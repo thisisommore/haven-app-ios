@@ -63,13 +63,13 @@ struct MessageForm<T: XXDKP>: View {
                 TextField(
                     "",
                     text: $abc,
-                    prompt: Text("Message").foregroundStyle(Color.placeHolder)
-                )
+                    prompt: Text("Message").foregroundStyle(Color.placeHolder),  axis: .vertical
+                ).lineLimit(1...10)
                 .onSubmit {
                     sendMessage()
                 }
                 .padding(.vertical, 8)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 18)
                 .background(.formBG.opacity(0.2))
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 40))
@@ -173,17 +173,20 @@ struct MessageForm<T: XXDKP>: View {
     // Create a simple preview chat
     let previewChat = Chat(channelId: "previewChannelId", name: "Preview Chat")
     container.mainContext.insert(previewChat)
-
-    return VStack {
-        Spacer()
-        MessageForm<XXDKMock>(
-            chat: previewChat,
-            replyTo: nil,
-            onCancelReply: {}
-        )
-        .modelContainer(container)
-        .environmentObject(XXDKMock())
-    }
+    return ZStack {
+           Color(.appBackground).edgesIgnoringSafeArea(.all)
+        VStack {
+            Spacer()
+            MessageForm<XXDKMock>(
+                chat: previewChat,
+                replyTo: nil,
+                onCancelReply: {}
+            )
+            .modelContainer(container)
+            .environmentObject(XXDKMock())
+        }
+       }
+    
 }
 
 #Preview("Reply Mode") {
@@ -227,5 +230,5 @@ struct MessageForm<T: XXDKP>: View {
         )
         .modelContainer(container)
         .environmentObject(XXDKMock())
-    }
+    }.background(.appBackground)
 }
