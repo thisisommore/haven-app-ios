@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -13,6 +13,7 @@
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A14987572EA202BC00E72C00 /* UIScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14987562EA202B800E72C00 /* UIScreen.swift */; };
+		A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */; };
 		A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
 		A1E0DB012EA35F3500E344DC /* Secret.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E0DB002EA35F3200E344DC /* Secret.swift */; };
 /* End PBXBuildFile section */
@@ -34,9 +35,39 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A10030F62E83AA070096767A /* Model */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Model; sourceTree = "<group>"; };
-		A10030FB2E83CE8B0096767A /* XXDK */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = XXDK; sourceTree = "<group>"; };
-		A17427A72EA2770D00D39261 /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
+		A10030F62E83AA070096767A /* Model */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		A10030FB2E83CE8B0096767A /* XXDK */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = XXDK;
+			sourceTree = "<group>";
+		};
+		A17427A72EA2770D00D39261 /* Views */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +76,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1662B707BC8225B49C368183 /* Pods_iOSExample.framework in Frameworks */,
+				A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,6 +204,9 @@
 				Base,
 			);
 			mainGroup = 980A0D602B96723C004FB15A;
+			packageReferences = (
+				A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */,
+			);
 			productRefGroup = 980A0D6A2B96723C004FB15A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -226,13 +261,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOSExample/Pods-iOSExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOSExample/Pods-iOSExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -491,6 +522,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ActuallyTaylor/SwiftHTMLToMarkdown";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */;
+			productName = SwiftHTMLtoMarkdown;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 980A0D612B96723C004FB15A /* Project object */;
 }
