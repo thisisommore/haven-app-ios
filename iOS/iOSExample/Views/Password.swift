@@ -73,12 +73,9 @@ public struct PasswordCreationView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Join the alpha").font(.title2).bold()
                     Text("Enter a password to secure your Haven identity")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                }
                 .onAppear {
                     Task.detached {
                         await xxdk.downloadNdf()
@@ -172,7 +169,9 @@ public struct PasswordCreationView: View {
                 }
                 .buttonStyle(BranchButtonStyle(isEnabled: true))
             }
-            
+            .onTapGesture {
+                focusedField = nil
+            }
             .animation(
                 .easeInOut(duration: 0.3),
                 value: !confirm.isEmpty || attemptedSubmit
@@ -180,15 +179,14 @@ public struct PasswordCreationView: View {
             .padding(.horizontal, 20)
             .padding(.top, 28)
             .frame(maxWidth: .infinity, alignment: .topLeading)
+            .navigationTitle("Join the alpha")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: handleSubmit) {
                         HStack {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(
-                                        CircularProgressViewStyle(tint: .white)
-                                    )
                                     .frame(width: 16, height: 16)
                             }
                             Text(isLoading ? xxdk.status : "Continue").fontWeight((!canContinue || isLoading) ? .regular : .bold ).foregroundStyle((!canContinue || isLoading) ? .gray : .haven)
