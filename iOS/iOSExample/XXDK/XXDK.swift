@@ -676,7 +676,7 @@ public class XXDK: XXDKP {
         do {
             let reportData = try cm.sendMessage(
                 channelIdData,
-                message: encodeMessage(msg),
+                message: encodeMessage("<p>\(msg)</p>"),
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
@@ -730,7 +730,7 @@ public class XXDK: XXDKP {
         do {
             let reportData = try cm.sendReply(
                 channelIdData,
-                message: encodeMessage(msg),
+                message: encodeMessage("<p>\(msg)</p>"),
                 messageToReactTo: replyToMessageId,
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
@@ -832,7 +832,7 @@ public class XXDK: XXDKP {
             let reportData = try DM.sendText(
                 toPubKey,
                 partnerToken: partnerToken,
-                message: msg,
+                message: "<p>\(msg)</p>",
                 leaseTimeMS: 0,
                 cmixParamsJSON: "".data
             )
@@ -887,7 +887,7 @@ public class XXDK: XXDKP {
             let reportData = try DM.sendReply(
                 toPubKey,
                 partnerToken: partnerToken,
-                replyMessage: msg,
+                replyMessage: "<p>\(msg)</p>",
                 replyToBytes: replyToMessageId,
                 leaseTimeMS: 0,
                 cmixParamsJSON: "".data
