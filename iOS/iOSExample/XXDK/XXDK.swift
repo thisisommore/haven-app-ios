@@ -647,7 +647,7 @@ public class XXDK: XXDKP {
             print("persistReaction: modelActor not set")
             return
         }
-        Task { @MainActor in
+        Task {
             do {
                 // Use SwiftDataActor instead of ModelContext
                 let reaction = MessageReaction(
