@@ -3,6 +3,7 @@ import SwiftUI
 
 struct HomeView<T: XXDKP>: View {
     @State private var showingSheet = false
+    @State private var showingCreateSpace = false
     @Query private var chats: [Chat]
 
     @EnvironmentObject var xxdk: T
@@ -44,8 +45,17 @@ struct HomeView<T: XXDKP>: View {
             }.hiddenSharedBackground()
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingSheet.toggle()
+                Menu {
+                    Button {
+                        showingSheet = true
+                    } label: {
+                        Label("Join Channel", systemImage: "link")
+                    }
+                    Button {
+                        showingCreateSpace = true
+                    } label: {
+                        Label("Create Space", systemImage: "plus.square")
+                    }
                 } label: {
                     Image(systemName: "plus")
                 }.tint(.haven)
@@ -54,6 +64,9 @@ struct HomeView<T: XXDKP>: View {
         }
         .sheet(isPresented: $showingSheet) {
             NewChatView<T>()
+        }
+        .sheet(isPresented: $showingCreateSpace) {
+            CreateSpaceView()
         }
         .background(Color.appBackground)
         .onAppear {
