@@ -66,7 +66,7 @@ struct HomeView<T: XXDKP>: View {
             NewChatView<T>()
         }
         .sheet(isPresented: $showingCreateSpace) {
-            CreateSpaceView()
+            CreateSpaceView<T>()
         }
         .background(Color.appBackground)
         .onAppear {

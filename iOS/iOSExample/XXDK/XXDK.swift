@@ -1282,6 +1282,55 @@ public class XXDK: XXDKP {
         return result.boolValue
     }
 
+    /// Create a new channel
+    /// - Parameters:
+    ///   - name: The channel name
+    ///   - description: The channel description
+    ///   - privacyLevel: Public or Secret
+    ///   - enableDms: Whether to enable direct messages
+    /// - Returns: Decoded ChannelJSON containing channel information
+    /// - Throws: Error if creation or joining fails
+    public func createChannel(
+        name: String,
+        description: String,
+        privacyLevel: PrivacyLevel,
+        enableDms: Bool = true
+    ) async throws -> ChannelJSON {
+        guard let cm = channelsManager else {
+            throw MyError.runtimeError("Channels Manager not initialized")
+        }
+        
+        var err: NSError?
+        
+        // Generate channel and get prettyPrint
+        let prettyPrint = cm.generateChannel(
+            name,
+            description: description,
+            privacyLevel: privacyLevel.rawValue,
+            error: &err
+        )
+        
+        if let error = err {
+            throw error
+        }
+        
+        // Join the channel
+        let channel = try await joinChannel(prettyPrint)
+        
+        guard let channelId = channel.channelId else {
+            throw MyError.runtimeError("ChannelID was not found")
+        }
+        
+        // Enable or disable DMs based on preference
+        if enableDms {
+            try enableDirectMessages(channelId: channelId)
+        } else {
+            try disableDirectMessages(channelId: channelId)
+        }
+        
+        return channel
+    }
+
     /// Leave a channel
     /// - Parameter channelId: The channel ID (base64-encoded)
     /// - Throws: Error if LeaveChannel fails or channels manager is not initialized

@@ -35,6 +35,7 @@ import Foundation
     func disableDirectMessages(channelId: String) throws
     func areDMsEnabled(channelId: String) throws -> Bool
     func leaveChannel(channelId: String) throws
+    func createChannel(name: String, description: String, privacyLevel: PrivacyLevel, enableDms: Bool) async throws -> ChannelJSON
      func setModelContainer(mActor: SwiftDataActor, sm: SecretManager)
 }
 // These are common helpers extending the string class which are essential for working with XXDK

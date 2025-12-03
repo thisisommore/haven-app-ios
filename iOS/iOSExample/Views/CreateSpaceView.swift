@@ -1,12 +1,16 @@
 import SwiftUI
 
-struct CreateSpaceView: View {
+struct CreateSpaceView<T: XXDKP>: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var xxdk: T
+    @EnvironmentObject var swiftDataActor: SwiftDataActor
     
     @State private var name: String = ""
     @State private var description: String = ""
     @State private var isSecret: Bool = true
     @State private var enableDirectMessages: Bool = false
+    @State private var isCreating: Bool = false
+    @State private var errorMessage: String?
     
     var body: some View {
         NavigationView {
@@ -26,6 +30,27 @@ struct CreateSpaceView: View {
                 Section(footer: Text("Allow members to send direct messages to each other")) {
                     Toggle("Enable Direct Messages", isOn: $enableDirectMessages)
                 }
+                
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                    }
+                }
+                
+                if isCreating {
+                    Section {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                            Text("Creating space...")
+                                .foregroundColor(.secondary)
+                                .padding(.leading, 8)
+                            Spacer()
+                        }
+                    }
+                }
             }
             .navigationTitle("Create Space")
             .navigationBarTitleDisplayMode(.inline)
@@ -34,21 +59,58 @@ struct CreateSpaceView: View {
                     Button("Cancel") {
                         dismiss()
                     }.tint(.haven)
+                    .disabled(isCreating)
                 }.hiddenSharedBackground()
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        // TODO: Handle creation
+                        createChannel()
                     }
                     .tint(.haven)
-                    .disabled(name.isEmpty)
+                    .disabled(name.isEmpty || isCreating)
                 }.hiddenSharedBackground()
+            }
+        }
+    }
+    
+    private func createChannel() {
+        isCreating = true
+        errorMessage = nil
+        
+        let privacyLevel: PrivacyLevel = isSecret ? .secret : .publicChannel
+        
+        Task {
+            do {
+                let channel = try await xxdk.createChannel(
+                    name: name,
+                    description: description,
+                    privacyLevel: privacyLevel,
+                    enableDms: enableDirectMessages
+                )
+                
+                guard let channelId = channel.channelId else {
+                    throw MyError.runtimeError("Channel ID is missing")
+                }
+                
+                let newChat = Chat(channelId: channelId, name: channel.name)
+                swiftDataActor.insert(newChat)
+                try swiftDataActor.save()
+                
+                await MainActor.run {
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isCreating = false
+                }
             }
         }
     }
 }
 
 #Preview {
-    CreateSpaceView()
+    CreateSpaceView<XXDKMock>()
+        .environmentObject(XXDKMock())
 }
 
