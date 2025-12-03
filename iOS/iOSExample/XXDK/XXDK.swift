@@ -1303,5 +1303,26 @@ public class XXDK: XXDKP {
 
         print("Successfully left channel: \(channelId)")
     }
+    
+    /// Import a private identity using a password
+    /// - Parameters:
+    ///   - password: The password to decrypt the identity
+    ///   - data: The encrypted identity data
+    /// - Returns: The decrypted private identity data
+    /// - Throws: Error if import fails
+    public func importIdentity(password: String, data: Data) throws -> Data {
+        var err: NSError?
+        let imported = Bindings.BindingsImportPrivateIdentity(password, data, &err)
+        
+        if let error = err {
+            throw error
+        }
+        
+        guard let result = imported else {
+            throw MyError.runtimeError("Import returned nil")
+        }
+        
+        return result
+    }
 }
 

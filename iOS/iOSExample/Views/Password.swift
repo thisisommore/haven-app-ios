@@ -345,9 +345,16 @@ extension Color {
 // MARK: - Import Account Sheet
 private struct ImportAccountSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.navigation) var navigation
+    @EnvironmentObject var xxdk: XXDK
+    @EnvironmentObject var sm: SecretManager
+    
     @Binding var importPassword: String
     @State private var selectedFileURL: URL?
     @State private var showFilePicker = false
+    @State private var isImporting = false
+    @State private var errorMessage: String?
+    @State private var showError = false
 
     var body: some View {
         NavigationStack {
@@ -425,15 +432,37 @@ private struct ImportAccountSheet: View {
                     }.tint(.haven)
                 }.hiddenSharedBackground()
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Import") {
-                        dismiss()
-                    }.tint(.haven).disabled(importPassword.isEmpty || selectedFileURL == nil)
+                    Button {
+                        handleImport()
+                    } label: {
+                        if isImporting {
+                            ProgressView()
+                        } else {
+                            Text("Import")
+                        }
+                    }
+                    .tint(.haven)
+                    .disabled(importPassword.isEmpty || selectedFileURL == nil || isImporting)
                 }.hiddenSharedBackground()
+            }
+            .alert("Import Failed", isPresented: $showError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage ?? "Unknown error")
+            }
+            
+            if isImporting {
+                VStack {
+                    Text(xxdk.status)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                }
             }
         }
         .fileImporter(
             isPresented: $showFilePicker,
-            allowedContentTypes: [.data],
+            allowedContentTypes: [.json],
             allowsMultipleSelection: false
         ) { result in
             if case .success(let urls) = result, let url = urls.first {
@@ -443,17 +472,46 @@ private struct ImportAccountSheet: View {
     }
 
     private func handleImport() {
-        let account = "self"
-        let password = "credentials.password.data(using: String.Encoding.utf8)!"
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: account,
-            kSecValueData as String: password,
-        ]
-        let status = SecItemAdd(query as CFDictionary, nil)
-        //        guard status == errSecSuccess else { throw KeychainError.unhandledError(status: status) }
-        // Handle import logic here
-        dismiss()
+        guard let url = selectedFileURL else { return }
+        isImporting = true
+        
+        // Access security scoped resource
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if accessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            // Call import
+            let identity = try xxdk.importIdentity(password: importPassword, data: data)
+            
+            // Use the import password as the app password
+            try sm.storePassword(importPassword)
+            
+            Task.detached {
+                // Initialize Cmix before loading identity
+                await xxdk.setUpCmix()
+                
+                // Start network follower to ensure connectivity before load blocks
+                await xxdk.startNetworkFollower()
+                
+                await xxdk.load(privateIdentity: identity)
+            }
+            
+            // Navigate immediately
+            isImporting = false
+            dismiss()
+            navigation.path.append(Destination.landing)
+
+        } catch {
+            print("Import failed: \(error)")
+            errorMessage = error.localizedDescription
+            showError = true
+            isImporting = false
+        }
     }
 }
 
