@@ -1353,6 +1353,28 @@ public class XXDK: XXDKP {
         print("Successfully left channel: \(channelId)")
     }
     
+    /// Get the share URL for a channel
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64-encoded)
+    ///   - host: The base URL for the join link (e.g., "https://example.com/join")
+    /// - Returns: The share URL string, or nil if unavailable
+    /// - Throws: Error if GetShareURL fails or channels manager is not initialized
+    public func getShareURL(channelId: String, host: String) throws -> String? {
+        guard let cm = channelsManager else {
+            throw MyError.runtimeError("Channels Manager not initialized")
+        }
+        guard let cmixInstance = cmix else {
+            throw MyError.runtimeError("Cmix not initialized")
+        }
+        
+        let channelIdData =
+            Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        let resultData = try cm.getShareURL(cmixInstance.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData)
+        let response = try Parser.decodeShareURL(from: resultData)
+        return response.url
+    }
+    
     /// Import a private identity using a password
     /// - Parameters:
     ///   - password: The password to decrypt the identity

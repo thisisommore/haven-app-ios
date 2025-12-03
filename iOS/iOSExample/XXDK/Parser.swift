@@ -137,6 +137,13 @@ public struct RemoteKVEntry: Codable {
     }
 }
 
+// Share URL response from GetShareURL
+// Keys map to: url, password
+public struct ShareURLJSON: Decodable {
+    public let url: String
+    public let password: String
+}
+
 // MARK: - CMix Params
 // Mirrors the TypeScript CMixParams shape
 public struct CMixParamsJSON: Codable {
@@ -275,5 +282,9 @@ public enum Parser {
 
     public static func encodeCMixParams(_ params: CMixParamsJSON) throws -> Data {
         try encoder.encode(params)
+    }
+    
+    public static func decodeShareURL(from data: Data) throws -> ShareURLJSON {
+        try decoder.decode(ShareURLJSON.self, from: data)
     }
 }
