@@ -212,7 +212,7 @@ struct QRScannerView: View {
                 
                 // Box frame
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(showSuccess ? Color.green : Color.haven, lineWidth: 3)
+                    .stroke(Color.haven, lineWidth: 3)
                     .frame(width: boxSize, height: boxSize)
                     .position(x: centerX, y: centerY)
                 
