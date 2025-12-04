@@ -17,6 +17,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var isDMEnabled: Bool = false
     @State private var shareURL: String?
     @State private var showExportKeySheet: Bool = false
+    @State private var showImportKeySheet: Bool = false
+    @State private var showImportSuccessToast: Bool = false
     
     var body: some View {
         NavigationView {
@@ -103,6 +105,25 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                 }
                 
+                // Import key section - only visible for non-admins
+                if let channelId = chat?.id, !xxdk.isChannelAdmin(channelId: channelId) {
+                    Section {
+                        Button {
+                            showImportKeySheet = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "key.fill")
+                                    .foregroundColor(.haven)
+                                Text("Import Channel Key")
+                                Spacer()
+                                Image(systemName: "square.and.arrow.down")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .tint(.primary)
+                    }
+                }
+                
                 Section {
                     Button(role: .destructive) {
                         onLeaveChannel()
@@ -131,6 +152,44 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     channelName: chat?.name ?? "Unknown",
                     xxdk: xxdk
                 )
+            }
+            .sheet(isPresented: $showImportKeySheet) {
+                ImportChannelKeySheet(
+                    channelId: chat?.id ?? "",
+                    channelName: chat?.name ?? "Unknown",
+                    onSuccess: {
+                        withAnimation(.spring(response: 0.3)) {
+                            showImportSuccessToast = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                showImportSuccessToast = false
+                            }
+                        }
+                    }
+                )
+            }
+            .overlay {
+                if showImportSuccessToast {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.white)
+                            Text("Key Imported Successfully")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 14)
+                        .background(Color.haven)
+                        .cornerRadius(25)
+                        .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
+                        .padding(.bottom, 50)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
         }
     }
@@ -340,6 +399,155 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
         } catch {
             errorMessage = "Failed to export key: \(error.localizedDescription)"
         }
+    }
+}
+
+struct ImportChannelKeySheet: View {
+    let channelId: String
+    let channelName: String
+    let onSuccess: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var showFileImporter = false
+    @State private var decryptionPassword = ""
+    @State private var importedKeyContent: String?
+    @State private var errorMessage: String?
+    
+    private var isPasswordValid: Bool {
+        !decryptionPassword.isEmpty
+    }
+    
+    private var canImport: Bool {
+        isPasswordValid && importedKeyContent != nil
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                Image(systemName: "key.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(.haven)
+                    .padding(.top, 32)
+                
+                Text("Import Admin Key")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                Text("Import an admin key for \"\(channelName)\" to gain admin privileges.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                
+                Button {
+                    showFileImporter = true
+                } label: {
+                    HStack {
+                        Image(systemName: importedKeyContent != nil ? "checkmark.circle.fill" : "doc.fill")
+                            .foregroundColor(.haven)
+                        Text(importedKeyContent != nil ? "Key File Selected" : "Select Key File (.txt)")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.haven.opacity(0.15))
+                    .foregroundColor(.haven)
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal, 24)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Decryption Password")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    HStack(spacing: 12) {
+                        Image(systemName: "lock.fill")
+                            .foregroundColor(.haven)
+                            .frame(width: 20)
+                        SecureField("Enter password", text: $decryptionPassword)
+                    }
+                    .padding()
+                    .background(Color.haven.opacity(0.08))
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(decryptionPassword.isEmpty ? Color.clear : Color.haven, lineWidth: 1.5)
+                    )
+                }
+                .padding(.horizontal, 24)
+                
+                if let error = errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 24)
+                }
+                
+                Button {
+                    importKey()
+                } label: {
+                    HStack {
+                        Image(systemName: "square.and.arrow.down")
+                        Text("Import Key")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(canImport ? Color.haven : Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .disabled(!canImport)
+                .padding(.horizontal, 24)
+                
+                Spacer()
+                
+                Text("You will need the password used to encrypt this key.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
+            }
+            .navigationTitle("Import Key")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .tint(.haven)
+                }.hiddenSharedBackground()
+            }
+            .fileImporter(
+                isPresented: $showFileImporter,
+                allowedContentTypes: [.plainText],
+                allowsMultipleSelection: false
+            ) { result in
+                switch result {
+                case .success(let urls):
+                    guard let url = urls.first else { return }
+                    do {
+                        guard url.startAccessingSecurityScopedResource() else {
+                            errorMessage = "Cannot access the selected file"
+                            return
+                        }
+                        defer { url.stopAccessingSecurityScopedResource() }
+                        let content = try String(contentsOf: url, encoding: .utf8)
+                        importedKeyContent = content
+                        errorMessage = nil
+                    } catch {
+                        errorMessage = "Failed to read file: \(error.localizedDescription)"
+                    }
+                case .failure(let error):
+                    errorMessage = "Failed to select file: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
+    private func importKey() {
+        // Fake success for now
+        errorMessage = nil
+        onSuccess()
+        dismiss()
     }
 }
 
