@@ -101,6 +101,23 @@ struct QRCodeView: View {
                 }
                 .padding(.horizontal, 24)
                 
+                // Warning notice
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 16))
+                    
+                    Text("This is permanent and cannot be revoked. Only share with people you trust.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(12)
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(8)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                
                 Spacer()
             }
             .padding(.top, 32)
