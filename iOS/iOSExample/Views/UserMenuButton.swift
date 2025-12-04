@@ -208,7 +208,9 @@ struct QRScannerView: View {
     @State private var showSuccess = false
     @State private var torchOn = false
     
-    private let boxSize: CGFloat = 250
+    private var boxSize: CGFloat {
+        min(max(UIScreen.w(85), 250), 350)
+    }
     
     var body: some View {
         ZStack {
@@ -235,9 +237,10 @@ struct QRScannerView: View {
                 let centerY = geometry.size.height / 2
                 
                 ZStack {
-                    // Blur effect
+                    // Blur effect (reduced by half)
                     Rectangle()
-                        .fill(.ultraThinMaterial)
+                        .fill(.regularMaterial)
+                        .opacity(0.9)
                     
                     // Dark tint
                     Color.black.opacity(kScannerDarkAmount)
