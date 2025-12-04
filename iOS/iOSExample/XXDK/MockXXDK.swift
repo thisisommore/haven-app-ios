@@ -220,4 +220,9 @@ public class XXDKMock: XXDKP {
         // Mock: return a mock encrypted admin key
         return "mock-encrypted-admin-key-\(channelId)-\(encryptionPassword.hashValue)"
     }
+    
+    func exportIdentity(password: String) throws -> Data {
+        // Mock: return mock encrypted identity data
+        return "mock-encrypted-identity-\(password.hashValue)".data(using: .utf8) ?? Data()
+    }
 }

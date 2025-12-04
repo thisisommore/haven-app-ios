@@ -41,6 +41,7 @@ import Foundation
      func setModelContainer(mActor: SwiftDataActor, sm: SecretManager)
     func isChannelAdmin(channelId: String) -> Bool
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
+    func exportIdentity(password: String) throws -> Data
 }
 // These are common helpers extending the string class which are essential for working with XXDK
 extension StringProtocol {

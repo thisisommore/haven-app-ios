@@ -1431,5 +1431,17 @@ public class XXDK: XXDKP {
         let result = try cm.exportChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword)
         return String(data: result, encoding: .utf8) ?? ""
     }
+    
+    /// Export the private identity encrypted with a password
+    /// - Parameter password: Password to encrypt the identity
+    /// - Returns: The encrypted identity data
+    public func exportIdentity(password: String) throws -> Data {
+        guard let cm = channelsManager else {
+            throw MyError.runtimeError("Channels Manager not initialized")
+        }
+        
+        let result = try cm.exportPrivateIdentity(password)
+        return result
+    }
 }
 
