@@ -219,7 +219,7 @@ struct QRScannerView: View {
                 if showSuccess {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 60))
-                        .foregroundColor(.green)
+                        .foregroundColor(.haven)
                         .position(x: centerX, y: centerY)
                         .transition(.scale.combined(with: .opacity))
                 }
