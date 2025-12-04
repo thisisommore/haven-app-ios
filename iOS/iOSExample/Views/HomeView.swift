@@ -6,6 +6,8 @@ struct HomeView<T: XXDKP>: View {
     @State private var showingSheet = false
     @State private var showingCreateSpace = false
     @State private var showExportIdentitySheet = false
+    @State private var showQRCodeSheet = false
+    @State private var showQRScanner = false
     @State private var toastMessage: String?
     @Query private var chats: [Chat]
 
@@ -42,6 +44,9 @@ struct HomeView<T: XXDKP>: View {
                         codename: xxdk.codename,
                         onExport: {
                             showExportIdentitySheet = true
+                        },
+                        onShareQR: {
+                            showQRCodeSheet = true
                         }
                     )
                     .frame(width: 28, height: 28)
@@ -59,7 +64,8 @@ struct HomeView<T: XXDKP>: View {
             ToolbarItem(placement: .topBarTrailing) {
                 PlusMenuButton(
                     onJoinChannel: { showingSheet = true },
-                    onCreateSpace: { showingCreateSpace = true }
+                    onCreateSpace: { showingCreateSpace = true },
+                    onScanQR: { showQRScanner = true }
                 )
                 .frame(width: 28, height: 28)
             }.hiddenSharedBackground()
@@ -70,6 +76,21 @@ struct HomeView<T: XXDKP>: View {
         }
         .sheet(isPresented: $showingCreateSpace) {
             CreateSpaceView<T>()
+        }
+        .sheet(isPresented: $showQRCodeSheet) {
+            QRCodeView()
+        }
+        .fullScreenCover(isPresented: $showQRScanner) {
+            QRScannerView { code in
+                withAnimation(.spring(response: 0.3)) {
+                    toastMessage = "User added successfully"
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation {
+                        toastMessage = nil
+                    }
+                }
+            }
         }
         .sheet(isPresented: $showExportIdentitySheet) {
             ExportIdentitySheet(
