@@ -57,20 +57,11 @@ struct HomeView<T: XXDKP>: View {
             }.hiddenSharedBackground()
 
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        showingSheet = true
-                    } label: {
-                        Label("Join Channel", systemImage: "link")
-                    }
-                    Button {
-                        showingCreateSpace = true
-                    } label: {
-                        Label("Create Space", systemImage: "plus.square")
-                    }
-                } label: {
-                    Image(systemName: "plus")
-                }.tint(.haven)
+                PlusMenuButton(
+                    onJoinChannel: { showingSheet = true },
+                    onCreateSpace: { showingCreateSpace = true }
+                )
+                .frame(width: 28, height: 28)
             }.hiddenSharedBackground()
 
         }
