@@ -34,14 +34,23 @@ struct HomeView<T: XXDKP>: View {
         .tint(.gray.opacity(0.3))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                if xxdk.statusPercentage != 100 {
-                    Button(action: {
-                        showTooltip.toggle()
-                    }) {
-                        ProgressView().tint(.haven)
+                HStack(spacing: 12) {
+                    UserMenuButton(
+                        codename: xxdk.codename,
+                        onExport: {
+                            // TODO: Export action
+                        }
+                    )
+                    .frame(width: 28, height: 28)
+                    
+                    if xxdk.statusPercentage != 100 {
+                        Button(action: {
+                            showTooltip.toggle()
+                        }) {
+                            ProgressView().tint(.haven)
+                        }
                     }
                 }
-
             }.hiddenSharedBackground()
 
             ToolbarItem(placement: .topBarTrailing) {
