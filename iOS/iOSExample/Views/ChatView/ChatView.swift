@@ -62,40 +62,34 @@ struct ChatView<T: XXDKP>: View {
     }
 
     var body: some View {
-        ZStack {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(messages, id: \.id) { result in
-                        ChatMessageRow(
-                            result: result,
-                            onReply: { message in
-                                replyingTo = message
-                            },
-                            onDM: { codename, dmToken, pubKey, color  in
-                                createDMChatAndNavigate(
-                                    codename: codename,
-                                    dmToken: dmToken,
-                                    pubKey: pubKey, color: color
-                                )
-                            }
-                        )
-                        if result == messages.last {
-                            HStack {}.padding(.vertical, 20)
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(messages, id: \.id) { result in
+                    ChatMessageRow(
+                        result: result,
+                        onReply: { message in
+                            replyingTo = message
+                        },
+                        onDM: { codename, dmToken, pubKey, color  in
+                            createDMChatAndNavigate(
+                                codename: codename,
+                                dmToken: dmToken,
+                                pubKey: pubKey, color: color
+                            )
                         }
-                    }
-                    Spacer()
-                }.padding().scrollTargetLayout()
-            }.defaultScrollAnchor(.bottom)
-            VStack {
+                    )
+                }
                 Spacer()
-                MessageForm<XXDK>(
-                    chat: chat,
-                    replyTo: replyingTo,
-                    onCancelReply: {
-                        replyingTo = nil
-                    }
-                )
-            }
+            }.padding().scrollTargetLayout()
+        }.defaultScrollAnchor(.bottom)
+        .safeAreaInset(edge: .bottom) {
+            MessageForm<XXDK>(
+                chat: chat,
+                replyTo: replyingTo,
+                onCancelReply: {
+                    replyingTo = nil
+                }
+            )
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
