@@ -24,6 +24,10 @@ struct ChatView<T: XXDKP>: View {
         // Sort by timestamp ascending
         return chat.messages.sorted { $0.timestamp < $1.timestamp }
     }
+    private var isChannel: Bool {
+        guard let chat else { return false }
+        return chat.name != "<self>" && chat.dmToken == nil
+    }
 
     @Environment(\.dismiss) private var dismiss
     @State var abc: String = ""
@@ -98,8 +102,13 @@ struct ChatView<T: XXDKP>: View {
                 Button {
                     showChannelOptions = true
                 } label: {
-                    Text(chatTitle == "<self>" ? "Notes" : chatTitle)
-                        .font(.headline)
+                    HStack(spacing: 6) {
+                        Text(chatTitle == "<self>" ? "Notes" : chatTitle)
+                            .font(.headline)
+                        if isChannel && xxdk.isChannelAdmin(channelId: chatId) {
+                            AdminBadge()
+                        }
+                    }
                 }
             }
           

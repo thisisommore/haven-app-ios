@@ -1395,5 +1395,25 @@ public class XXDK: XXDKP {
         
         return result
     }
+    
+    /// Check if current user is admin of a channel
+    /// - Parameter channelId: The channel ID (base64-encoded)
+    /// - Returns: True if user is admin, false otherwise
+    public func isChannelAdmin(channelId: String) -> Bool {
+        guard let cm = channelsManager else {
+            return false
+        }
+        
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        var result = ObjCBool(false)
+        do {
+            try cm.isChannelAdmin(channelIdData, ret0_: &result)
+            return result.boolValue
+        } catch {
+            print("isChannelAdmin failed: \(error)")
+            return false
+        }
+    }
 }
 

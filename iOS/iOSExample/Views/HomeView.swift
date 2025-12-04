@@ -16,7 +16,7 @@ struct HomeView<T: XXDKP>: View {
         List {
             ForEach(chats) { chat in
 
-                ChatRowView(chat: chat)
+                ChatRowView<T>(chat: chat)
                     .background(
                         NavigationLink(
                             value: Destination.chat(

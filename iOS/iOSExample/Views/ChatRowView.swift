@@ -1,8 +1,25 @@
 import SwiftUI
 import SwiftData
 
-struct ChatRowView: View {
+struct AdminBadge: View {
+    var body: some View {
+        Text("Admin")
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.haven)
+            .clipShape(Capsule())
+    }
+}
+
+struct ChatRowView<T: XXDKP>: View {
     let chat: Chat
+    @EnvironmentObject var xxdk: T
+    
+    private var isChannel: Bool {
+        chat.name != "<self>" && chat.dmToken == nil
+    }
 
     var body: some View {
         HStack {
@@ -11,7 +28,12 @@ struct ChatRowView: View {
             }
             
             VStack(alignment: .leading) {
-                Text(chat.name == "<self>" ? "Notes" : chat.name).foregroundStyle(.primary)
+                HStack(spacing: 6) {
+                    Text(chat.name == "<self>" ? "Notes" : chat.name).foregroundStyle(.primary)
+                    if isChannel && xxdk.isChannelAdmin(channelId: chat.id) {
+                        AdminBadge()
+                    }
+                }
 
                 if let lastMessage = chat.messages.sorted(by: { $0.timestamp < $1.timestamp }).last {
                     let senderName =

@@ -210,4 +210,9 @@ public class XXDKMock: XXDKP {
 
         return identities
     }
+    
+    func isChannelAdmin(channelId: String) -> Bool {
+        // Mock: return true for testing
+        return true
+    }
 }
