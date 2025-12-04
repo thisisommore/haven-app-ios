@@ -18,6 +18,8 @@ struct UserMenuButton: UIViewRepresentable {
     }
     
     func updateUIView(_ button: UIButton, context: Context) {
+        let havenColor = UIColor(named: "Haven")
+        
         let codenameAction = UIAction(
             title: codename ?? "Loading...",
             attributes: .disabled
@@ -25,7 +27,7 @@ struct UserMenuButton: UIViewRepresentable {
         
         let exportAction = UIAction(
             title: "Export",
-            image: UIImage(systemName: "square.and.arrow.up")
+            image: UIImage(systemName: "square.and.arrow.up")?.withTintColor(havenColor ?? .systemBlue, renderingMode: .alwaysOriginal)
         ) { _ in
             onExport()
         }
