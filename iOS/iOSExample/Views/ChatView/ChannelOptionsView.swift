@@ -18,7 +18,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var shareURL: String?
     @State private var showExportKeySheet: Bool = false
     @State private var showImportKeySheet: Bool = false
-    @State private var showImportSuccessToast: Bool = false
+    @State private var toastMessage: String?
     
     var body: some View {
         NavigationView {
@@ -150,33 +150,43 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 ExportChannelKeySheet(
                     channelId: chat?.id ?? "",
                     channelName: chat?.name ?? "Unknown",
-                    xxdk: xxdk
+                    xxdk: xxdk,
+                    onSuccess: { message in
+                        withAnimation(.spring(response: 0.3)) {
+                            toastMessage = message
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                toastMessage = nil
+                            }
+                        }
+                    }
                 )
             }
             .sheet(isPresented: $showImportKeySheet) {
                 ImportChannelKeySheet(
                     channelId: chat?.id ?? "",
                     channelName: chat?.name ?? "Unknown",
-                    onSuccess: {
+                    onSuccess: { message in
                         withAnimation(.spring(response: 0.3)) {
-                            showImportSuccessToast = true
+                            toastMessage = message
                         }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                             withAnimation {
-                                showImportSuccessToast = false
+                                toastMessage = nil
                             }
                         }
                     }
                 )
             }
             .overlay {
-                if showImportSuccessToast {
+                if let message = toastMessage {
                     VStack {
                         Spacer()
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.white)
-                            Text("Key Imported Successfully")
+                            Text(message)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
@@ -221,12 +231,12 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
     let channelId: String
     let channelName: String
     let xxdk: T
+    let onSuccess: (String) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var showFileExporter = false
     @State private var encryptionPassword = ""
     @State private var document = TextFileDocument(text: "")
     @State private var errorMessage: String?
-    @State private var showCopiedToast = false
     
     private var isPasswordValid: Bool {
         !encryptionPassword.isEmpty
@@ -338,32 +348,11 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                 switch result {
                 case .success(let url):
                     print("File saved to: \(url)")
+                    onSuccess("Exported to File")
                     dismiss()
                 case .failure(let error):
                     print("Failed to save file: \(error)")
                     errorMessage = "Failed to save: \(error.localizedDescription)"
-                }
-            }
-            .overlay {
-                if showCopiedToast {
-                    VStack {
-                        Spacer()
-                        HStack(spacing: 10) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.white)
-                            Text("Copied to Clipboard")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 14)
-                        .background(Color.haven)
-                        .cornerRadius(25)
-                        .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
-                        .padding(.bottom, 50)
-                    }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
         }
@@ -385,17 +374,8 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
             let key = try xxdk.exportChannelAdminKey(channelId: channelId, encryptionPassword: encryptionPassword)
             UIPasteboard.general.string = key
             errorMessage = nil
-            withAnimation(.spring(response: 0.3)) {
-                showCopiedToast = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                withAnimation {
-                    showCopiedToast = false
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    dismiss()
-                }
-            }
+            onSuccess("Copied to Clipboard")
+            dismiss()
         } catch {
             errorMessage = "Failed to export key: \(error.localizedDescription)"
         }
@@ -405,7 +385,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
 struct ImportChannelKeySheet: View {
     let channelId: String
     let channelName: String
-    let onSuccess: () -> Void
+    let onSuccess: (String) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var showFileImporter = false
     @State private var decryptionPassword = ""
@@ -546,7 +526,7 @@ struct ImportChannelKeySheet: View {
     private func importKey() {
         // Fake success for now
         errorMessage = nil
-        onSuccess()
+        onSuccess("Key Imported Successfully")
         dismiss()
     }
 }
