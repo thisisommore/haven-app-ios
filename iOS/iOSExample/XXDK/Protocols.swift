@@ -39,6 +39,7 @@ import Foundation
     func getShareURL(channelId: String, host: String) throws -> String?
      func setModelContainer(mActor: SwiftDataActor, sm: SecretManager)
     func isChannelAdmin(channelId: String) -> Bool
+    func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
 }
 // These are common helpers extending the string class which are essential for working with XXDK
 extension StringProtocol {

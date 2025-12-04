@@ -215,4 +215,9 @@ public class XXDKMock: XXDKP {
         // Mock: return true for testing
         return true
     }
+    
+    func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
+        // Mock: return a mock encrypted admin key
+        return "mock-encrypted-admin-key-\(channelId)-\(encryptionPassword.hashValue)"
+    }
 }
