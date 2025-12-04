@@ -160,6 +160,7 @@ struct QRCodeView: View {
 struct QRScannerView: View {
     @Environment(\.dismiss) private var dismiss
     let onCodeScanned: (String) -> Void
+    var onShowMyQR: (() -> Void)? = nil
     @State private var isScanning = true
     @State private var showSuccess = false
     @State private var torchOn = false
@@ -268,14 +269,33 @@ struct QRScannerView: View {
                 Spacer()
             }
             
-            // Bottom text
+            // Bottom section
             VStack {
                 Spacer()
                 Text(showSuccess ? "User added!" : "Scan QR Code")
                     .font(.headline)
                     .foregroundColor(.white)
-                    .padding(.bottom, 80)
+                
+                if let onShowMyQR = onShowMyQR, !showSuccess {
+                    Button {
+                        dismiss()
+                        onShowMyQR()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "qrcode")
+                            Text("Show My QR")
+                        }
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(.haven)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.9))
+                        .cornerRadius(20)
+                    }
+                    .padding(.top, 16)
+                }
             }
+            .padding(.bottom, 80)
         }
         .onDisappear {
             if torchOn {

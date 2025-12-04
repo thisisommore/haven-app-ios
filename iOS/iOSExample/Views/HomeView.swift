@@ -95,9 +95,17 @@ struct HomeView<T: XXDKP>: View {
             QRCodeView(dmToken: data.token, pubKey: data.pubKey, codeset: data.codeset)
         }
         .fullScreenCover(isPresented: $showQRScanner) {
-            QRScannerView { code in
-                handleAddUser(code: code)
-            }
+            QRScannerView(
+                onCodeScanned: { code in
+                    handleAddUser(code: code)
+                },
+                onShowMyQR: {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        guard let dm = xxdk.DM, let pubKey = dm.getPublicKey() else { return }
+                        qrData = QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset)
+                    }
+                }
+            )
         }
         .sheet(isPresented: $showExportIdentitySheet) {
             ExportIdentitySheet(
