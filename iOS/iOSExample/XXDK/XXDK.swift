@@ -66,6 +66,7 @@ public class XXDK: XXDKP {
     @Published var status: String = "..."
     @Published var statusPercentage: Double = 0
     @Published var codename: String?
+    @Published var codeset: Int = 0
     private var isNewUser: Bool = false
     // Channels Manager retained for channel sends
     private var channelsManager: Bindings.BindingsChannelsManager?
@@ -299,6 +300,7 @@ public class XXDK: XXDKP {
                 let identity = try Parser.decodeIdentity(from: pubId)
 
                 self.codename = identity.codename
+                self.codeset = identity.codeset
 
                 // Persist codename for later reads
                 if let nameData = identity.codename.data(using: .utf8) {

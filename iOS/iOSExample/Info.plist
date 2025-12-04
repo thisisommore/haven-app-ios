@@ -4,5 +4,16 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is needed to scan QR codes and add contacts</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.xxnetwork.haven</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>haven</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

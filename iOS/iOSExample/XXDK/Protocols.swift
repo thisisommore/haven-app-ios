@@ -15,6 +15,7 @@ import Foundation
     var status: String {get};
     var statusPercentage: Double {get};
     var codename: String? {get};
+    var codeset: Int {get};
     var DM: Bindings.BindingsDMClient? { get set }
     var dmReceiver: DMReceiver { get set }
     var cmix: Bindings.BindingsCmix? {get set}

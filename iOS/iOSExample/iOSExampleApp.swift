@@ -5,6 +5,7 @@
 //  Created by Richard Carback on 3/4/24.
 //
 
+import Bindings
 import SwiftData
 import SwiftUI
 
@@ -35,6 +36,86 @@ struct iOS_ExampleApp: App {
         }
     }()
     
+    @State private var deepLinkError: String?
+    
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "haven" else { return }
+        guard let host = url.host else { return }
+        
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let queryItems = components?.queryItems ?? []
+        
+        switch host {
+        case "chat":
+            let pathComponents = url.pathComponents.filter { $0 != "/" }
+            if let chatId = pathComponents.first {
+                navigation.path.append(Destination.chat(chatId: chatId, chatTitle: ""))
+            }
+        case "dm":
+            handleDMDeepLink(queryItems: queryItems)
+        default:
+            break
+        }
+    }
+    
+    private func handleDMDeepLink(queryItems: [URLQueryItem]) {
+        // haven://dm?token={dmToken}&pubKey={base64PubKey}&codeset={codeset}
+        guard let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
+              let token64 = Int64(tokenStr),
+              let pubKeyBase64 = queryItems.first(where: { $0.name == "pubKey" })?.value,
+              let pubKey = Data(base64Encoded: pubKeyBase64) else {
+            print("[DeepLink] Missing token or pubKey")
+            deepLinkError = "Invalid link: missing token or pubKey"
+            return
+        }
+        
+        let token = Int32(bitPattern: UInt32(truncatingIfNeeded: token64))
+        
+        guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
+              let codeset = Int(codesetStr) else {
+            print("[DeepLink] Missing codeset")
+            deepLinkError = "Invalid link: missing codeset"
+            return
+        }
+        
+        var err: NSError?
+        guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err),
+              err == nil else {
+            print("[DeepLink] BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown")")
+            deepLinkError = "Failed to derive identity"
+            return
+        }
+        
+        let name: String
+        let color: Int
+        do {
+            let identity = try Parser.decodeIdentity(from: identityData)
+            name = identity.codename
+            var colorStr = identity.color
+            if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
+                colorStr.removeFirst(2)
+            }
+            color = Int(colorStr, radix: 16) ?? 0xE97451
+            print("[DeepLink] Derived identity - codename: \(name), color: \(color)")
+        } catch {
+            print("[DeepLink] Failed to decode identity: \(error)")
+            deepLinkError = "Failed to decode identity"
+            return
+        }
+        
+        let newChat = Chat(pubKey: pubKey, name: name, dmToken: token, color: color)
+        
+        Task {
+            modelData.da.insert(newChat)
+            try? modelData.da.save()
+            print("[DeepLink] Chat saved for user: \(name)")
+            
+            await MainActor.run {
+                navigation.path.append(Destination.chat(chatId: newChat.id, chatTitle: name))
+            }
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
             NavigationStack(path: $navigation.path) {
@@ -60,6 +141,17 @@ struct iOS_ExampleApp: App {
 //            .environmentObject(logOutput)
             .environment(\.navigation, navigation)
             .environmentObject(modelData.da)
+            .onOpenURL { url in
+                handleDeepLink(url)
+            }
+            .alert("Error", isPresented: Binding(
+                get: { deepLinkError != nil },
+                set: { if !$0 { deepLinkError = nil } }
+            )) {
+                Button("OK") { deepLinkError = nil }
+            } message: {
+                Text(deepLinkError ?? "")
+            }
         }
     }
 }

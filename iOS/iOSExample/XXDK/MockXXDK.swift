@@ -35,6 +35,7 @@ public class XXDKMock: XXDKP {
         // Mock DM reply: no-op
     }
     var codename: String? = "Manny"
+    var codeset: Int = 0
     
     func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
         // Mock: simulate URL decode and join
