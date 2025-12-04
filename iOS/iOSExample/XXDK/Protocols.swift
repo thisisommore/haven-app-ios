@@ -43,6 +43,7 @@ import Foundation
     func isChannelAdmin(channelId: String) -> Bool
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
     func exportIdentity(password: String) throws -> Data
+    func logout() async
 }
 // These are common helpers extending the string class which are essential for working with XXDK
 extension StringProtocol {

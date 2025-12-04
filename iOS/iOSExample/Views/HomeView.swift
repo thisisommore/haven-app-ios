@@ -11,11 +11,14 @@ struct HomeView<T: XXDKP>: View {
     @State private var showQRScanner = false
     @State private var toastMessage: String?
     @State private var qrData: QRData?
+    @State private var showLogoutAlert = false
     @Query private var chats: [Chat]
 
     @EnvironmentObject var xxdk: T
     @State private var didStartLoad = false
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
+    @EnvironmentObject private var secretManager: SecretManager
+    @Environment(\.navigation) private var navigation
 
     var width: CGFloat
     @State private var showTooltip = false
@@ -55,6 +58,9 @@ struct HomeView<T: XXDKP>: View {
                                 return
                             }
                             qrData = QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset)
+                        },
+                        onLogout: {
+                            showLogoutAlert = true
                         }
                     )
                     .frame(width: 28, height: 28)
@@ -107,6 +113,29 @@ struct HomeView<T: XXDKP>: View {
                     }
                 }
             )
+        }
+        .alert("Logout", isPresented: $showLogoutAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Logout", role: .destructive) {
+                Task {
+                    await xxdk.logout()
+                    
+                    // Clear SwiftData
+                    try? swiftDataActor.deleteAll(ChatMessage.self)
+                    try? swiftDataActor.deleteAll(MessageReaction.self)
+                    try? swiftDataActor.deleteAll(Sender.self)
+                    try? swiftDataActor.deleteAll(Chat.self)
+                    try? swiftDataActor.save()
+                    
+                    secretManager.clearAll()
+                    await MainActor.run {
+                        navigation.path = NavigationPath()
+                        navigation.path.append(Destination.password)
+                    }
+                }
+            }
+        } message: {
+            Text("If you haven't backed up your identity, you will lose access to it permanently. Are you sure you want to logout?")
         }
         .overlay {
             if let message = toastMessage {

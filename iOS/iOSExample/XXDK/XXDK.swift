@@ -1445,5 +1445,55 @@ public class XXDK: XXDKP {
         let result = try cm.exportPrivateIdentity(password)
         return result
     }
+    
+    /// Logout and delete all local data
+    public func logout() async {
+        // Stop network follower
+        try! cmix?.stopNetworkFollower()
+        
+        // Clear references
+        channelsManager = nil
+        DM = nil
+        cmix = nil
+        remoteKV = nil
+        storageTagListener = nil
+        eventModelBuilder = nil
+        
+        // Delete all XXDK directories
+        let basePath = try? FileManager.default.url(
+            for: .documentDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: false
+        )
+        
+        if let basePath {
+            // Delete xxAppState directory (contains ekv)
+            let appStateDir = basePath.appendingPathComponent("xxAppState")
+            try? FileManager.default.removeItem(at: appStateDir)
+            
+            // Delete any other XXDK related directories
+            let contents = try? FileManager.default.contentsOfDirectory(at: basePath, includingPropertiesForKeys: nil)
+            contents?.forEach { url in
+                let name = url.lastPathComponent
+                // Remove channels, dm, and any xx-related directories
+                if name.contains("channel") || name.contains("dm") || name.hasPrefix("xx") {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+        }
+        
+        // Clear downloaded NDF to force re-download
+        downloadedNdf = nil
+        
+        // Reset published state
+        await MainActor.run {
+            self.codename = nil
+            self.codeset = 0
+            self.status = "..."
+            self.statusPercentage = 0
+            self.isNewUser = true
+        }
+    }
 }
 

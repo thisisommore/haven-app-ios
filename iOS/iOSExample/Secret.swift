@@ -118,6 +118,21 @@ public class SecretManager: ObservableObject {
         updatePasswordStatus()
     }
     
+    /// Clear all data (keychain + UserDefaults) for logout
+    func clearAll() {
+        // Clear keychain
+        clearKeychain()
+        
+        // Clear UserDefaults
+        UserDefaults.standard.removeObject(forKey: hasLaunchedKey)
+        if let bundleId = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: bundleId)
+        }
+        UserDefaults.standard.synchronize()
+        
+        updatePasswordStatus()
+    }
+    
     // MARK: - Private Methods
     
     /// Clear keychain if this is a fresh install

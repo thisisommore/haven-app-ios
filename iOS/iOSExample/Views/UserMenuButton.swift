@@ -5,6 +5,7 @@ struct UserMenuButton: UIViewRepresentable {
     let codename: String?
     let onExport: () -> Void
     let onShareQR: () -> Void
+    let onLogout: () -> Void
     
     func makeUIView(context: Context) -> UIButton {
         let button = UIButton(type: .system)
@@ -40,7 +41,15 @@ struct UserMenuButton: UIViewRepresentable {
             onShareQR()
         }
         
-        button.menu = UIMenu(children: [codenameAction, exportAction, shareQRAction])
+        let logoutAction = UIAction(
+            title: "Logout",
+            image: UIImage(systemName: "rectangle.portrait.and.arrow.right"),
+            attributes: .destructive
+        ) { _ in
+            onLogout()
+        }
+        
+        button.menu = UIMenu(children: [codenameAction, exportAction, shareQRAction, logoutAction])
     }
 }
 

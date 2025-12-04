@@ -226,4 +226,12 @@ public class XXDKMock: XXDKP {
         // Mock: return mock encrypted identity data
         return "mock-encrypted-identity-\(password.hashValue)".data(using: .utf8) ?? Data()
     }
+    
+    func logout() async {
+        // Mock: reset state
+        codename = nil
+        codeset = 0
+        status = "..."
+        statusPercentage = 0
+    }
 }
