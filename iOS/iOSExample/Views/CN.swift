@@ -160,7 +160,9 @@ struct HeaderView: View {
                 .popover(isPresented: $showTooltip, arrowEdge: .top) {
                     Text("Codenames are generated on your computer by you. No servers or databases are involved at all. Your Codename is your personally owned anonymous identity shared across every Haven Chat you join. It is private and it can never be traced back to you.")
                         .font(.caption)
-                        .padding()
+                        .padding(24)
+                        .frame(width: UIScreen.screenWidth)
+                        .fixedSize(horizontal: false, vertical: true)
                         // Adapts the popover size for a better fit on different devices
                         .presentationCompactAdaptation(.popover)
                 }
