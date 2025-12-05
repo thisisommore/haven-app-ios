@@ -27,6 +27,9 @@ struct UserMenuButton: UIViewRepresentable {
             attributes: .disabled
         ) { _ in }
         
+        var codenameMenu = UIMenu(options: .displayInline, children: [codenameAction])
+        codenameMenu.preferredElementSize = .small
+        
         let exportAction = UIAction(
             title: "Export",
             image: UIImage(systemName: "square.and.arrow.up")?.withTintColor(havenColor ?? .systemBlue, renderingMode: .alwaysOriginal)
@@ -49,7 +52,9 @@ struct UserMenuButton: UIViewRepresentable {
             onLogout()
         }
         
-        button.menu = UIMenu(children: [codenameAction, exportAction, shareQRAction, logoutAction])
+        let actionsMenu = UIMenu(options: .displayInline, children: [exportAction, shareQRAction, logoutAction])
+        
+        button.menu = UIMenu(children: [codenameMenu, actionsMenu])
     }
 }
 
