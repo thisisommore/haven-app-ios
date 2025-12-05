@@ -21,11 +21,16 @@ public class SecretManager: ObservableObject {
     
     // MARK: - Private Properties
     private let serviceName = "internalPassword"
-    private let hasLaunchedKey = "hasLaunchedBefore"
+    private let setupCompleteKey = "isSetupComplete"
+    
+    // MARK: - Setup Complete (single source of truth for app state)
+    var isSetupComplete: Bool {
+        get { UserDefaults.standard.bool(forKey: setupCompleteKey) }
+        set { UserDefaults.standard.set(newValue, forKey: setupCompleteKey) }
+    }
     
     // MARK: - Initialization
     init() {
-        clearKeychainIfNeeded()
         updatePasswordStatus()
     }
     
@@ -118,13 +123,12 @@ public class SecretManager: ObservableObject {
         updatePasswordStatus()
     }
     
-    /// Clear all data (keychain + UserDefaults) for logout
+    /// Clear all data (keychain + UserDefaults) for logout/reset
     func clearAll() {
         // Clear keychain
         clearKeychain()
         
         // Clear UserDefaults
-        UserDefaults.standard.removeObject(forKey: hasLaunchedKey)
         if let bundleId = Bundle.main.bundleIdentifier {
             UserDefaults.standard.removePersistentDomain(forName: bundleId)
         }
@@ -134,18 +138,6 @@ public class SecretManager: ObservableObject {
     }
     
     // MARK: - Private Methods
-    
-    /// Clear keychain if this is a fresh install
-    private func clearKeychainIfNeeded() {
-        let hasLaunchedBefore = UserDefaults.standard.bool(forKey: hasLaunchedKey)
-        
-        if !hasLaunchedBefore {
-            // First launch after install - clear keychain
-            clearKeychain()
-            UserDefaults.standard.set(true, forKey: hasLaunchedKey)
-            UserDefaults.standard.synchronize()
-        }
-    }
     
     /// Clear all keychain items
     private func clearKeychain() {

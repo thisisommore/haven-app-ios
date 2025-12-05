@@ -67,7 +67,6 @@ public class XXDK: XXDKP {
     @Published var statusPercentage: Double = 0
     @Published var codename: String?
     @Published var codeset: Int = 0
-    private var isNewUser: Bool = false
     // Channels Manager retained for channel sends
     private var channelsManager: Bindings.BindingsChannelsManager?
     private var stateDir: URL
@@ -119,7 +118,6 @@ public class XXDK: XXDKP {
                     at: stateDir,
                     withIntermediateDirectories: true
                 )
-                isNewUser = true
             }
             stateDir = stateDir.appendingPathComponent("ekv")
                // ⭐ IMPORTANT: Create ekv directory if it doesn't exist
@@ -180,7 +178,7 @@ public class XXDK: XXDKP {
         // Ensure immediate sending is enabled per user request
         params.Network.EnableImmediateSending = true
         let cmixParamsJSON = try! Parser.encodeCMixParams(params)
-        if isNewUser {
+        if !(sm.isSetupComplete) {
 
             guard let downloadedNdf else {
                 fatalError("no ndf downloaded yet")
@@ -414,7 +412,7 @@ public class XXDK: XXDKP {
                 self.eventModelBuilder?.configure(modelActor: actor)
             }
 
-            if isNewUser {
+            if !(sm?.isSetupComplete ?? false) {
                 
                 guard
                     let cm = Bindings.BindingsNewChannelsManager(
@@ -460,12 +458,11 @@ public class XXDK: XXDKP {
                 self.channelsManager = cm
             }
 
-            if !isNewUser {
-                // Finalize status: ready for new users
+            if sm?.isSetupComplete ?? false {
+                // Finalize status: ready for existing users
                 await progress(.readyExistingUser)
                 return
             }
-            isNewUser = false
             // Update status: joining channels
             await progress(.joiningChannels)
             while true {
@@ -557,6 +554,9 @@ public class XXDK: XXDKP {
             )
         }
 
+        // Mark setup as complete
+        sm?.isSetupComplete = true
+        
         // Finalize status: ready for new users
         await progress(.ready)
     }
@@ -1492,7 +1492,6 @@ public class XXDK: XXDKP {
             self.codeset = 0
             self.status = "..."
             self.statusPercentage = 0
-            self.isNewUser = true
         }
     }
 }

@@ -128,10 +128,21 @@ struct iOS_ExampleApp: App {
                     xxdk.setModelContainer(mActor: modelData.da, sm: sM)
                     
                     print("ON appear")
-                    if !sM.isPasswordSet {
-                        navigation.path.append(Destination.password)
-                    } else {
+                    
+                    if sM.isSetupComplete {
                         navigation.path.append(Destination.home)
+                    } else {
+                        // Clear everything and start fresh
+                        Task {
+                            await xxdk.logout()
+                            try? modelData.da.deleteAll(ChatMessage.self)
+                            try? modelData.da.deleteAll(MessageReaction.self)
+                            try? modelData.da.deleteAll(Sender.self)
+                            try? modelData.da.deleteAll(Chat.self)
+                            try? modelData.da.save()
+                            sM.clearAll()
+                        }
+                        navigation.path.append(Destination.password)
                     }
                 }
             }

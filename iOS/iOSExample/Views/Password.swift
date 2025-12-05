@@ -227,6 +227,13 @@ public struct PasswordCreationView: View {
 
             await MainActor.run {
                 print("append time")
+                // Clear all state
+                password = ""
+                confirm = ""
+                attemptedSubmit = false
+                isLoading = false
+                focusedField = nil
+                importPassword = ""
                 navigation.path.append(Destination.codenameGenerator)
             }
         }
