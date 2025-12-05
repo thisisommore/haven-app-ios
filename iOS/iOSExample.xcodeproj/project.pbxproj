@@ -16,6 +16,7 @@
 		A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */; };
 		A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
 		A1E0DB012EA35F3500E344DC /* Secret.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E0DB002EA35F3200E344DC /* Secret.swift */; };
+		A1E5FDBE2EE2AE5900627B46 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		A17324322EA515BF00388AC0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = HavenIcon.icon; sourceTree = "<group>"; };
 		A1E0DB002EA35F3200E344DC /* Secret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secret.swift; sourceTree = "<group>"; };
+		A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AC0A4ED193EDC7519BB5AFA4 /* Pods_iOSExample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iOSExample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAA55C59EA7ABF73C37204DC /* Pods-iOSExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSExample.release.xcconfig"; path = "Target Support Files/Pods-iOSExample/Pods-iOSExample.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -95,6 +97,7 @@
 				A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */,
 				980A0D742B96723E004FB15A /* iOSExample.entitlements */,
 				980A0D752B96723E004FB15A /* Preview Content */,
+				A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */,
 			);
 			path = iOSExample;
 			sourceTree = "<group>";
@@ -194,6 +197,7 @@
 				A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */,
 				980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */,
 				9854D57C2B98C269009437B8 /* mainnet.crt in Resources */,
+				A1E5FDBE2EE2AE5900627B46 /* LaunchScreen.storyboard in Resources */,
 				980A0D732B96723E004FB15A /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -382,6 +386,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = HavenIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = iOSExample/iOSExample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -394,6 +399,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iOSExample/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Haven;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to scan QR codes and add contacts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -403,6 +409,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
@@ -431,6 +438,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = HavenIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = iOSExample/iOSExample.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -443,6 +451,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iOSExample/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Haven;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to scan QR codes and add contacts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -452,6 +461,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
