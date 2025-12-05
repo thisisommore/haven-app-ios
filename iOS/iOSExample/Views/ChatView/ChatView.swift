@@ -8,6 +8,92 @@
 import SwiftData
 import SwiftUI
 
+// MARK: - Floating Date Header
+struct FloatingDateHeader: View {
+    let date: Date?
+    let scrollingToOlder: Bool
+    
+    private var dateText: String {
+        guard let date else { return "" }
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "Today"
+        } else if calendar.isDateInYesterday(date) {
+            return "Yesterday"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = calendar.isDate(date, equalTo: Date(), toGranularity: .year) ? "EEE d MMM" : "EEE d MMM yyyy"
+            return formatter.string(from: date)
+        }
+    }
+    
+    var body: some View {
+        if date != nil {
+            Text(dateText)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                .id(dateText)
+                .transition(.asymmetric(
+                    insertion: .opacity,
+                    removal: .offset(y: scrollingToOlder ? 30 : -30).combined(with: .opacity)
+                ))
+        }
+    }
+}
+
+// MARK: - Date Separator Badge
+struct DateSeparatorBadge: View {
+    let date: Date
+    let isFirst: Bool
+    
+    private var dateText: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "Today"
+        } else if calendar.isDateInYesterday(date) {
+            return "Yesterday"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = calendar.isDate(date, equalTo: Date(), toGranularity: .year) ? "EEE d MMM" : "EEE d MMM yyyy"
+            return formatter.string(from: date)
+        }
+    }
+    
+    var body: some View {
+        HStack {
+            Spacer()
+            Text(dateText)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+            Spacer()
+        }
+        .padding(.top, isFirst ? 0 : 28)
+        .padding(.bottom, 12)
+    }
+}
+
+// MARK: - Visible Message Tracker
+struct VisibleMessagePreferenceKey: PreferenceKey {
+    static var defaultValue: Date? = nil
+    static func reduce(value: inout Date?, nextValue: () -> Date?) {
+        // Keep the earliest (topmost) visible message date
+        if let next = nextValue() {
+            if value == nil || next < value! {
+                value = next
+            }
+        }
+    }
+}
+
 struct ChatView<T: XXDKP>: View {
     let width: CGFloat
     let chatId: String
@@ -34,6 +120,10 @@ struct ChatView<T: XXDKP>: View {
     @State private var replyingTo: ChatMessage? = nil
     @State private var showChannelOptions: Bool = false
     @State private var navigateToDMChat: Chat? = nil
+    @State private var visibleDate: Date? = nil
+    @State private var showDateHeader: Bool = false
+    @State private var hideTask: Task<Void, Never>? = nil
+    @State private var scrollingToOlder: Bool = true
     @EnvironmentObject var xxdk: T
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int)
     {
@@ -62,26 +152,75 @@ struct ChatView<T: XXDKP>: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                ForEach(messages, id: \.id) { result in
-                    ChatMessageRow(
-                        result: result,
-                        onReply: { message in
-                            replyingTo = message
-                        },
-                        onDM: { codename, dmToken, pubKey, color  in
-                            createDMChatAndNavigate(
-                                codename: codename,
-                                dmToken: dmToken,
-                                pubKey: pubKey, color: color
-                            )
+        ZStack(alignment: .top) {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(messages.enumerated()), id: \.element.id) { index, result in
+                        // Show date separator if this is first message or date changed
+                        if index == 0 || !Calendar.current.isDate(result.timestamp, inSameDayAs: messages[index - 1].timestamp) {
+                            DateSeparatorBadge(date: result.timestamp, isFirst: index == 0)
                         }
-                    )
+                        
+                        ChatMessageRow(
+                            result: result,
+                            onReply: { message in
+                                replyingTo = message
+                            },
+                            onDM: { codename, dmToken, pubKey, color  in
+                                createDMChatAndNavigate(
+                                    codename: codename,
+                                    dmToken: dmToken,
+                                    pubKey: pubKey, color: color
+                                )
+                            }
+                        )
+                        .background(
+                            GeometryReader { geo in
+                                let frame = geo.frame(in: .named("chatScroll"))
+                                Color.clear
+                                    .preference(
+                                        key: VisibleMessagePreferenceKey.self,
+                                        value: frame.minY < 60 && frame.maxY > 0 ? result.timestamp : nil
+                                    )
+                            }
+                        )
+                    }
+                    Spacer()
+                }.padding().scrollTargetLayout()
+            }
+            .coordinateSpace(name: "chatScroll")
+            .onPreferenceChange(VisibleMessagePreferenceKey.self) { date in
+                if let date {
+                    // Determine scroll direction
+                    if let oldDate = visibleDate {
+                        scrollingToOlder = date < oldDate
+                    }
+                    withAnimation(.spring(duration: 0.35)) {
+                        visibleDate = date
+                    }
+                    showDateHeader = true
+                    
+                    // Cancel previous hide task and schedule new one
+                    hideTask?.cancel()
+                    hideTask = Task {
+                        try? await Task.sleep(for: .seconds(4))
+                        if !Task.isCancelled {
+                            await MainActor.run {
+                                showDateHeader = false
+                            }
+                        }
+                    }
                 }
-                Spacer()
-            }.padding().scrollTargetLayout()
-        }.defaultScrollAnchor(.bottom)
+            }
+            .defaultScrollAnchor(.bottom)
+            
+            // Floating date header
+            FloatingDateHeader(date: visibleDate, scrollingToOlder: scrollingToOlder)
+                .padding(.top, 14)
+                .opacity(showDateHeader ? 1 : 0)
+                .animation(.easeOut(duration: 0.3), value: showDateHeader)
+                .animation(.spring(duration: 0.35), value: visibleDate?.formatted(date: .complete, time: .omitted))
+        }
         .safeAreaInset(edge: .bottom) {
             MessageForm<XXDK>(
                 chat: chat,
