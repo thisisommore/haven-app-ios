@@ -141,8 +141,8 @@ struct iOS_ExampleApp: App {
                             try? modelData.da.deleteAll(Chat.self)
                             try? modelData.da.save()
                             sM.clearAll()
+                            navigation.path.append(Destination.password)
                         }
-                        navigation.path.append(Destination.password)
                     }
                 }
             }
