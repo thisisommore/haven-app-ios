@@ -272,11 +272,24 @@ struct QRScannerView: View {
             // Bottom section
             VStack {
                 Spacer()
-                Text(showSuccess ? "User added!" : "Scan QR Code")
+                Text("Scan QR Code")
                     .font(.headline)
                     .foregroundColor(.white)
+                    .opacity(showSuccess ? 0 : 1)
                 
-                if let onShowMyQR = onShowMyQR, !showSuccess {
+                if showSuccess {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("User added!")
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.haven)
+                    .cornerRadius(20)
+                    .padding(.top, 16)
+                } else if let onShowMyQR = onShowMyQR {
                     Button {
                         dismiss()
                         onShowMyQR()
