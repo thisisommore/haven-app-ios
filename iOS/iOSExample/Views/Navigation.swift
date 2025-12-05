@@ -21,6 +21,7 @@ enum Destination: Hashable {
     case codenameGenerator
     case password
     case chat(chatId: String, chatTitle: String)   // add whatever "props" you need
+    case logViewer
 }
 
 // MARK: - Navigation Destination Views
@@ -42,6 +43,9 @@ extension Destination {
                 .navigationBarBackButtonHidden()
         case let .chat(chatId, chatTitle):
             ChatView<XXDK>(width: UIScreen.w(100), chatId: chatId, chatTitle: chatTitle)
+                .navigationBarBackButtonHidden()
+        case .logViewer:
+            LogViewerUI()
                 .navigationBarBackButtonHidden()
         }
     }

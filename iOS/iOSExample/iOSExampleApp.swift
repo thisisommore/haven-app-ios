@@ -135,10 +135,11 @@ struct iOS_ExampleApp: App {
                     }
                 }
             }
+            .logViewerOnShake()
             .modelContainer(modelData.mC)
             .environmentObject(sM)
             .environmentObject(xxdk)
-//            .environmentObject(logOutput)
+            .environmentObject(logOutput)
             .environment(\.navigation, navigation)
             .environmentObject(modelData.da)
             .onOpenURL { url in
