@@ -42,6 +42,7 @@ import Foundation
      func setModelContainer(mActor: SwiftDataActor, sm: SecretManager)
     func isChannelAdmin(channelId: String) -> Bool
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
+    func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws
     func exportIdentity(password: String) throws -> Data
     func logout() async
 }

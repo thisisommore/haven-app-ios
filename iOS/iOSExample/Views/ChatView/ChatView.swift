@@ -124,6 +124,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var showDateHeader: Bool = false
     @State private var hideTask: Task<Void, Never>? = nil
     @State private var scrollingToOlder: Bool = true
+    @State private var isAdmin: Bool = false
     @EnvironmentObject var xxdk: T
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int)
     {
@@ -238,7 +239,7 @@ struct ChatView<T: XXDKP>: View {
                     HStack(spacing: 6) {
                         Text(chatTitle == "<self>" ? "Notes" : chatTitle)
                             .font(.headline)
-                        if isChannel && xxdk.isChannelAdmin(channelId: chatId) {
+                        if isChannel && isAdmin {
                             AdminBadge()
                         }
                     }
@@ -281,6 +282,14 @@ struct ChatView<T: XXDKP>: View {
                 }
             }
             .environmentObject(xxdk)
+        }
+        .onAppear {
+            isAdmin = xxdk.isChannelAdmin(channelId: chatId)
+        }
+        .onChange(of: showChannelOptions) { _, newValue in
+            if !newValue {
+                isAdmin = xxdk.isChannelAdmin(channelId: chatId)
+            }
         }
         .navigationDestination(item: $navigateToDMChat) { dmChat in
             ChatView<XXDK>(

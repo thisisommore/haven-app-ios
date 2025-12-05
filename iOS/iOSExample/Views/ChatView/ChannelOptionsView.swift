@@ -19,6 +19,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var showExportKeySheet: Bool = false
     @State private var showImportKeySheet: Bool = false
     @State private var toastMessage: String?
+    @State private var isAdmin: Bool = false
     
     var body: some View {
         NavigationView {
@@ -71,6 +72,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                 }
                 .onAppear {
+                    refreshAdminStatus()
                     guard let channelId = chat?.id else { return }
                     do {
                         isDMEnabled = try xxdk.areDMsEnabled(channelId: channelId)
@@ -87,7 +89,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 }
                 
                 // Admin section - only visible for channel admins
-                if let channelId = chat?.id, xxdk.isChannelAdmin(channelId: channelId) {
+                if let _ = chat?.id, isAdmin {
                     Section(header: Text("Admin")) {
                         Button {
                             showExportKeySheet = true
@@ -106,7 +108,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 }
                 
                 // Import key section - only visible for non-admins
-                if let channelId = chat?.id, !xxdk.isChannelAdmin(channelId: channelId) {
+                if let _ = chat?.id, !isAdmin {
                     Section {
                         Button {
                             showImportKeySheet = true
@@ -167,7 +169,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 ImportChannelKeySheet(
                     channelId: chat?.id ?? "",
                     channelName: chat?.name ?? "Unknown",
+                    xxdk: xxdk,
                     onSuccess: { message in
+                        refreshAdminStatus()
                         withAnimation(.spring(response: 0.3)) {
                             toastMessage = message
                         }
@@ -202,6 +206,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 }
             }
         }
+    }
+    
+    private func refreshAdminStatus() {
+        guard let channelId = chat?.id else { return }
+        isAdmin = xxdk.isChannelAdmin(channelId: channelId)
     }
 }
 
@@ -382,9 +391,10 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
     }
 }
 
-struct ImportChannelKeySheet: View {
+struct ImportChannelKeySheet<T: XXDKP>: View {
     let channelId: String
     let channelName: String
+    let xxdk: T
     let onSuccess: (String) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var showFileImporter = false
@@ -524,10 +534,19 @@ struct ImportChannelKeySheet: View {
     }
     
     private func importKey() {
-        // Fake success for now
-        errorMessage = nil
-        onSuccess("Key Imported Successfully")
-        dismiss()
+        guard let keyContent = importedKeyContent else {
+            errorMessage = "No key file selected"
+            return
+        }
+        
+        do {
+            try xxdk.importChannelAdminKey(channelId: channelId, encryptionPassword: decryptionPassword, privateKey: keyContent)
+            errorMessage = nil
+            onSuccess("Key Imported Successfully")
+            dismiss()
+        } catch {
+            errorMessage = "Import failed: \(error.localizedDescription)"
+        }
     }
 }
 

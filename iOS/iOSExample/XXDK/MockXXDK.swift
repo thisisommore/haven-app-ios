@@ -222,6 +222,10 @@ public class XXDKMock: XXDKP {
         return "mock-encrypted-admin-key-\(channelId)-\(encryptionPassword.hashValue)"
     }
     
+    func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
+        // Mock: do nothing
+    }
+    
     func exportIdentity(password: String) throws -> Data {
         // Mock: return mock encrypted identity data
         return "mock-encrypted-identity-\(password.hashValue)".data(using: .utf8) ?? Data()

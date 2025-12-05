@@ -1434,6 +1434,22 @@ public class XXDK: XXDKP {
         return String(data: result, encoding: .utf8) ?? ""
     }
     
+    /// Import an admin key for a channel
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64 encoded)
+    ///   - encryptionPassword: Password to decrypt the key
+    ///   - privateKey: The encrypted private key string
+    public func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
+        guard let cm = channelsManager else {
+            throw NSError(domain: "XXDK", code: -1, userInfo: [NSLocalizedDescriptionKey: "Channel manager not initialized"])
+        }
+        
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        let privateKeyData = privateKey.data(using: .utf8) ?? Data()
+        
+        try cm.importChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKeyData)
+    }
+    
     /// Export the private identity encrypted with a password
     /// - Parameter password: Password to encrypt the identity
     /// - Returns: The encrypted identity data
