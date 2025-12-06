@@ -404,7 +404,7 @@ struct ChatView<T: XXDKP>: View {
         }
         
         
-        .background(Color.appBackground)
+        .background(ChatBackgroundView())
         .simultaneousGesture(
             DragGesture()
                 .onEnded { gesture in

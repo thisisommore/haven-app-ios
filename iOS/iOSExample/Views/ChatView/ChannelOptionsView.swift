@@ -57,6 +57,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var shareURL: String?
     @State private var showExportKeySheet: Bool = false
     @State private var showImportKeySheet: Bool = false
+    @State private var showBackgroundPicker: Bool = false
     @State private var toastMessage: String?
     @State private var isAdmin: Bool = false
     @State private var mutedUsers: [Data] = []
@@ -201,6 +202,24 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                 }
                 
+                // Chat Background section
+                Section(header: Text("Appearance")) {
+                    Button {
+                        showBackgroundPicker = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "paintbrush.fill")
+                                .foregroundColor(.haven)
+                            Text("Chat Background")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .tint(.primary)
+                }
+                
                 Section {
                     Button(role: .destructive) {
                         onLeaveChannel()
@@ -257,6 +276,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         }
                     }
                 )
+            }
+            .sheet(isPresented: $showBackgroundPicker) {
+                ChatBackgroundPickerView()
             }
             .overlay {
                 if let message = toastMessage {
