@@ -45,11 +45,34 @@ public class XXDK: XXDKP {
                 // Handle special case: .final forces 100%
                 if status.increment == -1 {
                     self.statusPercentage = 100.0
+                    Self.playCompletionHaptic()
                 } else {
                     // Increment the percentage, capping at 100
-                    self.statusPercentage = min(self.statusPercentage + status.increment, 100.0)
+                    let newPercentage = min(self.statusPercentage + status.increment, 100.0)
+                    if newPercentage == 100.0 && self.statusPercentage < 100.0 {
+                        Self.playCompletionHaptic()
+                    }
+                    self.statusPercentage = newPercentage
                 }
             }
+        }
+    }
+    
+    /// Plays a subtle, satisfying haptic pattern for completion events
+    private static func playCompletionHaptic() {
+        // Layered haptic: soft tap + success notification for depth
+        let soft = UIImpactFeedbackGenerator(style: .soft)
+        let notif = UINotificationFeedbackGenerator()
+        
+        soft.prepare()
+        notif.prepare()
+        
+        // Soft lead-in
+        soft.impactOccurred(intensity: 0.4)
+        
+        // Main satisfying success after tiny delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+            notif.notificationOccurred(.success)
         }
     }
 
