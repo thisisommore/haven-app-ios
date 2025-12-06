@@ -70,7 +70,7 @@ struct MessageForm<T: XXDKP>: View {
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 18)
-                .background(.formBG.opacity(0.2))
+                .background(.formBG.opacity(0.1))
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 40))
 
@@ -100,7 +100,7 @@ struct MessageForm<T: XXDKP>: View {
 
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: replyTo?.id)
-        .background(.black.opacity(0.3)).background(.ultraThinMaterial)
+        .background(.bottomNav).background(.ultraThinMaterial)
     }
 
     private func sendMessage() {
