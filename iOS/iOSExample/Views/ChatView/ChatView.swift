@@ -302,33 +302,49 @@ struct ChatView<T: XXDKP>: View {
                 )
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
+        .navigationBarHidden(true)
+        .safeAreaInset(edge: .top) {
+            HStack {
+                Button {
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    HStack(spacing: 2) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                    .font(.headline)
+                    .foregroundStyle(.haven)
+                }
+                
+                Spacer()
+                
                 Button {
                     showChannelOptions = true
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 4) {
                         Text(chatTitle == "<self>" ? "Notes" : chatTitle)
-                            .font(.headline)
+                            .font(.headline.weight(.semibold))
                         if isChannel && isAdmin {
                             AdminBadge()
                         }
                     }
                 }
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                // Invisible spacer to balance the back button
+                HStack(spacing: 2) {
+                    Image(systemName: "chevron.left")
+                    Text("Back")
+                }
+                .font(.subheadline)
+                .opacity(0)
             }
-          
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        presentationMode.wrappedValue.dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left").foregroundStyle(.haven)
-                        Text("Back")
-                            .font(.headline).foregroundStyle(.haven)
-                    }
-                }.hiddenSharedBackground()
-            
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(.ultraThinMaterial)
         }
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showChannelOptions) {
             ChannelOptionsView<T>(chat: chat) {
                 Task {
