@@ -56,6 +56,7 @@ struct MessageForm<T: XXDKP>: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(Color(.systemGray6))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
             HStack(spacing: 0) {
@@ -97,7 +98,9 @@ struct MessageForm<T: XXDKP>: View {
                 value: abc.isEmpty
             )
 
-        }.background(.black.opacity(0.3)).background(.ultraThinMaterial)
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: replyTo?.id)
+        .background(.black.opacity(0.3)).background(.ultraThinMaterial)
     }
 
     private func sendMessage() {
