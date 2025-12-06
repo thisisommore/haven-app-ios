@@ -332,7 +332,8 @@ struct HTMLText: View, Equatable {
             baseTextStyle: baseTextStyle,
             preserveSizes: preserveSizes,
             preserveBoldItalic: preserveBoldItalic,
-            customFontSize: size
+            customFontSize: size,
+            lineLimit: lineLimit
         )
     }
     
