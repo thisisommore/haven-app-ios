@@ -181,7 +181,8 @@ struct ChatView<T: XXDKP>: View {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(messages.enumerated()), id: \.element.id) { index, result in
                         // Show date separator if this is first message or date changed
-                        if index == 0 || !Calendar.current.isDate(result.timestamp, inSameDayAs: messages[index - 1].timestamp) {
+                        let showDateSeparator = index == 0 || (index > 0 && index < messages.count && !Calendar.current.isDate(result.timestamp, inSameDayAs: messages[index - 1].timestamp))
+                        if showDateSeparator {
                             DateSeparatorBadge(date: result.timestamp, isFirst: index == 0)
                         }
                         
@@ -350,17 +351,17 @@ struct ChatView<T: XXDKP>: View {
                 Task {
                     do {
                         try xxdk.leaveChannel(channelId: chatId)
+                        
+                        let descriptor = FetchDescriptor<Chat>(predicate: #Predicate { $0.id == chatId })
+                        let chatsToDelete = try swiftDataActor.fetch(descriptor)
+                        
+                        for chatToDelete in chatsToDelete {
+                            swiftDataActor.delete(chatToDelete)
+                        }
+                        
+                        try? swiftDataActor.save()
+                        
                         await MainActor.run {
-                            if let chat = chat {
-                                swiftDataActor.delete(chat)
-                                do {
-                                    try swiftDataActor.save()
-                                } catch {
-                                    print(
-                                        "Failed to save context after deleting chat: \(error)"
-                                    )
-                                }
-                            }
                             dismiss()
                         }
                     } catch {
