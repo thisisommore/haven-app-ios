@@ -102,7 +102,7 @@ class ChatBackgroundSettings: ObservableObject {
            let type = ChatBackgroundType(rawValue: typeRaw) {
             self.backgroundType = type
         } else {
-            self.backgroundType = .doodle
+            self.backgroundType = .solidColor
         }
         
         self.selectedColorId = UserDefaults.standard.string(forKey: colorIdKey) ?? "auto"
