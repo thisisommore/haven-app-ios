@@ -24,12 +24,15 @@ class Chat {
     @Relationship(deleteRule: .cascade, inverse: \ChatMessage.chat)
     var messages = [ChatMessage]()
     var color: Int = 0xE97451
+    // Whether user is admin of this channel
+    var isAdmin: Bool = false
 
     // General initializer (use for channels where you have a channel id and name)
-    init(channelId: String, name: String, description: String? = nil) {
+    init(channelId: String, name: String, description: String? = nil, isAdmin: Bool = false) {
         self.id = channelId
         self.name = name
         self.channelDescription = description
+        self.isAdmin = isAdmin
     }
 
     // initializer for DM chats where pubkey and dmToken is required

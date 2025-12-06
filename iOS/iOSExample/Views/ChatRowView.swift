@@ -16,7 +16,6 @@ struct AdminBadge: View {
 struct ChatRowView<T: XXDKP>: View {
     let chat: Chat
     @EnvironmentObject var xxdk: T
-    @State private var isAdmin: Bool = false
     
     private var isChannel: Bool {
         chat.name != "<self>" && chat.dmToken == nil
@@ -31,7 +30,7 @@ struct ChatRowView<T: XXDKP>: View {
             VStack(alignment: .leading) {
                 HStack(spacing: 6) {
                     Text(chat.name == "<self>" ? "Notes" : chat.name).foregroundStyle(.primary)
-                    if isChannel && isAdmin {
+                    if isChannel && chat.isAdmin {
                         AdminBadge()
                     }
                 }
@@ -55,9 +54,6 @@ struct ChatRowView<T: XXDKP>: View {
                         .foregroundStyle(.secondary)
                 }
             }
-        }
-        .onAppear {
-            isAdmin = xxdk.isChannelAdmin(channelId: chat.id)
         }
     }
 }

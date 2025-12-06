@@ -265,6 +265,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     channelName: chat?.name ?? "Unknown",
                     xxdk: xxdk,
                     onSuccess: { message in
+                        chat?.isAdmin = true
                         refreshAdminStatus()
                         withAnimation(.spring(response: 0.3)) {
                             toastMessage = message
@@ -317,8 +318,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     }
     
     private func refreshAdminStatus() {
-        guard let channelId = chat?.id else { return }
-        isAdmin = xxdk.isChannelAdmin(channelId: channelId)
+        isAdmin = chat?.isAdmin ?? false
     }
 }
 

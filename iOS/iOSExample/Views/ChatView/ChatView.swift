@@ -371,7 +371,7 @@ struct ChatView<T: XXDKP>: View {
             .environmentObject(xxdk)
         }
         .onAppear {
-            isAdmin = xxdk.isChannelAdmin(channelId: chatId)
+            isAdmin = chat?.isAdmin ?? false
             isMuted = xxdk.isMuted(channelId: chatId)
             do {
                 mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
@@ -392,7 +392,7 @@ struct ChatView<T: XXDKP>: View {
         }
         .onChange(of: showChannelOptions) { _, newValue in
             if !newValue {
-                isAdmin = xxdk.isChannelAdmin(channelId: chatId)
+                isAdmin = chat?.isAdmin ?? false
             }
         }
         .navigationDestination(item: $navigateToDMChat) { dmChat in
