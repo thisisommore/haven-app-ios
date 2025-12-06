@@ -1,8 +1,27 @@
 import Bindings
 import Foundation
 import SwiftData
-
 import Dispatch
+
+/// Thread-safe atomic counter for generating unique Int64 IDs
+final class InternalIdGenerator {
+    static let shared = InternalIdGenerator()
+    private var counter: Int64
+    private let lock = NSLock()
+    private let key = "InternalIdGenerator.counter"
+    
+    private init() {
+        counter = Int64(UserDefaults.standard.integer(forKey: key))
+    }
+    
+    func next() -> Int64 {
+        lock.lock()
+        defer { lock.unlock() }
+        counter += 1
+        UserDefaults.standard.set(Int(counter), forKey: key)
+        return counter
+    }
+}
 final class EventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
     private var r: EventModel
 
@@ -46,14 +65,41 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         ret0_: UnsafeMutablePointer<Int64>?
     ) throws {
         log(
-            "updateFromMessageID - messageID \(short(messageID)) | messageUpdateInfoJSON \(messageUpdateInfoJSON)"
+            "update - messageID \(short(messageID)) | messageUpdateInfoJSON \(messageUpdateInfoJSON!.utf8)"
         )
     }
 
     func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
         log(
-            "updateFromUUID - uuid \(uuid) | messageUpdateInfoJSON \(messageUpdateInfoJSON)"
+            "update - uuid \(uuid) | messageUpdateInfoJSON \(messageUpdateInfoJSON?.utf8 ?? "nil")"
         )
+
+        guard let jsonData = messageUpdateInfoJSON else {
+            return
+        }
+
+        let updateInfo = try Parser.decodeMessageUpdateInfo(from: jsonData)
+
+        guard updateInfo.messageIDSet, let newMessageId = updateInfo.messageID else {
+            return
+        }
+
+        guard let actor = modelActor else {
+            log("update(fromUUID): no modelActor available")
+            return
+        }
+
+        let descriptor = FetchDescriptor<ChatMessage>(
+            predicate: #Predicate { $0.internalId == uuid }
+        )
+
+        if let message = try actor.fetch(descriptor).first {
+            message.id = newMessageId
+            try actor.save()
+            log("update(fromUUID): Updated message internalId=\(uuid) with new id=\(newMessageId)")
+        } else {
+            log("update(fromUUID): No message found with internalId=\(uuid)")
+        }
     }
 
     // MARK: - Helpers
@@ -129,9 +175,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     existingSender.dmToken = dmToken ?? 0
                     sender = existingSender
                     try modelActor?.save()
-                    log(
-                        "Updated Sender dmToken for \(codename): \(dmToken ?? 0)"
-                    )
+    
                 } else {
                     // Create new sender
                     sender = Sender(
@@ -154,8 +198,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             if let mid = messageIdB64, !mid.isEmpty {
                 // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                 let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderPubKey, ctx: actor)
+                let internalId = InternalIdGenerator.shared.next()
                 log(
-                    "ChatMessage(message: \(text), isIncoming: \(isIncoming), chat: \(chat.name), sender: \(sender!.codename), id: \(mid))"
+                    "ChatMessage(message: \(text), isIncoming: \(isIncoming), chat: \(chat.name), sender: \(sender!.codename), id: \(mid), internalId: \(internalId))"
                 )
                 log(
                     "Sender(codename: \(sender!.codename), dmToken: \(sender!.dmToken))"
@@ -166,6 +211,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     chat: chat,
                     sender: sender,
                     id: mid,
+                    internalId: internalId,
                     replyTo: replyTo,
                     timestamp: timestamp
                 )
@@ -181,7 +227,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             
             chat.messages.append(msg)
             try modelActor?.save()
-            return Int64(msg.persistentModelID.hashValue)
+            return msg.internalId
         } catch {
             print("persist msg error \(error)")
             fatalError(
@@ -325,7 +371,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     // Update existing sender's dmToken
                     existingSender.dmToken = dmToken
                     sender = existingSender
-                    log("Updated Sender dmToken for \(codename): \(dmToken)")
+           
                 } else {
                     // Create new sender
                     sender = Sender(
@@ -340,8 +386,10 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 }
             }
 
+            let internalId = InternalIdGenerator.shared.next()
             let record = MessageReaction(
                 id: messageID!.base64EncodedString(),
+                internalId: internalId,
                 targetMessageId: targetId,
                 emoji: reactionText,
                 sender: sender
@@ -349,9 +397,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             actor.insert(record)
             try actor.save()
             log(
-                "MessageReaction(id: \(messageID!.base64EncodedString()), targetMessageId: \(targetId), emoji: \(reactionText), sender: \(sender))"
+                "MessageReaction(id: \(messageID!.base64EncodedString()), internalId: \(internalId), targetMessageId: \(targetId), emoji: \(reactionText), sender: \(sender))"
             )
-            return Int64(record.persistentModelID.hashValue)
+            return record.internalId
         } catch {
             fatalError(
                 "failed to store message reaction \(error.localizedDescription)"
@@ -465,9 +513,37 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         -> Bool
     {
         log(
-            "updateFromUUID - uuid \(uuid) | messageUpdateInfoJSON \(messageUpdateInfoJSON?.utf8)"
+            "updateFromUUID - uuid \(uuid) | messageUpdateInfoJSON \(messageUpdateInfoJSON?.utf8 ?? "nil")"
         )
-        return true
+
+        guard let jsonData = messageUpdateInfoJSON else {
+            return false
+        }
+
+        let updateInfo = try Parser.decodeMessageUpdateInfo(from: jsonData)
+
+        guard updateInfo.messageIDSet, let newMessageId = updateInfo.messageID else {
+            return false
+        }
+
+        guard let actor = modelActor else {
+            log("updateFromUUID: no modelActor available")
+            return false
+        }
+
+        let descriptor = FetchDescriptor<ChatMessage>(
+            predicate: #Predicate { $0.internalId == uuid }
+        )
+
+        if let message = try actor.fetch(descriptor).first {
+            message.id = newMessageId
+            try actor.save()
+            log("updateFromUUID: Updated message internalId=\(uuid) with new id=\(newMessageId)")
+            return true
+        }
+
+        log("updateFromUUID: No message found with internalId=\(uuid)")
+        return false
     }
 
     func getMessage(_ messageID: Data?) throws -> Data {
@@ -539,6 +615,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             let messages = try actor.fetch(messageDescriptor)
 
             if !messages.isEmpty {
+                let chatId = messages.first?.chat.id
                 for message in messages {
                     log(
                         "deleteMessage: Deleting ChatMessage with id=\(messageIdB64)"
@@ -547,6 +624,17 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 }
                 try actor.save()
                 log("deleteMessage: ChatMessage deleted successfully")
+                
+                // Log remaining messages in the chat
+                if let chatId {
+                    let chatDescriptor = FetchDescriptor<Chat>(predicate: #Predicate { $0.id == chatId })
+                    if let chat = try? actor.fetch(chatDescriptor).first {
+                        log("deleteMessage: Remaining messages in chat '\(chat.name)':")
+                        for msg in chat.messages {
+                            log("  - id=\(msg.id), text=\(msg.message)")
+                        }
+                    }
+                }
                 return
             }
 
@@ -575,6 +663,18 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             log(
                 "deleteMessage: Warning - No ChatMessage or MessageReaction found for id=\(messageIdB64)"
             )
+            
+            // Debug: Log ChatMessages for chat "Bho"
+            let chatName = "Bho"
+            let bhoMessagesDescriptor = FetchDescriptor<ChatMessage>(
+                predicate: #Predicate { $0.chat.name == chatName }
+            )
+            if let bhoMessages = try? actor.fetch(bhoMessagesDescriptor) {
+                log("deleteMessage: ChatMessages in '\(chatName)' (\(bhoMessages.count) total):")
+                for msg in bhoMessages {
+                    log("  - id=\(msg.id), text=\(msg.message.prefix(30))")
+                }
+            }
 
         } catch {
             print("EventModel: Failed to delete message/reaction: \(error)")

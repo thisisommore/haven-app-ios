@@ -13,11 +13,18 @@ struct MessageContextMenu: View {
     let text: String
     let isIncoming: Bool
     let sender: Sender?
+    let isAdmin: Bool
     
     @Binding var selectedEmoji: MessageEmoji
     @Binding var shouldTriggerReply: Bool
     
     var onDM: ((String, Int32, Data, Int) -> Void)?
+    var onDelete: (() -> Void)?
+    
+    /// Check if user can delete this message (admin or message owner)
+    private var canDelete: Bool {
+        isAdmin || !isIncoming
+    }
     
     var body: some View {
         // Emoji picker
@@ -55,6 +62,15 @@ struct MessageContextMenu: View {
             )
         } label: {
             Text("Copy")
+        }
+        
+        // Delete button (only for admin or message owner)
+        if canDelete {
+            Button(role: .destructive) {
+                onDelete?()
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
         }
     }
 }

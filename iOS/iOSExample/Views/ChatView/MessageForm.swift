@@ -215,7 +215,8 @@ struct MessageForm<T: XXDKP>: View {
             dmToken: 0,
             color: greenColorInt
         ),
-        id: "msg-123"
+        id: "msg-123",
+        internalId: InternalIdGenerator.shared.next()
     )
     container.mainContext.insert(messageToReplyTo)
 

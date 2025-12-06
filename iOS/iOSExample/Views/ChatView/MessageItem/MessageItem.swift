@@ -7,17 +7,21 @@ struct MessageItem: View {
     let repliedTo: String?
     let sender: Sender?
     let timeStamp: String
+    let isAdmin: Bool
 
     var onReply: (() -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
+    var onDelete: (() -> Void)?
 
-    init(text: String, isIncoming: Bool, repliedTo: String?, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date) {
+    init(text: String, isIncoming: Bool, repliedTo: String?, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false) {
         self.text = text
         self.isIncoming = isIncoming
         self.repliedTo = repliedTo
         self.sender = sender
         self.onReply = onReply
         self.onDM = onDM
+        self.onDelete = onDelete
+        self.isAdmin = isAdmin
         _isEmojiSheetPresented = State(initialValue: isEmojiSheetPresented)
         _shouldTriggerReply = State(initialValue: shouldTriggerReply)
         _selectedEmoji = State(initialValue: selectedEmoji)
@@ -54,7 +58,9 @@ struct MessageItem: View {
                         timestamp: timeStamp,
                         selectedEmoji: $selectedEmoji,
                         shouldTriggerReply: $shouldTriggerReply,
-                        onDM: onDM
+                        isAdmin: isAdmin,
+                        onDM: onDM,
+                        onDelete: onDelete
                     )
                     ConditionalSpacer(isIncoming)
                 }

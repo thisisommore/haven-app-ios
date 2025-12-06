@@ -688,6 +688,7 @@ struct ExportIdentitySheet<T: XXDKP>: View {
                 chat: chat,
                 sender: nil,
                 id: name,
+                internalId: InternalIdGenerator.shared.next(),
                 replyTo: nil,
                 timestamp: 1
             )

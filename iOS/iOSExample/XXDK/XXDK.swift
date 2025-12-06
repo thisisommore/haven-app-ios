@@ -652,8 +652,10 @@ public class XXDK: XXDKP {
         Task {
             do {
                 // Use SwiftDataActor instead of ModelContext
+                let internalId = InternalIdGenerator.shared.next()
                 let reaction = MessageReaction(
                     id: messageIdB64,
+                    internalId: internalId,
                     targetMessageId: targetMessageId,
                     emoji: emoji,
                     isMe: isMe
@@ -689,21 +691,8 @@ public class XXDK: XXDKP {
                 )
                 if let mid = report.messageID {
                     print(
-                        "Channel sendMessage messageID: \(mid.base64EncodedString())"
+                        "Channel sendMessage messageID: \(msg) \(mid.base64EncodedString())"
                     )
-                    let chatId = channelId
-                    let defaultName: String = {
-                        if let actor = self.modelActor {
-                            let descriptor = FetchDescriptor<Chat>(
-                                predicate: #Predicate { $0.id == chatId }
-                            )
-                            if let found = try? actor.fetch(descriptor).first {
-                                return found.name
-                            }
-                        }
-                        return "Channel \(String(chatId.prefix(8)))"
-                    }()
-
                 } else {
                     print("Channel sendMessage returned no messageID")
                 }
@@ -1448,6 +1437,30 @@ public class XXDK: XXDKP {
         let privateKeyData = privateKey.data(using: .utf8) ?? Data()
         
         try cm.importChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKeyData)
+    }
+    
+    /// Delete a message from a channel (admin or message owner only)
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64-encoded)
+    ///   - messageId: The message ID (base64-encoded)
+    public func deleteMessage(channelId: String, messageId: String) {
+        guard let cm = channelsManager else {
+            print("deleteMessage: Channels Manager not initialized")
+            return
+        }
+        
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        guard let messageIdData = Data(base64Encoded: messageId) else {
+            print("deleteMessage: invalid message id base64")
+            return
+        }
+        
+        do {
+            try cm.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
+            print("Successfully deleted message: \(messageId)")
+        } catch {
+            print("deleteMessage failed: \(error.localizedDescription)")
+        }
     }
     
     /// Export the private identity encrypted with a password

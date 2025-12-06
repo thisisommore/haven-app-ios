@@ -164,6 +164,7 @@ struct ChatView<T: XXDKP>: View {
                         
                         ChatMessageRow(
                             result: result,
+                            isAdmin: isAdmin,
                             onReply: { message in
                                 replyingTo = message
                             },
@@ -173,6 +174,9 @@ struct ChatView<T: XXDKP>: View {
                                     dmToken: dmToken,
                                     pubKey: pubKey, color: color
                                 )
+                            },
+                            onDelete: { message in
+                                xxdk.deleteMessage(channelId: chatId, messageId: message.id)
                             }
                         )
                         .background(

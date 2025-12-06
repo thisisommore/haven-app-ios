@@ -8,14 +8,18 @@ import SwiftData
 import SwiftUI
 struct ChatMessageRow: View {
     let result: ChatMessage
+    let isAdmin: Bool
     var onReply: ((ChatMessage) -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
+    var onDelete: ((ChatMessage) -> Void)?
     @Query private var chatReactions: [MessageReaction]
     @Query private var repliedTo: [ChatMessage]
     @Query private var messageSender: [Sender]
-    init(result: ChatMessage, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?) {
+    init(result: ChatMessage, isAdmin: Bool = false, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil) {
         self.result = result
+        self.isAdmin = isAdmin
         self.onReply = onReply
+        self.onDelete = onDelete
         let messageId = result.id
         let replyTo = result.replyTo
         let senderId = result.sender?.id
@@ -45,7 +49,11 @@ struct ChatMessageRow: View {
                         onReply?(result)
                     },
                     onDM: onDM,
-                    timestamp: result.timestamp
+                    onDelete: {
+                        onDelete?(result)
+                    },
+                    timestamp: result.timestamp,
+                    isAdmin: isAdmin
                 )
                 Reactions(reactions: chatReactions)
             }

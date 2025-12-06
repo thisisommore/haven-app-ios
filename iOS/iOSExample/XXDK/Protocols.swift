@@ -44,6 +44,7 @@ import Foundation
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
     func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws
     func exportIdentity(password: String) throws -> Data
+    func deleteMessage(channelId: String, messageId: String)
     func logout() async
 }
 // These are common helpers extending the string class which are essential for working with XXDK

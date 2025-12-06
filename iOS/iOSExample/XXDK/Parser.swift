@@ -144,6 +144,25 @@ public struct ShareURLJSON: Decodable {
     public let password: String
 }
 
+// Message update info from updateFromUUID callback
+public struct MessageUpdateInfoJSON: Decodable {
+    public let messageID: String?
+    public let messageIDSet: Bool
+    public let timestamp: Int64?
+    public let timestampSet: Bool
+    public let status: Int?
+    public let statusSet: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case messageID = "MessageID"
+        case messageIDSet = "MessageIDSet"
+        case timestamp = "Timestamp"
+        case timestampSet = "TimestampSet"
+        case status = "Status"
+        case statusSet = "StatusSet"
+    }
+}
+
 // MARK: - CMix Params
 // Mirrors the TypeScript CMixParams shape
 public struct CMixParamsJSON: Codable {
@@ -286,5 +305,9 @@ public enum Parser {
     
     public static func decodeShareURL(from data: Data) throws -> ShareURLJSON {
         try decoder.decode(ShareURLJSON.self, from: data)
+    }
+
+    public static func decodeMessageUpdateInfo(from data: Data) throws -> MessageUpdateInfoJSON {
+        try decoder.decode(MessageUpdateInfoJSON.self, from: data)
     }
 }

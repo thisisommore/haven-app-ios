@@ -11,6 +11,14 @@ import SwiftData
 import SwiftUI
 import Foundation
 public class XXDKMock: XXDKP {
+    func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
+        
+    }
+    
+    func deleteMessage(channelId: String, messageId: String) {
+        
+    }
+    
     @Published var status: String = "Initiating";
     @Published var statusPercentage: Double = 0;
     public func setModelContainer(mActor: SwiftDataActor, sm: SecretManager) {
@@ -220,10 +228,6 @@ public class XXDKMock: XXDKP {
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
         // Mock: return a mock encrypted admin key
         return "mock-encrypted-admin-key-\(channelId)-\(encryptionPassword.hashValue)"
-    }
-    
-    func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
-        // Mock: do nothing
     }
     
     func exportIdentity(password: String) throws -> Data {

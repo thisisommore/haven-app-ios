@@ -64,7 +64,6 @@ func decodeMessage(_ b64: String) -> String? {
         print("[MessageDecoding] Attempting zlib decompression")
         if let decompressed = decompressZlib(data),
            let utf8String = String(data: decompressed, encoding: .utf8) {
-            print("[MessageDecoding] Zlib decoded: \(utf8String)")
             return utf8String
         }
     }

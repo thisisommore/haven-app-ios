@@ -172,7 +172,8 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
 
                 // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                 let isIncoming = !isSenderSelf(chat: chat, senderPubKey: nil, ctx: contextToUse)
-                let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, id: messageId.base64EncodedString())
+                let internalId = InternalIdGenerator.shared.next()
+                let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, id: messageId.base64EncodedString(), internalId: internalId)
                 chat.messages.append(msg)
                 try contextToUse.save()
                 print("DMReceiver: ChatMessage(message: \"\(message)\", isIncoming: \(isIncoming), chat: \(chat.id), id: \(messageId.base64EncodedString()))")
@@ -202,7 +203,6 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
                         // Update existing sender's dmToken
                         existingSender.dmToken = dmToken
                         sender = existingSender
-                        print("DMReceiver: Updated Sender dmToken for \(name): \(dmToken)")
                     } else {
                         // Create new sender
                         sender = Sender(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
@@ -211,7 +211,8 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
 
                     // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                     let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderKey, ctx: backgroundContext)
-                    let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString())
+                    let internalId = InternalIdGenerator.shared.next()
+                    let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
                     chat.messages.append(msg)
                     try backgroundContext.save()
                 } else {
