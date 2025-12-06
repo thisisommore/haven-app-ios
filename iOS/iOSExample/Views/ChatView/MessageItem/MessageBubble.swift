@@ -74,6 +74,7 @@ struct MessageBubble: View {
 
             HStack {
                 Text(try! AttributedString(markdown: markdown))
+                .font(.system(size: 16))
                 .foregroundStyle(isIncoming ? Color.messageText : Color.white)
 
             }
@@ -88,10 +89,10 @@ struct MessageBubble: View {
         .background(isIncoming ? Color.messageBubble : Color.haven)
         .clipShape(
             UnevenRoundedRectangle(
-                topLeadingRadius: 10,
-                bottomLeadingRadius: isIncoming ? 0 : 10,
-                bottomTrailingRadius: isIncoming ? 10 : 0,
-                topTrailingRadius: 10
+                topLeadingRadius: 16,
+                bottomLeadingRadius: isIncoming ? 0 : 16,
+                bottomTrailingRadius: isIncoming ? 16 : 0,
+                topTrailingRadius: 16
             )
         ).contextMenu {
             MessageContextMenu(
