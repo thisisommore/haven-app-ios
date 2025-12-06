@@ -63,6 +63,16 @@ struct MessageBubble: View {
             self._markdown = State(initialValue: text)
         }
     }
+    private var underlinedMarkdown: AttributedString {
+        var attributed = (try? AttributedString(markdown: markdown)) ?? AttributedString(markdown)
+        for run in attributed.runs {
+            if run.link != nil {
+                attributed[run.range].underlineStyle = .single
+            }
+        }
+        return attributed
+    }
+    
     var body: some View {
         VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
             if isIncoming {
@@ -73,10 +83,10 @@ struct MessageBubble: View {
             }
 
             HStack {
-                Text(try! AttributedString(markdown: markdown))
+                Text(underlinedMarkdown)
                 .font(.system(size: 16))
                 .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-
+                .tint(isIncoming ? .blue : .white)
             }
             VStack(alignment: .trailing) {
                 Text(timestamp).font(.system(size: 10)).foregroundStyle(
