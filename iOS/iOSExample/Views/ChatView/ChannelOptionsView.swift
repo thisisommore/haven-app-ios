@@ -61,6 +61,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var toastMessage: String?
     @State private var isAdmin: Bool = false
     @State private var mutedUsers: [Data] = []
+    @State private var showLeaveConfirmation: Bool = false
     
     var body: some View {
         NavigationView {
@@ -222,8 +223,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 
                 Section {
                     Button(role: .destructive) {
-                        onLeaveChannel()
-                        dismiss()
+                        showLeaveConfirmation = true
                     } label: {
                         HStack {
                             Spacer()
@@ -231,6 +231,15 @@ struct ChannelOptionsView<T: XXDKP>: View {
                             Spacer()
                         }
                     }
+                }
+                .alert("Leave Channel", isPresented: $showLeaveConfirmation) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Leave", role: .destructive) {
+                        onLeaveChannel()
+                        dismiss()
+                    }
+                } message: {
+                    Text("Are you sure you want to leave \"\(chat?.name ?? "this channel")\"?")
                 }
             }
             .navigationTitle("Channel Options")
