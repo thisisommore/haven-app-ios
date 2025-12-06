@@ -242,4 +242,19 @@ public class XXDKMock: XXDKP {
         status = "..."
         statusPercentage = 0
     }
+    
+    func getMutedUsers(channelId: String) throws -> [Data] {
+        // Mock: return empty array
+        return []
+    }
+    
+    func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
+        // Mock: no-op
+        print("Mock: \(mute ? "Muted" : "Unmuted") user in channel: \(channelId)")
+    }
+    
+    func isMuted(channelId: String) -> Bool {
+        // Mock: return false
+        return false
+    }
 }

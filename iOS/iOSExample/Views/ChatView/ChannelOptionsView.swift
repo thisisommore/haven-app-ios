@@ -9,6 +9,45 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
+struct MutedUserRow: View {
+    let pubKey: Data
+    var onUnmute: (() -> Void)?
+    @Query private var senders: [Sender]
+    
+    init(pubKey: Data, onUnmute: (() -> Void)? = nil) {
+        self.pubKey = pubKey
+        self.onUnmute = onUnmute
+        _senders = Query(filter: #Predicate<Sender> { sender in
+            sender.pubkey == pubKey
+        })
+    }
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "speaker.slash.fill")
+                .foregroundColor(.secondary)
+            if let sender = senders.first {
+                Text(sender.codename)
+                    .foregroundColor(.primary)
+            } else {
+                Text(pubKey.base64EncodedString())
+                    .font(.caption)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            Spacer()
+            Button {
+                onUnmute?()
+            } label: {
+                Text("Unmute")
+                    .font(.caption)
+                    .foregroundColor(.haven)
+            }
+            .buttonStyle(.borderless)
+        }
+    }
+}
+
 struct ChannelOptionsView<T: XXDKP>: View {
     let chat: Chat?
     let onLeaveChannel: () -> Void
@@ -20,6 +59,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var showImportKeySheet: Bool = false
     @State private var toastMessage: String?
     @State private var isAdmin: Bool = false
+    @State private var mutedUsers: [Data] = []
     
     var body: some View {
         NavigationView {
@@ -86,6 +126,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     } catch {
                         print("Failed to fetch share URL: \(error)")
                     }
+                    do {
+                        mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
+                    } catch {
+                        print("Failed to fetch muted users: \(error)")
+                    }
                 }
                 
                 // Admin section - only visible for channel admins
@@ -104,6 +149,36 @@ struct ChannelOptionsView<T: XXDKP>: View {
                             }
                         }
                         .tint(.primary)
+                    }
+                }
+                
+                // Muted Users section - only visible for admins
+                if let _ = chat?.id, isAdmin {
+                    Section(header: Text("Muted Users")) {
+                        if mutedUsers.isEmpty {
+                            Text("No muted users")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(mutedUsers, id: \.self) { pubKey in
+                                MutedUserRow(pubKey: pubKey) {
+                                    guard let channelId = chat?.id else { return }
+                                    do {
+                                        try xxdk.muteUser(channelId: channelId, pubKey: pubKey, mute: false)
+                                        mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
+                                        withAnimation(.spring(response: 0.3)) {
+                                            toastMessage = "User unmuted"
+                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                            withAnimation {
+                                                toastMessage = nil
+                                            }
+                                        }
+                                    } catch {
+                                        print("Failed to unmute user: \(error)")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -203,6 +278,17 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         .padding(.bottom, 50)
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
+                guard let channelId = chat?.id else { return }
+                if let notificationChannelID = notification.userInfo?["channelID"] as? String,
+                   notificationChannelID == channelId {
+                    do {
+                        mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
+                    } catch {
+                        print("Failed to refresh muted users: \(error)")
+                    }
                 }
             }
         }

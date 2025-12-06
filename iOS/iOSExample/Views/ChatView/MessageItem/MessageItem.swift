@@ -12,8 +12,11 @@ struct MessageItem: View {
     var onReply: (() -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: (() -> Void)?
+    var onMute: ((Data) -> Void)?
+    var onUnmute: ((Data) -> Void)?
+    let isSenderMuted: Bool
 
-    init(text: String, isIncoming: Bool, repliedTo: String?, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false) {
+    init(text: String, isIncoming: Bool, repliedTo: String?, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false) {
         self.text = text
         self.isIncoming = isIncoming
         self.repliedTo = repliedTo
@@ -21,6 +24,9 @@ struct MessageItem: View {
         self.onReply = onReply
         self.onDM = onDM
         self.onDelete = onDelete
+        self.onMute = onMute
+        self.onUnmute = onUnmute
+        self.isSenderMuted = isSenderMuted
         self.isAdmin = isAdmin
         _isEmojiSheetPresented = State(initialValue: isEmojiSheetPresented)
         _shouldTriggerReply = State(initialValue: shouldTriggerReply)
@@ -60,7 +66,10 @@ struct MessageItem: View {
                         shouldTriggerReply: $shouldTriggerReply,
                         isAdmin: isAdmin,
                         onDM: onDM,
-                        onDelete: onDelete
+                        onDelete: onDelete,
+                        onMute: onMute,
+                        onUnmute: onUnmute,
+                        isSenderMuted: isSenderMuted
                     )
                     ConditionalSpacer(isIncoming)
                 }

@@ -20,6 +20,9 @@ struct MessageBubble: View {
     @State private var markdown: String = ""
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: (() -> Void)?
+    var onMute: ((Data) -> Void)?
+    var onUnmute: ((Data) -> Void)?
+    let isSenderMuted: Bool
     init(
         text: String,
         isIncoming: Bool,
@@ -29,7 +32,10 @@ struct MessageBubble: View {
         shouldTriggerReply: Binding<Bool>,
         isAdmin: Bool = false,
         onDM: ((String, Int32, Data, Int) -> Void)? = nil,
-        onDelete: (() -> Void)? = nil
+        onDelete: (() -> Void)? = nil,
+        onMute: ((Data) -> Void)? = nil,
+        onUnmute: ((Data) -> Void)? = nil,
+        isSenderMuted: Bool = false
     ) {
         self.text = text
         self.isIncoming = isIncoming
@@ -38,6 +44,9 @@ struct MessageBubble: View {
         self.isAdmin = isAdmin
         self.onDM = onDM
         self.onDelete = onDelete
+        self.onMute = onMute
+        self.onUnmute = onUnmute
+        self.isSenderMuted = isSenderMuted
 
         // Initialize @Binding properties
         self._selectedEmoji = selectedEmoji
@@ -93,7 +102,10 @@ struct MessageBubble: View {
                 selectedEmoji: $selectedEmoji,
                 shouldTriggerReply: $shouldTriggerReply,
                 onDM: onDM,
-                onDelete: onDelete
+                onDelete: onDelete,
+                onMute: onMute,
+                onUnmute: onUnmute,
+                isSenderMuted: isSenderMuted
             )
         }
         .id(sender)

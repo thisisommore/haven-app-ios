@@ -20,6 +20,9 @@ struct MessageContextMenu: View {
     
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: (() -> Void)?
+    var onMute: ((Data) -> Void)?
+    var onUnmute: ((Data) -> Void)?
+    let isSenderMuted: Bool
     
     /// Check if user can delete this message (admin or message owner)
     private var canDelete: Bool {
@@ -70,6 +73,23 @@ struct MessageContextMenu: View {
                 onDelete?()
             } label: {
                 Label("Delete", systemImage: "trash")
+            }
+        }
+        
+        // Mute/Unmute button (only for admin on incoming messages)
+        if isAdmin, isIncoming, let sender = sender {
+            if isSenderMuted {
+                Button {
+                    onUnmute?(sender.pubkey)
+                } label: {
+                    Label("Unmute User", systemImage: "speaker.wave.2")
+                }
+            } else {
+                Button(role: .destructive) {
+                    onMute?(sender.pubkey)
+                } label: {
+                    Label("Mute User", systemImage: "speaker.slash")
+                }
             }
         }
     }

@@ -3,6 +3,10 @@ import Foundation
 import SwiftData
 import Dispatch
 
+extension Notification.Name {
+    static let userMuteStatusChanged = Notification.Name("userMuteStatusChanged")
+}
+
 /// Thread-safe atomic counter for generating unique Int64 IDs
 final class InternalIdGenerator {
     static let shared = InternalIdGenerator()
@@ -686,6 +690,15 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         log(
             "muteUser - channelID \(short(channelID)) | pubkey \(short(pubkey)) | unmute \(unmute)"
         )
+        
+        // Post notification for UI to refresh mute status
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .userMuteStatusChanged,
+                object: nil,
+                userInfo: ["channelID": channelID?.base64EncodedString() ?? ""]
+            )
+        }
     }
 
     // MARK: - Helper Methods

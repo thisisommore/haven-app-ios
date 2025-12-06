@@ -12,14 +12,20 @@ struct ChatMessageRow: View {
     var onReply: ((ChatMessage) -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: ((ChatMessage) -> Void)?
+    var onMute: ((Data) -> Void)?
+    var onUnmute: ((Data) -> Void)?
+    let mutedUsers: [Data]
     @Query private var chatReactions: [MessageReaction]
     @Query private var repliedTo: [ChatMessage]
     @Query private var messageSender: [Sender]
-    init(result: ChatMessage, isAdmin: Bool = false, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil) {
+    init(result: ChatMessage, isAdmin: Bool = false, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = []) {
         self.result = result
         self.isAdmin = isAdmin
         self.onReply = onReply
         self.onDelete = onDelete
+        self.onMute = onMute
+        self.onUnmute = onUnmute
+        self.mutedUsers = mutedUsers
         let messageId = result.id
         let replyTo = result.replyTo
         let senderId = result.sender?.id
@@ -52,6 +58,9 @@ struct ChatMessageRow: View {
                     onDelete: {
                         onDelete?(result)
                     },
+                    onMute: onMute,
+                    onUnmute: onUnmute,
+                    isSenderMuted: messageSender.first.map { mutedUsers.contains($0.pubkey) } ?? false,
                     timestamp: result.timestamp,
                     isAdmin: isAdmin
                 )

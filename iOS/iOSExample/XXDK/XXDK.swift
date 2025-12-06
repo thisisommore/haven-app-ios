@@ -1475,6 +1475,72 @@ public class XXDK: XXDKP {
         return result
     }
     
+    /// Get muted users for a channel
+    /// - Parameter channelId: The channel ID (base64-encoded)
+    /// - Returns: Array of public keys (Data) of muted users
+    public func getMutedUsers(channelId: String) throws -> [Data] {
+        guard let cm = channelsManager else {
+            throw MyError.runtimeError("Channels Manager not initialized")
+        }
+        
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        let resultData = try cm.getMutedUsers(channelIdData)
+        
+        // Debug: print raw response
+        print("getMutedUsers raw response: \(resultData.utf8)")
+        
+        // Parse JSON array of base64 encoded public keys
+        guard let jsonArray = try? JSONSerialization.jsonObject(with: resultData) as? [String] else {
+            print("getMutedUsers: Failed to parse as [String], trying other formats...")
+            // Try parsing as array of objects
+            if let jsonObjects = try? JSONSerialization.jsonObject(with: resultData) {
+                print("getMutedUsers parsed object: \(jsonObjects)")
+            }
+            return []
+        }
+        
+        print("getMutedUsers parsed \(jsonArray.count) users")
+        return jsonArray.compactMap { Data(base64Encoded: $0) }
+    }
+    
+    /// Mute or unmute a user in a channel
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64-encoded)
+    ///   - pubKey: The public key of the user to mute/unmute
+    ///   - mute: True to mute, false to unmute
+    public func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
+        guard let cm = channelsManager else {
+            throw MyError.runtimeError("Channels Manager not initialized")
+        }
+        
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        try cm.muteUser(channelIdData, mutedUserPubKeyBytes: pubKey, undoAction: !mute, validUntilMS: Int(Bindings.BindingsValidForeverBindings), cmixParamsJSON: "".data)
+        
+        print("Successfully \(mute ? "muted" : "unmuted") user in channel: \(channelId)")
+    }
+    
+    /// Check if current user is muted in a channel
+    /// - Parameter channelId: The channel ID (base64-encoded)
+    /// - Returns: True if current user is muted
+    public func isMuted(channelId: String) -> Bool {
+        guard let cm = channelsManager else {
+            return false
+        }
+        
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        var result = ObjCBool(false)
+        do {
+            try cm.muted(channelIdData, ret0_: &result)
+            return result.boolValue
+        } catch {
+            print("isMuted failed: \(error)")
+            return false
+        }
+    }
+    
     /// Logout and delete all local data
     public func logout() async {
         // Stop network follower

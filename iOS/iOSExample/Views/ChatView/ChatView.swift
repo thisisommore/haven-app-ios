@@ -125,6 +125,9 @@ struct ChatView<T: XXDKP>: View {
     @State private var hideTask: Task<Void, Never>? = nil
     @State private var scrollingToOlder: Bool = true
     @State private var isAdmin: Bool = false
+    @State private var toastMessage: String? = nil
+    @State private var isMuted: Bool = false
+    @State private var mutedUsers: [Data] = []
     @EnvironmentObject var xxdk: T
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int)
     {
@@ -177,7 +180,38 @@ struct ChatView<T: XXDKP>: View {
                             },
                             onDelete: { message in
                                 xxdk.deleteMessage(channelId: chatId, messageId: message.id)
-                            }
+                            },
+                            onMute: { pubKey in
+                                do {
+                                    try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: true)
+                                    withAnimation(.spring(response: 0.3)) {
+                                        toastMessage = "User muted"
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        withAnimation {
+                                            toastMessage = nil
+                                        }
+                                    }
+                                } catch {
+                                    print("Failed to mute user: \(error)")
+                                }
+                            },
+                            onUnmute: { pubKey in
+                                do {
+                                    try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: false)
+                                    withAnimation(.spring(response: 0.3)) {
+                                        toastMessage = "User unmuted"
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        withAnimation {
+                                            toastMessage = nil
+                                        }
+                                    }
+                                } catch {
+                                    print("Failed to unmute user: \(error)")
+                                }
+                            },
+                            mutedUsers: mutedUsers
                         )
                         .background(
                             GeometryReader { geo in
@@ -227,13 +261,25 @@ struct ChatView<T: XXDKP>: View {
                 .animation(.spring(duration: 0.35), value: visibleDate?.formatted(date: .complete, time: .omitted))
         }
         .safeAreaInset(edge: .bottom) {
-            MessageForm<XXDK>(
-                chat: chat,
-                replyTo: replyingTo,
-                onCancelReply: {
-                    replyingTo = nil
+            if isMuted {
+                HStack {
+                    Image(systemName: "speaker.slash.fill")
+                        .foregroundColor(.secondary)
+                    Text("You are muted in this channel")
+                        .foregroundColor(.secondary)
                 }
-            )
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(.ultraThinMaterial)
+            } else {
+                MessageForm<XXDK>(
+                    chat: chat,
+                    replyTo: replyingTo,
+                    onCancelReply: {
+                        replyingTo = nil
+                    }
+                )
+            }
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -289,6 +335,23 @@ struct ChatView<T: XXDKP>: View {
         }
         .onAppear {
             isAdmin = xxdk.isChannelAdmin(channelId: chatId)
+            isMuted = xxdk.isMuted(channelId: chatId)
+            do {
+                mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
+            } catch {
+                print("Failed to fetch muted users: \(error)")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
+            if let channelID = notification.userInfo?["channelID"] as? String,
+               channelID == chatId {
+                isMuted = xxdk.isMuted(channelId: chatId)
+                do {
+                    mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
+                } catch {
+                    print("Failed to refresh muted users: \(error)")
+                }
+            }
         }
         .onChange(of: showChannelOptions) { _, newValue in
             if !newValue {
@@ -305,8 +368,28 @@ struct ChatView<T: XXDKP>: View {
         
         
         .background(Color.appBackground)
-
- 
+        .overlay {
+            if let message = toastMessage {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.white)
+                        Text(message)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .background(Color.haven)
+                    .cornerRadius(25)
+                    .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
+                    .padding(.bottom, 100)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
     }
 }
 

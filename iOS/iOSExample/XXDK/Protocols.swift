@@ -46,6 +46,9 @@ import Foundation
     func exportIdentity(password: String) throws -> Data
     func deleteMessage(channelId: String, messageId: String)
     func logout() async
+    func getMutedUsers(channelId: String) throws -> [Data]
+    func muteUser(channelId: String, pubKey: Data, mute: Bool) throws
+    func isMuted(channelId: String) -> Bool
 }
 // These are common helpers extending the string class which are essential for working with XXDK
 extension StringProtocol {
