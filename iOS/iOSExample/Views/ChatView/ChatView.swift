@@ -389,10 +389,10 @@ struct ChatView<T: XXDKP>: View {
         
         
         .background(Color.appBackground)
-        .gesture(
+        .simultaneousGesture(
             DragGesture()
                 .onEnded { gesture in
-                    if gesture.startLocation.x < 30 && gesture.translation.width > 80 {
+                    if gesture.startLocation.x < 100 && gesture.translation.width > 80 {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
