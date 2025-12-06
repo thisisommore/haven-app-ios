@@ -40,18 +40,17 @@ struct MessageForm<T: XXDKP>: View {
                         HTMLText(
                             replyTo.message,
                             textColor: .black,
-                            linkColor: .blue
+                            linkColor: .blue,
+                            lineLimit: 3
                         )
-                        .lineLimit(2)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .fontSize(13)
                     }
                     Spacer()
                     Button {
                         onCancelReply?()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.haven)
                     }
                 }
                 .padding(.horizontal, 16)
