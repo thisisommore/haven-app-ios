@@ -389,6 +389,14 @@ struct ChatView<T: XXDKP>: View {
         
         
         .background(Color.appBackground)
+        .gesture(
+            DragGesture()
+                .onEnded { gesture in
+                    if gesture.startLocation.x < 30 && gesture.translation.width > 80 {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+        )
         .overlay {
             if let message = toastMessage {
                 VStack {
