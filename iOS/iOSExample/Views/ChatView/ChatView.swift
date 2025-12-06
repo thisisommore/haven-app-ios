@@ -96,24 +96,16 @@ struct VisibleMessagePreferenceKey: PreferenceKey {
 
 // MARK: - Empty Chat State
 struct EmptyChatView: View {
-    let isChannel: Bool
-    
     var body: some View {
-        VStack(spacing: 16) {
+        VStack {
             Spacer()
-            
-            Image(systemName: "bubble.left.and.bubble.right")
-                .font(.system(size: 48))
-                .foregroundStyle(Color.haven.opacity(0.4))
-            
             Text("No messages yet")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-            
-            Text(isChannel ? "Be the first to send a message" : "Send a message to start the conversation")
                 .font(.subheadline)
-                .foregroundStyle(.tertiary)
-            
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color(.systemGray6))
+                .clipShape(Capsule())
             Spacer()
         }
     }
@@ -183,7 +175,7 @@ struct ChatView<T: XXDKP>: View {
     var body: some View {
         ZStack(alignment: .top) {
             if messages.isEmpty {
-                EmptyChatView(isChannel: isChannel)
+                EmptyChatView()
             } else {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
