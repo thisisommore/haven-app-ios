@@ -28,10 +28,12 @@ struct CreateSpaceView<T: XXDKP>: View {
                     : "Public Chats are accessible by anyone with just the link. No passphrase is needed to join. You can assume everyone knows when your codename is in a public chat."
                 )) {
                     Toggle("Secret", isOn: $isSecret)
+                        .tint(.haven)
                 }
                 
                 Section(footer: Text("Allow others to send you direct messages from this space")) {
                     Toggle("Enable Direct Messages", isOn: $enableDirectMessages)
+                        .tint(.haven)
                 }
                 
                 if let errorMessage {

@@ -93,6 +93,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     
                     if !isDM {
                         Toggle("Direct Messages", isOn: $isDMEnabled)
+                            .tint(.haven)
                             .onChange(of: isDMEnabled) { oldValue, newValue in
                                 guard let channelId = chat?.id else { return }
                                 do {

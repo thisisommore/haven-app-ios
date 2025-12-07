@@ -37,7 +37,9 @@ struct ChannelConfirmationView: View {
                 }
                 
                 Section {
-                    Toggle("Enable DM", isOn: $enableDM).disabled(isJoining)
+                    Toggle("Enable DM", isOn: $enableDM)
+                        .tint(.haven)
+                        .disabled(isJoining)
                 }
                 
                 if isJoining {
