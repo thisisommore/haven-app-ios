@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ParsedChannelLink {
     let url: String
@@ -71,6 +72,7 @@ struct ChannelInviteLinkPreview: View {
     @State private var channelData: ChannelJSON?
     @State private var prettyPrint: String?
     @State private var errorMessage: String?
+    @State private var isAlreadyJoined = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -101,16 +103,16 @@ struct ChannelInviteLinkPreview: View {
                         ProgressView()
                             .scaleEffect(0.8)
                     }
-                    Text(isLoading ? "Loading..." : "Join Channel")
+                    Text(isAlreadyJoined ? "Joined" : (isLoading ? "Loading..." : "Join Channel"))
                         .font(.subheadline.weight(.semibold))
                 }
-                .foregroundStyle(Color.haven)
+                .foregroundStyle(isAlreadyJoined ? Color.secondary : Color.haven)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(Color.haven.opacity(0.15))
+                .background(isAlreadyJoined ? Color.secondary.opacity(0.15) : Color.haven.opacity(0.15))
                 .cornerRadius(8)
             }
-            .disabled(isLoading)
+            .disabled(isLoading || isAlreadyJoined)
             
             if let error = errorMessage {
                 Text(error)
@@ -153,6 +155,9 @@ struct ChannelInviteLinkPreview: View {
                 }
             )
         }
+        .onAppear {
+            checkIfAlreadyJoined()
+        }
     }
     
     private func loadChannel() {
@@ -185,6 +190,25 @@ struct ChannelInviteLinkPreview: View {
         } catch {
             errorMessage = "Invalid password"
             showPasswordSheet = false
+        }
+    }
+    
+    private func checkIfAlreadyJoined() {
+        do {
+            let descriptor = FetchDescriptor<Chat>()
+            let allChats = try swiftDataActor.fetch(descriptor)
+            
+            // Try matching by channelId first
+            if let channel = try? xxdk.getChannelFromURL(url: link.url),
+               let channelId = channel.channelId {
+                isAlreadyJoined = allChats.contains { $0.id == channelId }
+                return
+            }
+            
+            // Fallback: match by name (for secret channels or if URL parsing fails)
+            isAlreadyJoined = allChats.contains { $0.name == link.name }
+        } catch {
+            // Ignore errors - if we can't check, assume not joined
         }
     }
     
