@@ -147,6 +147,18 @@ struct ChatView<T: XXDKP>: View {
     @State private var mutedUsers: [Data] = []
     @State private var highlightedMessageId: String? = nil
     @EnvironmentObject var xxdk: T
+    private func markMessagesAsRead() {
+        guard let chat else { return }
+        let unreadMessages = chat.messages.filter { $0.isIncoming && !$0.isRead && $0.timestamp > chat.joinedAt }
+        guard !unreadMessages.isEmpty else { return }
+        
+        for message in unreadMessages {
+            message.isRead = true
+        }
+        chat.unreadCount = 0
+        try? swiftDataActor.save()
+    }
+    
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int)
     {
         // Create a new DM chat
@@ -394,6 +406,8 @@ struct ChatView<T: XXDKP>: View {
             } catch {
                 print("Failed to fetch muted users: \(error)")
             }
+            // Mark all incoming messages as read
+            markMessagesAsRead()
         }
         .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
             if let channelID = notification.userInfo?["channelID"] as? String,

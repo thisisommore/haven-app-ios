@@ -175,6 +175,10 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
                 let internalId = InternalIdGenerator.shared.next()
                 let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, id: messageId.base64EncodedString(), internalId: internalId)
                 chat.messages.append(msg)
+                // Increment unread count for incoming messages after join time
+                if isIncoming && msg.timestamp > chat.joinedAt {
+                    chat.unreadCount += 1
+                }
                 try contextToUse.save()
                 print("DMReceiver: ChatMessage(message: \"\(message)\", isIncoming: \(isIncoming), chat: \(chat.id), id: \(messageId.base64EncodedString()))")
             } catch {
@@ -214,6 +218,10 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
                     let internalId = InternalIdGenerator.shared.next()
                     let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
                     chat.messages.append(msg)
+                    // Increment unread count for incoming messages after join time
+                    if isIncoming && msg.timestamp > chat.joinedAt {
+                        chat.unreadCount += 1
+                    }
                     try backgroundContext.save()
                 } else {
                     // Fallback if no partner key available

@@ -13,6 +13,20 @@ struct AdminBadge: View {
     }
 }
 
+struct UnreadBadge: View {
+    let count: Int
+    
+    var body: some View {
+        Text(count > 99 ? "99+" : "\(count)")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.haven)
+            .clipShape(Capsule())
+    }
+}
+
 struct ChatRowView<T: XXDKP>: View {
     let chat: Chat
     @EnvironmentObject var xxdk: T
@@ -53,6 +67,12 @@ struct ChatRowView<T: XXDKP>: View {
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 }
+            }
+            
+            Spacer()
+            
+            if chat.unreadCount > 0 {
+                UnreadBadge(count: chat.unreadCount)
             }
         }
     }

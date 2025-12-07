@@ -13,10 +13,11 @@ class ChatMessage: Identifiable {
     var message: String
     var timestamp: Date
     var isIncoming: Bool
+    var isRead: Bool
     var sender: Sender?
     var chat: Chat
     var replyTo: String?
-    init(message: String, isIncoming: Bool, chat: Chat, sender: Sender? = nil, id: String, internalId: Int64, replyTo: String? = nil, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3)) {
+    init(message: String, isIncoming: Bool, chat: Chat, sender: Sender? = nil, id: String, internalId: Int64, replyTo: String? = nil, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3), isRead: Bool = false) {
 
 
         self.id = id
@@ -24,6 +25,7 @@ class ChatMessage: Identifiable {
         self.message = message
         self.timestamp = Date(timeIntervalSince1970: Double(timestamp) * 1e-6 * 1e-3)
         self.isIncoming = isIncoming
+        self.isRead = isRead
         if (sender != nil)
         {
             self.sender = sender

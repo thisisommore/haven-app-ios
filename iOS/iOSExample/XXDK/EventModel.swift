@@ -230,6 +230,10 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
             
             chat.messages.append(msg)
+            // Increment unread count for incoming messages after join time
+            if msg.isIncoming && msg.timestamp > chat.joinedAt {
+                chat.unreadCount += 1
+            }
             try modelActor?.save()
             return msg.internalId
         } catch {
