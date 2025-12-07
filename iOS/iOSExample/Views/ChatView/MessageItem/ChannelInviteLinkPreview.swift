@@ -48,9 +48,11 @@ struct ParsedChannelLink {
             }
         }
         
-        guard !name.isEmpty else { return nil }
+        // Secret channels don't have 0Name parameter, show as "Secret Channel"
+        let isSecret = name.isEmpty
+        let displayName = isSecret ? "Secret Channel" : name
         
-        return ParsedChannelLink(url: url, name: name, description: description, level: level)
+        return ParsedChannelLink(url: url, name: displayName, description: description, level: isSecret ? "Secret" : level)
     }
 }
 
@@ -73,7 +75,7 @@ struct ChannelInviteLinkPreview: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                Image(systemName: "number.circle.fill")
+                Image(systemName: link.level == "Secret" ? "lock.circle.fill" : "number.circle.fill")
                     .foregroundStyle(Color.haven)
                     .font(.title)
                 
