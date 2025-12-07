@@ -101,36 +101,28 @@ struct MessageBubble: View {
                                 .foregroundStyle(isIncoming ? Color.messageText : Color.white)
                                 .tint(isIncoming ? .blue : .white)
                                 .lineLimit(isLinkExpanded ? nil : 1)
-                                .overlay {
-                                    if !isLinkExpanded {
-                                        Color.clear
-                                            .contentShape(Rectangle())
-                                            .onTapGesture {
-                                                withAnimation { isLinkExpanded = true }
-                                            }
-                                    }
-                                }
                             
                             if !isLinkExpanded {
-                                Text("expand")
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(isIncoming ? Color.messageText.opacity(0.7) : Color.white.opacity(0.7))
-                                    .underline()
-                                    .onTapGesture {
-                                        withAnimation { isLinkExpanded = true }
-                                    }
+                                Button {
+                                    withAnimation { isLinkExpanded = true }
+                                } label: {
+                                    Text("expand")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(isIncoming ? Color.messageText.opacity(0.7) : Color.white.opacity(0.7))
+                                        .underline()
+                                }
+                                .buttonStyle(.plain)
                             }
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation { isLinkExpanded.toggle() }
                         }
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 8)
                     .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
                     .background(isIncoming ? Color.messageBubble : Color.haven)
-                    .onTapGesture {
-                        if isLinkExpanded {
-                            withAnimation { isLinkExpanded = false }
-                        }
-                    }
                     
                     // White section with channel preview (includes timestamp)
                     ChannelInviteLinkPreview(
