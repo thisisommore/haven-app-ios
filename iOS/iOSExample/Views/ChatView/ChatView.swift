@@ -145,6 +145,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var toastMessage: String? = nil
     @State private var isMuted: Bool = false
     @State private var mutedUsers: [Data] = []
+    @State private var highlightedMessageId: String? = nil
     @EnvironmentObject var xxdk: T
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int)
     {
@@ -177,6 +178,7 @@ struct ChatView<T: XXDKP>: View {
             if messages.isEmpty {
                 EmptyChatView()
             } else {
+            ScrollViewReader { scrollProxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(messages.enumerated()), id: \.element.id) { index, result in
@@ -232,7 +234,19 @@ struct ChatView<T: XXDKP>: View {
                                     print("Failed to unmute user: \(error)")
                                 }
                             },
-                            mutedUsers: mutedUsers
+                            mutedUsers: mutedUsers,
+                            highlightedMessageId: highlightedMessageId,
+                            onScrollToReply: { messageId in
+                                highlightedMessageId = messageId
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    scrollProxy.scrollTo(messageId, anchor: .center)
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                    withAnimation(.easeOut(duration: 0.3)) {
+                                        highlightedMessageId = nil
+                                    }
+                                }
+                            }
                         )
                         .background(
                             GeometryReader { geo in
@@ -247,6 +261,7 @@ struct ChatView<T: XXDKP>: View {
                     }
                     Spacer()
                 }.padding().scrollTargetLayout()
+            }
             }
             .coordinateSpace(name: "chatScroll")
             .onPreferenceChange(VisibleMessagePreferenceKey.self) { date in

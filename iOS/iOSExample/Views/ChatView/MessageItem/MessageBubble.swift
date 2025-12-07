@@ -24,6 +24,7 @@ struct MessageBubble: View {
     var onMute: ((Data) -> Void)?
     var onUnmute: ((Data) -> Void)?
     let isSenderMuted: Bool
+    let isHighlighted: Bool
     init(
         text: String,
         isIncoming: Bool,
@@ -36,7 +37,8 @@ struct MessageBubble: View {
         onDelete: (() -> Void)? = nil,
         onMute: ((Data) -> Void)? = nil,
         onUnmute: ((Data) -> Void)? = nil,
-        isSenderMuted: Bool = false
+        isSenderMuted: Bool = false,
+        isHighlighted: Bool = false
     ) {
         self.text = text
         self.isIncoming = isIncoming
@@ -48,6 +50,7 @@ struct MessageBubble: View {
         self.onMute = onMute
         self.onUnmute = onUnmute
         self.isSenderMuted = isSenderMuted
+        self.isHighlighted = isHighlighted
 
         // Initialize @Binding properties
         self._selectedEmoji = selectedEmoji
@@ -170,6 +173,17 @@ struct MessageBubble: View {
             )
         }
         .id(sender)
+        .overlay(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 16,
+                bottomLeadingRadius: isIncoming ? 0 : 16,
+                bottomTrailingRadius: isIncoming ? 16 : 0,
+                topTrailingRadius: 16
+            )
+            .stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
+        )
+        .shadow(color: Color.haven.opacity(isHighlighted ? 0.5 : 0), radius: 8)
+        .animation(.easeInOut(duration: 0.25), value: isHighlighted)
         .padding(.top, 6)
     }
 }

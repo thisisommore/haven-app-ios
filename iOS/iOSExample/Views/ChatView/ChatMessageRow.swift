@@ -15,10 +15,17 @@ struct ChatMessageRow: View {
     var onMute: ((Data) -> Void)?
     var onUnmute: ((Data) -> Void)?
     let mutedUsers: [Data]
+    let highlightedMessageId: String?
+    var onScrollToReply: ((String) -> Void)?
     @Query private var chatReactions: [MessageReaction]
     @Query private var repliedTo: [ChatMessage]
     @Query private var messageSender: [Sender]
-    init(result: ChatMessage, isAdmin: Bool = false, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = []) {
+    
+    private var isHighlighted: Bool {
+        highlightedMessageId == result.id
+    }
+    
+    init(result: ChatMessage, isAdmin: Bool = false, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
         self.result = result
         self.isAdmin = isAdmin
         self.onReply = onReply
@@ -26,6 +33,8 @@ struct ChatMessageRow: View {
         self.onMute = onMute
         self.onUnmute = onUnmute
         self.mutedUsers = mutedUsers
+        self.highlightedMessageId = highlightedMessageId
+        self.onScrollToReply = onScrollToReply
         let messageId = result.id
         let replyTo = result.replyTo
         let senderId = result.sender?.id
@@ -50,6 +59,7 @@ struct ChatMessageRow: View {
                     text: result.message,
                     isIncoming: result.isIncoming,
                     repliedTo: repliedTo.first?.message,
+                    repliedToId: result.replyTo,
                     sender: messageSender.first,
                     onReply: {
                         onReply?(result)
@@ -62,7 +72,9 @@ struct ChatMessageRow: View {
                     onUnmute: onUnmute,
                     isSenderMuted: messageSender.first.map { mutedUsers.contains($0.pubkey) } ?? false,
                     timestamp: result.timestamp,
-                    isAdmin: isAdmin
+                    isAdmin: isAdmin,
+                    onScrollToReply: onScrollToReply,
+                    isHighlighted: isHighlighted
                 )
                 Reactions(reactions: chatReactions)
             }

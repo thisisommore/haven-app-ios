@@ -5,6 +5,7 @@ struct MessageItem: View {
     let text: String
     let isIncoming: Bool
     let repliedTo: String?
+    let repliedToId: String?
     let sender: Sender?
     let timeStamp: String
     let isAdmin: Bool
@@ -15,11 +16,14 @@ struct MessageItem: View {
     var onMute: ((Data) -> Void)?
     var onUnmute: ((Data) -> Void)?
     let isSenderMuted: Bool
+    var onScrollToReply: ((String) -> Void)?
+    let isHighlighted: Bool
 
-    init(text: String, isIncoming: Bool, repliedTo: String?, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false) {
+    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false) {
         self.text = text
         self.isIncoming = isIncoming
         self.repliedTo = repliedTo
+        self.repliedToId = repliedToId
         self.sender = sender
         self.onReply = onReply
         self.onDM = onDM
@@ -28,6 +32,8 @@ struct MessageItem: View {
         self.onUnmute = onUnmute
         self.isSenderMuted = isSenderMuted
         self.isAdmin = isAdmin
+        self.onScrollToReply = onScrollToReply
+        self.isHighlighted = isHighlighted
         _isEmojiSheetPresented = State(initialValue: isEmojiSheetPresented)
         _shouldTriggerReply = State(initialValue: shouldTriggerReply)
         _selectedEmoji = State(initialValue: selectedEmoji)
@@ -49,7 +55,12 @@ struct MessageItem: View {
                         ConditionalSpacer(!isIncoming)
                         MessageReplyPreview(
                             text: repliedTo,
-                            isIncoming: isIncoming
+                            isIncoming: isIncoming,
+                            onTap: {
+                                if let id = repliedToId {
+                                    onScrollToReply?(id)
+                                }
+                            }
                         )
                         ConditionalSpacer(isIncoming)
                     }
@@ -69,7 +80,8 @@ struct MessageItem: View {
                         onDelete: onDelete,
                         onMute: onMute,
                         onUnmute: onUnmute,
-                        isSenderMuted: isSenderMuted
+                        isSenderMuted: isSenderMuted,
+                        isHighlighted: isHighlighted
                     )
                     ConditionalSpacer(isIncoming)
                 }

@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 struct MessageReplyPreview: View {
     let text: String
     let isIncoming: Bool
+    var onTap: (() -> Void)?
     
     var body: some View {
         HStack() {
@@ -36,6 +37,9 @@ struct MessageReplyPreview: View {
                     Text("Copy")
                 }
             }
+        }
+        .onTapGesture {
+            onTap?()
         }
     }
 }
