@@ -128,7 +128,7 @@ struct ChannelInviteLinkPreview: View {
             }
         }
         .padding(10)
-        .background(Color(.systemBackground))
+        .background(Color.appBackground)
         .overlay(
             UnevenRoundedRectangle(
                 topLeadingRadius: 0,
@@ -136,7 +136,7 @@ struct ChannelInviteLinkPreview: View {
                 bottomTrailingRadius: isIncoming ? 16 : 0,
                 topTrailingRadius: 0
             )
-            .strokeBorder(Color.haven.opacity(0.4), lineWidth: 1)
+            .strokeBorder(Color.messageBubble, lineWidth: 1)
         )
         .sheet(isPresented: $showPasswordSheet) {
             PasswordInputView(
