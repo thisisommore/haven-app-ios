@@ -140,18 +140,20 @@ struct MessageForm<T: XXDKP>: View {
             } else {
                 // Channel chat: send via Channels Manager using channelId (stored in id)
                 if let replyTo = replyTo {
-                    xxdk.sendReply(
-                        msg: trimmed,
-                        channelId: chat.id,
-                        replyToMessageIdB64: replyTo.id
-                    )
-
+                    Task {
+                        xxdk.sendReply(
+                            msg: trimmed,
+                            channelId: chat.id,
+                            replyToMessageIdB64: replyTo.id
+                        )
+                    }
                 } else {
-                    xxdk.sendDM(
-                        msg: trimmed,
-                        channelId: chat.id
-                    )
-
+                    Task {
+                        xxdk.sendDM(
+                            msg: trimmed,
+                            channelId: chat.id
+                        )
+                    }
                 }
             }
         }
