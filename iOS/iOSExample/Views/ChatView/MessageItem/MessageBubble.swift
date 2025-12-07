@@ -18,6 +18,7 @@ struct MessageBubble: View {
     @Binding var selectedEmoji: MessageEmoji
     @Binding var shouldTriggerReply: Bool
     @State private var markdown: String = ""
+    @State private var parsedChannelLink: ParsedChannelLink?
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: (() -> Void)?
     var onMute: ((Data) -> Void)?
@@ -62,6 +63,9 @@ struct MessageBubble: View {
         } catch {
             self._markdown = State(initialValue: text)
         }
+        
+        // Parse channel link if present
+        self._parsedChannelLink = State(initialValue: ParsedChannelLink.parse(from: text))
     }
     private var underlinedMarkdown: AttributedString {
         var attributed = (try? AttributedString(markdown: markdown)) ?? AttributedString(markdown)
@@ -74,37 +78,83 @@ struct MessageBubble: View {
     }
     
     var body: some View {
-        VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
-            if isIncoming {
-                MessageSender(
-                    isIncoming: isIncoming,
-                    sender: sender
-                )
-            }
+        Group {
+            if let link = parsedChannelLink {
+                // Message with channel preview
+                VStack(alignment: .leading, spacing: 0) {
+                    // Orange/colored section with message
+                    VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
+                        if isIncoming {
+                            MessageSender(
+                                isIncoming: isIncoming,
+                                sender: sender
+                            )
+                        }
 
-            HStack {
-                Text(underlinedMarkdown)
-                .font(.system(size: 16))
-                .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-                .tint(isIncoming ? .blue : .white)
-            }
-            VStack(alignment: .trailing) {
-                Text(timestamp).font(.system(size: 10)).foregroundStyle(
-                    isIncoming ? Color.messageText : Color.white
+                        HStack {
+                            Text(underlinedMarkdown)
+                            .font(.system(size: 16))
+                            .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+                            .tint(isIncoming ? .blue : .white)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
+                    .background(isIncoming ? Color.messageBubble : Color.haven)
+                    
+                    // White section with channel preview (includes timestamp)
+                    ChannelInviteLinkPreview(
+                        link: link,
+                        isIncoming: isIncoming,
+                        timestamp: timestamp
+                    )
+                }
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 16,
+                        bottomLeadingRadius: isIncoming ? 0 : 16,
+                        bottomTrailingRadius: isIncoming ? 16 : 0,
+                        topTrailingRadius: 16
+                    )
+                )
+            } else {
+                // Regular message without preview
+                VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
+                    if isIncoming {
+                        MessageSender(
+                            isIncoming: isIncoming,
+                            sender: sender
+                        )
+                    }
+
+                    HStack {
+                        Text(underlinedMarkdown)
+                        .font(.system(size: 16))
+                        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+                        .tint(isIncoming ? .blue : .white)
+                    }
+                    
+                    VStack(alignment: .trailing) {
+                        Text(timestamp).font(.system(size: 10)).foregroundStyle(
+                            isIncoming ? Color.messageText : Color.white
+                        )
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+                .background(isIncoming ? Color.messageBubble : Color.haven)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 16,
+                        bottomLeadingRadius: isIncoming ? 0 : 16,
+                        bottomTrailingRadius: isIncoming ? 16 : 0,
+                        topTrailingRadius: 16
+                    )
                 )
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
-        .background(isIncoming ? Color.messageBubble : Color.haven)
-        .clipShape(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 16,
-                bottomLeadingRadius: isIncoming ? 0 : 16,
-                bottomTrailingRadius: isIncoming ? 16 : 0,
-                topTrailingRadius: 16
-            )
-        ).contextMenu {
+        .contextMenu {
             MessageContextMenu(
                 text: text,
                 isIncoming: isIncoming,
