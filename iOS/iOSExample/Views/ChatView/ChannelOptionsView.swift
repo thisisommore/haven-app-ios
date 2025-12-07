@@ -51,6 +51,7 @@ struct MutedUserRow: View {
 struct ChannelOptionsView<T: XXDKP>: View {
     let chat: Chat?
     let onLeaveChannel: () -> Void
+    var onDeleteChat: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var xxdk: T
     @State private var isDMEnabled: Bool = false
@@ -62,20 +63,25 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var isAdmin: Bool = false
     @State private var mutedUsers: [Data] = []
     @State private var showLeaveConfirmation: Bool = false
+    @State private var showDeleteConfirmation: Bool = false
+    
+    private var isDM: Bool {
+        chat?.dmToken != nil
+    }
     
     var body: some View {
         NavigationView {
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Channel Name")
+                        Text(isDM ? "Contact Name" : "Channel Name")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Text(chat?.name ?? "Unknown")
                             .font(.body)
                     }
                     
-                    if let description = chat?.channelDescription, !description.isEmpty {
+                    if !isDM, let description = chat?.channelDescription, !description.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Description")
                                 .font(.caption)
@@ -85,22 +91,24 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         }
                     }
                     
-                    Toggle("Direct Messages", isOn: $isDMEnabled)
-                        .onChange(of: isDMEnabled) { oldValue, newValue in
-                            guard let channelId = chat?.id else { return }
-                            do {
-                                if newValue {
-                                    try xxdk.enableDirectMessages(channelId: channelId)
-                                } else {
-                                    try xxdk.disableDirectMessages(channelId: channelId)
+                    if !isDM {
+                        Toggle("Direct Messages", isOn: $isDMEnabled)
+                            .onChange(of: isDMEnabled) { oldValue, newValue in
+                                guard let channelId = chat?.id else { return }
+                                do {
+                                    if newValue {
+                                        try xxdk.enableDirectMessages(channelId: channelId)
+                                    } else {
+                                        try xxdk.disableDirectMessages(channelId: channelId)
+                                    }
+                                } catch {
+                                    print("Failed to toggle DM: \(error)")
+                                    isDMEnabled = oldValue
                                 }
-                            } catch {
-                                print("Failed to toggle DM: \(error)")
-                                isDMEnabled = oldValue
                             }
-                        }
+                    }
                     
-                    if let urlString = shareURL, let url = URL(string: urlString) {
+                    if !isDM, let urlString = shareURL, let url = URL(string: urlString) {
                         ShareLink(item: url) {
                             HStack {
                                 Text(verbatim: urlString)
@@ -135,8 +143,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                 }
                 
-                // Admin section - only visible for channel admins
-                if let _ = chat?.id, isAdmin {
+                // Admin section - only visible for channel admins (not for DMs)
+                if !isDM, let _ = chat?.id, isAdmin {
                     Section(header: Text("Admin")) {
                         Button {
                             showExportKeySheet = true
@@ -154,8 +162,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                 }
                 
-                // Muted Users section - only visible for admins
-                if let _ = chat?.id, isAdmin {
+                // Muted Users section - only visible for admins (not for DMs)
+                if !isDM, let _ = chat?.id, isAdmin {
                     Section(header: Text("Muted Users")) {
                         if mutedUsers.isEmpty {
                             Text("No muted users")
@@ -184,8 +192,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                 }
                 
-                // Import key section - only visible for non-admins
-                if let _ = chat?.id, !isAdmin {
+                // Import key section - only visible for non-admins and not for DMs
+                if !isDM, let _ = chat?.id, !isAdmin {
                     Section {
                         Button {
                             showImportKeySheet = true
@@ -223,11 +231,15 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 
                 Section {
                     Button(role: .destructive) {
-                        showLeaveConfirmation = true
+                        if isDM {
+                            showDeleteConfirmation = true
+                        } else {
+                            showLeaveConfirmation = true
+                        }
                     } label: {
                         HStack {
                             Spacer()
-                            Text("Leave Channel")
+                            Text(isDM ? "Delete Chat" : "Leave Channel")
                             Spacer()
                         }
                     }
@@ -241,8 +253,17 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 } message: {
                     Text("Are you sure you want to leave \"\(chat?.name ?? "this channel")\"?")
                 }
+                .alert("Delete Chat", isPresented: $showDeleteConfirmation) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Delete", role: .destructive) {
+                        onDeleteChat?()
+                        dismiss()
+                    }
+                } message: {
+                    Text("Are you sure you want to delete this chat with \"\(chat?.name ?? "this contact")\"?")
+                }
             }
-            .navigationTitle("Channel Options")
+            .navigationTitle(isDM ? "DM Options" : "Channel Options")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
