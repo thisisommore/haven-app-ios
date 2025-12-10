@@ -655,6 +655,9 @@ public class XXDK: XXDKP {
             )
         }
 
+        // Mark setup as complete
+        sm!.isSetupComplete = true
+        
         // Finalize status: ready for new users
         await progress(.ready)
     }
