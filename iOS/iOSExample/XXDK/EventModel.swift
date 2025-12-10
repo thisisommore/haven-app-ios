@@ -5,6 +5,9 @@ import Dispatch
 
 extension Notification.Name {
     static let userMuteStatusChanged = Notification.Name("userMuteStatusChanged")
+    static let fileLinkReceived = Notification.Name("fileLinkReceived")
+    static let fileDownloadNeeded = Notification.Name("fileDownloadNeeded")
+    static let fileDataUpdated = Notification.Name("fileDataUpdated")
 }
 
 /// Thread-safe atomic counter for generating unique Int64 IDs
@@ -58,9 +61,33 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     // Optional SwiftData container for persisting chats/messages
 
     var modelActor: SwiftDataActor?
+    
+    // Cache for file data received via receiveFile (fileID -> fileData)
+    private var fileDataCache: [String: Data] = [:]
+    private let fileDataLock = NSLock()
+    
     // Allow late injection of the model container without changing initializer signature
     public func configure(modelActor: SwiftDataActor) {
         self.modelActor = modelActor
+    }
+    
+    // Store file data in cache
+    private func cacheFileData(fileID: String, data: Data) {
+        fileDataLock.lock()
+        fileDataCache[fileID] = data
+        fileDataLock.unlock()
+        log("[FT] Cached file data for \(fileID), size: \(data.count) bytes")
+    }
+    
+    // Retrieve and remove file data from cache
+    private func retrieveFileData(fileID: String) -> Data? {
+        fileDataLock.lock()
+        let data = fileDataCache[fileID]
+        fileDataLock.unlock()
+        if data != nil {
+            log("[FT] Retrieved cached file data for \(fileID), size: \(data!.count) bytes")
+        }
+        return data
     }
 
     func update(
@@ -270,6 +297,22 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     ) -> Int64 {
         let messageIdB64 = messageID?.base64EncodedString()
         let messageTextB64 = text ?? ""
+        
+        log("[EventReceived] messageType: \(messageType) | \(messageIdB64 ?? "nil")")
+        
+        // Check if this is a file message (type 40000)
+        if messageType == 40000 {
+            return handleFileMessage(
+                channelID: channelID,
+                messageID: messageID,
+                text: text,
+                pubKey: pubKey,
+                dmToken: dmToken,
+                codeset: codeset,
+                timestamp: timestamp
+            )
+        }
+        
         if let decodedText = decodeMessage(messageTextB64) {
             log(
                 "[EventReceived] new | \(messageIdB64 ?? "nil") | | \(decodedText)"
@@ -705,6 +748,269 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
     }
 
+    func deleteFile(_ fileID: Data?) throws {
+        let fileIdB64 = fileID?.base64EncodedString() ?? "nil"
+        log("deleteFile - fileID: \(fileIdB64)")
+    }
+
+    func getFile(_ fileID: Data?) throws -> Data {
+        let fileIdB64 = fileID?.base64EncodedString() ?? "nil"
+        log("getFile - fileID: \(fileIdB64)")
+        
+        // TODO: Look up file in storage by fileID and return its data
+        // For now, return the standard "no message" error that Go code recognizes
+        throw NSError(
+            domain: "EventModel",
+            code: 404,
+            userInfo: [NSLocalizedDescriptionKey: BindingsGetNoMessageErr()]
+        )
+    }
+
+    func receiveFile(
+        _ fileID: Data?,
+        fileLink: Data?,
+        fileData: Data?,
+        timestamp: Int64,
+        status: Int
+    ) throws {
+        log(
+            "receiveFile - fileID: \(short(fileID)) | fileLink: \(short(fileLink)) | fileData: \(fileData?.count ?? 0) bytes | timestamp: \(timestamp) | status: \(status)"
+        )
+        
+        // Cache file data for later use when file message arrives
+        if let fileID = fileID, let fileData = fileData, !fileData.isEmpty {
+            let fileIdStr = fileID.base64EncodedString()
+            cacheFileData(fileID: fileIdStr, data: fileData)
+        }
+        
+        // Post notification with file link for pending uploads
+        if let fileID = fileID, let fileLink = fileLink {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .fileLinkReceived,
+                    object: nil,
+                    userInfo: [
+                        "fileID": fileID,
+                        "fileLink": fileLink,
+                        "status": status
+                    ]
+                )
+            }
+        }
+    }
+
+    func updateFile(
+        _ fileID: Data?,
+        fileLink: Data?,
+        fileData: Data?,
+        timestamp: Int64,
+        status: Int
+    ) throws {
+        log(
+            "updateFile - fileID: \(short(fileID)) | fileLink: \(short(fileLink)) | fileData: \(fileData?.count ?? 0) bytes | timestamp: \(timestamp) | status: \(status)"
+        )
+        
+        // Cache file data for later use when file message arrives
+        if let fileID = fileID, let fileData = fileData, !fileData.isEmpty {
+            let fileIdStr = fileID.base64EncodedString()
+            cacheFileData(fileID: fileIdStr, data: fileData)
+            
+            // Update existing ChatMessage with file data (for downloads)
+            updateMessageWithFileData(fileID: fileIdStr, fileData: fileData)
+        }
+        
+        // Post notification with file link for pending uploads
+        if let fileID = fileID, let fileLink = fileLink {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .fileLinkReceived,
+                    object: nil,
+                    userInfo: [
+                        "fileID": fileID,
+                        "fileLink": fileLink,
+                        "status": status
+                    ]
+                )
+            }
+        }
+    }
+    
+    private func updateMessageWithFileData(fileID: String, fileData: Data) {
+        guard let actor = modelActor else {
+            log("[FT] No modelActor to update message with file data")
+            return
+        }
+        
+        Task {
+            do {
+                // Find ALL messages with matching fileID in fileLinkJSON
+                let allMessages = try actor.fetch(FetchDescriptor<ChatMessage>())
+                var updatedCount = 0
+                for message in allMessages {
+                    if let linkJSON = message.fileLinkJSON,
+                       linkJSON.contains(fileID),
+                       message.fileData == nil {
+                        message.fileData = fileData
+                        updatedCount += 1
+                    }
+                }
+                
+                if updatedCount > 0 {
+                    try actor.save()
+                    log("[FT] Updated \(updatedCount) message(s) with file data, fileID: \(fileID)")
+                    
+                    // Notify UI to refresh
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: .fileDataUpdated, object: nil)
+                    }
+                } else {
+                    log("[FT] No message found for fileID: \(fileID)")
+                }
+            } catch {
+                log("[FT] Error updating message with file data: \(error)")
+            }
+        }
+    }
+
+    // MARK: - File Message Handling
+    private func handleFileMessage(
+        channelID: Data?,
+        messageID: Data?,
+        text: String?,
+        pubKey: Data?,
+        dmToken: Int32,
+        codeset: Int,
+        timestamp: Int64
+    ) -> Int64 {
+        log("[FT] Received file message, text: \(text ?? "nil")")
+        
+        guard let actor = modelActor else {
+            log("[FT] ERROR: no modelActor for file message")
+            return 0
+        }
+        
+        guard let text = text, !text.isEmpty else {
+            log("[FT] ERROR: no text for file message")
+            return 0
+        }
+        
+        // Try to decode - might be base64 encoded or raw JSON
+        var textData: Data
+        if let decoded = Data(base64Encoded: text) {
+            log("[FT] Decoded base64 text")
+            textData = decoded
+        } else if let utf8Data = text.data(using: .utf8) {
+            log("[FT] Using UTF-8 text")
+            textData = utf8Data
+        } else {
+            log("[FT] ERROR: cannot convert text to data")
+            return 0
+        }
+        
+        do {
+            let fileInfo = try Parser.decodeFileInfo(from: textData)
+            log("[FT] File info: name=\(fileInfo.name), type=\(fileInfo.type), size=\(fileInfo.size)")
+            
+            // Get sender identity
+            var err: NSError?
+            let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err)
+            guard let identityData = identityData else {
+                log("[FT] ERROR: failed to construct identity")
+                return 0
+            }
+            
+            let identity = try Parser.decodeIdentity(from: identityData)
+            let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
+            let messageIdB64 = messageID?.base64EncodedString() ?? ""
+            
+            var colorStr = identity.color
+            if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
+                colorStr.removeFirst(2)
+            }
+            let color = Int(colorStr, radix: 16) ?? 0
+            
+            // Get or create chat
+            let chat = try fetchOrCreateChannelChat(
+                channelId: channelIdB64,
+                channelName: "Channel \(String(channelIdB64.prefix(8)))"
+            )
+            
+            // Get or create sender
+            var sender: Sender? = nil
+            if let pubKey = pubKey {
+                let senderId = pubKey.base64EncodedString()
+                let senderDescriptor = FetchDescriptor<Sender>(
+                    predicate: #Predicate { $0.id == senderId }
+                )
+                if let existingSender = try? actor.fetch(senderDescriptor).first {
+                    existingSender.dmToken = dmToken
+                    sender = existingSender
+                } else {
+                    sender = Sender(
+                        id: senderId,
+                        pubkey: pubKey,
+                        codename: identity.codename,
+                        dmToken: dmToken,
+                        color: color
+                    )
+                    actor.insert(sender!)
+                }
+            }
+            
+            // Create file message
+            let isIncoming = !isSenderSelf(chat: chat, senderPubKey: pubKey, ctx: actor)
+            let internalId = InternalIdGenerator.shared.next()
+            
+            // Try to get cached file data
+            let cachedFileData = retrieveFileData(fileID: fileInfo.fileID)
+            log("[FT] Creating file message, cached data: \(cachedFileData?.count ?? 0) bytes")
+            
+            let fileMessage = ChatMessage.fileMessage(
+                fileName: fileInfo.name,
+                fileType: fileInfo.type,
+                fileData: cachedFileData,
+                filePreview: fileInfo.preview,
+                fileLinkJSON: text,
+                isIncoming: isIncoming,
+                chat: chat,
+                sender: sender,
+                id: messageIdB64,
+                internalId: internalId,
+                timestamp: timestamp
+            )
+            
+            actor.insert(fileMessage)
+            chat.messages.append(fileMessage)
+            
+            if isIncoming && timestamp > Int64(chat.joinedAt.timeIntervalSince1970 * 1e9) {
+                chat.unreadCount += 1
+            }
+            
+            try actor.save()
+            log("[FT] File message persisted: \(fileInfo.name)")
+            
+            // Trigger download for incoming files without cached data
+            if isIncoming && cachedFileData == nil {
+                log("[FT] Requesting download for: \(fileInfo.name)")
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: .fileDownloadNeeded,
+                        object: nil,
+                        userInfo: [
+                            "fileInfoJSON": textData,
+                            "messageId": messageIdB64
+                        ]
+                    )
+                }
+            }
+            
+            return internalId
+        } catch {
+            log("[FT] ERROR parsing file message: \(error)")
+            return 0
+        }
+    }
+    
     // MARK: - Helper Methods
     private func isSenderSelf(chat: Chat, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
         // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey

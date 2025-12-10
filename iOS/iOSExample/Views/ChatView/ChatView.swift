@@ -120,12 +120,13 @@ struct ChatView<T: XXDKP>: View {
  
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @Query private var chatResults: [Chat]
+    @Query private var allMessages: [ChatMessage]
 
     private var chat: Chat? { chatResults.first }
     private var messages: [ChatMessage] {
-        guard let chat else { return [] }
-        // Sort by timestamp ascending
-        return chat.messages.sorted { $0.timestamp < $1.timestamp }
+        // Filter messages for this chat - using @Query ensures updates trigger refresh
+        let chatMessages = allMessages.filter { $0.chat.id == chatId }
+        return chatMessages.sorted { $0.timestamp < $1.timestamp }
     }
     private var isChannel: Bool {
         guard let chat else { return false }
@@ -146,6 +147,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var isMuted: Bool = false
     @State private var mutedUsers: [Data] = []
     @State private var highlightedMessageId: String? = nil
+    @State private var fileDataRefreshTrigger: Int = 0
     @EnvironmentObject var xxdk: T
     private func markMessagesAsRead() {
         guard let chat else { return }
@@ -183,6 +185,8 @@ struct ChatView<T: XXDKP>: View {
                 chat.id == chatId
             }
         )
+        // Query all messages - ensures fileData updates trigger view refresh
+        _allMessages = Query()
     }
 
     var body: some View {
@@ -420,6 +424,14 @@ struct ChatView<T: XXDKP>: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .fileDataUpdated)) { _ in
+            // Delay slightly to allow SwiftData to sync from background context
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                print("[FT] ChatView received fileDataUpdated, refreshing (trigger=\(fileDataRefreshTrigger + 1))")
+                fileDataRefreshTrigger += 1
+            }
+        }
+        .id("chat-\(chatId)-\(fileDataRefreshTrigger)")
         .onChange(of: showChannelOptions) { _, newValue in
             if !newValue {
                 isAdmin = chat?.isAdmin ?? false

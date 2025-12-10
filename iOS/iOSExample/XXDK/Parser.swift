@@ -98,6 +98,11 @@ public struct ChannelSendReportJSON: Decodable {
         case messageID
         case ephId
     }
+
+    public init(messageID: Data?, ephId: Int64?) {
+        self.messageID = messageID
+        self.ephId = ephId
+    }
 }
 
 // Model message for getMessage responses
@@ -235,6 +240,24 @@ public struct CMixCoreParams: Codable {
     public var DebugTag: String
     public var BlacklistedNodes: [String: Bool]
     public var Critical: Bool
+    
+    public init(
+        RoundTries: Int,
+        Timeout: Int,
+        RetryDelay: Int,
+        SendTimeout: Int,
+        DebugTag: String,
+        BlacklistedNodes: [String: Bool],
+        Critical: Bool
+    ) {
+        self.RoundTries = RoundTries
+        self.Timeout = Timeout
+        self.RetryDelay = RetryDelay
+        self.SendTimeout = SendTimeout
+        self.DebugTag = DebugTag
+        self.BlacklistedNodes = BlacklistedNodes
+        self.Critical = Critical
+    }
 }
 
 public enum Parser {
@@ -310,4 +333,140 @@ public enum Parser {
     public static func decodeMessageUpdateInfo(from data: Data) throws -> MessageUpdateInfoJSON {
         try decoder.decode(MessageUpdateInfoJSON.self, from: data)
     }
+
+    // MARK: - File Transfer helpers
+    public static func decodeFtSentProgress(from data: Data) throws -> FtSentProgressJSON {
+        try decoder.decode(FtSentProgressJSON.self, from: data)
+    }
+
+    public static func decodeFileLink(from data: Data) throws -> FileLinkJSON {
+        try decoder.decode(FileLinkJSON.self, from: data)
+    }
+
+    public static func decodeFileInfo(from data: Data) throws -> FileInfoJSON {
+        try decoder.decode(FileInfoJSON.self, from: data)
+    }
+
+    public static func encodeFileTransferParams(_ params: FileTransferParamsJSON) throws -> Data {
+        try encoder.encode(params)
+    }
+}
+
+// MARK: - File Transfer Models
+
+/// File transfer params for InitChannelsFileTransfer
+public struct FileTransferParamsJSON: Codable {
+    public var maxThroughput: Int
+    public var sendTimeout: Int64
+    public var resendWait: Int64
+    public var cmix: CMixCoreParams
+
+    private enum CodingKeys: String, CodingKey {
+        case maxThroughput = "MaxThroughput"
+        case sendTimeout = "SendTimeout"
+        case resendWait = "ResendWait"
+        case cmix = "Cmix"
+    }
+
+    public init(
+        maxThroughput: Int = 150_000,
+        sendTimeout: Int64 = 500_000_000,
+        resendWait: Int64 = 500_000_000,
+        cmix: CMixCoreParams = CMixCoreParams.fileTransferDefaults
+    ) {
+        self.maxThroughput = maxThroughput
+        self.sendTimeout = sendTimeout
+        self.resendWait = resendWait
+        self.cmix = cmix
+    }
+}
+
+extension CMixCoreParams {
+    /// Default cMix params for file transfer
+    public static var fileTransferDefaults: CMixCoreParams {
+        CMixCoreParams(
+            RoundTries: 10,
+            Timeout: 30_000_000_000,     // 30 seconds in nanoseconds
+            RetryDelay: 1_000_000_000,   // 1 second in nanoseconds
+            SendTimeout: 500_000_000,    // 500ms in nanoseconds
+            DebugTag: "FT",
+            BlacklistedNodes: [:],
+            Critical: false
+        )
+    }
+}
+
+/// Progress info passed to FtSentProgressCallback during upload
+public struct FtSentProgressJSON: Decodable {
+    public let id: String
+    public let completed: Bool
+    public let sent: Int
+    public let received: Int
+    public let total: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case completed
+        case sent
+        case received
+        case total
+    }
+}
+
+/// FileLink stored in event model after upload completes
+public struct FileLinkJSON: Codable {
+    public let fileID: String
+    public let recipientID: String
+    public let sentTimestamp: String
+    public let key: String
+    public let mac: String
+    public let size: Int
+    public let numParts: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case fileID
+        case recipientID
+        case sentTimestamp
+        case key
+        case mac
+        case size
+        case numParts
+    }
+}
+
+/// FileInfo received by channel members
+public struct FileInfoJSON: Decodable {
+    public let name: String
+    public let type: String
+    public let preview: Data?
+    public let fileID: String
+    public let recipientID: String
+    public let sentTimestamp: String
+    public let key: [UInt8]  // Encryption key as byte array
+    public let mac: String
+    public let size: Int
+    public let numParts: Int
+    public let retry: Float?
+
+    private enum CodingKeys: String, CodingKey {
+        case name
+        case type
+        case preview
+        case fileID
+        case recipientID
+        case sentTimestamp
+        case key
+        case mac
+        case size
+        case retry
+        case numParts
+    }
+}
+
+/// File part status values
+public enum FilePartStatus: Int {
+    case unsent = 0
+    case sent = 1
+    case arrived = 2
+    case received = 3
 }

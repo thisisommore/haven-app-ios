@@ -9,6 +9,9 @@ struct MessageItem: View {
     let sender: Sender?
     let timeStamp: String
     let isAdmin: Bool
+    
+    // File message properties
+    let chatMessage: ChatMessage?
 
     var onReply: (() -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
@@ -19,7 +22,7 @@ struct MessageItem: View {
     var onScrollToReply: ((String) -> Void)?
     let isHighlighted: Bool
 
-    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false) {
+    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false, chatMessage: ChatMessage? = nil) {
         self.text = text
         self.isIncoming = isIncoming
         self.repliedTo = repliedTo
@@ -34,6 +37,7 @@ struct MessageItem: View {
         self.isAdmin = isAdmin
         self.onScrollToReply = onScrollToReply
         self.isHighlighted = isHighlighted
+        self.chatMessage = chatMessage
         _isEmojiSheetPresented = State(initialValue: isEmojiSheetPresented)
         _shouldTriggerReply = State(initialValue: shouldTriggerReply)
         _selectedEmoji = State(initialValue: selectedEmoji)
@@ -68,21 +72,33 @@ struct MessageItem: View {
 
                 HStack {
                     ConditionalSpacer(!isIncoming)
-                    MessageBubble(
-                        text: text,
-                        isIncoming: isIncoming,
-                        sender: sender,
-                        timestamp: timeStamp,
-                        selectedEmoji: $selectedEmoji,
-                        shouldTriggerReply: $shouldTriggerReply,
-                        isAdmin: isAdmin,
-                        onDM: onDM,
-                        onDelete: onDelete,
-                        onMute: onMute,
-                        onUnmute: onUnmute,
-                        isSenderMuted: isSenderMuted,
-                        isHighlighted: isHighlighted
-                    )
+                    
+                    // Check if this is a file message
+                    if let msg = chatMessage, msg.hasFile {
+                        FileMessageBubble(
+                            message: msg,
+                            isIncoming: isIncoming,
+                            timestamp: timeStamp,
+                            isHighlighted: isHighlighted
+                        )
+                    } else {
+                        MessageBubble(
+                            text: text,
+                            isIncoming: isIncoming,
+                            sender: sender,
+                            timestamp: timeStamp,
+                            selectedEmoji: $selectedEmoji,
+                            shouldTriggerReply: $shouldTriggerReply,
+                            isAdmin: isAdmin,
+                            onDM: onDM,
+                            onDelete: onDelete,
+                            onMute: onMute,
+                            onUnmute: onUnmute,
+                            isSenderMuted: isSenderMuted,
+                            isHighlighted: isHighlighted
+                        )
+                    }
+                    
                     ConditionalSpacer(isIncoming)
                 }
               

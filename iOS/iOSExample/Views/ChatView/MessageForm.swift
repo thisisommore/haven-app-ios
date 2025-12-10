@@ -27,9 +27,43 @@ struct MessageForm<T: XXDKP>: View {
     @EnvironmentObject private var xxdk: T
     @State private var showSendButton: Bool = false
     @Namespace private var namespace
+    
+    // File transfer state
+    @StateObject private var fileTransferManager = FileTransferManager()
+    @State private var showFilePicker: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
+            // Upload progress overlay
+            if case .uploading = fileTransferManager.state {
+                UploadProgressOverlay(state: fileTransferManager.state) {
+                    fileTransferManager.cancel(xxdk: xxdk)
+                }
+                .padding(.bottom, 8)
+            } else if case .failed = fileTransferManager.state {
+                UploadProgressOverlay(state: fileTransferManager.state) {
+                    fileTransferManager.reset()
+                }
+                .padding(.bottom, 8)
+            } else if case .completed = fileTransferManager.state {
+                UploadProgressOverlay(state: fileTransferManager.state) {
+                    fileTransferManager.reset()
+                }
+                .padding(.bottom, 8)
+            }
+            
+            // Selected file preview
+            if let fileName = fileTransferManager.selectedFileName,
+               let fileData = fileTransferManager.selectedFileData,
+               case .idle = fileTransferManager.state {
+                SelectedFilePreview(
+                    fileName: fileName,
+                    fileSize: fileData.count,
+                    onRemove: { fileTransferManager.reset() }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            
             // Reply preview
             if let replyTo = replyTo {
                 HStack {
@@ -59,7 +93,13 @@ struct MessageForm<T: XXDKP>: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            HStack(spacing: 0) {
+            HStack(spacing: 8) {
+                // File attachment button (only for channels, not DMs)
+                if chat?.dmToken == nil {
+                    FileAttachmentButton(showFilePicker: $showFilePicker)
+                        .padding(.leading, 8)
+                }
+                
                 TextField(
                     "",
                     text: $abc,
@@ -74,7 +114,17 @@ struct MessageForm<T: XXDKP>: View {
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 40))
 
-                if !abc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                if fileTransferManager.selectedFileData != nil && abc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    // Send file button
+                    Button(action: sendFile) {
+                        Image(systemName: "arrow.up.doc.fill")
+                            .padding(.vertical, 4)
+                    }.tint(.haven)
+                        .buttonStyle(.borderedProminent)
+                        .padding(.trailing, 6)
+                        .buttonBorderShape(.circle)
+                        .transition(.scale.combined(with: .opacity))
+                } else if !abc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     && !isSendingMessage
                 {
                     Button(action: sendMessage) {
@@ -82,7 +132,7 @@ struct MessageForm<T: XXDKP>: View {
                             .padding(.vertical, 4)
                     }.tint(.haven)
                         .buttonStyle(.borderedProminent)
-                        .padding(.horizontal, 6)
+                        .padding(.trailing, 6)
                         .buttonBorderShape(.circle)
                         .transition(.scale.combined(with: .opacity))
                 }
@@ -91,24 +141,34 @@ struct MessageForm<T: XXDKP>: View {
                     ProgressView()
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 8)
             .padding(.top, 10)
             .animation(
                 .spring(response: 0.3, dampingFraction: 0.7),
                 value: abc.isEmpty
             )
+            .animation(
+                .spring(response: 0.3, dampingFraction: 0.7),
+                value: fileTransferManager.selectedFileName
+            )
 
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: replyTo?.id)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: fileTransferManager.state)
         .background(.bottomNav).background(.ultraThinMaterial)
+        .sheet(isPresented: $showFilePicker) {
+            FilePickerSheet(isPresented: $showFilePicker, manager: fileTransferManager)
+        }
     }
 
     private func sendMessage() {
+        // Guard against double-submission
+        guard !isSendingMessage else { return }
+        let trimmed = abc.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
         withAnimation {
             isSendingMessage = true
         }
-        let trimmed = abc.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
 
         if let chat = chat {
             if let token = chat.dmToken {
@@ -162,6 +222,11 @@ struct MessageForm<T: XXDKP>: View {
         }
         abc = ""
         onCancelReply?()
+    }
+    
+    private func sendFile() {
+        guard let chat = chat, chat.dmToken == nil else { return }
+        fileTransferManager.uploadAndSend(xxdk: xxdk, channelId: chat.id)
     }
 }
 

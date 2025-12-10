@@ -257,4 +257,37 @@ public class XXDKMock: XXDKP {
         // Mock: return false
         return false
     }
+    
+    // MARK: - File Transfer API (Mock)
+    
+    func initChannelsFileTransfer(paramsJson: Data?) throws {
+        // Mock: no-op
+    }
+    
+    func uploadFile(fileData: Data, retry: Float, progressCB: FtSentProgressCallback, periodMS: Int) throws -> Data {
+        // Mock: return empty file ID
+        return Data()
+    }
+    
+    func sendFile(channelId: String, fileLinkJSON: Data, fileName: String, fileType: String, preview: Data?, validUntilMS: Int) throws -> ChannelSendReportJSON {
+        // Mock: return empty report
+        return ChannelSendReportJSON(messageID: nil, ephId: nil)
+    }
+    
+    func retryFileUpload(fileIDBytes: Data, progressCB: FtSentProgressCallback, periodMS: Int) throws {
+        // Mock: no-op
+    }
+    
+    func closeFileSend(fileIDBytes: Data) throws {
+        // Mock: no-op
+    }
+    
+    func registerFileProgressCallback(fileIDBytes: Data, progressCB: FtSentProgressCallback, periodMS: Int) throws {
+        // Mock: no-op
+    }
+    
+    func downloadFile(fileInfoJSON: Data, progressCB: FtReceivedProgressCallback, periodMS: Int) throws -> Data {
+        // Mock: return empty file ID
+        return Data()
+    }
 }

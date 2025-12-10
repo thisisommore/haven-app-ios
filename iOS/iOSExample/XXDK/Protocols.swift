@@ -10,6 +10,26 @@ import Bindings
 import SwiftData
 import Foundation
 
+/// Callback protocol for file upload progress updates
+public protocol FtSentProgressCallback: AnyObject {
+    /// Called with progress updates during file upload
+    /// - Parameters:
+    ///   - payload: JSON of FtSentProgress
+    ///   - partTracker: ChFilePartTracker instance
+    ///   - error: Fatal error (requires RetryUpload or CloseSend)
+    func callback(payload: Data, partTracker: Any?, error: Error?)
+}
+
+/// Callback protocol for file download progress updates
+public protocol FtReceivedProgressCallback: AnyObject {
+    /// Called with progress updates during file download
+    /// - Parameters:
+    ///   - payload: JSON of FtReceivedProgress
+    ///   - fileData: The downloaded file data (available when completed)
+    ///   - partTracker: ChFilePartTracker instance
+    ///   - error: Fatal error if download failed
+    func callback(payload: Data, fileData: Data?, partTracker: Any?, error: Error?)
+}
 
  protocol XXDKP: ObservableObject, AnyObject {
     var status: String {get};
@@ -49,6 +69,14 @@ import Foundation
     func getMutedUsers(channelId: String) throws -> [Data]
     func muteUser(channelId: String, pubKey: Data, mute: Bool) throws
     func isMuted(channelId: String) -> Bool
+    // File Transfer API
+    func initChannelsFileTransfer(paramsJson: Data?) throws
+    func uploadFile(fileData: Data, retry: Float, progressCB: FtSentProgressCallback, periodMS: Int) throws -> Data
+    func sendFile(channelId: String, fileLinkJSON: Data, fileName: String, fileType: String, preview: Data?, validUntilMS: Int) throws -> ChannelSendReportJSON
+    func retryFileUpload(fileIDBytes: Data, progressCB: FtSentProgressCallback, periodMS: Int) throws
+    func closeFileSend(fileIDBytes: Data) throws
+    func registerFileProgressCallback(fileIDBytes: Data, progressCB: FtSentProgressCallback, periodMS: Int) throws
+    func downloadFile(fileInfoJSON: Data, progressCB: FtReceivedProgressCallback, periodMS: Int) throws -> Data
 }
 // These are common helpers extending the string class which are essential for working with XXDK
 extension StringProtocol {

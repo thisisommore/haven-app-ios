@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build App",
+            "type": "sweetpad",
+            "action": "build",
+            "scheme": "iOSExample", // Change this to your actual scheme name (e.g. "MyApp")
+            "configuration": "Debug",
+            "problemMatcher": [
+                "$sweetpad-xcodebuild-default",
+                "$sweetpad-xcbeautify-errors",
+                "$sweetpad-xcbeautify-warnings"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

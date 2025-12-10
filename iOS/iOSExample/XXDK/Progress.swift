@@ -17,6 +17,7 @@ public enum XXDKProgressStatus {
     case connectingToNodes
     case settingUpRemoteKV
     case waitingForNetwork
+    case creatingE2e
     case preparingChannelsManager
     case joiningChannels
     case readyExistingUser
@@ -46,6 +47,8 @@ public enum XXDKProgressStatus {
             return "Setting up remote KV"
         case .waitingForNetwork:
             return "Waiting for network to be ready"
+        case .creatingE2e:
+            return "Setting up file transfer"
         case .preparingChannelsManager:
             return "Preparing channels manager"
         case .joiningChannels:
@@ -83,6 +86,8 @@ public enum XXDKProgressStatus {
         case .settingUpRemoteKV:
             return 7
         case .waitingForNetwork:
+            return 7
+        case .creatingE2e:
             return 7
         case .preparingChannelsManager:
             return 7
