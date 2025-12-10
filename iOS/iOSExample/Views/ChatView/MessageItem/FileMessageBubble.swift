@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import QuickLook
 
 /// Bubble for displaying file attachments in chat
 struct FileMessageBubble: View {
@@ -13,6 +14,8 @@ struct FileMessageBubble: View {
     let isIncoming: Bool
     let timestamp: String
     let isHighlighted: Bool
+    
+    @State private var previewURL: URL?
     
     var body: some View {
         VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
@@ -55,6 +58,25 @@ struct FileMessageBubble: View {
         .shadow(color: Color.haven.opacity(isHighlighted ? 0.5 : 0), radius: 8)
         .animation(.easeInOut(duration: 0.25), value: isHighlighted)
         .padding(.top, 6)
+        .onTapGesture {
+            openFile()
+        }
+        .quickLookPreview($previewURL)
+    }
+    
+    private func openFile() {
+        guard let fileData = message.fileData,
+              let fileName = message.fileName else { return }
+        
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileURL = tempDir.appendingPathComponent(fileName)
+        
+        do {
+            try fileData.write(to: fileURL)
+            previewURL = fileURL
+        } catch {
+            print("Failed to write file for preview: \(error)")
+        }
     }
     
     @ViewBuilder
@@ -88,11 +110,11 @@ struct FileMessageBubble: View {
                 .fill(Color.gray.opacity(0.2))
                 .frame(width: 200, height: 150)
             
-            VStack(spacing: 8) {
-                Image(systemName: "photo")
-                    .font(.largeTitle)
-                    .foregroundStyle(Color.gray)
-                Text("Image")
+            VStack(spacing: 12) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .haven))
+                    .scaleEffect(1.2)
+                Text("Downloading...")
                     .font(.caption)
                     .foregroundStyle(Color.gray)
             }
