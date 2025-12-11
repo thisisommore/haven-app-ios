@@ -841,7 +841,7 @@ public class XXDK: XXDKP {
         do {
             let reportData = try cm.sendReply(
                 channelIdData,
-                message: "<p>\(msg)</p>",
+                message: encodeMessage("<p>\(msg)</p>"),
                 messageToReactTo: replyToMessageId,
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
@@ -854,20 +854,7 @@ public class XXDK: XXDKP {
                 if let mid = report.messageID {
                     print(
                         "Channel sendReply messageID: \(mid.base64EncodedString())"
-                    )
-                    let chatId = channelId
-                    let defaultName: String = {
-                        if let actor = self.modelActor {
-                            let descriptor = FetchDescriptor<Chat>(
-                                predicate: #Predicate { $0.id == chatId }
-                            )
-                            if let found = try? actor.fetch(descriptor).first {
-                                return found.name
-                            }
-                        }
-                        return "Channel \(String(chatId.prefix(8)))"
-                    }()
-
+                    )  
                 } else {
                     print("Channel sendReply returned no messageID")
                 }
@@ -998,7 +985,7 @@ public class XXDK: XXDKP {
             let reportData = try DM.sendReply(
                 toPubKey,
                 partnerToken: partnerToken,
-                replyMessage: "<p>\(msg)</p>",
+                replyMessage: encodeMessage("<p>\(msg)</p>"),
                 replyToBytes: replyToMessageId,
                 leaseTimeMS: 0,
                 cmixParamsJSON: "".data
