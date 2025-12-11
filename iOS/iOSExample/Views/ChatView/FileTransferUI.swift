@@ -251,7 +251,7 @@ struct FileAttachmentButton: View {
         } label: {
             Image(systemName: "paperclip")
                 .font(.system(size: 20))
-                .foregroundStyle(.haven)
+                .foregroundStyle(.formBG)
         }
     }
 }
