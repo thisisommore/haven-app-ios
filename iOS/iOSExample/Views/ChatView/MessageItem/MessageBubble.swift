@@ -112,84 +112,96 @@ struct MessageBubble: View {
         }
     }
     
-    var body: some View {
-        Group {
-            if let link = parsedChannelLink {
-                // Message with channel preview
-                VStack(alignment: .leading, spacing: 0) {
-                    // Orange/colored section with message
-                VStack(alignment: .leading, spacing: 4) {
-                    if isIncoming && isFirstInGroup {
-                        MessageSender(
-                            isIncoming: isIncoming,
-                            sender: sender
-                        )
-                    }
-
-                    HStack(alignment: .top, spacing: 4) {
-                            Text(underlinedMarkdown)
-                                .font(.system(size: 16))
-                                .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-                                .tint(isIncoming ? .blue : .white)
-                                .lineLimit(isLinkExpanded ? nil : 1)
-                            
-                            if !isLinkExpanded {
-                                Button {
-                                    withAnimation { isLinkExpanded = true }
-                                } label: {
-                                    Text("expand")
-                                        .font(.system(size: 14))
-                                        .foregroundStyle(isIncoming ? Color.messageText.opacity(0.7) : Color.white.opacity(0.7))
-                                        .underline()
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            withAnimation { isLinkExpanded.toggle() }
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
-                    .background(isIncoming ? Color.messageBubble : Color.haven)
-                    
-                    // White section with channel preview (includes timestamp)
-                    ChannelInviteLinkPreview(
-                        link: link,
+    @ViewBuilder
+    private func channelLinkContent(link: ParsedChannelLink) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Orange/colored section with message
+            VStack(alignment: .leading, spacing: 4) {
+                if isIncoming && isFirstInGroup {
+                    MessageSender(
                         isIncoming: isIncoming,
-                        timestamp: timestamp
+                        sender: sender
                     )
                 }
-                .clipShape(bubbleShape)
-            } else {
-                // Regular message without preview
-                VStack(alignment: .leading, spacing: 4) {
-                    if isIncoming && isFirstInGroup {
-                        MessageSender(
-                            isIncoming: isIncoming,
-                            sender: sender
-                        )
-                    }
 
-                    HStack {
-                        Text(underlinedMarkdown)
+                HStack(alignment: .top, spacing: 4) {
+                    Text(underlinedMarkdown)
                         .font(.system(size: 16))
                         .foregroundStyle(isIncoming ? Color.messageText : Color.white)
                         .tint(isIncoming ? .blue : .white)
-                    }
+                        .lineLimit(isLinkExpanded ? nil : 1)
                     
-                    VStack(alignment: .trailing) {
-                        Text(timestamp).font(.system(size: 10)).foregroundStyle(
-                            isIncoming ? Color.messageText : Color.white
-                        )
+                    if !isLinkExpanded {
+                        Button {
+                            withAnimation { isLinkExpanded = true }
+                        } label: {
+                            Text("expand")
+                                .font(.system(size: 14))
+                                .foregroundStyle(isIncoming ? Color.messageText.opacity(0.7) : Color.white.opacity(0.7))
+                                .underline()
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation { isLinkExpanded.toggle() }
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
+            .background(isIncoming ? Color.messageBubble : Color.haven)
+            
+            // White section with channel preview (includes timestamp)
+            ChannelInviteLinkPreview(
+                link: link,
+                isIncoming: isIncoming,
+                timestamp: timestamp
+            )
+        }
+        .clipShape(bubbleShape)
+    }
+    
+    @ViewBuilder
+    private var regularMessageContent: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if isIncoming && isFirstInGroup {
+                MessageSender(
+                    isIncoming: isIncoming,
+                    sender: sender
+                )
+            }
+
+            (
+                Text(underlinedMarkdown)
+                    .font(.system(size: 16))
+                    .foregroundColor(isIncoming ? Color.messageText : Color.white)
+                + Text("    \(timestamp)")
+                    .font(.system(size: 10))
+                    .foregroundColor(.clear)
+            )
+            .tint(isIncoming ? .blue : .white)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .overlay(alignment: .bottomTrailing) {
+            Text(timestamp)
+                .font(.system(size: 10))
+                .foregroundStyle(isIncoming ? Color.messageText : Color.white)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
-                .background(isIncoming ? Color.messageBubble : Color.haven)
-                .clipShape(bubbleShape)
+        }
+        .background(isIncoming ? Color.messageBubble : Color.haven)
+        .clipShape(bubbleShape)
+    }
+    
+    var body: some View {
+        Group {
+            if let link = parsedChannelLink {
+                channelLinkContent(link: link)
+            } else {
+                regularMessageContent
             }
         }
         .contextMenu {
