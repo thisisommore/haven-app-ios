@@ -103,7 +103,7 @@ struct MessageForm<T: XXDKP>: View {
                 TextField(
                     "",
                     text: $abc,
-                    prompt: Text("Message").foregroundStyle(Color.placeHolder),  axis: .vertical
+                    axis: .vertical
                 ).lineLimit(1...10)
                 .onSubmit {
                     sendMessage()
