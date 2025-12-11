@@ -146,7 +146,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                             nickname = ""
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.haven)
                         }
                     }
                 }
