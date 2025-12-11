@@ -204,9 +204,29 @@ struct ChatView<T: XXDKP>: View {
                             DateSeparatorBadge(date: result.timestamp, isFirst: index == 0)
                         }
                         
+                        // Show sender name only for first message in a group (same sender, same date)
+                        let isFirstInGroup: Bool = {
+                            guard index > 0 else { return true }
+                            let prev = messages[index - 1]
+                            if showDateSeparator { return true }
+                            return result.sender?.id != prev.sender?.id
+                        }()
+                        
+                        // Check if this is last message in group
+                        let isLastInGroup: Bool = {
+                            guard index < messages.count - 1 else { return true }
+                            let next = messages[index + 1]
+                            // Next message on different date
+                            if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
+                            // Next message has different sender
+                            return result.sender?.id != next.sender?.id
+                        }()
+                        
                         ChatMessageRow(
                             result: result,
                             isAdmin: isAdmin,
+                            isFirstInGroup: isFirstInGroup,
+                            isLastInGroup: isLastInGroup,
                             onReply: { message in
                                 replyingTo = message
                             },

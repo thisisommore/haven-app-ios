@@ -13,6 +13,8 @@ struct MessageBubble: View {
     let text: String
     let isIncoming: Bool
     let sender: Sender?
+    let isFirstInGroup: Bool
+    let isLastInGroup: Bool
     let timestamp: String
     let isAdmin: Bool
     @Binding var selectedEmoji: MessageEmoji
@@ -26,10 +28,16 @@ struct MessageBubble: View {
     var onUnmute: ((Data) -> Void)?
     let isSenderMuted: Bool
     let isHighlighted: Bool
+    // Corner radius values
+    private let fullRadius: CGFloat = 16
+    private let smallRadius: CGFloat = 4
+    
     init(
         text: String,
         isIncoming: Bool,
         sender: Sender?,
+        isFirstInGroup: Bool = true,
+        isLastInGroup: Bool = true,
         timestamp: String,
         selectedEmoji: Binding<MessageEmoji>,
         shouldTriggerReply: Binding<Bool>,
@@ -44,6 +52,8 @@ struct MessageBubble: View {
         self.text = text
         self.isIncoming = isIncoming
         self.sender = sender
+        self.isFirstInGroup = isFirstInGroup
+        self.isLastInGroup = isLastInGroup
         self.timestamp = timestamp
         self.isAdmin = isAdmin
         self.onDM = onDM
@@ -81,6 +91,27 @@ struct MessageBubble: View {
         return attributed
     }
     
+    /// Dynamic corner radii based on group position
+    private var bubbleShape: UnevenRoundedRectangle {
+        if isIncoming {
+            // Incoming: left side changes based on position
+            return UnevenRoundedRectangle(
+                topLeadingRadius: isFirstInGroup ? fullRadius : smallRadius,
+                bottomLeadingRadius: isLastInGroup ? smallRadius : smallRadius,
+                bottomTrailingRadius: fullRadius,
+                topTrailingRadius: fullRadius
+            )
+        } else {
+            // Outgoing: right side changes based on position
+            return UnevenRoundedRectangle(
+                topLeadingRadius: fullRadius,
+                bottomLeadingRadius: fullRadius,
+                bottomTrailingRadius: isLastInGroup ? smallRadius : smallRadius,
+                topTrailingRadius: isFirstInGroup ? fullRadius : smallRadius
+            )
+        }
+    }
+    
     var body: some View {
         Group {
             if let link = parsedChannelLink {
@@ -88,7 +119,7 @@ struct MessageBubble: View {
                 VStack(alignment: .leading, spacing: 0) {
                     // Orange/colored section with message
                     VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
-                        if isIncoming {
+                        if isIncoming && isFirstInGroup {
                             MessageSender(
                                 isIncoming: isIncoming,
                                 sender: sender
@@ -131,18 +162,11 @@ struct MessageBubble: View {
                         timestamp: timestamp
                     )
                 }
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 16,
-                        bottomLeadingRadius: isIncoming ? 0 : 16,
-                        bottomTrailingRadius: isIncoming ? 16 : 0,
-                        topTrailingRadius: 16
-                    )
-                )
+                .clipShape(bubbleShape)
             } else {
                 // Regular message without preview
                 VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
-                    if isIncoming {
+                    if isIncoming && isFirstInGroup {
                         MessageSender(
                             isIncoming: isIncoming,
                             sender: sender
@@ -165,14 +189,7 @@ struct MessageBubble: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
                 .background(isIncoming ? Color.messageBubble : Color.haven)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 16,
-                        bottomLeadingRadius: isIncoming ? 0 : 16,
-                        bottomTrailingRadius: isIncoming ? 16 : 0,
-                        topTrailingRadius: 16
-                    )
-                )
+                .clipShape(bubbleShape)
             }
         }
         .contextMenu {
@@ -192,17 +209,12 @@ struct MessageBubble: View {
         }
         .id(sender)
         .overlay(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 16,
-                bottomLeadingRadius: isIncoming ? 0 : 16,
-                bottomTrailingRadius: isIncoming ? 16 : 0,
-                topTrailingRadius: 16
-            )
-            .stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
+            bubbleShape
+                .stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
         )
         .shadow(color: Color.haven.opacity(isHighlighted ? 0.5 : 0), radius: 8)
         .animation(.easeInOut(duration: 0.25), value: isHighlighted)
-        .padding(.top, 6)
+        .padding(.top, isFirstInGroup ? 6 : 2)
     }
 }
 //#Preview {

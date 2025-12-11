@@ -9,6 +9,8 @@ import SwiftUI
 struct ChatMessageRow: View {
     let result: ChatMessage
     let isAdmin: Bool
+    let isFirstInGroup: Bool
+    let isLastInGroup: Bool
     var onReply: ((ChatMessage) -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: ((ChatMessage) -> Void)?
@@ -25,9 +27,11 @@ struct ChatMessageRow: View {
         highlightedMessageId == result.id
     }
     
-    init(result: ChatMessage, isAdmin: Bool = false, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
+    init(result: ChatMessage, isAdmin: Bool = false, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
         self.result = result
         self.isAdmin = isAdmin
+        self.isFirstInGroup = isFirstInGroup
+        self.isLastInGroup = isLastInGroup
         self.onReply = onReply
         self.onDelete = onDelete
         self.onMute = onMute
@@ -61,6 +65,8 @@ struct ChatMessageRow: View {
                     repliedTo: repliedTo.first?.message,
                     repliedToId: result.replyTo,
                     sender: messageSender.first,
+                    isFirstInGroup: isFirstInGroup,
+                    isLastInGroup: isLastInGroup,
                     onReply: {
                         onReply?(result)
                     },

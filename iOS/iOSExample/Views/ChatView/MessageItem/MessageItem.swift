@@ -7,6 +7,8 @@ struct MessageItem: View {
     let repliedTo: String?
     let repliedToId: String?
     let sender: Sender?
+    let isFirstInGroup: Bool
+    let isLastInGroup: Bool
     let timeStamp: String
     let isAdmin: Bool
     
@@ -22,12 +24,14 @@ struct MessageItem: View {
     var onScrollToReply: ((String) -> Void)?
     let isHighlighted: Bool
 
-    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: Sender?, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false, chatMessage: ChatMessage? = nil) {
+    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: Sender?, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false, chatMessage: ChatMessage? = nil) {
         self.text = text
         self.isIncoming = isIncoming
         self.repliedTo = repliedTo
         self.repliedToId = repliedToId
         self.sender = sender
+        self.isFirstInGroup = isFirstInGroup
+        self.isLastInGroup = isLastInGroup
         self.onReply = onReply
         self.onDM = onDM
         self.onDelete = onDelete
@@ -86,6 +90,8 @@ struct MessageItem: View {
                             text: text,
                             isIncoming: isIncoming,
                             sender: sender,
+                            isFirstInGroup: isFirstInGroup,
+                            isLastInGroup: isLastInGroup,
                             timestamp: timeStamp,
                             selectedEmoji: $selectedEmoji,
                             shouldTriggerReply: $shouldTriggerReply,
