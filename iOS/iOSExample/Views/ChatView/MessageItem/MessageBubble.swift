@@ -118,15 +118,15 @@ struct MessageBubble: View {
                 // Message with channel preview
                 VStack(alignment: .leading, spacing: 0) {
                     // Orange/colored section with message
-                    VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
-                        if isIncoming && isFirstInGroup {
-                            MessageSender(
-                                isIncoming: isIncoming,
-                                sender: sender
-                            )
-                        }
+                VStack(alignment: .leading, spacing: 4) {
+                    if isIncoming && isFirstInGroup {
+                        MessageSender(
+                            isIncoming: isIncoming,
+                            sender: sender
+                        )
+                    }
 
-                        HStack(alignment: .top, spacing: 4) {
+                    HStack(alignment: .top, spacing: 4) {
                             Text(underlinedMarkdown)
                                 .font(.system(size: 16))
                                 .foregroundStyle(isIncoming ? Color.messageText : Color.white)
@@ -165,7 +165,7 @@ struct MessageBubble: View {
                 .clipShape(bubbleShape)
             } else {
                 // Regular message without preview
-                VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
+                VStack(alignment: .leading, spacing: 4) {
                     if isIncoming && isFirstInGroup {
                         MessageSender(
                             isIncoming: isIncoming,
