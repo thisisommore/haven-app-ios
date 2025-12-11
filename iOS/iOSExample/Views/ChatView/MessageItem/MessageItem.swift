@@ -46,7 +46,7 @@ struct MessageItem: View {
         _shouldTriggerReply = State(initialValue: shouldTriggerReply)
         _selectedEmoji = State(initialValue: selectedEmoji)
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm a"
+        formatter.timeStyle = .short
         self.timeStamp = formatter.string(from: timestamp)
     }
     @State private var isEmojiSheetPresented = false
