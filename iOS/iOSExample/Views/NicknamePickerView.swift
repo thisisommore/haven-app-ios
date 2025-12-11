@@ -80,37 +80,37 @@ struct NicknamePickerView<T: XXDKP>: View {
                     }
                 
                 VStack(spacing: 12) {
-                    mockMessage("Hey there! 👋", sender: "Alice", isOutgoing: false)
-                    mockMessage("Hello! How are you?", sender: displayName, isOutgoing: true)
-                    mockMessage("Love the new nickname!", sender: "Alice", isOutgoing: false)
+                    mockMessage("Hey there! 👋", sender: displayName, isFromYou: true)
+                    mockMessage("Nice to meet you!", sender: "Alice", isFromYou: false)
                 }
                 .padding(20)
             }
-            .frame(height: 220)
+            .frame(height: 160)
             .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
         }
     }
     
-    private func mockMessage(_ text: String, sender: String, isOutgoing: Bool) -> some View {
+    /// Shows message from receiver's perspective - your messages appear as incoming to them
+    private func mockMessage(_ text: String, sender: String, isFromYou: Bool) -> some View {
         HStack(alignment: .top, spacing: 8) {
-            if isOutgoing { Spacer() }
+            if !isFromYou { Spacer() }
             
-            VStack(alignment: isOutgoing ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: isFromYou ? .leading : .trailing, spacing: 4) {
                 Text(sender)
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundStyle(isOutgoing ? .haven : .secondary)
+                    .foregroundStyle(isFromYou ? .haven : .secondary)
                 
                 Text(text)
                     .font(.subheadline)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(isOutgoing ? Color.haven : Color(.systemGray5))
-                    .foregroundStyle(isOutgoing ? .white : .primary)
+                    .background(isFromYou ? Color(.systemGray5) : Color.haven)
+                    .foregroundColor(isFromYou ? .primary : .white)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             
-            if !isOutgoing { Spacer() }
+            if isFromYou { Spacer() }
         }
     }
     
