@@ -399,7 +399,7 @@ struct SelectedFilePreview: View {
     }
 }
 
-// MARK: - Photo Picker Sheet
+// MARK: - File Picker Sheet
 struct FilePickerSheet: View {
     @Binding var isPresented: Bool
     @ObservedObject var manager: FileTransferManager
@@ -407,35 +407,51 @@ struct FilePickerSheet: View {
     @State private var showDocumentPicker = false
     
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    PhotosPicker(selection: $selectedItem, matching: .images) {
-                        Label("Choose Photo", systemImage: "photo")
-                    }
-                    
-                    Button {
-                        showDocumentPicker = true
-                    } label: {
-                        Label("Choose File", systemImage: "doc")
-                    }
-                } header: {
-                    Text("Select a file to send")
-                } footer: {
-                    Text("Maximum file size: 250 KB")
-                        .foregroundStyle(.secondary)
+        VStack(spacing: 0) {
+            // Drag indicator
+            RoundedRectangle(cornerRadius: 2.5)
+                .fill(Color(.systemGray4))
+                .frame(width: 36, height: 5)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
+            
+            // Options row
+            HStack(spacing: 32) {
+                // Photo option
+                PhotosPicker(selection: $selectedItem, matching: .images) {
+                    attachmentOption(
+                        icon: "photo.fill",
+                        title: "Photo",
+                        color: .blue
+                    )
                 }
-            }
-            .navigationTitle("Attach File")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        isPresented = false
-                    }
+                .buttonStyle(.plain)
+                
+                // File option
+                Button {
+                    showDocumentPicker = true
+                } label: {
+                    attachmentOption(
+                        icon: "doc.fill",
+                        title: "File",
+                        color: .haven
+                    )
                 }
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 40)
+            
+            // Size limit hint
+            Text("Max 250 KB")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
         }
+        .padding(.bottom, 16)
+        .presentationDetents([.height(180)])
+        .presentationDragIndicator(.hidden)
+        .presentationCornerRadius(24)
         .onChange(of: selectedItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -460,6 +476,24 @@ struct FilePickerSheet: View {
             case .failure(let error):
                 print("File import failed: \(error)")
             }
+        }
+    }
+    
+    private func attachmentOption(icon: String, title: String, color: Color) -> some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .foregroundStyle(color)
+            }
+            
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
         }
     }
 }
