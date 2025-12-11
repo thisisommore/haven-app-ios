@@ -76,15 +76,36 @@ public class XXDK: XXDKP {
                 // Handle special case: .final forces 100%
                 if status.increment == -1 {
                     self.statusPercentage = 100.0
+                    Self.playCompletionHaptic()
                 } else {
                     // Increment the percentage, capping at 100
-                    self.statusPercentage = min(self.statusPercentage + status.increment, 100.0)
+                    let _statusPercentage = min(self.statusPercentage + status.increment, 100.0)
+                    if _statusPercentage == 100.0 && self.statusPercentage < 100.0 {
+                                           Self.playCompletionHaptic()
+                    }
+                    self.statusPercentage = _statusPercentage
                 }
             }
         }
     }
 
-
+    /// Plays a subtle, satisfying haptic pattern for completion events
+       private static func playCompletionHaptic() {
+           // Layered haptic: soft tap + success notification for depth
+           let soft = UIImpactFeedbackGenerator(style: .soft)
+           let notif = UINotificationFeedbackGenerator()
+           
+           soft.prepare()
+           notif.prepare()
+           
+           // Soft lead-in
+           soft.impactOccurred(intensity: 0.4)
+           
+           // Main satisfying success after tiny delay
+           DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+               notif.notificationOccurred(.success)
+           }
+       }
     private var downloadedNdf: Data?
     private var nsLock = NSLock()
     private func lockTask() {
@@ -97,8 +118,7 @@ public class XXDK: XXDKP {
     @Published var status: String = "..."
     @Published var statusPercentage: Double = 0
     @Published var codename: String?
-    var codeset: Int = 0
-    private var isNewUser: Bool = false
+    @Published var codeset: Int = 0
     // Channels Manager retained for channel sends
     private var channelsManager: Bindings.BindingsChannelsManager?
     private var stateDir: URL
@@ -185,7 +205,6 @@ public class XXDK: XXDKP {
                     at: stateDir,
                     withIntermediateDirectories: true
                 )
-                isNewUser = true
             }
             stateDir = stateDir.appendingPathComponent("ekv")
                // ⭐ IMPORTANT: Create ekv directory if it doesn't exist
@@ -246,7 +265,7 @@ public class XXDK: XXDKP {
         // Ensure immediate sending is enabled per user request
         params.Network.EnableImmediateSending = true
         let cmixParamsJSON = try! Parser.encodeCMixParams(params)
-        if isNewUser {
+        if !(sm.isSetupComplete) {
 
             guard let downloadedNdf else {
                 fatalError("no ndf downloaded yet")
@@ -366,6 +385,7 @@ public class XXDK: XXDKP {
                 let identity = try Parser.decodeIdentity(from: pubId)
 
                 await MainActor.run {
+                    self.codeset = identity.codeset
                     self.codename = identity.codename
                 }
 
@@ -512,7 +532,7 @@ public class XXDK: XXDKP {
             let extensionJSON = try JSONEncoder().encode(extensionIDs)
             print("[FT] Extension builders JSON: \(String(data: extensionJSON, encoding: .utf8) ?? "nil")")
 
-            if isNewUser {
+            if !(sm?.isSetupComplete ?? false) {
                 
                 guard
                     let cm = Bindings.BindingsNewChannelsManager(
@@ -558,12 +578,12 @@ public class XXDK: XXDKP {
                 self.channelsManager = cm
             }
 
-            if !isNewUser {
+            if sm?.isSetupComplete ?? false {
                 // Finalize status: ready for new users
                 await progress(.readyExistingUser)
                 return
             }
-            isNewUser = false
+ 
             // Update status: joining channels
             await progress(.joiningChannels)
             while true {
@@ -780,7 +800,7 @@ public class XXDK: XXDKP {
         do {
             let reportData = try cm.sendMessage(
                 channelIdData,
-                message: encodeMessage(msg),
+                message: encodeMessage("<p>\(msg)</p>"),
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
@@ -791,21 +811,8 @@ public class XXDK: XXDKP {
                 )
                 if let mid = report.messageID {
                     print(
-                        "Channel sendMessage messageID: \(mid.base64EncodedString())"
+                        "Channel sendMessage messageID: \(msg) \(mid.base64EncodedString())"
                     )
-                    let chatId = channelId
-                    let defaultName: String = {
-                        if let actor = self.modelActor {
-                            let descriptor = FetchDescriptor<Chat>(
-                                predicate: #Predicate { $0.id == chatId }
-                            )
-                            if let found = try? actor.fetch(descriptor).first {
-                                return found.name
-                            }
-                        }
-                        return "Channel \(String(chatId.prefix(8)))"
-                    }()
-
                 } else {
                     print("Channel sendMessage returned no messageID")
                 }
@@ -834,7 +841,7 @@ public class XXDK: XXDKP {
         do {
             let reportData = try cm.sendReply(
                 channelIdData,
-                message: encodeMessage(msg),
+                message: "<p>\(msg)</p>",
                 messageToReactTo: replyToMessageId,
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
@@ -991,7 +998,7 @@ public class XXDK: XXDKP {
             let reportData = try DM.sendReply(
                 toPubKey,
                 partnerToken: partnerToken,
-                replyMessage: msg,
+                replyMessage: "<p>\(msg)</p>",
                 replyToBytes: replyToMessageId,
                 leaseTimeMS: 0,
                 cmixParamsJSON: "".data
@@ -1409,60 +1416,126 @@ public class XXDK: XXDKP {
     }
     
     /// Create a new channel
-    public func createChannel(name: String, description: String, privacyLevel: PrivacyLevel, enableDms: Bool) async throws -> ChannelJSON {
-        guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
-        }
-        var err: NSError?
-        let channelDataString = cm.generateChannel(name, description: description, privacyLevel: privacyLevel == .secret ? 2 : 0, error: &err)
-        if let error = err {
-            throw error
-        }
-        guard let channelData = channelDataString.data(using: .utf8) else {
-            throw MyError.runtimeError("Failed to encode channel data")
-        }
-        return try Parser.decodeChannel(from: channelData)
-    }
+       /// - Parameters:
+       ///   - name: The channel name
+       ///   - description: The channel description
+       ///   - privacyLevel: Public or Secret
+       ///   - enableDms: Whether to enable direct messages
+       /// - Returns: Decoded ChannelJSON containing channel information
+       /// - Throws: Error if creation or joining fails
+       public func createChannel(
+           name: String,
+           description: String,
+           privacyLevel: PrivacyLevel,
+           enableDms: Bool = true
+       ) async throws -> ChannelJSON {
+           guard let cm = channelsManager else {
+               throw MyError.runtimeError("Channels Manager not initialized")
+           }
+           
+           var err: NSError?
+           
+           // Generate channel and get prettyPrint
+           let prettyPrint = cm.generateChannel(
+               name,
+               description: description,
+               privacyLevel: privacyLevel.rawValue,
+               error: &err
+           )
+           
+           if let error = err {
+               throw error
+           }
+           
+           // Join the channel
+           let channel = try await joinChannel(prettyPrint)
+           
+           guard let channelId = channel.channelId else {
+               throw MyError.runtimeError("ChannelID was not found")
+           }
+           
+           // Enable or disable DMs based on preference
+           if enableDms {
+               try enableDirectMessages(channelId: channelId)
+           } else {
+               try disableDirectMessages(channelId: channelId)
+           }
+           
+           return channel
+       }
     
-    /// Get share URL for a channel
+    /// Get the share URL for a channel
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64-encoded)
+    ///   - host: The base URL for the join link (e.g., "https://example.com/join")
+    /// - Returns: The share URL string, or nil if unavailable
+    /// - Throws: Error if GetShareURL fails or channels manager is not initialized
     public func getShareURL(channelId: String, host: String) throws -> String? {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
+        guard let cmixInstance = cmix else {
+            throw MyError.runtimeError("Cmix not initialized")
+        }
+        
+        let channelIdData =
+            Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        let resultData = try cm.getShareURL(cmixInstance.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData)
+        let response = try Parser.decodeShareURL(from: resultData)
+        return response.url
+    }
+    
+    /// Check if current user is admin of a channel
+    /// - Parameter channelId: The channel ID (base64-encoded)
+    /// - Returns: True if user is admin, false otherwise
+    public func isChannelAdmin(channelId: String) -> Bool {
+        guard let cm = channelsManager else {
+            return false
+        }
         
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
-        let urlData = try cm.getShareURL(0, host: host, maxUses: 0, channelIdBytes: channelIdData)
-        return urlData.utf8
-    }
-    
-    /// Check if user is admin of a channel
-    public func isChannelAdmin(channelId: String) -> Bool {
-        guard let cm = channelsManager else { return false }
-        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
         var result = ObjCBool(false)
-        try? cm.isChannelAdmin(channelIdData, ret0_: &result)
-        return result.boolValue
+        do {
+            try cm.isChannelAdmin(channelIdData, ret0_: &result)
+            return result.boolValue
+        } catch {
+            print("isChannelAdmin failed: \(error)")
+            return false
+        }
     }
+
     
-    /// Export channel admin key
+    /// Export the admin key for a channel
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64 encoded)
+    ///   - encryptionPassword: Password to encrypt the exported key
+    /// - Returns: The encrypted admin key as a string
     public func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw NSError(domain: "XXDK", code: -1, userInfo: [NSLocalizedDescriptionKey: "Channel manager not initialized"])
         }
+        
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
-        let keyData = try cm.exportChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword)
-        return keyData.base64EncodedString()
+        
+        let result = try cm.exportChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword)
+        return String(data: result, encoding: .utf8) ?? ""
     }
     
-    /// Import channel admin key
+    /// Import an admin key for a channel
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64 encoded)
+    ///   - encryptionPassword: Password to decrypt the key
+    ///   - privateKey: The encrypted private key string
     public func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw NSError(domain: "XXDK", code: -1, userInfo: [NSLocalizedDescriptionKey: "Channel manager not initialized"])
         }
+        
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
-        guard let privateKeyData = Data(base64Encoded: privateKey) else {
-            throw MyError.runtimeError("Invalid private key encoding")
-        }
+        let privateKeyData = privateKey.data(using: .utf8) ?? Data()
+        
         try cm.importChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKeyData)
     }
     
@@ -1474,96 +1547,166 @@ public class XXDK: XXDKP {
         return try cmix.ekvGet("MyPrivateIdentity")
     }
     
-    /// Import identity from encrypted data
+    /// Import a private identity using a password
+    /// - Parameters:
+    ///   - password: The password to decrypt the identity
+    ///   - data: The encrypted identity data
+    /// - Returns: The decrypted private identity data
+    /// - Throws: Error if import fails
     public func importIdentity(password: String, data: Data) throws -> Data {
         var err: NSError?
-        guard let identity = Bindings.BindingsImportPrivateIdentity(password, data, &err) else {
-            throw err ?? MyError.runtimeError("Failed to import identity")
-        }
+        let imported = Bindings.BindingsImportPrivateIdentity(password, data, &err)
+        
         if let error = err {
             throw error
         }
-        return identity
+        
+        guard let result = imported else {
+            throw MyError.runtimeError("Import returned nil")
+        }
+        
+        return result
     }
     
-    /// Delete a message from a channel
+    /// Delete a message from a channel (admin or message owner only)
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64-encoded)
+    ///   - messageId: The message ID (base64-encoded)
     public func deleteMessage(channelId: String, messageId: String) {
         guard let cm = channelsManager else {
             print("deleteMessage: Channels Manager not initialized")
             return
         }
+        
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
         guard let messageIdData = Data(base64Encoded: messageId) else {
             print("deleteMessage: invalid message id base64")
             return
         }
+        
         do {
-            try cm.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: Data())
+            try cm.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
             print("Successfully deleted message: \(messageId)")
         } catch {
-            print("deleteMessage failed: \(error)")
+            print("deleteMessage failed: \(error.localizedDescription)")
         }
     }
     
-    /// Logout and clear state
-    public func logout() async {
-        // Stop network follower if running
-        try? cmix?.stopNetworkFollower()
-        
-        // Clear references
-        channelsManager = nil
-        channelsFileTransfer = nil
-        e2e = nil
-        DM = nil
-        
-        // Clear downloaded NDF to force re-download
-        downloadedNdf = nil
-        
-        await MainActor.run {
-            codename = nil
-            codeset = 0
-            status = "..."
-            statusPercentage = 0
+    /// Logout and delete all local data
+        public func logout() async {
+            // Stop network follower
+            try! cmix?.stopNetworkFollower()
+            
+            // Clear references
+            channelsManager = nil
+            DM = nil
+            cmix = nil
+            remoteKV = nil
+            storageTagListener = nil
+            eventModelBuilder = nil
+            e2e = nil
+            // Delete all XXDK directories
+            let basePath = try? FileManager.default.url(
+                for: .documentDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: false
+            )
+            
+            if let basePath {
+                // Delete xxAppState directory (contains ekv)
+                let appStateDir = basePath.appendingPathComponent("xxAppState")
+                try? FileManager.default.removeItem(at: appStateDir)
+                
+                // Delete any other XXDK related directories
+                let contents = try? FileManager.default.contentsOfDirectory(at: basePath, includingPropertiesForKeys: nil)
+                contents?.forEach { url in
+                    let name = url.lastPathComponent
+                    // Remove channels, dm, and any xx-related directories
+                    if name.contains("channel") || name.contains("dm") || name.hasPrefix("xx") {
+                        try? FileManager.default.removeItem(at: url)
+                    }
+                }
+            }
+            
+            // Clear downloaded NDF to force re-download
+            downloadedNdf = nil
+            
+            // Reset published state
+            await MainActor.run {
+                self.codename = nil
+                self.codeset = 0
+                self.status = "..."
+                self.statusPercentage = 0
+            }
         }
-    }
     
     /// Get muted users for a channel
+    /// - Parameter channelId: The channel ID (base64-encoded)
+    /// - Returns: Array of public keys (Data) of muted users
     public func getMutedUsers(channelId: String) throws -> [Data] {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
-        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
-        let mutedData = try cm.getMutedUsers(channelIdData)
         
-        // Parse the JSON array of muted user public keys
-        guard let jsonArray = try? JSONSerialization.jsonObject(with: mutedData) as? [[String: Any]] else {
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        let resultData = try cm.getMutedUsers(channelIdData)
+        
+        // Debug: print raw response
+        print("getMutedUsers raw response: \(resultData.utf8)")
+        
+        // Parse JSON array of base64 encoded public keys
+        guard let jsonArray = try? JSONSerialization.jsonObject(with: resultData) as? [String] else {
+            print("getMutedUsers: Failed to parse as [String], trying other formats...")
+            // Try parsing as array of objects
+            if let jsonObjects = try? JSONSerialization.jsonObject(with: resultData) {
+                print("getMutedUsers parsed object: \(jsonObjects)")
+            }
             return []
         }
         
-        return jsonArray.compactMap { dict -> Data? in
-            guard let pubkeyB64 = dict["pubkey"] as? String else { return nil }
-            return Data(base64Encoded: pubkeyB64)
-        }
+        print("getMutedUsers parsed \(jsonArray.count) users")
+        return jsonArray.compactMap { Data(base64Encoded: $0) }
     }
     
     /// Mute or unmute a user in a channel
+    /// - Parameters:
+    ///   - channelId: The channel ID (base64-encoded)
+    ///   - pubKey: The public key of the user to mute/unmute
+    ///   - mute: True to mute, false to unmute
     public func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
+        
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
-        try cm.muteUser(channelIdData, mutedUserPubKeyBytes: pubKey, undoAction: !mute, validUntilMS: 0, cmixParamsJSON: Data())
+        
+        try cm.muteUser(channelIdData, mutedUserPubKeyBytes: pubKey, undoAction: !mute, validUntilMS: Int(Bindings.BindingsValidForeverBindings), cmixParamsJSON: "".data)
+        
+        print("Successfully \(mute ? "muted" : "unmuted") user in channel: \(channelId)")
     }
     
     /// Check if current user is muted in a channel
+    /// - Parameter channelId: The channel ID (base64-encoded)
+    /// - Returns: True if current user is muted
     public func isMuted(channelId: String) -> Bool {
-        // Check if user is in the muted users list
-        guard let mutedUsers = try? getMutedUsers(channelId: channelId),
-              let myPubKey = DM?.getPublicKey() else {
+        guard let cm = channelsManager else {
             return false
         }
-        return mutedUsers.contains(myPubKey)
+        
+        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        
+        var result = ObjCBool(false)
+        do {
+            try cm.muted(channelIdData, ret0_: &result)
+            return result.boolValue
+        } catch {
+            print("isMuted failed: \(error)")
+            return false
+        }
     }
+
     
     // MARK: - File Transfer API
     
