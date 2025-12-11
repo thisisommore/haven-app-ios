@@ -1801,5 +1801,47 @@ public class XXDK: XXDKP {
         print("[FT] downloadFile called - fileInfoJSON: \(fileInfoJSON.count) bytes")
         return try ft.download(fileInfoJSON: fileInfoJSON, progressCB: progressCB, periodMS: periodMS)
     }
+    
+    // MARK: - Channel Nickname API
+    public func getChannelNickname(channelId: String) throws -> String {
+        guard let cm = channelsManager else {
+            throw MyError.runtimeError("Channels Manager not initialized")
+        }
+        guard let channelIdBytes = Data(base64Encoded: channelId) else {
+            throw NSError(domain: "XXDK", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid channel ID"])
+        }
+        var err: NSError?
+        let nickname = cm.getNickname(channelIdBytes, error: &err)
+        if let err = err { throw err }
+        return nickname
+    }
+    
+    public func setChannelNickname(channelId: String, nickname: String) throws {
+        guard let cm = channelsManager else {
+            throw MyError.runtimeError("Channels Manager not initialized")
+        }
+        guard let channelIdBytes = Data(base64Encoded: channelId) else {
+            throw NSError(domain: "XXDK", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid channel ID"])
+        }
+        try cm.setNickname(nickname, channelIDBytes: channelIdBytes)
+    }
+    
+    // MARK: - DM Nickname API
+    public func getDMNickname() throws -> String {
+        guard let dm = DM else {
+            throw MyError.runtimeError("DM Client not initialized")
+        }
+        var err: NSError?
+        let nickname = dm.getNickname(&err)
+        if let err = err { throw err }
+        return nickname
+    }
+    
+    public func setDMNickname(_ nickname: String) throws {
+        guard let dm = DM else {
+            throw MyError.runtimeError("DM Client not initialized")
+        }
+        try dm.setNickname(nickname)
+    }
 }
 

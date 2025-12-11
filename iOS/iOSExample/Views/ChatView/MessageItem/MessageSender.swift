@@ -20,7 +20,14 @@ struct MessageSender: View {
                     .font(.caption)
                     .foregroundStyle(.primary)
             } else if let sender {
-                Text(sender.codename).bold()
+                let hasNickname = sender.nickname != nil && !sender.nickname!.isEmpty
+                let displayName: String = {
+                    guard hasNickname else { return sender.codename }
+                    let nick = sender.nickname!
+                    let truncatedNick = nick.count > 10 ? String(nick.prefix(10)) + "…" : nick
+                    return "\(truncatedNick) aka \(sender.codename)"
+                }()
+                Text(displayName).bold()
                     .font(.caption)
                     .foregroundStyle(
                         Color(hexNumber: sender.color).adaptive(

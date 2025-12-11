@@ -69,6 +69,12 @@ public protocol FtReceivedProgressCallback: AnyObject {
     func getMutedUsers(channelId: String) throws -> [Data]
     func muteUser(channelId: String, pubKey: Data, mute: Bool) throws
     func isMuted(channelId: String) -> Bool
+    // Channel Nickname API
+    func getChannelNickname(channelId: String) throws -> String
+    func setChannelNickname(channelId: String, nickname: String) throws
+    // DM Nickname API (global nickname for all DM conversations)
+    func getDMNickname() throws -> String
+    func setDMNickname(_ nickname: String) throws
     // File Transfer API
     func initChannelsFileTransfer(paramsJson: Data?) throws
     func uploadFile(fileData: Data, retry: Float, progressCB: FtSentProgressCallback, periodMS: Int) throws -> Data

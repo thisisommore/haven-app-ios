@@ -64,6 +64,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var mutedUsers: [Data] = []
     @State private var showLeaveConfirmation: Bool = false
     @State private var showDeleteConfirmation: Bool = false
+    @State private var channelNickname: String = ""
+    @FocusState private var isNicknameFocused: Bool
     
     private var isDM: Bool {
         chat?.dmToken != nil
@@ -74,7 +76,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(isDM ? "Contact Name" : "Channel Name")
+                        Text(isDM ? "Name" : "Channel Name")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Text(chat?.name ?? "Unknown")
@@ -88,6 +90,40 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                 .foregroundColor(.secondary)
                             Text(description)
                                 .font(.body)
+                        }
+                    }
+                    
+                    if !isDM {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Your Nickname")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            HStack {
+                                TextField("Enter nickname (max 24 chars)", text: $channelNickname)
+                                    .focused($isNicknameFocused)
+                                    .onChange(of: channelNickname) { _, newValue in
+                                        if newValue.count > 24 {
+                                            channelNickname = String(newValue.prefix(24))
+                                        }
+                                    }
+                                if isNicknameFocused {
+                                    Button("Save") {
+                                        saveNickname()
+                                        isNicknameFocused = false
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.haven)
+                                }
+                            }
+                            if channelNickname.count > 10 {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(.orange)
+                                    Text("Nickname will be truncated to 10 chars in display")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                            }
                         }
                     }
                     
@@ -141,6 +177,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
                     } catch {
                         print("Failed to fetch muted users: \(error)")
+                    }
+                    do {
+                        channelNickname = try xxdk.getChannelNickname(channelId: channelId)
+                    } catch {
+                        print("Failed to fetch channel nickname: \(error)")
                     }
                 }
                 
@@ -350,6 +391,23 @@ struct ChannelOptionsView<T: XXDKP>: View {
     
     private func refreshAdminStatus() {
         isAdmin = chat?.isAdmin ?? false
+    }
+    
+    private func saveNickname() {
+        guard let channelId = chat?.id else { return }
+        do {
+            try xxdk.setChannelNickname(channelId: channelId, nickname: channelNickname)
+            withAnimation(.spring(response: 0.3)) {
+                toastMessage = "Nickname saved"
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation {
+                    toastMessage = nil
+                }
+            }
+        } catch {
+            print("Failed to save nickname: \(error)")
+        }
     }
 }
 

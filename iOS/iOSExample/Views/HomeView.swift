@@ -12,6 +12,8 @@ struct HomeView<T: XXDKP>: View {
     @State private var toastMessage: String?
     @State private var qrData: QRData?
     @State private var showLogoutAlert = false
+    @State private var showNicknamePicker = false
+    @State private var currentNickname: String?
     @Query private var chats: [Chat]
 
     @EnvironmentObject var xxdk: T
@@ -47,6 +49,10 @@ struct HomeView<T: XXDKP>: View {
                 HStack(spacing: 12) {
                     UserMenuButton(
                         codename: xxdk.codename,
+                        nickname: currentNickname,
+                        onNicknameTap: {
+                            showNicknamePicker = true
+                        },
                         onExport: {
                             showExportIdentitySheet = true
                         },
@@ -106,6 +112,12 @@ struct HomeView<T: XXDKP>: View {
                     }
                 }
             )
+        }
+        .sheet(isPresented: $showNicknamePicker) {
+            NicknamePickerView<T>(codename: xxdk.codename ?? "")
+                .onDisappear {
+                    loadCurrentNickname()
+                }
         }
         .sheet(isPresented: $showExportIdentitySheet) {
             ExportIdentitySheet(
@@ -176,6 +188,7 @@ struct HomeView<T: XXDKP>: View {
                     await xxdk.startNetworkFollower()
                 }
             }
+            loadCurrentNickname()
         }
         .navigationTitle("Chat")
         .navigationBarTitleDisplayMode(.large)
@@ -276,6 +289,15 @@ struct HomeView<T: XXDKP>: View {
             withAnimation {
                 toastMessage = nil
             }
+        }
+    }
+    
+    private func loadCurrentNickname() {
+        do {
+            let nickname = try xxdk.getDMNickname()
+            currentNickname = nickname.isEmpty ? nil : nickname
+        } catch {
+            currentNickname = nil
         }
     }
 }

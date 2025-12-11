@@ -3,9 +3,18 @@ import UIKit
 
 struct UserMenuButton: UIViewRepresentable {
     let codename: String?
+    let nickname: String?
+    let onNicknameTap: () -> Void
     let onExport: () -> Void
     let onShareQR: () -> Void
     let onLogout: () -> Void
+    
+    private var displayName: String {
+        if let nickname = nickname, !nickname.isEmpty {
+            return nickname
+        }
+        return codename ?? "Loading..."
+    }
     
     func makeUIView(context: Context) -> UIButton {
         let button = UIButton(type: .system)
@@ -22,13 +31,15 @@ struct UserMenuButton: UIViewRepresentable {
     func updateUIView(_ button: UIButton, context: Context) {
         let havenColor = UIColor(named: "Haven")
         
-        let codenameAction = UIAction(
-            title: codename ?? "Loading...",
-            attributes: .disabled
-        ) { _ in }
+        // Nickname/Codename action - tappable to edit nickname
+        let nameAction = UIAction(
+            title: displayName
+        ) { _ in
+            onNicknameTap()
+        }
         
-        var codenameMenu = UIMenu(options: .displayInline, children: [codenameAction])
-        codenameMenu.preferredElementSize = .small
+        let nameMenu = UIMenu(options: .displayInline, children: [nameAction])
+        nameMenu.preferredElementSize = .small
         
         let exportAction = UIAction(
             title: "Export",
@@ -54,7 +65,7 @@ struct UserMenuButton: UIViewRepresentable {
         
         let actionsMenu = UIMenu(options: .displayInline, children: [exportAction, shareQRAction, logoutAction])
         
-        button.menu = UIMenu(children: [codenameMenu, actionsMenu])
+        button.menu = UIMenu(children: [nameMenu, actionsMenu])
     }
 }
 

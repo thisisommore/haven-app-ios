@@ -34,6 +34,35 @@ struct ChatRowView<T: XXDKP>: View {
     private var isChannel: Bool {
         chat.name != "<self>" && chat.dmToken == nil
     }
+    
+    private var isDM: Bool {
+        chat.dmToken != nil
+    }
+    
+    /// For DMs, get the partner's nickname from their messages
+    private var dmPartnerNickname: String? {
+        guard isDM else { return nil }
+        // Find nickname from incoming message sender
+        return chat.messages
+            .first(where: { $0.isIncoming && $0.sender != nil })?
+            .sender?.nickname
+    }
+    
+    /// Truncate nickname to 10 chars for display
+    private func truncateNickname(_ nickname: String) -> String {
+        nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
+    }
+    
+    /// Display name for chat title
+    private var chatDisplayName: String {
+        if chat.name == "<self>" {
+            return "Notes"
+        }
+        if isDM, let nickname = dmPartnerNickname, !nickname.isEmpty {
+            return "\(truncateNickname(nickname)) aka \(chat.name)"
+        }
+        return chat.name
+    }
 
     var body: some View {
         HStack {
@@ -43,15 +72,27 @@ struct ChatRowView<T: XXDKP>: View {
             
             VStack(alignment: .leading) {
                 HStack(spacing: 6) {
-                    Text(chat.name == "<self>" ? "Notes" : chat.name).foregroundStyle(.primary)
+                    Text(chatDisplayName).foregroundStyle(.primary)
                     if isChannel && chat.isAdmin {
                         AdminBadge()
                     }
                 }
 
                 if let lastMessage = chat.messages.sorted(by: { $0.timestamp < $1.timestamp }).last {
-                    let senderName =
-                        lastMessage.isIncoming ? (lastMessage.sender?.codename ?? "unknown") : "you"
+                    let senderName: String = {
+                        if !lastMessage.isIncoming {
+                            return "you"
+                        }
+                        guard let sender = lastMessage.sender else { return "unknown" }
+                        // For DMs, only show codename since nickname is already in title
+                        if isDM {
+                            return sender.codename
+                        }
+                        if let nickname = sender.nickname, !nickname.isEmpty {
+                            return "\(truncateNickname(nickname)) aka \(sender.codename)"
+                        }
+                        return sender.codename
+                    }()
 
                     VStack(alignment: .leading) {
                         Text(senderName)

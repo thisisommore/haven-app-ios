@@ -176,7 +176,8 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         replyTo: String? = nil,
         timestamp: Int64,
         dmToken: Int32? = nil,
-        color: Int
+        color: Int,
+        nickname: String? = nil
     ) -> Int64 {
         
 
@@ -202,8 +203,11 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     senderDescriptor
                 ).first {
                     log("text=\(text) sender= id=\(existingSender.id) codename=\(existingSender.codename) dmToken=\(existingSender.dmToken)")
-                    // Update existing sender's dmToken
+                    // Update existing sender's dmToken and nickname
                     existingSender.dmToken = dmToken ?? 0
+                    if let nickname = nickname, !nickname.isEmpty {
+                        existingSender.nickname = nickname
+                    }
                     sender = existingSender
                     try modelActor?.save()
     
@@ -213,6 +217,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                         id: senderId,
                         pubkey: pubKey,
                         codename: codename,
+                        nickname: nickname,
                         dmToken: dmToken ?? 0,
                         color: color
                     )
@@ -343,7 +348,8 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     senderPubKey: pubKey,
                     messageIdB64: messageIdB64,
                     timestamp: timestamp,
-                    dmToken: dmToken, color: Int(_color, radix: 16)!
+                    dmToken: dmToken, color: Int(_color, radix: 16)!,
+                    nickname: nickname
                 )
             }
             return 0
@@ -419,8 +425,11 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 
                
                 if let existingSender = try? actor.fetch(senderDescriptor).first {
-                    // Update existing sender's dmToken
+                    // Update existing sender's dmToken and nickname
                     existingSender.dmToken = dmToken
+                    if let nickname = nickname, !nickname.isEmpty {
+                        existingSender.nickname = nickname
+                    }
                     sender = existingSender
            
                 } else {
@@ -429,6 +438,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                         id: senderId,
                         pubkey: pubKey,
                         codename: codename,
+                        nickname: nickname,
                         dmToken: dmToken, color: color
                     )
                     log(
@@ -543,7 +553,8 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 messageIdB64: messageIdB64,
                 replyTo: reactionTo.base64EncodedString(),
                 timestamp: timestamp,
-                dmToken: dmToken, color: color
+                dmToken: dmToken, color: color,
+                nickname: nickname
             )
         }
         return 0
@@ -944,12 +955,14 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 )
                 if let existingSender = try? actor.fetch(senderDescriptor).first {
                     existingSender.dmToken = dmToken
+                    // Note: handleFileMessage doesn't receive nickname parameter
                     sender = existingSender
                 } else {
                     sender = Sender(
                         id: senderId,
                         pubkey: pubKey,
                         codename: identity.codename,
+                        nickname: nil,
                         dmToken: dmToken,
                         color: color
                     )
