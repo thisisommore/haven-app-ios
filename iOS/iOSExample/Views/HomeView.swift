@@ -14,6 +14,7 @@ struct HomeView<T: XXDKP>: View {
     @State private var showLogoutAlert = false
     @State private var showNicknamePicker = false
     @State private var currentNickname: String?
+    @State private var searchText: String = ""
     @Query private var chats: [Chat]
 
     @EnvironmentObject var xxdk: T
@@ -24,9 +25,17 @@ struct HomeView<T: XXDKP>: View {
 
     var width: CGFloat
     @State private var showTooltip = false
+    
+    private var filteredChats: [Chat] {
+        if searchText.isEmpty {
+            return chats
+        }
+        return chats.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
     var body: some View {
         List {
-            ForEach(chats) { chat in
+            ForEach(filteredChats) { chat in
 
                 ChatRowView<T>(chat: chat)
                     .background(
@@ -43,6 +52,7 @@ struct HomeView<T: XXDKP>: View {
             }
 
         }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search chats")
         .tint(.gray.opacity(0.3))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
