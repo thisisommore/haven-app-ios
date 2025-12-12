@@ -30,7 +30,21 @@ struct HomeView<T: XXDKP>: View {
         if searchText.isEmpty {
             return chats
         }
-        return chats.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        return chats.filter { chat in
+            // Search by chat name
+            if chat.name.localizedCaseInsensitiveContains(searchText) {
+                return true
+            }
+            // Search by DM partner nickname
+            if let nickname = chat.messages
+                .first(where: { $0.isIncoming && $0.sender != nil })?
+                .sender?.nickname,
+               !nickname.isEmpty,
+               nickname.localizedCaseInsensitiveContains(searchText) {
+                return true
+            }
+            return false
+        }
     }
     
     var body: some View {
