@@ -31,8 +31,9 @@ struct HomeView<T: XXDKP>: View {
             return chats
         }
         return chats.filter { chat in
-            // Search by chat name
-            if chat.name.localizedCaseInsensitiveContains(searchText) {
+            // Search by chat name (use "Notes" for self chat)
+            let displayName = chat.name == "<self>" ? "Notes" : chat.name
+            if displayName.localizedCaseInsensitiveContains(searchText) {
                 return true
             }
             // Search by DM partner nickname
