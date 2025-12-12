@@ -13,10 +13,6 @@ struct NicknamePickerView<T: XXDKP>: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String?
     
-    // Preview bubble uses the real chat bubble
-    @State private var previewSelectedEmoji: MessageEmoji = .none
-    @State private var previewShouldTriggerReply: Bool = false
-    
     let codename: String
     
     private let maxNicknameLength = 24
@@ -33,10 +29,6 @@ struct NicknamePickerView<T: XXDKP>: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 28) {
-                    // Preview
-                    nicknamePreview
-                        .padding(.top, 8)
-                    
                     // Nickname input
                     nicknameInput
                     
@@ -63,64 +55,6 @@ struct NicknamePickerView<T: XXDKP>: View {
                 }
             }
             .onAppear { loadCurrentNickname() }
-        }
-    }
-    
-    // MARK: - Preview
-    private var nicknamePreview: some View {
-        VStack(spacing: 12) {
-            Text("Preview")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            ZStack {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .overlay {
-                        ChatBackgroundView()
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                            .allowsHitTesting(false)
-                    }
-                
-                VStack(spacing: 12) {
-                    // Receiver's perspective: your messages appear incoming to them
-                    HStack {
-                        MessageBubble(
-                            text: "<p>Hey there! 👋</p>",
-                            isIncoming: true,
-                            sender: Sender(
-                                id: "preview-sender",
-                                pubkey: Data(),
-                                codename: codename,
-                                nickname: nickname.isEmpty ? nil : nickname,
-                                dmToken: 0,
-                                color: 0xFF9800
-                            ),
-                            timestamp: "11:52",
-                            selectedEmoji: $previewSelectedEmoji,
-                            shouldTriggerReply: $previewShouldTriggerReply
-                        )
-                        Spacer()
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        MessageBubble(
-                            text: "<p>Nice to meet you!</p>",
-                            isIncoming: false,
-                            sender: nil,
-                            timestamp: "11:53",
-                            selectedEmoji: $previewSelectedEmoji,
-                            shouldTriggerReply: $previewShouldTriggerReply
-                        )
-                    }
-                }
-                .padding(20)
-                .allowsHitTesting(false)
-            }
-            .frame(height: 160)
-            .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
         }
     }
     
