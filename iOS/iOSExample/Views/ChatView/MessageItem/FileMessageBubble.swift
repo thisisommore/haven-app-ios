@@ -13,6 +13,7 @@ struct FileMessageBubble: View {
     let message: ChatMessage
     let isIncoming: Bool
     let timestamp: String
+    let showTimestamp: Bool
     let isHighlighted: Bool
     
     @State private var previewURL: URL?
@@ -31,9 +32,11 @@ struct FileMessageBubble: View {
             }
             
             // Timestamp
-            Text(timestamp)
-                .font(.system(size: 10))
-                .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+            if showTimestamp {
+                Text(timestamp)
+                    .font(.system(size: 10))
+                    .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
@@ -210,6 +213,7 @@ struct FileMessageBubble: View {
             message: imageMsg,
             isIncoming: true,
             timestamp: "10:30 AM",
+            showTimestamp: true,
             isHighlighted: false
         )
         
@@ -226,6 +230,7 @@ struct FileMessageBubble: View {
             message: fileMsg,
             isIncoming: false,
             timestamp: "10:31 AM",
+            showTimestamp: true,
             isHighlighted: false
         )
     }

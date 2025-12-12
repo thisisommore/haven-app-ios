@@ -122,9 +122,11 @@ struct ChannelInviteLinkPreview: View {
             
             HStack {
                 Spacer()
-                Text(timestamp)
-                    .font(.system(size: 10))
-                    .foregroundStyle(Color.secondary)
+                if !timestamp.isEmpty {
+                    Text(timestamp)
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.secondary)
+                }
             }
         }
         .padding(10)

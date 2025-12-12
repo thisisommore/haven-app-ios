@@ -16,6 +16,7 @@ struct MessageBubble: View {
     let isFirstInGroup: Bool
     let isLastInGroup: Bool
     let timestamp: String
+    let showTimestamp: Bool
     let isAdmin: Bool
     @Binding var selectedEmoji: MessageEmoji
     @Binding var shouldTriggerReply: Bool
@@ -39,6 +40,7 @@ struct MessageBubble: View {
         isFirstInGroup: Bool = true,
         isLastInGroup: Bool = true,
         timestamp: String,
+        showTimestamp: Bool = true,
         selectedEmoji: Binding<MessageEmoji>,
         shouldTriggerReply: Binding<Bool>,
         isAdmin: Bool = false,
@@ -55,6 +57,7 @@ struct MessageBubble: View {
         self.isFirstInGroup = isFirstInGroup
         self.isLastInGroup = isLastInGroup
         self.timestamp = timestamp
+        self.showTimestamp = showTimestamp
         self.isAdmin = isAdmin
         self.onDM = onDM
         self.onDelete = onDelete
@@ -157,7 +160,7 @@ struct MessageBubble: View {
             ChannelInviteLinkPreview(
                 link: link,
                 isIncoming: isIncoming,
-                timestamp: timestamp
+                timestamp: showTimestamp ? timestamp : ""
             )
         }
         .clipShape(bubbleShape)
@@ -173,24 +176,33 @@ struct MessageBubble: View {
                 )
             }
 
-            (
+            if showTimestamp {
+                (
+                    Text(underlinedMarkdown)
+                        .font(.system(size: 16))
+                        .foregroundColor(isIncoming ? Color.messageText : Color.white)
+                    + Text("    \(timestamp)")
+                        .font(.system(size: 10))
+                        .foregroundColor(.clear)
+                )
+                .tint(isIncoming ? .blue : .white)
+            } else {
                 Text(underlinedMarkdown)
                     .font(.system(size: 16))
                     .foregroundColor(isIncoming ? Color.messageText : Color.white)
-                + Text("    \(timestamp)")
-                    .font(.system(size: 10))
-                    .foregroundColor(.clear)
-            )
-            .tint(isIncoming ? .blue : .white)
+                    .tint(isIncoming ? .blue : .white)
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
         .overlay(alignment: .bottomTrailing) {
-            Text(timestamp)
-                .font(.system(size: 10))
-                .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 8)
+            if showTimestamp {
+                Text(timestamp)
+                    .font(.system(size: 10))
+                    .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+            }
         }
         .background(isIncoming ? Color.messageBubble : Color.haven)
         .clipShape(bubbleShape)

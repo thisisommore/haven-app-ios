@@ -221,12 +221,27 @@ struct ChatView<T: XXDKP>: View {
                             // Next message has different sender
                             return result.sender?.id != next.sender?.id
                         }()
+
+                        // Show timestamp only on the last message before (day OR sender OR time) changes
+                        let showTimestamp: Bool = {
+                            guard index < messages.count - 1 else { return true }
+                            let next = messages[index + 1]
+                            // Next message on different date
+                            if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
+                            // Next message has different sender
+                            if result.sender?.id != next.sender?.id { return true }
+                            // Next message has different time (short style, same as UI)
+                            let currentTime = DateFormatter.localizedString(from: result.timestamp, dateStyle: .none, timeStyle: .short)
+                            let nextTime = DateFormatter.localizedString(from: next.timestamp, dateStyle: .none, timeStyle: .short)
+                            return currentTime != nextTime
+                        }()
                         
                         ChatMessageRow(
                             result: result,
                             isAdmin: isAdmin,
                             isFirstInGroup: isFirstInGroup,
                             isLastInGroup: isLastInGroup,
+                            showTimestamp: showTimestamp,
                             onReply: { message in
                                 replyingTo = message
                             },
