@@ -49,7 +49,7 @@ struct HomeView<T: XXDKP>: View {
     }
     
     var body: some View {
-        List {
+        let chatList = List {
             ForEach(filteredChats) { chat in
 
                 ChatRowView<T>(chat: chat)
@@ -67,9 +67,15 @@ struct HomeView<T: XXDKP>: View {
             }
 
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search chats")
-        .tint(.gray.opacity(0.3))
-        .toolbar {
+        
+        let listHeader = chatList
+            .searchable(
+                text: $searchText,
+                placement: .navigationBarDrawer(displayMode: .automatic),
+                prompt: "Search chats"
+            )
+            .tint(.gray.opacity(0.3))
+            .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 HStack(spacing: 12) {
                     UserMenuButton(
@@ -116,6 +122,8 @@ struct HomeView<T: XXDKP>: View {
             }.hiddenSharedBackground()
 
         }
+        
+        return listHeader
         .sheet(isPresented: $showingSheet) {
             NewChatView<T>()
         }
@@ -216,7 +224,7 @@ struct HomeView<T: XXDKP>: View {
             loadCurrentNickname()
         }
         .navigationTitle("Chat")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(NavigationBarItem.TitleDisplayMode.large)
     }
 
     private func handleAddUser(code: String) {
