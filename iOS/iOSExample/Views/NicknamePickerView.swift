@@ -12,6 +12,7 @@ struct NicknamePickerView<T: XXDKP>: View {
     @State private var nickname: String = ""
     @State private var isSaving: Bool = false
     @State private var errorMessage: String?
+    @FocusState private var isNicknameFocused: Bool
     
     let codename: String
     
@@ -79,6 +80,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                     TextField("Enter nickname", text: $nickname)
                         .textInputAutocapitalization(.never)
                         .disableAutocorrection(true)
+                        .focused($isNicknameFocused)
                         .onChange(of: nickname) { _, newValue in
                             if newValue.count > maxNicknameLength {
                                 nickname = String(newValue.prefix(maxNicknameLength))
@@ -95,11 +97,11 @@ struct NicknamePickerView<T: XXDKP>: View {
                     }
                 }
                 .padding()
-                .background(Color.haven.opacity(0.08))
+                .background(isNicknameFocused ? Color.haven.opacity(0.08) : Color(.secondarySystemBackground))
                 .cornerRadius(10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(nickname.isEmpty ? Color.clear : Color.haven, lineWidth: 1.5)
+                        .stroke(isNicknameFocused ? Color.haven : Color.clear, lineWidth: 1.5)
                 )
             }
             
