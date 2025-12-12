@@ -11,6 +11,10 @@ struct ChatBackgroundPickerView: View {
     @ObservedObject private var settings = ChatBackgroundSettings.shared
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var tempImageData: Data?
+
+    // Preview bubble uses the real chat bubble
+    @State private var previewSelectedEmoji: MessageEmoji = .none
+    @State private var previewShouldTriggerReply: Bool = false
     
     var body: some View {
         NavigationView {
@@ -68,30 +72,43 @@ struct ChatBackgroundPickerView: View {
                             .allowsHitTesting(false)
                     }
                 
-                // Mock messages
                 VStack(spacing: 12) {
-                    mockMessage("Hello! 👋", isOutgoing: false)
-                    mockMessage("Hey, how are you?", isOutgoing: true)
-                    mockMessage("Great! Love this background", isOutgoing: false)
+                    HStack {
+                        MessageBubble(
+                            text: "<p>Love this background 👋</p>",
+                            isIncoming: true,
+                            sender: Sender(
+                                id: "preview-sender",
+                                pubkey: Data(),
+                                codename: "juniorFunkyAntiquity",
+                                nickname: nil,
+                                dmToken: 0,
+                                color: 0xFF9800
+                            ),
+                            timestamp: "11:52",
+                            selectedEmoji: $previewSelectedEmoji,
+                            shouldTriggerReply: $previewShouldTriggerReply
+                        )
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        MessageBubble(
+                            text: "<p>Yep, looks clean.</p>",
+                            isIncoming: false,
+                            sender: nil,
+                            timestamp: "11:53",
+                            selectedEmoji: $previewSelectedEmoji,
+                            shouldTriggerReply: $previewShouldTriggerReply
+                        )
+                    }
                 }
                 .padding(20)
+                .allowsHitTesting(false)
             }
             .frame(height: 200)
             .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
-        }
-    }
-    
-    private func mockMessage(_ text: String, isOutgoing: Bool) -> some View {
-        HStack {
-            if isOutgoing { Spacer() }
-            Text(text)
-                .font(.subheadline)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(isOutgoing ? Color.haven : Color(.systemGray5))
-                .foregroundStyle(isOutgoing ? .white : .primary)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-            if !isOutgoing { Spacer() }
         }
     }
     
