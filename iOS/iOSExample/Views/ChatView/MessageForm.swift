@@ -97,7 +97,6 @@ struct MessageForm<T: XXDKP>: View {
                 // File attachment button (only for channels, not DMs)
                 if chat?.dmToken == nil {
                     FileAttachmentButton(showFilePicker: $showFilePicker)
-                        .padding(.leading, 8)
                 }
                 
                 TextField(
@@ -113,6 +112,7 @@ struct MessageForm<T: XXDKP>: View {
                 .background(.formBG.opacity(0.1))
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 40))
+                .padding(.trailing, 8)
 
                 if fileTransferManager.selectedFileData != nil && abc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     // Send file button

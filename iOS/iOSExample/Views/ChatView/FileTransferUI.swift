@@ -250,8 +250,9 @@ struct FileAttachmentButton: View {
             showFilePicker = true
         } label: {
             Image(systemName: "paperclip")
-                .font(.system(size: 20))
-                .foregroundStyle(.formBG)
+                .font(.system(size: 22))
+                .foregroundStyle(.messageText.opacity(0.2))
+                .padding(6)
         }
     }
 }
