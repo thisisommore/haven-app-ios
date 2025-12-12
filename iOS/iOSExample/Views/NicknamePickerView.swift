@@ -13,6 +13,10 @@ struct NicknamePickerView<T: XXDKP>: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String?
     
+    // Preview bubble uses the real chat bubble
+    @State private var previewSelectedEmoji: MessageEmoji = .none
+    @State private var previewShouldTriggerReply: Bool = false
+    
     let codename: String
     
     private let maxNicknameLength = 24
@@ -80,37 +84,43 @@ struct NicknamePickerView<T: XXDKP>: View {
                     }
                 
                 VStack(spacing: 12) {
-                    mockMessage("Hey there! 👋", sender: displayName, isFromYou: true)
-                    mockMessage("Nice to meet you!", sender: "Alice", isFromYou: false)
+                    // Receiver's perspective: your messages appear incoming to them
+                    HStack {
+                        MessageBubble(
+                            text: "<p>Hey there! 👋</p>",
+                            isIncoming: true,
+                            sender: Sender(
+                                id: "preview-sender",
+                                pubkey: Data(),
+                                codename: codename,
+                                nickname: nickname.isEmpty ? nil : nickname,
+                                dmToken: 0,
+                                color: 0xFF9800
+                            ),
+                            timestamp: "11:52",
+                            selectedEmoji: $previewSelectedEmoji,
+                            shouldTriggerReply: $previewShouldTriggerReply
+                        )
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        MessageBubble(
+                            text: "<p>Nice to meet you!</p>",
+                            isIncoming: false,
+                            sender: nil,
+                            timestamp: "11:53",
+                            selectedEmoji: $previewSelectedEmoji,
+                            shouldTriggerReply: $previewShouldTriggerReply
+                        )
+                    }
                 }
                 .padding(20)
+                .allowsHitTesting(false)
             }
             .frame(height: 160)
             .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
-        }
-    }
-    
-    /// Shows message from receiver's perspective - your messages appear as incoming to them
-    private func mockMessage(_ text: String, sender: String, isFromYou: Bool) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            if !isFromYou { Spacer() }
-            
-            VStack(alignment: isFromYou ? .leading : .trailing, spacing: 4) {
-                Text(sender)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(isFromYou ? .haven : .secondary)
-                
-                Text(text)
-                    .font(.subheadline)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(isFromYou ? Color(.systemGray5) : Color.haven)
-                    .foregroundColor(isFromYou ? .primary : .white)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            }
-            
-            if isFromYou { Spacer() }
         }
     }
     
