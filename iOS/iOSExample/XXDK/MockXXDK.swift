@@ -111,9 +111,9 @@ public class XXDKMock: XXDKP {
         print("Mock: Left channel: \(channelId)")
     }
     
-    func getShareURL(channelId: String, host: String) throws -> String? {
+    func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
         // Mock: return a mock share URL
-        return "\(host)?channelId=\(channelId)"
+        return ShareURLJSON(url: "\(host)?channelId=\(channelId)", password: "")
     }
     
     func createChannel(name: String, description: String, privacyLevel: PrivacyLevel, enableDms: Bool) async throws -> ChannelJSON {

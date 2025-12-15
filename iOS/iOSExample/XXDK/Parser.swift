@@ -147,6 +147,11 @@ public struct RemoteKVEntry: Codable {
 public struct ShareURLJSON: Decodable {
     public let url: String
     public let password: String
+    
+    public init(url: String, password: String) {
+        self.url = url
+        self.password = password
+    }
 }
 
 // Message update info from updateFromUUID callback

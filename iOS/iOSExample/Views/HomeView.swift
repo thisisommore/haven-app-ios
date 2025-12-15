@@ -500,7 +500,7 @@ struct NewChatView<T: XXDKP>: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
 
-            let newChat = Chat(channelId: channelId, name: joinedChannel.name)
+            let newChat = Chat(channelId: channelId, name: joinedChannel.name, isSecret: isPrivateChannel)
             swiftDataActor.insert(newChat)
             try swiftDataActor.save()
 

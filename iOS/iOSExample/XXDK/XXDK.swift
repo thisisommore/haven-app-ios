@@ -1455,9 +1455,9 @@ public class XXDK: XXDKP {
     /// - Parameters:
     ///   - channelId: The channel ID (base64-encoded)
     ///   - host: The base URL for the join link (e.g., "https://example.com/join")
-    /// - Returns: The share URL string, or nil if unavailable
+    /// - Returns: ShareURLJSON containing url and password
     /// - Throws: Error if GetShareURL fails or channels manager is not initialized
-    public func getShareURL(channelId: String, host: String) throws -> String? {
+    public func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -1469,8 +1469,7 @@ public class XXDK: XXDKP {
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
         
         let resultData = try cm.getShareURL(cmixInstance.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData)
-        let response = try Parser.decodeShareURL(from: resultData)
-        return response.url
+        return try Parser.decodeShareURL(from: resultData)
     }
     
     /// Check if current user is admin of a channel

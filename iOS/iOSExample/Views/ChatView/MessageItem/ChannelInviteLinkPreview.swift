@@ -235,7 +235,7 @@ struct ChannelInviteLinkPreview: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
             
-            let newChat = Chat(channelId: channelId, name: joinedChannel.name)
+            let newChat = Chat(channelId: channelId, name: joinedChannel.name, isSecret: link.level == "Secret")
             swiftDataActor.insert(newChat)
             try swiftDataActor.save()
             

@@ -26,6 +26,8 @@ class Chat {
     var color: Int = 0xE97451
     // Whether user is admin of this channel
     var isAdmin: Bool = false
+    // Whether this is a secret channel
+    var isSecret: Bool = false
     // Timestamp when user joined this chat
     var joinedAt: Date = Date()
     // Unread message count (stored for SwiftUI reactivity)
@@ -37,11 +39,12 @@ class Chat {
     }
 
     // General initializer (use for channels where you have a channel id and name)
-    init(channelId: String, name: String, description: String? = nil, isAdmin: Bool = false) {
+    init(channelId: String, name: String, description: String? = nil, isAdmin: Bool = false, isSecret: Bool = false) {
         self.id = channelId
         self.name = name
         self.channelDescription = description
         self.isAdmin = isAdmin
+        self.isSecret = isSecret
         self.joinedAt = Date()
     }
 

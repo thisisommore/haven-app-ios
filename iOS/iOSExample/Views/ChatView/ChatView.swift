@@ -391,6 +391,9 @@ struct ChatView<T: XXDKP>: View {
                     HStack(spacing: 4) {
                         Text(chatTitle == "<self>" ? "Notes" : chatTitle)
                             .font(.headline.weight(.semibold))
+                        if isChannel && chat?.isSecret == true {
+                            SecretBadge()
+                        }
                         if isChannel && isAdmin {
                             AdminBadge()
                         }

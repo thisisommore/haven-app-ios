@@ -56,6 +56,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @EnvironmentObject var xxdk: T
     @State private var isDMEnabled: Bool = false
     @State private var shareURL: String?
+    @State private var sharePassword: String?
     @State private var showExportKeySheet: Bool = false
     @State private var showImportKeySheet: Bool = false
     @State private var showBackgroundPicker: Bool = false
@@ -156,6 +157,32 @@ struct ChannelOptionsView<T: XXDKP>: View {
                             }
                         }
                         .tint(.haven)
+                        
+                        if let password = sharePassword, !password.isEmpty {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack(spacing: 6) {
+                                        Text("Password")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        SecretBadge()
+                                    }
+                                    Text(password)
+                                        .font(.body)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                }
+                                Spacer()
+                                Button {
+                                    UIPasteboard.general.string = password
+                                    toastMessage = "Password copied"
+                                } label: {
+                                    Image(systemName: "doc.on.doc")
+                                        .foregroundColor(.haven)
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
                     }
                 }
                 .onAppear {
@@ -168,7 +195,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         isDMEnabled = false
                     }
                     do {
-                        shareURL = try xxdk.getShareURL(channelId: channelId, host: "https://xxnetwork.com/join")
+                        let shareData = try xxdk.getShareURL(channelId: channelId, host: "https://xxnetwork.com/join")
+                        shareURL = shareData.url
+                        sharePassword = shareData.password
                         print("Share URL: \(shareURL ?? "nil")")
                     } catch {
                         print("Failed to fetch share URL: \(error)")
