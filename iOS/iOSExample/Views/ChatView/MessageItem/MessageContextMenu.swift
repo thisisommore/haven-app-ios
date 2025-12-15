@@ -19,6 +19,7 @@ struct MessageContextMenu: View {
     @Binding var shouldTriggerReply: Bool
     
     var onDM: ((String, Int32, Data, Int) -> Void)?
+    var onSelectText: (() -> Void)?
     var onDelete: (() -> Void)?
     var onMute: ((Data) -> Void)?
     var onUnmute: ((Data) -> Void)?
@@ -64,7 +65,14 @@ struct MessageContextMenu: View {
                 forPasteboardType: UTType.plainText.identifier
             )
         } label: {
-            Text("Copy")
+            Label("Copy", systemImage: "doc.on.doc")
+        }
+
+        // Select Text button
+        Button {
+            onSelectText?()
+        } label: {
+            Label("Select Text", systemImage: "crop")
         }
         
         // Delete button (only for admin or message owner)

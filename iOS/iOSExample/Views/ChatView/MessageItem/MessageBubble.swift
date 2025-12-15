@@ -23,6 +23,7 @@ struct MessageBubble: View {
     @State private var markdown: String = ""
     @State private var parsedChannelLink: ParsedChannelLink?
     @State private var isLinkExpanded: Bool = false
+    @State private var showTextSelection: Bool = false
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: (() -> Void)?
     var onMute: ((Data) -> Void)?
@@ -225,6 +226,9 @@ struct MessageBubble: View {
                 selectedEmoji: $selectedEmoji,
                 shouldTriggerReply: $shouldTriggerReply,
                 onDM: onDM,
+                onSelectText: {
+                    showTextSelection = true
+                },
                 onDelete: onDelete,
                 onMute: onMute,
                 onUnmute: onUnmute,
@@ -232,6 +236,13 @@ struct MessageBubble: View {
             )
         }
         .id(sender)
+        .sheet(isPresented: $showTextSelection) {
+            if let attributed = try? AttributedString(markdown: markdown) {
+                TextSelectionView(text: String(attributed.characters))
+            } else {
+                TextSelectionView(text: text)
+            }
+        }
         .overlay(
             bubbleShape
                 .stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
