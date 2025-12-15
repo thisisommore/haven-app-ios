@@ -162,11 +162,7 @@ struct RootContentView: View {
                         ChatView<XXDK>(width: UIScreen.w(100), chatId: chatId, chatTitle: selectedChat.chatTitle)
                             .id(chatId) // Force view refresh when chat changes
                     } else if horizontalSizeClass == .regular {
-                        ContentUnavailableView(
-                            "No Chat Selected",
-                            systemImage: "bubble.left.and.bubble.right",
-                            description: Text("Select a chat from the sidebar to start messaging")
-                        )
+                        EmptyChatSelectionView()
                     }
                 }
                 .navigationSplitViewStyle(.balanced)
