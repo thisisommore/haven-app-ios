@@ -11,8 +11,25 @@ class AppNavigationPath: Observable, ObservableObject {
     public var path = NavigationPath()
 }
 
+/// Holds selected chat info for split view detail column
+class SelectedChat: ObservableObject {
+    @Published var chatId: String?
+    @Published var chatTitle: String = ""
+    
+    func select(id: String, title: String) {
+        chatId = id
+        chatTitle = title
+    }
+    
+    func clear() {
+        chatId = nil
+        chatTitle = ""
+    }
+}
+
 extension EnvironmentValues {
     @Entry var navigation: AppNavigationPath = AppNavigationPath()
+    @Entry var isSplitView: Bool = false
 }
 
 enum Destination: Hashable {

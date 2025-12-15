@@ -37,7 +37,36 @@ struct iOS_ExampleApp: App {
     }()
     
     @State private var deepLinkError: String?
+    @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
+    @StateObject private var selectedChat = SelectedChat()
     
+    var body: some Scene {
+        WindowGroup {
+            RootContentView(
+                xxdk: xxdk,
+                sM: sM,
+                navigation: navigation,
+                modelData: modelData,
+                logOutput: logOutput,
+                columnVisibility: $columnVisibility,
+                selectedChat: selectedChat
+            )
+        }
+    }
+}
+
+struct RootContentView: View {
+    @ObservedObject var xxdk: XXDK
+    @ObservedObject var sM: SecretManager
+    @ObservedObject var navigation: AppNavigationPath
+    var modelData: (mC: ModelContainer, da: SwiftDataActor)
+    @ObservedObject var logOutput: LogViewer
+    @Binding var columnVisibility: NavigationSplitViewVisibility
+    @ObservedObject var selectedChat: SelectedChat
+    
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var deepLinkError: String?
+
     private func handleDeepLink(_ url: URL) {
         guard url.scheme == "haven" else { return }
         guard let host = url.host else { return }
@@ -49,7 +78,7 @@ struct iOS_ExampleApp: App {
         case "chat":
             let pathComponents = url.pathComponents.filter { $0 != "/" }
             if let chatId = pathComponents.first {
-                navigation.path.append(Destination.chat(chatId: chatId, chatTitle: ""))
+                selectedChat.select(id: chatId, title: "")
             }
         case "dm":
             handleDMDeepLink(queryItems: queryItems)
@@ -111,59 +140,88 @@ struct iOS_ExampleApp: App {
             print("[DeepLink] Chat saved for user: \(name)")
             
             await MainActor.run {
-                navigation.path.append(Destination.chat(chatId: newChat.id, chatTitle: name))
+                selectedChat.select(id: newChat.id, title: name)
             }
         }
     }
     
-    var body: some Scene {
-        WindowGroup {
-            NavigationStack(path: $navigation.path) {
-                Color.clear
-                .navigationDestination(for: Destination.self) { destination in
-                    destination.destinationView()
-                        .toolbarBackground(.ultraThinMaterial)
-                }.onAppear{
-                    
-                    xxdk.setModelContainer(mActor: modelData.da, sm: sM)
-                    
-                    print("ON appear")
-                    
-                    if sM.isSetupComplete {
-                        navigation.path.append(Destination.home)
-                    } else {
-                        // Clear everything and start fresh
-                        Task {
-                            await xxdk.logout()
-                            try? modelData.da.deleteAll(ChatMessage.self)
-                            try? modelData.da.deleteAll(MessageReaction.self)
-                            try? modelData.da.deleteAll(Sender.self)
-                            try? modelData.da.deleteAll(Chat.self)
-                            try? modelData.da.save()
-                            sM.clearAll()
-                            navigation.path.append(Destination.password)
-                        }
+    var body: some View {
+        Group {
+            if sM.isSetupComplete {
+                // Split view for main app (iPad/Mac optimized)
+                NavigationSplitView(columnVisibility: $columnVisibility) {
+                    NavigationStack(path: $navigation.path) {
+                        HomeView<XXDK>(width: UIScreen.w(100))
+                            .navigationDestination(for: Destination.self) { destination in
+                                destination.destinationView()
+                                    .toolbarBackground(.ultraThinMaterial)
+                            }
+                    }
+                } detail: {
+                    if let chatId = selectedChat.chatId {
+                        ChatView<XXDK>(width: UIScreen.w(100), chatId: chatId, chatTitle: selectedChat.chatTitle)
+                            .id(chatId) // Force view refresh when chat changes
+                    } else if horizontalSizeClass == .regular {
+                        ContentUnavailableView(
+                            "No Chat Selected",
+                            systemImage: "bubble.left.and.bubble.right",
+                            description: Text("Select a chat from the sidebar to start messaging")
+                        )
                     }
                 }
-            }
-            .logViewerOnShake()
-            .modelContainer(modelData.mC)
-            .environmentObject(sM)
-            .environmentObject(xxdk)
-            .environmentObject(logOutput)
-            .environment(\.navigation, navigation)
-            .environmentObject(modelData.da)
-            .onOpenURL { url in
-                handleDeepLink(url)
-            }
-            .alert("Error", isPresented: Binding(
-                get: { deepLinkError != nil },
-                set: { if !$0 { deepLinkError = nil } }
-            )) {
-                Button("OK") { deepLinkError = nil }
-            } message: {
-                Text(deepLinkError ?? "")
+                .navigationSplitViewStyle(.balanced)
+                .onChange(of: selectedChat.chatId) { _, newValue in
+                    if newValue == nil && horizontalSizeClass == .compact {
+                        // On iPhone, clearing selection should show sidebar
+                         columnVisibility = .all
+                    }
+                }
+            } else {
+                // Full screen for onboarding
+                NavigationStack(path: $navigation.path) {
+                    Color.clear
+                        .navigationDestination(for: Destination.self) { destination in
+                            destination.destinationView()
+                                .toolbarBackground(.ultraThinMaterial)
+                        }
+                        .onAppear {
+                            xxdk.setModelContainer(mActor: modelData.da, sm: sM)
+                            Task {
+                                await xxdk.logout()
+                                try? modelData.da.deleteAll(ChatMessage.self)
+                                try? modelData.da.deleteAll(MessageReaction.self)
+                                try? modelData.da.deleteAll(Sender.self)
+                                try? modelData.da.deleteAll(Chat.self)
+                                try? modelData.da.save()
+                                sM.clearAll()
+                                navigation.path.append(Destination.password)
+                            }
+                        }
+                }
             }
         }
+        .onAppear {
+            xxdk.setModelContainer(mActor: modelData.da, sm: sM)
+        }
+        .logViewerOnShake()
+        .modelContainer(modelData.mC)
+        .environmentObject(sM)
+        .environmentObject(xxdk)
+        .environmentObject(logOutput)
+        .environmentObject(selectedChat)
+        .environment(\.navigation, navigation)
+        .environmentObject(modelData.da)
+        .onOpenURL { url in
+            handleDeepLink(url)
+        }
+        .alert("Error", isPresented: Binding(
+            get: { deepLinkError != nil },
+            set: { if !$0 { deepLinkError = nil } }
+        )) {
+            Button("OK") { deepLinkError = nil }
+        } message: {
+            Text(deepLinkError ?? "")
+        }
     }
+
 }

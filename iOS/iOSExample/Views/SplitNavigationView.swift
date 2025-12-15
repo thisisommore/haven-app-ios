@@ -1,41 +1,50 @@
 import SwiftUI
 import SwiftData
 
-struct SplitNavigationView: View {
+struct SplitNavigationView<T: XXDKP>: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @EnvironmentObject var xxdk: T
+    @EnvironmentObject private var selectedChat: SelectedChat
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            // Sidebar / Primary
-            HomeView<XXDK>(width: 100)
-                .navigationTitle("Home")
+            // Sidebar - Chat list
+            HomeView<T>(width: 320)
+                .navigationTitle("Chat")
+                .environment(\.isSplitView, true)
         } detail: {
-            // Detail
-            Text("Select chat to continue")
-        }.navigationBarBackButtonHidden(true)
+            // Detail - Selected chat or placeholder
+            if let chatId = selectedChat.chatId {
+                ChatView<T>(width: UIScreen.w(100), chatId: chatId, chatTitle: selectedChat.chatTitle)
+                    .id(chatId)
+            } else {
+                ContentUnavailableView(
+                    "No Chat Selected",
+                    systemImage: "bubble.left.and.bubble.right",
+                    description: Text("Select a chat from the sidebar to start messaging")
+                )
+            }
+        }
+        .navigationSplitViewStyle(.balanced)
     }
 }
 
 #Preview {
-    // In-memory SwiftData container for previewing SplitNavigationView with mock data
-    let container = try! ModelContainer(
-        for: Chat.self, ChatMessage.self, MessageReaction.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-
-    // Create a mock channel chat and some messages so the detail has content
-    let previewChannelId = "previewChannelId"
-    let chat = Chat(channelId: previewChannelId, name: "General")
-    let chat2 = Chat(channelId: "max", name: "Max")
-    let msgs = [
-        ChatMessage(message: "Welcome to #general!", isIncoming: true, chat: chat, sender: Sender(id: "system-id", pubkey: Data(), codename: "System", color: greenColorInt), id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()),
-        ChatMessage(message: "Hi everyone 👋", isIncoming: false, chat: chat, id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()),
-        ChatMessage(message: "Great to see you here.", isIncoming: true, chat: chat, sender: Sender(id: "mayur-id", pubkey: Data(), codename: "Mayur", color: greenColorInt), id: UUID().uuidString, internalId: InternalIdGenerator.shared.next())
-    ]
-    msgs.forEach { container.mainContext.insert($0) }
-    container.mainContext.insert(chat2)
-
-    return SplitNavigationView()
+    @Previewable @StateObject var selectedChat = SelectedChat()
+    @Previewable @State var container: ModelContainer = {
+        let c = try! ModelContainer(
+            for: Chat.self, ChatMessage.self, MessageReaction.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let chat = Chat(channelId: "previewChannelId", name: "General")
+        let chat2 = Chat(channelId: "max", name: "Max")
+        c.mainContext.insert(chat)
+        c.mainContext.insert(chat2)
+        return c
+    }()
+    
+    SplitNavigationView<XXDKMock>()
         .modelContainer(container)
         .environmentObject(XXDKMock())
+        .environmentObject(selectedChat)
 }

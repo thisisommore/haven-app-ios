@@ -115,9 +115,8 @@ struct ChatView<T: XXDKP>: View {
     let width: CGFloat
     let chatId: String
     let chatTitle: String
-    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
-
- 
+    
+    @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @Query private var chatResults: [Chat]
     @Query private var allMessages: [ChatMessage]
@@ -149,6 +148,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var highlightedMessageId: String? = nil
     @State private var fileDataRefreshTrigger: Int = 0
     @EnvironmentObject var xxdk: T
+    
     private func markMessagesAsRead() {
         guard let chat else { return }
         let unreadMessages = chat.messages.filter { $0.isIncoming && !$0.isRead && $0.timestamp > chat.joinedAt }
@@ -369,11 +369,16 @@ struct ChatView<T: XXDKP>: View {
                 )
             }
         }
-        .navigationBarHidden(true)
-        .safeAreaInset(edge: .top) {
-            HStack {
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
                 Button {
-                    presentationMode.wrappedValue.dismiss()
+                    if selectedChat.chatId == chatId {
+                        selectedChat.clear()
+                    } else {
+                        dismiss()
+                    }
                 } label: {
                     HStack(spacing: 2) {
                         Image(systemName: "chevron.left")
@@ -382,15 +387,15 @@ struct ChatView<T: XXDKP>: View {
                     .font(.headline)
                     .foregroundStyle(.haven)
                 }
-                
-                Spacer()
-                
+            }
+            ToolbarItem(placement: .principal) {
                 Button {
                     showChannelOptions = true
                 } label: {
                     HStack(spacing: 4) {
                         Text(chatTitle == "<self>" ? "Notes" : chatTitle)
                             .font(.headline.weight(.semibold))
+                            .foregroundStyle(.primary)
                         if isChannel && chat?.isSecret == true {
                             SecretBadge()
                         }
@@ -399,21 +404,7 @@ struct ChatView<T: XXDKP>: View {
                         }
                     }
                 }
-                .buttonStyle(.plain)
-                
-                Spacer()
-                
-                // Invisible spacer to balance the back button
-                HStack(spacing: 2) {
-                    Image(systemName: "chevron.left")
-                    Text("Back")
-                }
-                .font(.subheadline)
-                .opacity(0)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(.ultraThinMaterial)
         }
         .sheet(isPresented: $showChannelOptions) {
             ChannelOptionsView<T>(chat: chat) {
@@ -485,14 +476,6 @@ struct ChatView<T: XXDKP>: View {
         
         
         .background(ChatBackgroundView())
-        .simultaneousGesture(
-            DragGesture()
-                .onEnded { gesture in
-                    if gesture.startLocation.x < 100 && gesture.translation.width > 80 {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-        )
         .overlay {
             if let message = toastMessage {
                 VStack {
@@ -543,5 +526,6 @@ struct ChatView<T: XXDKP>: View {
         .modelContainer(container)
         .environmentObject(SwiftDataActor(previewModelContainer: container))
         .environmentObject(XXDKMock())
+        .environmentObject(SelectedChat())
     }
 }

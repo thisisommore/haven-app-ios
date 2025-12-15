@@ -22,6 +22,8 @@ struct HomeView<T: XXDKP>: View {
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @EnvironmentObject private var secretManager: SecretManager
     @Environment(\.navigation) private var navigation
+    @Environment(\.isSplitView) private var isSplitView
+    @EnvironmentObject private var selectedChat: SelectedChat
 
     var width: CGFloat
     @State private var showTooltip = false
@@ -49,23 +51,17 @@ struct HomeView<T: XXDKP>: View {
     }
     
     var body: some View {
-        let chatList = List {
+        let chatList = List(selection: $selectedChat.chatId) {
             ForEach(filteredChats) { chat in
-
                 ChatRowView<T>(chat: chat)
-                    .background(
-                        NavigationLink(
-                            value: Destination.chat(
-                                chatId: chat.id,
-                                chatTitle: chat.name
-                            )
-                        ) {
-
-                        }.opacity(0)
-                    )
-
+                    .tag(chat.id)
             }
-
+        }
+        .onChange(of: selectedChat.chatId) { _, newValue in
+            if let chatId = newValue,
+               let chat = chats.first(where: { $0.id == chatId }) {
+                selectedChat.chatTitle = chat.name
+            }
         }
         
         let listHeader = chatList
@@ -721,42 +717,38 @@ struct ExportIdentitySheet<T: XXDKP>: View {
 }
 
 #Preview {
-    let container = try! ModelContainer(
-        for: Chat.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-    ["<self>", "Tom", "Mayur", "Shashank"].forEach { name in
-        let chat = Chat(
-            pubKey: name.data,
-            name: name,
-            dmToken: 0,
-            color: greenColorInt
+    @Previewable @StateObject var selectedChat = SelectedChat()
+    @Previewable @State var container: ModelContainer = {
+        let c = try! ModelContainer(
+            for: Chat.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
-        container.mainContext.insert(
-            chat
-        )
-        container.mainContext.insert(
-            ChatMessage(
-                message:
-                    "<p>Hello alllllllllHello alllllllllHello alllllllllHello alllllllllHello alllllllllHello alllllllllHello alllllllllHello alllllllllHello alllllllllHello alllllllll</p>",
-                isIncoming: true,
-                chat: chat,
-                sender: nil,
-                id: name,
-                internalId: InternalIdGenerator.shared.next(),
-                replyTo: nil,
-                timestamp: 1
+        for name in ["<self>", "Tom", "Mayur", "Shashank"] {
+            let chat = Chat(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
+            c.mainContext.insert(chat)
+            c.mainContext.insert(
+                ChatMessage(
+                    message: "<p>Hello world</p>",
+                    isIncoming: true,
+                    chat: chat,
+                    sender: nil,
+                    id: name,
+                    internalId: InternalIdGenerator.shared.next(),
+                    replyTo: nil,
+                    timestamp: 1
+                )
             )
-        )
-
-    }
-    try! container.mainContext.save()
-    return NavigationStack {
+        }
+        try! c.mainContext.save()
+        return c
+    }()
+    
+    NavigationStack {
         HomeView<XXDKMock>(width: UIScreen.w(100))
             .modelContainer(container)
             .environmentObject(XXDKMock())
+            .environmentObject(selectedChat)
             .navigationTitle("Chat")
             .navigationBarBackButtonHidden()
     }
-
 }
