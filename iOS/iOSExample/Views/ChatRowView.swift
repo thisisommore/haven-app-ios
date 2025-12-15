@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct AdminBadge: View {
     var body: some View {
@@ -85,7 +86,7 @@ struct ChatRowView<T: XXDKP>: View {
             
             VStack(alignment: .leading) {
                 HStack(spacing: 6) {
-                    Text(chatDisplayName).foregroundStyle(.primary)
+                    Text(chatDisplayName).foregroundStyle(Color(uiColor: .label))
                     if isChannel && chat.isSecret {
                         SecretBadge()
                     }
@@ -112,7 +113,7 @@ struct ChatRowView<T: XXDKP>: View {
 
                     VStack(alignment: .leading) {
                         Text(senderName)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(uiColor: .secondaryLabel))
                             .font(.system(size: 12))
                          HTMLText(lastMessage.message,
                                   textColor: .messageText,
@@ -122,7 +123,7 @@ struct ChatRowView<T: XXDKP>: View {
                 } else {
                     Text("No messages yet")
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color(uiColor: .secondaryLabel))
                 }
             }
             
