@@ -77,7 +77,7 @@ struct ChatBackgroundPickerView: View {
                         MessageBubble(
                             text: "<p>Love this background 👋</p>",
                             isIncoming: true,
-                            sender: Sender(
+                            sender: SenderModel(
                                 id: "preview-sender",
                                 pubkey: Data(),
                                 codename: "juniorFunkyAntiquity",

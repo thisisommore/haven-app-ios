@@ -2,16 +2,16 @@ import Foundation
 import SwiftData
 
 @Model
-class MessageReaction {
+class MessageReactionModel {
     @Attribute(.unique) var id: String
     var internalId: Int64
     var targetMessageId: String
     var emoji: String
     var timestamp: Date
     var isMe: Bool
-    var sender: Sender?
+    var sender: SenderModel?
 
-    init(id: String, internalId: Int64, targetMessageId: String, emoji: String, sender: Sender? = nil, isMe: Bool = false) {
+    init(id: String, internalId: Int64, targetMessageId: String, emoji: String, sender: SenderModel? = nil, isMe: Bool = false) {
         self.targetMessageId = targetMessageId
         self.emoji = emoji
         self.timestamp = Date()

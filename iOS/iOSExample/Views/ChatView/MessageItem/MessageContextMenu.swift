@@ -12,7 +12,7 @@ import UniformTypeIdentifiers
 struct MessageContextMenu: View {
     let text: String
     let isIncoming: Bool
-    let sender: Sender?
+    let sender: SenderModel?
     let isAdmin: Bool
     
     @Binding var selectedEmoji: MessageEmoji

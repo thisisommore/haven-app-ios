@@ -12,12 +12,12 @@ import UniformTypeIdentifiers
 struct MutedUserRow: View {
     let pubKey: Data
     var onUnmute: (() -> Void)?
-    @Query private var senders: [Sender]
+    @Query private var senders: [SenderModel]
     
     init(pubKey: Data, onUnmute: (() -> Void)? = nil) {
         self.pubKey = pubKey
         self.onUnmute = onUnmute
-        _senders = Query(filter: #Predicate<Sender> { sender in
+        _senders = Query(filter: #Predicate<SenderModel> { sender in
             sender.pubkey == pubKey
         })
     }
@@ -49,7 +49,7 @@ struct MutedUserRow: View {
 }
 
 struct ChannelOptionsView<T: XXDKP>: View {
-    let chat: Chat?
+    let chat: ChatModelModel?
     let onLeaveChannel: () -> Void
     var onDeleteChat: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
@@ -778,11 +778,11 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
 
 #Preview {
     let container = try! ModelContainer(
-        for: Chat.self,
+        for: ChatModelModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     
-    let mockChat = Chat(
+    let mockChat = ChatModelModel(
         channelId: "mock-channel-123",
         name: "General Discussion",
         description: "A channel for general team discussions and announcements",

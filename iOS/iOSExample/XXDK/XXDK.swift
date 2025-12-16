@@ -624,7 +624,7 @@ public class XXDK: XXDKP {
                         print("ERROR: modelActor not available")
                         return
                     }
-                    let descriptor = FetchDescriptor<Chat>(
+                    let descriptor = FetchDescriptor<ChatModelModel>(
                         predicate: #Predicate { $0.id == selfPubKeyB64 }
                     )
                     let existing = try actor.fetch(descriptor)
@@ -632,7 +632,7 @@ public class XXDK: XXDKP {
                         let token64 = DM.getToken()
                         let tokenU32 = UInt32(truncatingIfNeeded: token64)
                         let selfToken = Int32(bitPattern: tokenU32)
-                        let chat = Chat(
+                        let chat = ChatModelModel(
                             pubKey: selfPubKeyData,
                             name: "<self>",
                             dmToken: selfToken,
@@ -659,12 +659,12 @@ public class XXDK: XXDKP {
                     print("ERROR: modelActor not available")
                     return
                 }
-                let check = FetchDescriptor<Chat>(
+                let check = FetchDescriptor<ChatModelModel>(
                     predicate: #Predicate { $0.id == channelId }
                 )
                 let existingChannel = try actor.fetch(check)
                 if existingChannel.isEmpty {
-                    let channelChat = Chat(channelId: channelId, name: cd.name)
+                    let channelChat = ChatModelModel(channelId: channelId, name: cd.name)
                     actor.insert(channelChat)
                     try actor.save()
                 }
@@ -773,7 +773,7 @@ public class XXDK: XXDKP {
         Task {
             do {
                 // Use SwiftDataActor instead of ModelContext
-                let reaction = MessageReaction(
+                let reaction = MessageReactionModel(
                     id: messageIdB64,
                     internalId: InternalIdGenerator.shared.next(),
                     targetMessageId: targetMessageId,
@@ -944,7 +944,7 @@ public class XXDK: XXDKP {
                     let chatId = toPubKey.base64EncodedString()
                     let defaultName: String = {
                         if let actor = self.modelActor {
-                            let descriptor = FetchDescriptor<Chat>(
+                            let descriptor = FetchDescriptor<ChatModelModel>(
                                 predicate: #Predicate { $0.id == chatId }
                             )
                             if let found = try? actor.fetch(descriptor).first {
@@ -1001,7 +1001,7 @@ public class XXDK: XXDKP {
                     let chatId = toPubKey.base64EncodedString()
                     let defaultName: String = {
                         if let actor = self.modelActor {
-                            let descriptor = FetchDescriptor<Chat>(
+                            let descriptor = FetchDescriptor<ChatModelModel>(
                                 predicate: #Predicate { $0.id == chatId }
                             )
                             if let found = try? actor.fetch(descriptor).first {

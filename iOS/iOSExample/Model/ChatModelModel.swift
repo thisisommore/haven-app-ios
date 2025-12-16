@@ -11,7 +11,7 @@ import Foundation
 
 
 @Model
-class Chat {
+class ChatModelModel {
     // For channels, this is the channel ID. For DMs, this is the pub key.
     @Attribute(.unique) var id: String
     // Human-readable name (channel name or partner codename)
@@ -21,8 +21,8 @@ class Chat {
 
     // needed for direct dm
     var dmToken: Int32?
-    @Relationship(deleteRule: .cascade, inverse: \ChatMessage.chat)
-    var messages = [ChatMessage]()
+    @Relationship(deleteRule: .cascade, inverse: \ChatMessageModel.chat)
+    var messages = [ChatMessageModel]()
     var color: Int = 0xE97451
     // Whether user is admin of this channel
     var isAdmin: Bool = false
@@ -57,7 +57,7 @@ class Chat {
         self.joinedAt = Date()
     }
 
-    func add(m: ChatMessage){
+    func add(m: ChatMessageModel){
         messages.append(m)
     }
 }

@@ -72,12 +72,12 @@ struct LandingPage<T>: View where T: XXDKP {
 
 #Preview {
     let container = try! ModelContainer(
-        for: Chat.self,
+        for: ChatModelModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     ["Tom", "Mayur", "Shashank"].forEach { name in
         container.mainContext.insert(
-            Chat(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
+            ChatModelModel(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
         )
     }
     let actor = SwiftDataActor(previewModelContainer: container)

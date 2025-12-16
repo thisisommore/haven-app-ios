@@ -7,28 +7,28 @@
 import SwiftData
 import SwiftUI
 struct ChatMessageRow: View {
-    let result: ChatMessage
+    let result: ChatMessageModel
     let isAdmin: Bool
     let isFirstInGroup: Bool
     let isLastInGroup: Bool
     let showTimestamp: Bool
-    var onReply: ((ChatMessage) -> Void)?
+    var onReply: ((ChatMessageModel) -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
-    var onDelete: ((ChatMessage) -> Void)?
+    var onDelete: ((ChatMessageModel) -> Void)?
     var onMute: ((Data) -> Void)?
     var onUnmute: ((Data) -> Void)?
     let mutedUsers: [Data]
     let highlightedMessageId: String?
     var onScrollToReply: ((String) -> Void)?
-    @Query private var chatReactions: [MessageReaction]
-    @Query private var repliedTo: [ChatMessage]
-    @Query private var messageSender: [Sender]
+    @Query private var chatReactions: [MessageReactionModel]
+    @Query private var repliedTo: [ChatMessageModel]
+    @Query private var messageSender: [SenderModel]
     
     private var isHighlighted: Bool {
         highlightedMessageId == result.id
     }
     
-    init(result: ChatMessage, isAdmin: Bool = false, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: ((ChatMessage) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessage) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
+    init(result: ChatMessageModel, isAdmin: Bool = false, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: ((ChatMessageModel) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessageModel) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
         self.result = result
         self.isAdmin = isAdmin
         self.isFirstInGroup = isFirstInGroup
@@ -44,14 +44,14 @@ struct ChatMessageRow: View {
         let messageId = result.id
         let replyTo = result.replyTo
         let senderId = result.sender?.id
-        _chatReactions = Query(filter: #Predicate<MessageReaction> { r in
+        _chatReactions = Query(filter: #Predicate<MessageReactionModel> { r in
             r.targetMessageId == messageId
         })
         self.onDM = onDM
-        _repliedTo = Query(filter: #Predicate<ChatMessage> { r in
+        _repliedTo = Query(filter: #Predicate<ChatMessageModel> { r in
             if (replyTo != nil) { r.id == replyTo! } else { false }
         })
-        _messageSender = Query(filter: #Predicate<Sender> { s in
+        _messageSender = Query(filter: #Predicate<SenderModel> { s in
             if (senderId != nil) { s.id == senderId! } else { false }
         })
     }

@@ -104,14 +104,14 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
 
     public var modelContainer: ModelContainer?
 
-    private func fetchOrCreateChannelChat(channelId: String, channelName: String, ctx: SwiftDataActor) throws -> Chat {
+    private func fetchOrCreateChannelChat(channelId: String, channelName: String, ctx: SwiftDataActor) throws -> ChatModelModel {
         log("fetchOrCreateChannelChat channelId=\(channelId) channelName=\(channelName)")
-        let descriptor = FetchDescriptor<Chat>(predicate: #Predicate { $0.id == channelId })
+        let descriptor = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.id == channelId })
         if let existing = try ctx.fetch(descriptor).first {
             log("found existing Chat id=\(existing.id) name=\(existing.name) messages=\(existing.messages.count)")
             return existing
         } else {
-            let newChat = Chat(channelId: channelId, name: channelName)
+            let newChat = ChatModelModel(channelId: channelId, name: channelName)
             ctx.insert(newChat)
             log("inserting new Chat id=\(newChat.id) name=\(newChat.name)")
             try ctx.save()

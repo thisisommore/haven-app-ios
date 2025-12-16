@@ -18,10 +18,10 @@ struct Main: App {
     var modelData  = {
         // Include all SwiftData models used by the app
         let schema = Schema([
-            Chat.self,
-            ChatMessage.self,
-            MessageReaction.self,
-            Sender.self,
+            ChatModelModel.self,
+            ChatMessageModel.self,
+            MessageReactionModel.self,
+            SenderModel.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema)
         
@@ -132,7 +132,7 @@ struct RootContentView: View {
             return
         }
         
-        let newChat = Chat(pubKey: pubKey, name: name, dmToken: token, color: color)
+        let newChat = ChatModelModel(pubKey: pubKey, name: name, dmToken: token, color: color)
         
         Task {
             modelData.da.insert(newChat)
@@ -178,10 +178,10 @@ struct RootContentView: View {
                             xxdk.setModelContainer(mActor: modelData.da, sm: sM)
                             Task {
                                 await xxdk.logout()
-                                try? modelData.da.deleteAll(ChatMessage.self)
-                                try? modelData.da.deleteAll(MessageReaction.self)
-                                try? modelData.da.deleteAll(Sender.self)
-                                try? modelData.da.deleteAll(Chat.self)
+                                try? modelData.da.deleteAll(ChatMessageModel.self)
+                                try? modelData.da.deleteAll(MessageReactionModel.self)
+                                try? modelData.da.deleteAll(SenderModel.self)
+                                try? modelData.da.deleteAll(ChatModelModel.self)
                                 try? modelData.da.save()
                                 sM.clearAll()
                                 navigation.path.append(Destination.password)

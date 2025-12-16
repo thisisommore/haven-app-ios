@@ -16,15 +16,15 @@ enum MessageType: Int64 {
 }
 
 @Model
-class ChatMessage: Identifiable {
+class ChatMessageModel: Identifiable {
     @Attribute(.unique) var id: String
     var internalId: Int64
     var message: String
     var timestamp: Date
     var isIncoming: Bool
     var isRead: Bool
-    var sender: Sender?
-    var chat: Chat
+    var sender: SenderModel?
+    var chat: ChatModelModel
     var replyTo: String?
     
     // File attachment properties
@@ -45,7 +45,7 @@ class ChatMessage: Identifiable {
         return ["jpg", "jpeg", "png", "gif", "webp", "heic"].contains(type)
     }
     
-    init(message: String, isIncoming: Bool, chat: Chat, sender: Sender? = nil, id: String, internalId: Int64, replyTo: String? = nil, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3), isRead: Bool = false) {
+    init(message: String, isIncoming: Bool, chat: ChatModelModel, sender: SenderModel? = nil, id: String, internalId: Int64, replyTo: String? = nil, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3), isRead: Bool = false) {
         self.id = id
         self.internalId = internalId
         self.message = message
@@ -68,13 +68,13 @@ class ChatMessage: Identifiable {
         filePreview: Data?,
         fileLinkJSON: String?,
         isIncoming: Bool,
-        chat: Chat,
-        sender: Sender?,
+        chat: ChatModelModel,
+        sender: SenderModel?,
         id: String,
         internalId: Int64,
         timestamp: Int64
-    ) -> ChatMessage {
-        let msg = ChatMessage(
+    ) -> ChatMessageModel {
+        let msg = ChatMessageModel(
             message: "📎 \(fileName)",
             isIncoming: isIncoming,
             chat: chat,

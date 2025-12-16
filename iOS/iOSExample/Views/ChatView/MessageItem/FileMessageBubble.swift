@@ -10,7 +10,7 @@ import QuickLook
 
 /// Bubble for displaying file attachments in chat
 struct FileMessageBubble: View {
-    let message: ChatMessage
+    let message: ChatMessageModel
     let isIncoming: Bool
     let timestamp: String
     let showTimestamp: Bool
@@ -200,11 +200,11 @@ struct FileMessageBubble: View {
 #Preview {
     VStack(spacing: 16) {
         // Image message incoming
-        let imageMsg = ChatMessage(
+        let imageMsg = ChatMessageModel(
             message: "📎 photo.jpg",
             isIncoming: true,
-            chat: Chat(channelId: "test", name: "Test"),
-            sender: Sender(id: "1", pubkey: Data(), codename: "Alice", dmToken: 0, color: 0x2196F3),
+            chat: ChatModelModel(channelId: "test", name: "Test"),
+            sender: SenderModel(id: "1", pubkey: Data(), codename: "Alice", dmToken: 0, color: 0x2196F3),
             id: "1",
             internalId: 1
         )
@@ -218,10 +218,10 @@ struct FileMessageBubble: View {
         )
         
         // File message outgoing
-        let fileMsg = ChatMessage(
+        let fileMsg = ChatMessageModel(
             message: "📎 document.pdf",
             isIncoming: false,
-            chat: Chat(channelId: "test", name: "Test"),
+            chat: ChatModelModel(channelId: "test", name: "Test"),
             id: "2",
             internalId: 2
         )

@@ -6,7 +6,7 @@ struct MessageItem: View {
     let isIncoming: Bool
     let repliedTo: String?
     let repliedToId: String?
-    let sender: Sender?
+    let sender: SenderModel?
     let isFirstInGroup: Bool
     let isLastInGroup: Bool
     let showTimestamp: Bool
@@ -14,7 +14,7 @@ struct MessageItem: View {
     let isAdmin: Bool
     
     // File message properties
-    let chatMessage: ChatMessage?
+    let chatMessage: ChatMessageModel?
 
     var onReply: (() -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
@@ -25,7 +25,7 @@ struct MessageItem: View {
     var onScrollToReply: ((String) -> Void)?
     let isHighlighted: Bool
 
-    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: Sender?, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false, chatMessage: ChatMessage? = nil) {
+    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: SenderModel?, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false, chatMessage: ChatMessageModel? = nil) {
         self.text = text
         self.isIncoming = isIncoming
         self.repliedTo = repliedTo
@@ -148,7 +148,7 @@ struct MessageItem: View {
                 isIncoming: true,
                 repliedTo:
                     "Wow lets go Wow lets go Wow lets go Wow lets go Wow lets go",
-                sender: Sender(
+                sender: SenderModel(
                     id: "1",
                     pubkey: Data(),
                     codename: "Mayur",
@@ -174,7 +174,7 @@ struct MessageItem: View {
                     """,
                 isIncoming: true,
                 repliedTo: nil,
-                sender: Sender(
+                sender: SenderModel(
                     id: "2",
                     pubkey: Data(),
                     codename: "Alex",
@@ -203,7 +203,7 @@ struct MessageItem: View {
                 text: "Hello there 👋",
                 isIncoming: true,
                 repliedTo: nil,
-                sender: Sender(
+                sender: SenderModel(
                     id: "3",
                     pubkey: Data(),
                     codename: "Sarah",
@@ -226,7 +226,7 @@ struct MessageItem: View {
                     "This is a much longer message to test how the bubble handles multiple lines of text. It should wrap nicely and maintain proper styling throughout.",
                 isIncoming: true,
                 repliedTo: nil,
-                sender: Sender(
+                sender: SenderModel(
                     id: "1",
                     pubkey: Data(),
                     codename: "Mayur",

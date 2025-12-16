@@ -120,7 +120,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             return
         }
 
-        let descriptor = FetchDescriptor<ChatMessage>(
+        let descriptor = FetchDescriptor<ChatMessageModel>(
             predicate: #Predicate { $0.internalId == uuid }
         )
 
@@ -148,18 +148,18 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     private func fetchOrCreateChannelChat(
         channelId: String,
         channelName: String
-    ) throws -> Chat {
+    ) throws -> ChatModelModel {
         guard let actor = modelActor else {
             throw NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "modelActor not available"])
         }
-        let descriptor = FetchDescriptor<Chat>(
+        let descriptor = FetchDescriptor<ChatModelModel>(
             predicate: #Predicate { $0.id == channelId }
         )
         if let existing = try actor.fetch(descriptor).first {
             return existing
         }
         log("Chat(channelId: \(channelId), name: \(channelName))")
-        let newChat = Chat(channelId: channelId, name: channelName)
+        let newChat = ChatModelModel(channelId: channelId, name: channelName)
         actor.insert(newChat)
         try actor.save()
         return newChat
@@ -191,12 +191,12 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
 
             // Create or update Sender object if we have codename and pubkey
-            var sender: Sender? = nil
+            var sender: SenderModel? = nil
             if let codename = senderCodename, let pubKey = senderPubKey {
                 let senderId = pubKey.base64EncodedString()
 
                 // Check if sender already exists and update dmToken
-                let senderDescriptor = FetchDescriptor<Sender>(
+                let senderDescriptor = FetchDescriptor<SenderModel>(
                     predicate: #Predicate { $0.id == senderId }
                 )
                 if let existingSender = try? actor.fetch(
@@ -213,7 +213,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     
                 } else {
                     // Create new sender
-                    sender = Sender(
+                    sender = SenderModel(
                         id: senderId,
                         pubkey: pubKey,
                         codename: codename,
@@ -230,7 +230,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
             
             
-            let msg: ChatMessage
+            let msg: ChatMessageModel
             if let mid = messageIdB64, !mid.isEmpty {
                 // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                 let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderPubKey, ctx: actor)
@@ -241,7 +241,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 log(
                     "Sender(codename: \(sender!.codename), dmToken: \(sender!.dmToken))"
                 )
-                msg = ChatMessage(
+                msg = ChatMessageModel(
                     message: text,
                     isIncoming: isIncoming,
                     chat: chat,
@@ -414,12 +414,12 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
             // Create or update Sender object if we have codename and pubkey
-            var sender: Sender? = nil
+            var sender: SenderModel? = nil
             if let pubKey = pubKey {
                 let senderId = pubKey.base64EncodedString()
 
                 // Check if sender already exists and update dmToken
-                let senderDescriptor = FetchDescriptor<Sender>(
+                let senderDescriptor = FetchDescriptor<SenderModel>(
                     predicate: #Predicate { $0.id == senderId }
                 )
                 
@@ -434,7 +434,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
            
                 } else {
                     // Create new sender
-                    sender = Sender(
+                    sender = SenderModel(
                         id: senderId,
                         pubkey: pubKey,
                         codename: codename,
@@ -448,7 +448,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
             let internalId = InternalIdGenerator.shared.next()
-            let record = MessageReaction(
+            let record = MessageReactionModel(
                 id: messageID!.base64EncodedString(),
                 internalId: internalId,
                 targetMessageId: targetId,
@@ -478,7 +478,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 log("deleteReaction: no modelActor available")
                 return
             }
-            let descriptor = FetchDescriptor<MessageReaction>(
+            let descriptor = FetchDescriptor<MessageReactionModel>(
                 predicate: #Predicate {
                     $0.id == messageId && $0.emoji == emoji
                 }
@@ -593,7 +593,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             return false
         }
 
-        let descriptor = FetchDescriptor<ChatMessage>(
+        let descriptor = FetchDescriptor<ChatMessageModel>(
             predicate: #Predicate { $0.internalId == uuid }
         )
 
@@ -625,7 +625,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         // Check ChatMessage
-        let msgDescriptor = FetchDescriptor<ChatMessage>(
+        let msgDescriptor = FetchDescriptor<ChatMessageModel>(
             predicate: #Predicate { $0.id == messageIdB64 }
         )
         if let msg = try? actor.fetch(msgDescriptor).first {
@@ -638,7 +638,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         // Check MessageReaction - if message not found, check if it's a reaction
-        let reactionDescriptor = FetchDescriptor<MessageReaction>(
+        let reactionDescriptor = FetchDescriptor<MessageReactionModel>(
             predicate: #Predicate { $0.id == messageIdB64 }
         )
         if let reaction = try? actor.fetch(reactionDescriptor).first {
@@ -671,7 +671,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
         do {
             // First, try to find and delete a ChatMessage
-            let messageDescriptor = FetchDescriptor<ChatMessage>(
+            let messageDescriptor = FetchDescriptor<ChatMessageModel>(
                 predicate: #Predicate { $0.id == messageIdB64 }
             )
             let messages = try actor.fetch(messageDescriptor)
@@ -689,7 +689,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 
                 // Log remaining messages in the chat
                 if let chatId {
-                    let chatDescriptor = FetchDescriptor<Chat>(predicate: #Predicate { $0.id == chatId })
+                    let chatDescriptor = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.id == chatId })
                     if let chat = try? actor.fetch(chatDescriptor).first {
                         log("deleteMessage: Remaining messages in chat '\(chat.name)':")
                         for msg in chat.messages {
@@ -704,7 +704,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             log(
                 "deleteMessage: No ChatMessage found, checking for MessageReaction"
             )
-            let reactionDescriptor = FetchDescriptor<MessageReaction>(
+            let reactionDescriptor = FetchDescriptor<MessageReactionModel>(
                 predicate: #Predicate { $0.id == messageIdB64 }
             )
             let reactions = try actor.fetch(reactionDescriptor)
@@ -728,7 +728,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             
             // Debug: Log ChatMessages for chat "Bho"
             let chatName = "Bho"
-            let bhoMessagesDescriptor = FetchDescriptor<ChatMessage>(
+            let bhoMessagesDescriptor = FetchDescriptor<ChatMessageModel>(
                 predicate: #Predicate { $0.chat.name == chatName }
             )
             if let bhoMessages = try? actor.fetch(bhoMessagesDescriptor) {
@@ -855,7 +855,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         Task {
             do {
                 // Find ALL messages with matching fileID in fileLinkJSON
-                let allMessages = try actor.fetch(FetchDescriptor<ChatMessage>())
+                let allMessages = try actor.fetch(FetchDescriptor<ChatMessageModel>())
                 var updatedCount = 0
                 for message in allMessages {
                     if let linkJSON = message.fileLinkJSON,
@@ -947,10 +947,10 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
             
             // Get or create sender
-            var sender: Sender? = nil
+            var sender: SenderModel? = nil
             if let pubKey = pubKey {
                 let senderId = pubKey.base64EncodedString()
-                let senderDescriptor = FetchDescriptor<Sender>(
+                let senderDescriptor = FetchDescriptor<SenderModel>(
                     predicate: #Predicate { $0.id == senderId }
                 )
                 if let existingSender = try? actor.fetch(senderDescriptor).first {
@@ -958,7 +958,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     // Note: handleFileMessage doesn't receive nickname parameter
                     sender = existingSender
                 } else {
-                    sender = Sender(
+                    sender = SenderModel(
                         id: senderId,
                         pubkey: pubKey,
                         codename: identity.codename,
@@ -978,7 +978,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             let cachedFileData = retrieveFileData(fileID: fileInfo.fileID)
             log("[FT] Creating file message, cached data: \(cachedFileData?.count ?? 0) bytes")
             
-            let fileMessage = ChatMessage.fileMessage(
+            let fileMessage = ChatMessageModel.fileMessage(
                 fileName: fileInfo.name,
                 fileType: fileInfo.type,
                 fileData: cachedFileData,
@@ -1025,9 +1025,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
     
     // MARK: - Helper Methods
-    private func isSenderSelf(chat: Chat, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
+    private func isSenderSelf(chat: ChatModelModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
         // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey
-        let selfChatDescriptor = FetchDescriptor<Chat>(predicate: #Predicate { $0.name == "<self>" })
+        let selfChatDescriptor = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.name == "<self>" })
         if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
             guard let senderPubKey = senderPubKey else { return false }
             return Data(base64Encoded: selfChat.id) == senderPubKey

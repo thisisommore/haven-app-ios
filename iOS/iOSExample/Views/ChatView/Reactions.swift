@@ -9,12 +9,12 @@ import SwiftData
 import SwiftUI
 
 struct Reactions: View {
-    let reactions: [MessageReaction]
+    let reactions: [MessageReactionModel]
     @State private var showReactors = false
     @State private var selectedEmoji: String?
     
     /// Groups reactions by emoji
-    private var groupedReactions: [(emoji: String, reactions: [MessageReaction])] {
+    private var groupedReactions: [(emoji: String, reactions: [MessageReactionModel])] {
         Dictionary(grouping: reactions, by: { $0.emoji })
             .map { (emoji: $0.key, reactions: $0.value) }
             .sorted { $0.reactions.count > $1.reactions.count }
@@ -66,11 +66,11 @@ struct Reactions: View {
 }
 
 struct ReactorsSheet: View {
-    let groupedReactions: [(emoji: String, reactions: [MessageReaction])]
+    let groupedReactions: [(emoji: String, reactions: [MessageReactionModel])]
     let selectedEmoji: String?
     @State private var currentEmoji: String?
     
-    var displayedReactions: [MessageReaction] {
+    var displayedReactions: [MessageReactionModel] {
         if let emoji = currentEmoji ?? selectedEmoji {
             return groupedReactions.first { $0.emoji == emoji }?.reactions ?? []
         }

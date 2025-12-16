@@ -173,7 +173,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
                 // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                 let isIncoming = !isSenderSelf(chat: chat, senderPubKey: nil, ctx: contextToUse)
                 let internalId = InternalIdGenerator.shared.next()
-                let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, id: messageId.base64EncodedString(), internalId: internalId)
+                let msg = ChatMessageModel(message: message, isIncoming: isIncoming, chat: chat, id: messageId.base64EncodedString(), internalId: internalId)
                 chat.messages.append(msg)
                 // Increment unread count for incoming messages after join time
                 if isIncoming && msg.timestamp > chat.joinedAt {
@@ -199,24 +199,24 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
 
                     // Create or update Sender object
                     let senderId = partnerKey.base64EncodedString()
-                    let senderDescriptor = FetchDescriptor<Sender>(
+                    let senderDescriptor = FetchDescriptor<SenderModel>(
                         predicate: #Predicate { $0.id == senderId }
                     )
-                    let sender: Sender
+                    let sender: SenderModel
                     if let existingSender = try? backgroundContext.fetch(senderDescriptor).first {
                         // Update existing sender's dmToken
                         existingSender.dmToken = dmToken
                         sender = existingSender
                     } else {
                         // Create new sender
-                        sender = Sender(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
+                        sender = SenderModel(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
                         print("DMReceiver: Created new Sender for \(name) with dmToken: \(dmToken)")
                     }
 
                     // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                     let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderKey, ctx: backgroundContext)
                     let internalId = InternalIdGenerator.shared.next()
-                    let msg = ChatMessage(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
+                    let msg = ChatMessageModel(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
                     chat.messages.append(msg)
                     // Increment unread count for incoming messages after join time
                     if isIncoming && msg.timestamp > chat.joinedAt {
@@ -233,22 +233,22 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         }
     }
 
-    private func fetchOrCreateDMChat(codename: String, ctx: SwiftDataActor, pubKey: Data?, dmToken: Int32?, color: Int) throws -> Chat {
+    private func fetchOrCreateDMChat(codename: String, ctx: SwiftDataActor, pubKey: Data?, dmToken: Int32?, color: Int) throws -> ChatModelModel {
         if let pubKey {
             let pubKeyB64 = pubKey.base64EncodedString()
-            let byKey = FetchDescriptor<Chat>(predicate: #Predicate { $0.id == pubKeyB64 })
+            let byKey = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.id == pubKeyB64 })
             if let existingByKey = try ctx.fetch(byKey).first {
                 return existingByKey
             } else {
                 guard let dmToken else { throw MyError.runtimeError("dmToken is required to create chat with pubKey") }
-                let newChat = Chat(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
+                let newChat = ChatModelModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
                 ctx.insert(newChat)
                 try ctx.save()
                 return newChat
             }
         } else {
             // Fallback to codename-based lookup (may collide)
-            let byName = FetchDescriptor<Chat>(predicate: #Predicate { $0.name == codename })
+            let byName = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.name == codename })
             if let existingByName = try ctx.fetch(byName).first {
                 return existingByName
             } else {
@@ -258,9 +258,9 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     }
 
     // MARK: - Helper Methods
-    private func isSenderSelf(chat: Chat, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
+    private func isSenderSelf(chat: ChatModelModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
         // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey
-        let selfChatDescriptor = FetchDescriptor<Chat>(predicate: #Predicate { $0.name == "<self>" })
+        let selfChatDescriptor = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.name == "<self>" })
         if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
             guard let senderPubKey = senderPubKey else { return false }
             return Data(base64Encoded: selfChat.id) == senderPubKey
