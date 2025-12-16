@@ -5,8 +5,8 @@
 //  File/image message display component
 //
 
-import SwiftUI
 import QuickLook
+import SwiftUI
 
 /// Bubble for displaying file attachments in chat
 struct FileMessageBubble: View {
@@ -15,22 +15,22 @@ struct FileMessageBubble: View {
     let timestamp: String
     let showTimestamp: Bool
     let isHighlighted: Bool
-    
+
     @State private var previewURL: URL?
-    
+
     var body: some View {
         VStack(alignment: isIncoming ? .leading : .trailing, spacing: 4) {
             if isIncoming, let sender = message.sender {
                 MessageSender(isIncoming: isIncoming, sender: sender)
             }
-            
+
             // File content
             if message.isImage {
                 imageContent
             } else {
                 fileContent
             }
-            
+
             // Timestamp
             if showTimestamp {
                 Text(timestamp)
@@ -66,14 +66,14 @@ struct FileMessageBubble: View {
         }
         .quickLookPreview($previewURL)
     }
-    
+
     private func openFile() {
         guard let fileData = message.fileData,
               let fileName = message.fileName else { return }
-        
+
         let tempDir = FileManager.default.temporaryDirectory
         let fileURL = tempDir.appendingPathComponent(fileName)
-        
+
         do {
             try fileData.write(to: fileURL)
             previewURL = fileURL
@@ -81,12 +81,13 @@ struct FileMessageBubble: View {
             print("Failed to write file for preview: \(error)")
         }
     }
-    
+
     @ViewBuilder
     private var imageContent: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let imageData = message.fileData ?? message.filePreview,
-               let uiImage = UIImage(data: imageData) {
+               let uiImage = UIImage(data: imageData)
+            {
                 Image(uiImage: uiImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -96,7 +97,7 @@ struct FileMessageBubble: View {
                 // Placeholder for image not yet downloaded
                 imagePlaceholder
             }
-            
+
             if let fileName = message.fileName {
                 Text(fileName)
                     .font(.caption)
@@ -105,14 +106,14 @@ struct FileMessageBubble: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var imagePlaceholder: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color.gray.opacity(0.2))
                 .frame(width: 200, height: 150)
-            
+
             VStack(spacing: 12) {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .haven))
@@ -123,7 +124,7 @@ struct FileMessageBubble: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var fileContent: some View {
         HStack(spacing: 12) {
@@ -132,23 +133,23 @@ struct FileMessageBubble: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isIncoming ? Color.haven.opacity(0.15) : Color.white.opacity(0.2))
                     .frame(width: 44, height: 44)
-                
+
                 Image(systemName: fileIcon)
                     .font(.title2)
                     .foregroundStyle(isIncoming ? Color.haven : Color.white)
             }
-            
+
             // File info
             VStack(alignment: .leading, spacing: 2) {
                 Text(message.fileName ?? "File")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(isIncoming ? Color.messageText : Color.white)
                     .lineLimit(2)
-                
+
                 HStack(spacing: 4) {
                     Text(message.fileType?.uppercased() ?? "FILE")
                         .font(.caption2.weight(.medium))
-                    
+
                     if let data = message.fileData {
                         Text("•")
                         Text(formatFileSize(data.count))
@@ -157,15 +158,15 @@ struct FileMessageBubble: View {
                 }
                 .foregroundStyle(isIncoming ? Color.messageText.opacity(0.6) : Color.white.opacity(0.7))
             }
-            
+
             Spacer(minLength: 0)
         }
         .frame(maxWidth: 250)
     }
-    
+
     private var fileIcon: String {
         guard let type = message.fileType?.lowercased() else { return "doc.fill" }
-        
+
         switch type {
         case "pdf":
             return "doc.text.fill"
@@ -185,7 +186,7 @@ struct FileMessageBubble: View {
             return "doc.fill"
         }
     }
-    
+
     private func formatFileSize(_ bytes: Int) -> String {
         if bytes < 1024 {
             return "\(bytes) B"
@@ -208,7 +209,7 @@ struct FileMessageBubble: View {
             id: "1",
             internalId: 1
         )
-        
+
         FileMessageBubble(
             message: imageMsg,
             isIncoming: true,
@@ -216,7 +217,7 @@ struct FileMessageBubble: View {
             showTimestamp: true,
             isHighlighted: false
         )
-        
+
         // File message outgoing
         let fileMsg = ChatMessageModel(
             message: "📎 document.pdf",
@@ -225,7 +226,7 @@ struct FileMessageBubble: View {
             id: "2",
             internalId: 2
         )
-        
+
         FileMessageBubble(
             message: fileMsg,
             isIncoming: false,
@@ -236,6 +237,3 @@ struct FileMessageBubble: View {
     }
     .padding()
 }
-
-
-

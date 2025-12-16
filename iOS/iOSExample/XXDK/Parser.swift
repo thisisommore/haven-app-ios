@@ -5,14 +5,16 @@
 //  Created by Om More on 24/09/25.
 //
 
-import Foundation
 import Bindings
+import Foundation
 
 // MARK: - Decoders / Parsers centralization
+
 // This file centralizes JSON models and decode helpers used across the app.
 // Add new payload models and decode helpers here to keep parsing consistent.
 
 // MARK: - Privacy Level
+
 public enum PrivacyLevel: Int {
     case publicChannel = 0
     case secret = 2
@@ -31,15 +33,16 @@ public struct IsReadyInfoJSON: Decodable {
     // Be tolerant of number-like strings or integers for HowClose
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.isReady = try container.decode(Bool.self, forKey: .isReady)
+        isReady = try container.decode(Bool.self, forKey: .isReady)
 
         if let d = try? container.decode(Double.self, forKey: .howClose) {
-            self.howClose = d
+            howClose = d
         } else if let i = try? container.decode(Int.self, forKey: .howClose) {
-            self.howClose = Double(i)
+            howClose = Double(i)
         } else if let s = try? container.decode(String.self, forKey: .howClose),
-                  let d = Double(s) {
-            self.howClose = d
+                  let d = Double(s)
+        {
+            howClose = d
         } else {
             throw DecodingError.dataCorrupted(
                 .init(codingPath: [CodingKeys.howClose],
@@ -74,7 +77,7 @@ public struct ChannelJSON: Decodable, Identifiable {
     public let channelId: String?
     public let name: String
     public let description: String
-    
+
     // Identifiable conformance
     public var id: String {
         channelId ?? name
@@ -136,9 +139,9 @@ public struct RemoteKVEntry: Codable {
     }
 
     public init(version: Int, data: String, timestamp: String) {
-        self.Version = version
-        self.Data = data
-        self.Timestamp = timestamp
+        Version = version
+        Data = data
+        Timestamp = timestamp
     }
 }
 
@@ -147,7 +150,7 @@ public struct RemoteKVEntry: Codable {
 public struct ShareURLJSON: Decodable {
     public let url: String
     public let password: String
-    
+
     public init(url: String, password: String) {
         self.url = url
         self.password = password
@@ -174,6 +177,7 @@ public struct MessageUpdateInfoJSON: Decodable {
 }
 
 // MARK: - CMix Params
+
 // Mirrors the TypeScript CMixParams shape
 public struct CMixParamsJSON: Codable {
     public var Network: NetworkParams
@@ -245,7 +249,7 @@ public struct CMixCoreParams: Codable {
     public var DebugTag: String
     public var BlacklistedNodes: [String: Bool]
     public var Critical: Bool
-    
+
     public init(
         RoundTries: Int,
         Timeout: Int,
@@ -272,7 +276,7 @@ public enum Parser {
         // We use explicit CodingKeys above, so default strategy is fine.
         return d
     }()
-    
+
     // Shared JSONEncoder for consistency
     private static let encoder: JSONEncoder = {
         let e = JSONEncoder()
@@ -288,7 +292,7 @@ public enum Parser {
     public static func decodeIdentity(from data: Data) throws -> IdentityJSON {
         try decoder.decode(IdentityJSON.self, from: data)
     }
-    
+
     public static func decodeChannel(from data: Data) throws -> ChannelJSON {
         try decoder.decode(ChannelJSON.self, from: data)
     }
@@ -296,11 +300,11 @@ public enum Parser {
     public static func decodeChannelSendReport(from data: Data) throws -> ChannelSendReportJSON {
         try decoder.decode(ChannelSendReportJSON.self, from: data)
     }
-    
+
     public static func decodeString(from data: Data) throws -> String {
         try decoder.decode(String.self, from: data)
     }
-    
+
     // MARK: - Encode helpers
 
     public static func encodeIdentity(_ identity: IdentityJSON) throws -> Data {
@@ -318,11 +322,13 @@ public enum Parser {
     public static func decodeRemoteKVEntry(from data: Data) throws -> RemoteKVEntry {
         try decoder.decode(RemoteKVEntry.self, from: data)
     }
+
     public static func encodeString(_ entry: String) throws -> Data {
         try encoder.encode(entry)
     }
 
     // MARK: - CMix Params helpers
+
     public static func decodeCMixParams(from data: Data) throws -> CMixParamsJSON {
         try decoder.decode(CMixParamsJSON.self, from: data)
     }
@@ -330,7 +336,7 @@ public enum Parser {
     public static func encodeCMixParams(_ params: CMixParamsJSON) throws -> Data {
         try encoder.encode(params)
     }
-    
+
     public static func decodeShareURL(from data: Data) throws -> ShareURLJSON {
         try decoder.decode(ShareURLJSON.self, from: data)
     }
@@ -340,6 +346,7 @@ public enum Parser {
     }
 
     // MARK: - File Transfer helpers
+
     public static func decodeFtSentProgress(from data: Data) throws -> FtSentProgressJSON {
         try decoder.decode(FtSentProgressJSON.self, from: data)
     }
@@ -386,14 +393,14 @@ public struct FileTransferParamsJSON: Codable {
     }
 }
 
-extension CMixCoreParams {
+public extension CMixCoreParams {
     /// Default cMix params for file transfer
-    public static var fileTransferDefaults: CMixCoreParams {
+    static var fileTransferDefaults: CMixCoreParams {
         CMixCoreParams(
             RoundTries: 10,
-            Timeout: 30_000_000_000,     // 30 seconds in nanoseconds
-            RetryDelay: 1_000_000_000,   // 1 second in nanoseconds
-            SendTimeout: 500_000_000,    // 500ms in nanoseconds
+            Timeout: 30_000_000_000, // 30 seconds in nanoseconds
+            RetryDelay: 1_000_000_000, // 1 second in nanoseconds
+            SendTimeout: 500_000_000, // 500ms in nanoseconds
             DebugTag: "FT",
             BlacklistedNodes: [:],
             Critical: false
@@ -447,7 +454,7 @@ public struct FileInfoJSON: Decodable {
     public let fileID: String
     public let recipientID: String
     public let sentTimestamp: String
-    public let key: [UInt8]  // Encryption key as byte array
+    public let key: [UInt8] // Encryption key as byte array
     public let mac: String
     public let size: Int
     public let numParts: Int

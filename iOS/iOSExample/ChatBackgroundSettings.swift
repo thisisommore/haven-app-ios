@@ -6,10 +6,10 @@
 import SwiftUI
 
 enum ChatBackgroundType: String, Codable, CaseIterable {
-    case doodle = "doodle"
+    case doodle
     case solidColor = "solid"
     case customImage = "custom"
-    
+
     var displayName: String {
         switch self {
         case .doodle: return "Doodle Pattern"
@@ -17,7 +17,7 @@ enum ChatBackgroundType: String, Codable, CaseIterable {
         case .customImage: return "Custom Image"
         }
     }
-    
+
     var icon: String {
         switch self {
         case .doodle: return "scribble.variable"
@@ -34,7 +34,7 @@ struct SolidBackgroundColor: Codable, Identifiable, Equatable {
     let blue: Double
     let name: String
     let isDynamic: Bool
-    
+
     init(id: String, red: Double, green: Double, blue: Double, name: String, isDynamic: Bool = false) {
         self.id = id
         self.red = red
@@ -43,14 +43,14 @@ struct SolidBackgroundColor: Codable, Identifiable, Equatable {
         self.name = name
         self.isDynamic = isDynamic
     }
-    
+
     var color: Color {
         if isDynamic {
             return Color.appBackground
         }
         return Color(red: red, green: green, blue: blue)
     }
-    
+
     static let presets: [SolidBackgroundColor] = [
         SolidBackgroundColor(id: "auto", red: 0, green: 0, blue: 0, name: "Auto", isDynamic: true),
         SolidBackgroundColor(id: "midnight", red: 0.05, green: 0.05, blue: 0.12, name: "Midnight"),
@@ -70,43 +70,43 @@ struct SolidBackgroundColor: Codable, Identifiable, Equatable {
 
 class ChatBackgroundSettings: ObservableObject {
     static let shared = ChatBackgroundSettings()
-    
+
     private let typeKey = "chatBackgroundType"
     private let colorIdKey = "chatBackgroundColorId"
     private let customImageKey = "chatBackgroundCustomImage"
-    
+
     @Published var backgroundType: ChatBackgroundType {
         didSet {
             UserDefaults.standard.set(backgroundType.rawValue, forKey: typeKey)
         }
     }
-    
+
     @Published var selectedColorId: String {
         didSet {
             UserDefaults.standard.set(selectedColorId, forKey: colorIdKey)
         }
     }
-    
+
     @Published var customImageData: Data? {
         didSet {
             UserDefaults.standard.set(customImageData, forKey: customImageKey)
         }
     }
-    
+
     var selectedColor: SolidBackgroundColor {
         SolidBackgroundColor.presets.first { $0.id == selectedColorId } ?? SolidBackgroundColor.presets[0]
     }
-    
+
     init() {
         if let typeRaw = UserDefaults.standard.string(forKey: typeKey),
-           let type = ChatBackgroundType(rawValue: typeRaw) {
-            self.backgroundType = type
+           let type = ChatBackgroundType(rawValue: typeRaw)
+        {
+            backgroundType = type
         } else {
-            self.backgroundType = .solidColor
+            backgroundType = .solidColor
         }
-        
-        self.selectedColorId = UserDefaults.standard.string(forKey: colorIdKey) ?? "auto"
-        self.customImageData = UserDefaults.standard.data(forKey: customImageKey)
+
+        selectedColorId = UserDefaults.standard.string(forKey: colorIdKey) ?? "auto"
+        customImageData = UserDefaults.standard.data(forKey: customImageKey)
     }
 }
-

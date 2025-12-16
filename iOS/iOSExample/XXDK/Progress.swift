@@ -23,8 +23,8 @@ public enum XXDKProgressStatus {
     case readyExistingUser
     case networkFollowerComplete
     case ready
-    case final  // Edge case: force 100% completion
-    
+    case final // Edge case: force 100% completion
+
     var message: String {
         switch self {
         case .downloadingNDF:
@@ -63,7 +63,7 @@ public enum XXDKProgressStatus {
             return "Complete"
         }
     }
-    
+
     // Each step increments by 7% (13 steps × 7% = 91%, last step = 9% to reach 100%)
     var increment: Double {
         switch self {
@@ -96,12 +96,11 @@ public enum XXDKProgressStatus {
         case .networkFollowerComplete:
             return 7
         case .ready:
-            return -1  // Final step brings us to 100%
+            return -1 // Final step brings us to 100%
         case .readyExistingUser:
-            return 9 + XXDKProgressStatus.joiningChannels.increment + XXDKProgressStatus.creatingIdentity.increment + XXDKProgressStatus.downloadingNDF.increment  // Final step brings us to 100%
+            return 9 + XXDKProgressStatus.joiningChannels.increment + XXDKProgressStatus.creatingIdentity.increment + XXDKProgressStatus.downloadingNDF.increment // Final step brings us to 100%
         case .final:
-            return -1  // Special flag: force to 100%
+            return -1 // Special flag: force to 100%
         }
     }
 }
-

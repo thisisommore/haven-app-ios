@@ -1,5 +1,5 @@
-import SwiftUI
 import Foundation
+import SwiftUI
 
 struct MessageItem: View {
     let text: String
@@ -12,7 +12,7 @@ struct MessageItem: View {
     let showTimestamp: Bool
     let timeStamp: String
     let isAdmin: Bool
-    
+
     // File message properties
     let chatMessage: ChatMessageModel?
 
@@ -49,14 +49,14 @@ struct MessageItem: View {
         _selectedEmoji = State(initialValue: selectedEmoji)
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        self.timeStamp = formatter.string(from: timestamp)
+        timeStamp = formatter.string(from: timestamp)
     }
+
     @State private var isEmojiSheetPresented = false
     @State private var shouldTriggerReply = false
     @State private var selectedEmoji: MessageEmoji = .none
 
     var body: some View {
-
         HStack(spacing: 2) {
             ConditionalSpacer(!isIncoming)
             VStack {
@@ -78,7 +78,7 @@ struct MessageItem: View {
 
                 HStack {
                     ConditionalSpacer(!isIncoming)
-                    
+
                     // Check if this is a file message
                     if let msg = chatMessage, msg.hasFile {
                         FileMessageBubble(
@@ -108,17 +108,15 @@ struct MessageItem: View {
                             isHighlighted: isHighlighted
                         )
                     }
-                    
+
                     ConditionalSpacer(isIncoming)
                 }
-              
             }
             ConditionalSpacer(isIncoming)
-
         }
 
         .sheet(isPresented: $isEmojiSheetPresented) {
-            EmojiKeyboard { emoji in
+            EmojiKeyboard { _ in
                 // Handle emoji selection
                 isEmojiSheetPresented = false
             }
@@ -139,6 +137,7 @@ struct MessageItem: View {
         }
     }
 }
+
 #Preview {
     ScrollView {
         VStack(spacing: 2) {
@@ -147,7 +146,7 @@ struct MessageItem: View {
                 text: "<p>Yup here you go</p>",
                 isIncoming: true,
                 repliedTo:
-                    "Wow lets go Wow lets go Wow lets go Wow lets go Wow lets go",
+                "Wow lets go Wow lets go Wow lets go Wow lets go Wow lets go",
                 sender: MessageSenderModel(
                     id: "1",
                     pubkey: Data(),
@@ -158,7 +157,7 @@ struct MessageItem: View {
                 onReply: {
                     print("Reply tapped")
                 },
-                onDM: { name, token, pubkey, color in
+                onDM: { name, _, _, _ in
                     print("DM to \(name)")
                 },
                 selectedEmoji: MessageEmoji.none,
@@ -168,10 +167,10 @@ struct MessageItem: View {
             // Incoming message with link
             MessageItem(
                 text: """
-                    <a href="https://www.example.com" rel="noopener noreferrer" target="_blank">
-                    Check out this link!
-                    </a>
-                    """,
+                <a href="https://www.example.com" rel="noopener noreferrer" target="_blank">
+                Check out this link!
+                </a>
+                """,
                 isIncoming: true,
                 repliedTo: nil,
                 sender: MessageSenderModel(
@@ -188,10 +187,10 @@ struct MessageItem: View {
                 text: "Thanks for sharing!",
                 isIncoming: false,
                 repliedTo: """
-                    <a href="https://www.example.com" rel="noopener noreferrer" target="_blank">
-                    Check out this link!
-                    </a>
-                    """,
+                <a href="https://www.example.com" rel="noopener noreferrer" target="_blank">
+                Check out this link!
+                </a>
+                """,
                 sender: nil,
                 onReply: {
                     print("Reply tapped")
@@ -223,7 +222,7 @@ struct MessageItem: View {
             // Long incoming message
             MessageItem(
                 text:
-                    "This is a much longer message to test how the bubble handles multiple lines of text. It should wrap nicely and maintain proper styling throughout.",
+                "This is a much longer message to test how the bubble handles multiple lines of text. It should wrap nicely and maintain proper styling throughout.",
                 isIncoming: true,
                 repliedTo: nil,
                 sender: MessageSenderModel(
@@ -231,11 +230,10 @@ struct MessageItem: View {
                     pubkey: Data(),
                     codename: "Mayur",
                     dmToken: 123,
-                    color: 0xcef8c5
+                    color: 0xCEF8C5
                 ), timestamp: Date()
             )
         }
         .padding()
     }
 }
-

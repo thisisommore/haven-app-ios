@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 import UIKit
 
 struct AdminBadge: View {
@@ -29,7 +29,7 @@ struct SecretBadge: View {
 
 struct UnreadBadge: View {
     let count: Int
-    
+
     var body: some View {
         Text(count > 99 ? "99+" : "\(count)")
             .font(.system(size: 12, weight: .bold))
@@ -44,15 +44,15 @@ struct UnreadBadge: View {
 struct ChatRowView<T: XXDKP>: View {
     let chat: ChatModel
     @EnvironmentObject var xxdk: T
-    
+
     private var isChannel: Bool {
         chat.name != "<self>" && chat.dmToken == nil
     }
-    
+
     private var isDM: Bool {
         chat.dmToken != nil
     }
-    
+
     /// For DMs, get the partner's nickname from their messages
     private var dmPartnerNickname: String? {
         guard isDM else { return nil }
@@ -61,12 +61,12 @@ struct ChatRowView<T: XXDKP>: View {
             .first(where: { $0.isIncoming && $0.sender != nil })?
             .sender?.nickname
     }
-    
+
     /// Truncate nickname to 10 chars for display
     private func truncateNickname(_ nickname: String) -> String {
         nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
     }
-    
+
     /// Display name for chat title
     private var chatDisplayName: String {
         if chat.name == "<self>" {
@@ -83,7 +83,7 @@ struct ChatRowView<T: XXDKP>: View {
             if chat.name == "<self>" {
                 Image(systemName: "bookmark.circle.fill").font(.system(size: 40)).foregroundStyle(.orange).symbolRenderingMode(.hierarchical)
             }
-            
+
             VStack(alignment: .leading) {
                 HStack(spacing: 6) {
                     Text(chatDisplayName).foregroundStyle(Color(uiColor: .label))
@@ -115,10 +115,10 @@ struct ChatRowView<T: XXDKP>: View {
                         Text(senderName)
                             .foregroundStyle(Color(uiColor: .secondaryLabel))
                             .font(.system(size: 12))
-                         HTMLText(lastMessage.message,
-                                  textColor: .messageText,
-                                  customFontSize: 12,
-                                  lineLimit: 1)
+                        HTMLText(lastMessage.message,
+                                 textColor: .messageText,
+                                 customFontSize: 12,
+                                 lineLimit: 1)
                     }
                 } else {
                     Text("No messages yet")
@@ -126,9 +126,9 @@ struct ChatRowView<T: XXDKP>: View {
                         .foregroundStyle(Color(uiColor: .secondaryLabel))
                 }
             }
-            
+
             Spacer()
-            
+
             if chat.unreadCount > 0 {
                 UnreadBadge(count: chat.unreadCount)
             }

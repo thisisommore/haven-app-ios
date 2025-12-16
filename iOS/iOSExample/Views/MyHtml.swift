@@ -1,6 +1,7 @@
 import SwiftUI
 
 // MARK: - HTML Element Types
+
 enum HTMLElement {
     case text(String)
     case bold(String)
@@ -15,6 +16,7 @@ enum HTMLElement {
     case paragraph([HTMLElement])
     case lineBreak
 }
+
 struct ParagraphView: View {
     let elements: [HTMLElement]
     @Environment(\.font) var environmentFont
@@ -33,24 +35,24 @@ struct ParagraphView: View {
             var content: AttributedString
 
             switch element {
-            case .text(let text):
+            case let .text(text):
                 content = AttributedString(text)
                 content.font = baseFont
-            case .bold(let text):
+            case let .bold(text):
                 content = AttributedString(text)
                 content.font = baseFont.weight(.bold)
-            case .italic(let text):
+            case let .italic(text):
                 content = AttributedString(text)
                 content.font = baseFont.italic()
-            case .strikethrough(let text):
+            case let .strikethrough(text):
                 content = AttributedString(text)
                 content.font = baseFont
                 content.strikethroughStyle = .single
-            case .link(let text, _):
+            case let .link(text, _):
                 content = AttributedString(text)
                 content.font = baseFont
                 content.foregroundColor = .blue
-            case .code(let text):
+            case let .code(text):
                 content = AttributedString(text)
                 content.font = .system(.body, design: .monospaced)
                 content.backgroundColor = Color.gray.opacity(0.2)
@@ -71,25 +73,27 @@ struct ParagraphView: View {
 }
 
 // MARK: - Fast Path for Simple Content
+
 private extension String {
     var isSimpleParagraph: Bool {
-        let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.hasPrefix("<p>") && trimmed.hasSuffix("</p>") &&
-               !trimmed.contains("<p>") && !trimmed.contains("<b>") &&
-               !trimmed.contains("<i>") && !trimmed.contains("<code>") &&
-               !trimmed.contains("<a ") && !trimmed.contains("<br")
+            !trimmed.contains("<p>") && !trimmed.contains("<b>") &&
+            !trimmed.contains("<i>") && !trimmed.contains("<code>") &&
+            !trimmed.contains("<a ") && !trimmed.contains("<br")
     }
 
     var simpleParagraphContent: String? {
         guard isSimpleParagraph else { return nil }
-        let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
         let start = trimmed.index(trimmed.startIndex, offsetBy: 3)
         let end = trimmed.index(trimmed.endIndex, offsetBy: -4)
-        return String(trimmed[start..<end])
+        return String(trimmed[start ..< end])
     }
 }
 
 // MARK: - HTML Parser
+
 class HTMLParser {
     static let shared = HTMLParser()
     private var cache: [String: [HTMLElement]] = [:]
@@ -141,10 +145,10 @@ class HTMLParser {
         String, String.Index
     )? {
         // Fast path: if no '<' in remaining string, take everything
-        if let range = html.range(of: "<", range: startIndex..<html.endIndex) {
+        if let range = html.range(of: "<", range: startIndex ..< html.endIndex) {
             let length = html.distance(from: startIndex, to: range.lowerBound)
             if length > 0 {
-                return (String(html[startIndex..<range.lowerBound]), range.lowerBound)
+                return (String(html[startIndex ..< range.lowerBound]), range.lowerBound)
             } else {
                 return nil
             }
@@ -161,7 +165,7 @@ class HTMLParser {
         guard html[startIndex] == "<" else { return nil }
 
         var tagEndIndex = startIndex
-        while tagEndIndex < html.endIndex && html[tagEndIndex] != ">" {
+        while tagEndIndex < html.endIndex, html[tagEndIndex] != ">" {
             tagEndIndex = html.index(after: tagEndIndex)
         }
 
@@ -169,14 +173,14 @@ class HTMLParser {
         tagEndIndex = html.index(after: tagEndIndex)
 
         let tagRange =
-            html.index(after: startIndex)..<html.index(before: tagEndIndex)
+            html.index(after: startIndex) ..< html.index(before: tagEndIndex)
         let tagContent = String(html[tagRange]).trimmingCharacters(
             in: .whitespaces
         )
 
         let tagName =
             tagContent.split(separator: " ").first.map(String.init)
-            ?? tagContent
+                ?? tagContent
 
         switch tagName.lowercased() {
         case "p":
@@ -242,18 +246,18 @@ class HTMLParser {
         guard
             let openTagEnd = html.range(
                 of: ">",
-                range: startIndex..<html.endIndex
+                range: startIndex ..< html.endIndex
             )?.upperBound
         else { return nil }
         guard
             let closingRange = html.range(
                 of: "</p>",
                 options: .caseInsensitive,
-                range: openTagEnd..<html.endIndex
+                range: openTagEnd ..< html.endIndex
             )
         else { return nil }
 
-        let content = String(html[openTagEnd..<closingRange.lowerBound])
+        let content = String(html[openTagEnd ..< closingRange.lowerBound])
         let innerElements = parseInline(content)
 
         return (.paragraph(innerElements), closingRange.upperBound)
@@ -296,7 +300,7 @@ class HTMLParser {
         guard html[startIndex] == "<" else { return nil }
 
         var tagEndIndex = startIndex
-        while tagEndIndex < html.endIndex && html[tagEndIndex] != ">" {
+        while tagEndIndex < html.endIndex, html[tagEndIndex] != ">" {
             tagEndIndex = html.index(after: tagEndIndex)
         }
 
@@ -304,14 +308,14 @@ class HTMLParser {
         tagEndIndex = html.index(after: tagEndIndex)
 
         let tagRange =
-            html.index(after: startIndex)..<html.index(before: tagEndIndex)
+            html.index(after: startIndex) ..< html.index(before: tagEndIndex)
         let tagContent = String(html[tagRange]).trimmingCharacters(
             in: .whitespaces
         )
 
         let tagName =
             tagContent.split(separator: " ").first.map(String.init)
-            ?? tagContent
+                ?? tagContent
 
         switch tagName.lowercased() {
         case "b", "strong":
@@ -369,26 +373,26 @@ class HTMLParser {
         guard
             let openTagEnd = html.range(
                 of: ">",
-                range: startIndex..<html.endIndex
+                range: startIndex ..< html.endIndex
             )?.upperBound
         else { return nil }
 
         var closingRange = html.range(
             of: closingTag,
             options: .caseInsensitive,
-            range: openTagEnd..<html.endIndex
+            range: openTagEnd ..< html.endIndex
         )
         if closingRange == nil, let alt = altClosingTag {
             closingRange = html.range(
                 of: alt,
                 options: .caseInsensitive,
-                range: openTagEnd..<html.endIndex
+                range: openTagEnd ..< html.endIndex
             )
         }
 
         guard let closing = closingRange else { return nil }
 
-        let content = String(html[openTagEnd..<closing.lowerBound])
+        let content = String(html[openTagEnd ..< closing.lowerBound])
         return (element(content), closing.upperBound)
     }
 
@@ -398,20 +402,20 @@ class HTMLParser {
         guard
             let openTagEnd = html.range(
                 of: ">",
-                range: startIndex..<html.endIndex
+                range: startIndex ..< html.endIndex
             )?.upperBound
         else { return nil }
         guard
             let closingRange = html.range(
                 of: "</pre>",
                 options: .caseInsensitive,
-                range: openTagEnd..<html.endIndex
+                range: openTagEnd ..< html.endIndex
             )
         else { return nil }
 
-        var content = String(html[openTagEnd..<closingRange.lowerBound])
+        var content = String(html[openTagEnd ..< closingRange.lowerBound])
 
-        if content.hasPrefix("<code>") && content.hasSuffix("</code>") {
+        if content.hasPrefix("<code>"), content.hasSuffix("</code>") {
             content = String(content.dropFirst(6).dropLast(7))
         }
 
@@ -424,18 +428,18 @@ class HTMLParser {
         guard
             let openTagEnd = html.range(
                 of: ">",
-                range: startIndex..<html.endIndex
+                range: startIndex ..< html.endIndex
             )?.upperBound
         else { return nil }
         guard
             let closingRange = html.range(
                 of: "</blockquote>",
                 options: .caseInsensitive,
-                range: openTagEnd..<html.endIndex
+                range: openTagEnd ..< html.endIndex
             )
         else { return nil }
 
-        let content = String(html[openTagEnd..<closingRange.lowerBound])
+        let content = String(html[openTagEnd ..< closingRange.lowerBound])
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return (.blockquote(content), closingRange.upperBound)
     }
@@ -452,25 +456,25 @@ class HTMLParser {
         ) {
             let afterHref = hrefRange.upperBound
             if let endQuote = tagContent[afterHref...].firstIndex(of: "\"") {
-                url = String(tagContent[afterHref..<endQuote])
+                url = String(tagContent[afterHref ..< endQuote])
             }
         }
 
         guard
             let openTagEnd = html.range(
                 of: ">",
-                range: startIndex..<html.endIndex
+                range: startIndex ..< html.endIndex
             )?.upperBound
         else { return nil }
         guard
             let closingRange = html.range(
                 of: "</a>",
                 options: .caseInsensitive,
-                range: openTagEnd..<html.endIndex
+                range: openTagEnd ..< html.endIndex
             )
         else { return nil }
 
-        let linkText = String(html[openTagEnd..<closingRange.lowerBound])
+        let linkText = String(html[openTagEnd ..< closingRange.lowerBound])
         return (.link(text: linkText, url: url), closingRange.upperBound)
     }
 
@@ -505,18 +509,18 @@ class HTMLParser {
         guard
             let openTagEnd = html.range(
                 of: ">",
-                range: startIndex..<html.endIndex
+                range: startIndex ..< html.endIndex
             )?.upperBound
         else { return nil }
         guard
             let closingRange = html.range(
                 of: "</\(listTag)>",
                 options: .caseInsensitive,
-                range: openTagEnd..<html.endIndex
+                range: openTagEnd ..< html.endIndex
             )
         else { return nil }
 
-        let listContent = String(html[openTagEnd..<closingRange.lowerBound])
+        let listContent = String(html[openTagEnd ..< closingRange.lowerBound])
         let items = extractListItems(from: listContent)
 
         return (element(items), closingRange.upperBound)
@@ -530,19 +534,19 @@ class HTMLParser {
             if let liStart = content.range(
                 of: "<li",
                 options: .caseInsensitive,
-                range: currentIndex..<content.endIndex
+                range: currentIndex ..< content.endIndex
             ) {
                 if let liOpenEnd = content.range(
                     of: ">",
-                    range: liStart.lowerBound..<content.endIndex
+                    range: liStart.lowerBound ..< content.endIndex
                 )?.upperBound {
                     if let liClose = content.range(
                         of: "</li>",
                         options: .caseInsensitive,
-                        range: liOpenEnd..<content.endIndex
+                        range: liOpenEnd ..< content.endIndex
                     ) {
                         let itemText = String(
-                            content[liOpenEnd..<liClose.lowerBound]
+                            content[liOpenEnd ..< liClose.lowerBound]
                         ).trimmingCharacters(in: .whitespacesAndNewlines)
                         items.append(itemText)
                         currentIndex = liClose.upperBound
@@ -562,6 +566,7 @@ class HTMLParser {
 }
 
 // MARK: - HTML View
+
 struct HTMLView: View {
     let html: String
     @Environment(\.font) private var environmentFont
@@ -573,8 +578,8 @@ struct HTMLView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(elements.enumerated()), id: \.offset) {
-                index,
-                element in
+                _,
+                    element in
                 renderElement(element)
             }
         }
@@ -583,33 +588,32 @@ struct HTMLView: View {
     @ViewBuilder
     private func renderElement(_ element: HTMLElement) -> some View {
         switch element {
-        case .text(let content):
-            if !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            {
+        case let .text(content):
+            if !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text(content)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-        case .bold(let content):
+        case let .bold(content):
             Text(content)
                 .fontWeight(.bold)
 
-        case .italic(let content):
+        case let .italic(content):
             Text(content)
                 .italic()
 
-        case .strikethrough(let content):
+        case let .strikethrough(content):
             Text(content)
                 .strikethrough()
 
-        case .link(let text, let url):
+        case let .link(text, url):
             Link(
                 text,
                 destination: URL(string: url) ?? URL(string: "about:blank")!
             )
             .foregroundColor(.blue)
 
-        case .code(let content):
+        case let .code(content):
             Text(content)
                 .monospaced()
                 .padding(.horizontal, 6)
@@ -617,7 +621,7 @@ struct HTMLView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(4)
 
-        case .codeBlock(let content):
+        case let .codeBlock(content):
             Text(content)
                 .monospaced()
                 .padding()
@@ -625,30 +629,30 @@ struct HTMLView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(8)
 
-        case .blockquote(let content):
+        case let .blockquote(content):
             HStack(alignment: .top, spacing: 12) {
                 Rectangle()
                     .fill(Color.gray.opacity(0.5))
                     .frame(width: 4)
-                    .fixedSize()  // don't let it stretch vertically unnecessarily
+                    .fixedSize() // don't let it stretch vertically unnecessarily
 
                 Text(content)
                     .italic()
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.leading)
                     .lineLimit(nil)
-                    .fixedSize(horizontal: false, vertical: true)  // critical: size to content only
-                    .layoutPriority(1)  // claim space so parent doesn't add empty gap
+                    .fixedSize(horizontal: false, vertical: true) // critical: size to content only
+                    .layoutPriority(1) // claim space so parent doesn't add empty gap
             }
-            .padding(.vertical, 2)  // minimal vertical padding
+            .padding(.vertical, 2) // minimal vertical padding
             .padding(.leading, 4)
             .background(Color.clear)
 
-        case .orderedList(let items):
+        case let .orderedList(items):
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array(items.enumerated()), id: \.offset) {
                     index,
-                    item in
+                        item in
                     HStack(alignment: .top, spacing: 8) {
                         Text("\(index + 1).")
                             .fontWeight(.medium)
@@ -658,7 +662,7 @@ struct HTMLView: View {
             }
             .padding(.leading, 8)
 
-        case .unorderedList(let items):
+        case let .unorderedList(items):
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(items, id: \.self) { item in
                     HStack(alignment: .top, spacing: 8) {
@@ -670,7 +674,7 @@ struct HTMLView: View {
             }
             .padding(.leading, 8)
 
-        case .paragraph(let innerElements):
+        case let .paragraph(innerElements):
             renderParagraph(innerElements)
                 .padding(.bottom, 4)
 
@@ -687,35 +691,36 @@ struct HTMLView: View {
 }
 
 // MARK: - Preview
+
 struct HTMLView_Previews: PreviewProvider {
     static var previews: some View {
         HTMLView(
             html: """
-                <p>This is <b>bold text</b> and <i>italic text</i>.</p>
-                <p>Here is <s>strikethrough</s> and a <a href="https://apple.com">link to Apple</a>.</p>
+            <p>This is <b>bold text</b> and <i>italic text</i>.</p>
+            <p>Here is <s>strikethrough</s> and a <a href="https://apple.com">link to Apple</a>.</p>
 
-                <p>Inline code: <code>let x = 5</code></p>
+            <p>Inline code: <code>let x = 5</code></p>
 
-                <pre><code>func hello() {
-                    print("Hello, World!")
-                }</code></pre>
+            <pre><code>func hello() {
+                print("Hello, World!")
+            }</code></pre>
 
-                <blockquote>This is a famous quote from someone important.</blockquote>
+            <blockquote>This is a famous quote from someone important.</blockquote>
 
-                <p><strong>Ordered List:</strong></p>
-                <ol>
-                    <li>First item</li>
-                    <li>Second item</li>
-                    <li>Third item</li>
-                </ol>
+            <p><strong>Ordered List:</strong></p>
+            <ol>
+                <li>First item</li>
+                <li>Second item</li>
+                <li>Third item</li>
+            </ol>
 
-                <p><em>Unordered List:</em></p>
-                <ul>
-                    <li>Apple</li>
-                    <li>Banana</li>
-                    <li>Orange</li>
-                </ul>
-                """
+            <p><em>Unordered List:</em></p>
+            <ul>
+                <li>Apple</li>
+                <li>Banana</li>
+                <li>Orange</li>
+            </ul>
+            """
         ).font(.system(size: 12))
     }
 }

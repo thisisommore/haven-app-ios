@@ -16,25 +16,25 @@ struct CodenameGeneratorView: View {
     private let adjectives1 = [
         "elector", "brother", "recruit", "clever", "swift", "mystic", "cosmic",
         "quantum", "stellar", "cyber", "digital", "neural", "atomic", "solar",
-        "lunar", "phantom", "cipher", "vector", "omega", "delta"
+        "lunar", "phantom", "cipher", "vector", "omega", "delta",
     ]
-    
+
     private let adjectives2 = [
         "Angelic", "Trifid", "Mutative", "Silent", "Golden", "Crystal", "Phantom",
         "Frozen", "Blazing", "Hidden", "Ancient", "Modern", "Virtual", "Infinite",
-        "Mystic", "Cosmic", "Radiant", "Neon", "Prism", "Stellar"
+        "Mystic", "Cosmic", "Radiant", "Neon", "Prism", "Stellar",
     ]
-    
+
     private let nouns = [
         "Boating", "Cathouse", "Vocal", "Thunder", "Whisper", "Shadow", "Phoenix",
         "Dragon", "Storm", "Nexus", "Matrix", "Cipher", "Enigma", "Prism",
-        "Vertex", "Pulse", "Echo", "Flux", "Zen", "Aura"
+        "Vertex", "Pulse", "Echo", "Flux", "Zen", "Aura",
     ]
-    
+
     private let colors: [Color] = [
-        .blue, .green, .orange, .purple, .pink, .red, .cyan, .mint, .indigo, .teal
+        .blue, .green, .orange, .purple, .pink, .red, .cyan, .mint, .indigo, .teal,
     ]
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header with icon
@@ -42,11 +42,11 @@ struct CodenameGeneratorView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 24)
-            
+
             // Codenames list
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(Array(codenames.enumerated()), id: \.element.id) { index, codename in
+                    ForEach(Array(codenames.enumerated()), id: \.element.id) { _, codename in
                         CodenameCard(
                             codename: codename,
                             isSelected: selectedCodename?.id == codename.id
@@ -63,7 +63,7 @@ struct CodenameGeneratorView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 8)
             }
-            
+
             // Bottom action buttons
             BottomActionsView(
                 isGenerating: $isGenerating,
@@ -84,7 +84,7 @@ struct CodenameGeneratorView: View {
             }
         }
     }
-    
+
     private func generateCodenames() {
         isGenerating = true
         let impact = UIImpactFeedbackGenerator(style: .medium)
@@ -113,7 +113,7 @@ struct CodenameGeneratorView: View {
             }
         }
     }
-    
+
     private func claimCodename() {
         guard let selected = selectedCodename else { return }
 
@@ -138,6 +138,7 @@ struct CodenameGeneratorView: View {
 }
 
 // MARK: - Header View
+
 struct HeaderView: View {
     // State to control the tooltip popover visibility
     @State private var showTooltip = false
@@ -148,7 +149,7 @@ struct HeaderView: View {
                 Text("Find your Codename")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
-                
+
                 // Tooltip icon that shows a popover when tapped
                 Button(action: {
                     showTooltip.toggle()
@@ -172,34 +173,34 @@ struct HeaderView: View {
     }
 }
 
-
 // MARK: - Codename Card
+
 struct CodenameCard: View {
     let codename: Codename
     let isSelected: Bool
-    
+
     var body: some View {
         HStack(spacing: 16) {
             // Color accent bar
             RoundedRectangle(cornerRadius: 4)
                 .fill(codename.color)
                 .frame(width: 4, height: 48)
-            
+
             // Codename text
             Text(codename.text)
                 .font(.system(size: 17, weight: .medium, design: .monospaced))
                 .foregroundColor(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-            
+
             Spacer()
-            
+
             // Selection indicator
             ZStack {
                 Circle()
                     .stroke(isSelected ? codename.color : Color.secondary.opacity(0.3), lineWidth: 2)
                     .frame(width: 28, height: 28)
-                
+
                 if isSelected {
                     Circle()
                         .fill(codename.color)
@@ -231,12 +232,13 @@ struct CodenameCard: View {
 }
 
 // MARK: - Bottom Actions
+
 struct BottomActionsView: View {
     @Binding var isGenerating: Bool
     let selectedCodename: Codename?
     let onGenerate: () -> Void
     let onClaim: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Generate button
@@ -249,7 +251,7 @@ struct BottomActionsView: View {
                             isGenerating ? .linear(duration: 1).repeatForever(autoreverses: false) : .default,
                             value: isGenerating
                         )
-                    
+
                     Text("Generate New Set")
                         .font(.system(size: 12, weight: .semibold))
                 }
@@ -260,13 +262,13 @@ struct BottomActionsView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(isGenerating)
-            
+
             // Claim button
             Button(action: onClaim) {
                 HStack(spacing: 10) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 14, weight: .semibold))
-                    
+
                     Text("Claim Codename")
                         .font(.system(size: 12, weight: .semibold))
                 }
@@ -282,6 +284,7 @@ struct BottomActionsView: View {
 }
 
 // MARK: - Previews
+
 #Preview("Codename Generator") {
     CodenameGeneratorView()
 }
@@ -297,12 +300,12 @@ struct BottomActionsView: View {
             codename: Codename(text: "electorAngelicBoating", color: .blue),
             isSelected: false
         )
-        
+
         CodenameCard(
             codename: Codename(text: "brotherTrifidCathouse", color: .purple),
             isSelected: true
         )
-        
+
         CodenameCard(
             codename: Codename(text: "recruitMutativeVocal", color: .orange),
             isSelected: false

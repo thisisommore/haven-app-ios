@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 struct LogMessage: Identifiable {
     var Msg: String
     var id = UUID()
@@ -20,11 +19,11 @@ public class LogViewer: ObservableObject {
     @Published var Messages: [LogMessage] = [LogMessage(Msg: "LogMessages")]
     private var size: Int
     private var count: UInt = 1
-    
+
     init(numLines: Int = 1000) {
         size = numLines
         Messages.reserveCapacity(size)
-        
+
         let stdoutFile = OpenFileCloner(fd: STDOUT_FILENO).Output
         // Redirect stderr to stdout. I didn't figure out why, but you can't
         // do a OpenFileCloner call on both the way you might expect but this
@@ -53,7 +52,7 @@ public class LogViewer: ObservableObject {
                     if idx != nil {
                         start = line.index(after: idx!)
                     }
-                    
+
                     // Now we add to the published messages object
                     // and reduce it's size if it gets too big.
                     self.Messages.append(LogMessage(Msg: String(line[start...])))
@@ -76,11 +75,11 @@ public class LogViewer: ObservableObject {
 // copy all writes to the original `fd`. The original `fd` can be used
 // to write to it if needed.
 @MainActor
-class OpenFileCloner : ObservableObject {
+class OpenFileCloner: ObservableObject {
     private var input: Pipe
     private var origOut: Pipe
     var Output: Pipe
-    
+
     init(fd: Int32) {
         input = Pipe()
         origOut = Pipe()
@@ -103,7 +102,7 @@ class OpenFileCloner : ObservableObject {
         // writes will come in through the input and we will
         // copy them into the output pipes.
         dup2(input.fileHandleForWriting.fileDescriptor, fd)
-        
+
         // monitor the input so that anything written to it is
         // also copied to the output pipes so the user can read it.
         // listen in to the readHandle notification
@@ -122,4 +121,3 @@ class OpenFileCloner : ObservableObject {
         }
     }
 }
-

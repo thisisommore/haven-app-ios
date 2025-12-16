@@ -3,8 +3,8 @@
 //  iOSExample
 //
 
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 struct ChatBackgroundPickerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -15,7 +15,7 @@ struct ChatBackgroundPickerView: View {
     // Preview bubble uses the real chat bubble
     @State private var previewSelectedEmoji: MessageEmoji = .none
     @State private var previewShouldTriggerReply: Bool = false
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -23,10 +23,10 @@ struct ChatBackgroundPickerView: View {
                     // Preview
                     backgroundPreview
                         .padding(.top, 8)
-                    
+
                     // Type selector
                     typeSelector
-                    
+
                     // Options based on type
                     switch settings.backgroundType {
                     case .doodle:
@@ -36,7 +36,7 @@ struct ChatBackgroundPickerView: View {
                     case .customImage:
                         imagePicker
                     }
-                    
+
                     Spacer(minLength: 40)
                 }
                 .padding(.horizontal, 20)
@@ -53,15 +53,16 @@ struct ChatBackgroundPickerView: View {
             }
         }
     }
-    
+
     // MARK: - Preview
+
     private var backgroundPreview: some View {
         VStack(spacing: 12) {
             Text("Preview")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             ZStack {
                 // Background
                 RoundedRectangle(cornerRadius: 20)
@@ -71,7 +72,7 @@ struct ChatBackgroundPickerView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                             .allowsHitTesting(false)
                     }
-                
+
                 VStack(spacing: 12) {
                     HStack {
                         MessageBubble(
@@ -91,7 +92,7 @@ struct ChatBackgroundPickerView: View {
                         )
                         Spacer()
                     }
-                    
+
                     HStack {
                         Spacer()
                         MessageBubble(
@@ -111,15 +112,16 @@ struct ChatBackgroundPickerView: View {
             .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
         }
     }
-    
+
     // MARK: - Type Selector
+
     private var typeSelector: some View {
         VStack(spacing: 12) {
             Text("Background Type")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack(spacing: 12) {
                 ForEach(ChatBackgroundType.allCases, id: \.self) { type in
                     typeButton(type)
@@ -127,10 +129,10 @@ struct ChatBackgroundPickerView: View {
             }
         }
     }
-    
+
     private func typeButton(_ type: ChatBackgroundType) -> some View {
         let isSelected = settings.backgroundType == type
-        
+
         return Button {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                 settings.backgroundType = type
@@ -141,12 +143,12 @@ struct ChatBackgroundPickerView: View {
                     Circle()
                         .fill(isSelected ? Color.haven : Color(.systemGray5))
                         .frame(width: 48, height: 48)
-                    
+
                     Image(systemName: type.icon)
                         .font(.system(size: 20))
                         .foregroundStyle(isSelected ? .white : .secondary)
                 }
-                
+
                 Text(type.displayName)
                     .font(.caption)
                     .fontWeight(isSelected ? .semibold : .regular)
@@ -168,8 +170,9 @@ struct ChatBackgroundPickerView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
     // MARK: - Doodle Info
+
     private var doodleInfo: some View {
         VStack(spacing: 16) {
             Image("ChatDoodle")
@@ -182,7 +185,7 @@ struct ChatBackgroundPickerView: View {
                         .stroke(Color.haven, lineWidth: 2)
                 )
                 .allowsHitTesting(false)
-            
+
             Text("A playful doodle pattern that adds personality to your chats")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -194,15 +197,16 @@ struct ChatBackgroundPickerView: View {
                 .fill(Color(.systemBackground))
         )
     }
-    
+
     // MARK: - Color Grid
+
     private var colorGrid: some View {
         VStack(spacing: 16) {
             Text("Choose a Color")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                 ForEach(SolidBackgroundColor.presets) { preset in
                     colorCell(preset)
@@ -215,10 +219,10 @@ struct ChatBackgroundPickerView: View {
                 .fill(Color(.systemBackground))
         )
     }
-    
+
     private func colorCell(_ preset: SolidBackgroundColor) -> some View {
         let isSelected = settings.selectedColorId == preset.id
-        
+
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 settings.selectedColorId = preset.id
@@ -241,7 +245,7 @@ struct ChatBackgroundPickerView: View {
                                 Circle()
                                     .stroke(Color(.systemGray3), lineWidth: 1)
                             )
-                        
+
                         // Sun/Moon icon
                         Image(systemName: "circle.lefthalf.filled")
                             .font(.system(size: 22))
@@ -252,12 +256,12 @@ struct ChatBackgroundPickerView: View {
                             .frame(width: 52, height: 52)
                             .shadow(color: preset.color.opacity(0.4), radius: isSelected ? 8 : 0, y: 2)
                     }
-                    
+
                     if isSelected {
                         Circle()
                             .stroke(Color.haven, lineWidth: 3)
                             .frame(width: 52, height: 52)
-                        
+
                         if !preset.isDynamic {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 16, weight: .bold))
@@ -265,7 +269,7 @@ struct ChatBackgroundPickerView: View {
                         }
                     }
                 }
-                
+
                 Text(preset.name)
                     .font(.caption2)
                     .fontWeight(isSelected ? .semibold : .regular)
@@ -275,12 +279,14 @@ struct ChatBackgroundPickerView: View {
         .buttonStyle(.plain)
         .scaleEffect(isSelected ? 1.05 : 1.0)
     }
-    
+
     // MARK: - Image Picker
+
     private var imagePicker: some View {
         VStack(spacing: 16) {
             if let data = settings.customImageData,
-               let uiImage = UIImage(data: data) {
+               let uiImage = UIImage(data: data)
+            {
                 Image(uiImage: uiImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -291,7 +297,7 @@ struct ChatBackgroundPickerView: View {
                             .stroke(Color.haven, lineWidth: 2)
                     )
             }
-            
+
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
                 HStack(spacing: 10) {
                     Image(systemName: settings.customImageData == nil ? "photo.badge.plus" : "arrow.triangle.2.circlepath")
@@ -316,7 +322,7 @@ struct ChatBackgroundPickerView: View {
                     }
                 }
             }
-            
+
             if settings.customImageData != nil {
                 Button(role: .destructive) {
                     withAnimation {
@@ -342,9 +348,10 @@ struct ChatBackgroundPickerView: View {
 }
 
 // MARK: - Background View (Used in ChatView)
+
 struct ChatBackgroundView: View {
     @ObservedObject private var settings = ChatBackgroundSettings.shared
-    
+
     var body: some View {
         Group {
             switch settings.backgroundType {
@@ -353,13 +360,14 @@ struct ChatBackgroundView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .opacity(0.5)
-                    
+
             case .solidColor:
                 settings.selectedColor.color
-                
+
             case .customImage:
                 if let data = settings.customImageData,
-                   let uiImage = UIImage(data: data) {
+                   let uiImage = UIImage(data: data)
+                {
                     Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -377,4 +385,3 @@ struct ChatBackgroundView: View {
 #Preview {
     ChatBackgroundPickerView()
 }
-

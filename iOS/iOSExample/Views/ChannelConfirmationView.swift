@@ -12,10 +12,10 @@ struct ChannelConfirmationView: View {
     let channelURL: String
     @Binding var isJoining: Bool
     let onConfirm: (Bool) -> Void
-    
+
     @State private var enableDM = false
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         NavigationView {
             Form {
@@ -27,7 +27,7 @@ struct ChannelConfirmationView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 Section(header: Text("URL")) {
                     Text(channelURL)
                         .font(.system(.body, design: .monospaced))
@@ -35,13 +35,13 @@ struct ChannelConfirmationView: View {
                         .lineLimit(nil)
                         .textSelection(.enabled)
                 }
-                
+
                 Section {
                     Toggle("Enable DM", isOn: $enableDM)
                         .tint(.haven)
                         .disabled(isJoining)
                 }
-                
+
                 if isJoining {
                     Section {
                         HStack {
@@ -63,13 +63,13 @@ struct ChannelConfirmationView: View {
                     Button("Cancel") {
                         dismiss()
                     }.tint(.haven)
-                    .disabled(isJoining)
+                        .disabled(isJoining)
                 }.hiddenSharedBackground()
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Join") {
                         onConfirm(enableDM)
                     }.tint(.haven)
-                    .disabled(isJoining)
+                        .disabled(isJoining)
                 }.hiddenSharedBackground()
             }
         }
@@ -87,4 +87,3 @@ struct ChannelConfirmationView: View {
         }
     )
 }
-

@@ -4,7 +4,7 @@
 //
 //  Created by Om More on 19/10/25.
 //
-//https://medium.com/@hnsarthh/swiftui-a-view-that-creates-another-row-if-theres-not-enough-width-816728e9ab89
+// https://medium.com/@hnsarthh/swiftui-a-view-that-creates-another-row-if-theres-not-enough-width-816728e9ab89
 import SwiftUI
 
 // A simple wrapping flow layout that places subviews in rows based on available width.
@@ -15,7 +15,7 @@ struct FlowLayout: Layout {
     func sizeThatFits(
         proposal: ProposedViewSize,
         subviews: Subviews,
-        cache: inout ()
+        cache _: inout ()
     ) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
 
@@ -31,7 +31,8 @@ struct FlowLayout: Layout {
 
             // Wrap to next line if needed
             if currentRowWidth > 0
-                && currentRowWidth + interItemSpacing + itemWidth > maxWidth {
+                && currentRowWidth + interItemSpacing + itemWidth > maxWidth
+            {
                 maxRowWidth = max(maxRowWidth, currentRowWidth)
                 totalHeight += currentRowHeight + lineSpacing
                 currentRowWidth = 0
@@ -60,9 +61,9 @@ struct FlowLayout: Layout {
 
     func placeSubviews(
         in bounds: CGRect,
-        proposal: ProposedViewSize,
+        proposal _: ProposedViewSize,
         subviews: Subviews,
-        cache: inout ()
+        cache _: inout ()
     ) {
         let maxX = bounds.maxX
         var x = bounds.minX
@@ -71,8 +72,8 @@ struct FlowLayout: Layout {
 
         for subview in subviews {
             let size = subview.sizeThatFits(.unspecified)
-            
-            if x != bounds.minX && x + size.width > maxX {
+
+            if x != bounds.minX, x + size.width > maxX {
                 x = bounds.minX
                 y += rowHeight + lineSpacing
                 rowHeight = 0

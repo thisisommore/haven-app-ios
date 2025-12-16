@@ -1,5 +1,5 @@
-import Foundation
 import Bindings
+import Foundation
 import SwiftData
 
 // NOTE:
@@ -15,35 +15,36 @@ import SwiftData
 
 // Mirrors the JS ChannelEvents enum for readable event types.
 enum ChannelEvent: Int64, CustomStringConvertible {
-    case nicknameUpdate      = 1000
-    case notificationUpdate  = 2000
-    case messageReceived     = 3000
-    case userMuted           = 4000
-    case messageDeleted      = 5000
-    case adminKeyUpdate      = 6000
-    case dmTokenUpdate       = 7000
-    case channelUpdate       = 8000
+    case nicknameUpdate = 1000
+    case notificationUpdate = 2000
+    case messageReceived = 3000
+    case userMuted = 4000
+    case messageDeleted = 5000
+    case adminKeyUpdate = 6000
+    case dmTokenUpdate = 7000
+    case channelUpdate = 8000
 
     var description: String {
         switch self {
-        case .nicknameUpdate:     return "NICKNAME_UPDATE"
+        case .nicknameUpdate: return "NICKNAME_UPDATE"
         case .notificationUpdate: return "NOTIFICATION_UPDATE"
-        case .messageReceived:    return "MESSAGE_RECEIVED"
-        case .userMuted:          return "USER_MUTED"
-        case .messageDeleted:     return "MESSAGE_DELETED"
-        case .adminKeyUpdate:     return "ADMIN_KEY_UPDATE"
-        case .dmTokenUpdate:      return "DM_TOKEN_UPDATE"
-        case .channelUpdate:      return "CHANNEL_UPDATE"
+        case .messageReceived: return "MESSAGE_RECEIVED"
+        case .userMuted: return "USER_MUTED"
+        case .messageDeleted: return "MESSAGE_DELETED"
+        case .adminKeyUpdate: return "ADMIN_KEY_UPDATE"
+        case .dmTokenUpdate: return "DM_TOKEN_UPDATE"
+        case .channelUpdate: return "CHANNEL_UPDATE"
         }
     }
 }
 
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
-
     // MARK: - Properties
-    public var modelActor: SwiftDataActor?
+
+    var modelActor: SwiftDataActor?
 
     // MARK: - Debug Logging
+
     private let logPrefix = "[ChannelUICallbacks]"
     private func log(_ message: String) {
         print("\(logPrefix) \(message)")
@@ -62,9 +63,11 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
 
         // 1) Try raw JSON bytes first
         if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
-           JSONSerialization.isValidJSONObject(jsonObject) == false || true { // allow any JSON object
+           JSONSerialization.isValidJSONObject(jsonObject) == false || true
+        { // allow any JSON object
             if let pretty = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]),
-               let prettyStr = String(data: pretty, encoding: .utf8) {
+               let prettyStr = String(data: pretty, encoding: .utf8)
+            {
                 return prettyStr
             }
         }
@@ -75,7 +78,8 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
             if let b64Data = Data(base64Encoded: asString) {
                 if let jsonObject = try? JSONSerialization.jsonObject(with: b64Data, options: []),
                    let pretty = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]),
-                   let prettyStr = String(data: pretty, encoding: .utf8) {
+                   let prettyStr = String(data: pretty, encoding: .utf8)
+                {
                     return prettyStr
                 }
             }
@@ -83,7 +87,8 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
             if let strData = asString.data(using: .utf8),
                let jsonObject = try? JSONSerialization.jsonObject(with: strData, options: []),
                let pretty = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]),
-               let prettyStr = String(data: pretty, encoding: .utf8) {
+               let prettyStr = String(data: pretty, encoding: .utf8)
+            {
                 return prettyStr
             }
         }
@@ -97,12 +102,12 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
         log("init()")
     }
 
-    public func configure(modelActor: SwiftDataActor? = nil) {
+    func configure(modelActor: SwiftDataActor? = nil) {
         log("configure(modelActor set: \(modelActor != nil))")
         self.modelActor = modelActor
     }
 
-    public var modelContainer: ModelContainer?
+    var modelContainer: ModelContainer?
 
     private func fetchOrCreateChannelChat(channelId: String, channelName: String, ctx: SwiftDataActor) throws -> ChatModel {
         log("fetchOrCreateChannelChat channelId=\(channelId) channelName=\(channelName)")

@@ -3,11 +3,12 @@
 //  iOSExample
 //
 
+import AVFoundation
 import SwiftUI
 import UIKit
-import AVFoundation
 
 // MARK: - QR Scanner Constants
+
 private let kScannerBlurRadius: CGFloat = 10
 private let kScannerDarkAmount: CGFloat = 0.5
 
@@ -19,6 +20,7 @@ struct QRData: Identifiable {
 }
 
 // MARK: - QR Code Generator
+
 func generateQRCode(from string: String) -> UIImage? {
     let data = string.data(using: .ascii)
     if let filter = CIFilter(name: "CIQRCodeGenerator") {
@@ -37,18 +39,19 @@ func generateQRCode(from string: String) -> UIImage? {
 }
 
 // MARK: - QR Code View
+
 struct QRCodeView: View {
     @Environment(\.dismiss) private var dismiss
     let dmToken: Int64
     let pubKey: Data
     let codeset: Int
-    
+
     private var url: String {
         let pubKeyBase64 = pubKey.base64EncodedString()
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         return "haven://dm?token=\(dmToken)&pubKey=\(pubKeyBase64)&codeset=\(codeset)"
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
@@ -62,14 +65,14 @@ struct QRCodeView: View {
                         .cornerRadius(12)
                         .padding(.horizontal, 24)
                 }
-                
+
                 Text(url)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                
+
                 VStack(spacing: 12) {
                     Button {
                         shareLink()
@@ -84,7 +87,7 @@ struct QRCodeView: View {
                         .foregroundColor(.white)
                         .cornerRadius(10)
                     }
-                    
+
                     Button {
                         shareQRImage()
                     } label: {
@@ -100,13 +103,13 @@ struct QRCodeView: View {
                     }
                 }
                 .padding(.horizontal, 24)
-                
+
                 // Warning notice
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
                         .font(.system(size: 16))
-                    
+
                     Text("This is permanent and cannot be revoked. Only share with people you trust.")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -117,7 +120,7 @@ struct QRCodeView: View {
                 .cornerRadius(8)
                 .padding(.horizontal, 24)
                 .padding(.top, 8)
-                
+
                 Spacer()
             }
             .padding(.top, 32)
@@ -132,21 +135,22 @@ struct QRCodeView: View {
             }
         }
     }
-    
+
     private func shareLink() {
         let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         presentActivityVC(activityVC)
     }
-    
+
     private func shareQRImage() {
         guard let qrImage = generateQRCode(from: url) else { return }
         let activityVC = UIActivityViewController(activityItems: [qrImage], applicationActivities: nil)
         presentActivityVC(activityVC)
     }
-    
+
     private func presentActivityVC(_ activityVC: UIActivityViewController) {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
+           let rootVC = windowScene.windows.first?.rootViewController
+        {
             var topVC = rootVC
             while let presented = topVC.presentedViewController {
                 topVC = presented
@@ -157,6 +161,7 @@ struct QRCodeView: View {
 }
 
 // MARK: - QR Code Scanner
+
 struct QRScannerView: View {
     @Environment(\.dismiss) private var dismiss
     let onCodeScanned: (String) -> Void
@@ -164,44 +169,44 @@ struct QRScannerView: View {
     @State private var isScanning = true
     @State private var showSuccess = false
     @State private var torchOn = false
-    
+
     private var boxSize: CGFloat {
         min(max(UIScreen.w(85), 250), 350)
     }
-    
+
     var body: some View {
         ZStack {
             CameraPreviewView(onCodeFound: { code in
                 guard isScanning else { return }
                 isScanning = false
-                
+
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                
+
                 withAnimation {
                     showSuccess = true
                 }
-                
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     onCodeScanned(code)
                     dismiss()
                 }
             })
             .ignoresSafeArea()
-            
+
             // Blur and dark overlay with cutout and box frame
             GeometryReader { geometry in
                 let centerX = geometry.size.width / 2
                 let centerY = geometry.size.height / 2
-                
+
                 ZStack {
                     // Blur effect (reduced by half)
                     Rectangle()
                         .fill(.regularMaterial)
                         .opacity(0.9)
-                    
+
                     // Dark tint
                     Color.black.opacity(kScannerDarkAmount)
-                    
+
                     // Cutout
                     RoundedRectangle(cornerRadius: 16)
                         .frame(width: boxSize, height: boxSize)
@@ -209,13 +214,13 @@ struct QRScannerView: View {
                         .blendMode(.destinationOut)
                 }
                 .compositingGroup()
-                
+
                 // Box frame
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(Color.haven, lineWidth: 3)
                     .frame(width: boxSize, height: boxSize)
                     .position(x: centerX, y: centerY)
-                
+
                 // Success checkmark
                 if showSuccess {
                     Image(systemName: "checkmark.circle.fill")
@@ -226,7 +231,7 @@ struct QRScannerView: View {
                 }
             }
             .ignoresSafeArea()
-            
+
             // Top buttons
             VStack {
                 HStack {
@@ -249,9 +254,9 @@ struct QRScannerView: View {
                             .clipShape(Circle())
                     }
                     .padding(.leading, 24)
-                    
+
                     Spacer()
-                    
+
                     // Close button
                     Button {
                         dismiss()
@@ -268,7 +273,7 @@ struct QRScannerView: View {
                 .padding(.top, 60)
                 Spacer()
             }
-            
+
             // Bottom section
             VStack {
                 Spacer()
@@ -276,7 +281,7 @@ struct QRScannerView: View {
                     .font(.headline)
                     .foregroundColor(.white)
                     .opacity(showSuccess ? 0 : 1)
-                
+
                 if showSuccess {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
@@ -316,11 +321,11 @@ struct QRScannerView: View {
             }
         }
     }
-    
+
     private func toggleTorch(on: Bool) {
         guard let device = AVCaptureDevice.default(for: .video),
               device.hasTorch else { return }
-        
+
         try? device.lockForConfiguration()
         device.torchMode = on ? .on : .off
         device.unlockForConfiguration()
@@ -328,28 +333,29 @@ struct QRScannerView: View {
 }
 
 // MARK: - Camera Preview
+
 struct CameraPreviewView: UIViewControllerRepresentable {
     let onCodeFound: (String) -> Void
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(onCodeFound: onCodeFound)
     }
-    
+
     func makeUIViewController(context: Context) -> UIViewController {
         let viewController = CameraViewController()
         viewController.delegate = context.coordinator
         return viewController
     }
-    
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-    
+
+    func updateUIViewController(_: UIViewController, context _: Context) {}
+
     class Coordinator: NSObject, CameraViewControllerDelegate {
         let onCodeFound: (String) -> Void
-        
+
         init(onCodeFound: @escaping (String) -> Void) {
             self.onCodeFound = onCodeFound
         }
-        
+
         func didFindCode(_ code: String) {
             onCodeFound(code)
         }
@@ -365,54 +371,55 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
     private var captureSession: AVCaptureSession?
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var hasFoundCode = false
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCamera()
     }
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         previewLayer?.frame = view.bounds
     }
-    
+
     private func setupCamera() {
         let session = AVCaptureSession()
-        
+
         guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device) else {
+              let input = try? AVCaptureDeviceInput(device: device)
+        else {
             return
         }
-        
+
         if session.canAddInput(input) {
             session.addInput(input)
         }
-        
+
         let output = AVCaptureMetadataOutput()
         if session.canAddOutput(output) {
             session.addOutput(output)
             output.setMetadataObjectsDelegate(self, queue: .main)
             output.metadataObjectTypes = [.qr]
         }
-        
+
         let preview = AVCaptureVideoPreviewLayer(session: session)
         preview.videoGravity = .resizeAspectFill
         preview.frame = view.bounds
         view.layer.addSublayer(preview)
-        
-        self.captureSession = session
-        self.previewLayer = preview
-        
+
+        captureSession = session
+        previewLayer = preview
+
         DispatchQueue.global(qos: .userInitiated).async {
             session.startRunning()
         }
     }
-    
-    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+
+    func metadataOutput(_: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from _: AVCaptureConnection) {
         guard !hasFoundCode,
               let object = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
               let code = object.stringValue else { return }
-        
+
         hasFoundCode = true
         delegate?.didFindCode(code)
     }

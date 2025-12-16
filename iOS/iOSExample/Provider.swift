@@ -5,8 +5,9 @@
 //  Created by Om More on 16/12/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
+
 struct Provider<Content: View>: View {
     @StateObject private var logOutput = LogViewer()
     @StateObject private var xxdk = XXDK()

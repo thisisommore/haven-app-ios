@@ -6,6 +6,7 @@
 import SwiftUI
 
 // MARK: - Log Level Detection
+
 enum LogLevel: String, CaseIterable {
     case all = "ALL"
     case error = "ERROR"
@@ -13,7 +14,7 @@ enum LogLevel: String, CaseIterable {
     case info = "INFO"
     case debug = "DEBUG"
     case trace = "TRACE"
-    
+
     var color: Color {
         switch self {
         case .error: return .red
@@ -24,7 +25,7 @@ enum LogLevel: String, CaseIterable {
         case .all: return .secondary
         }
     }
-    
+
     var icon: String {
         switch self {
         case .error: return "xmark.circle.fill"
@@ -35,7 +36,7 @@ enum LogLevel: String, CaseIterable {
         case .all: return "list.bullet"
         }
     }
-    
+
     static func detect(from message: String) -> LogLevel {
         let upper = message.uppercased()
         if upper.contains("ERROR") || upper.contains("FATAL") || upper.contains("FAIL") {
@@ -52,21 +53,23 @@ enum LogLevel: String, CaseIterable {
 }
 
 // MARK: - Styled Log Message
+
 struct StyledLogMessage: Identifiable {
     let id: UUID
     let text: String
     let level: LogLevel
     let timestamp: Date
-    
+
     init(from message: LogMessage) {
-        self.id = message.id
-        self.text = message.Msg
-        self.level = LogLevel.detect(from: message.Msg)
-        self.timestamp = Date()
+        id = message.id
+        text = message.Msg
+        level = LogLevel.detect(from: message.Msg)
+        timestamp = Date()
     }
 }
 
 // MARK: - Main Log Viewer UI
+
 struct LogViewerUI: View {
     @EnvironmentObject var logOutput: LogViewer
     @State private var searchText = ""
@@ -74,7 +77,7 @@ struct LogViewerUI: View {
     @State private var autoScroll = true
     @State private var showFilters = false
     @State private var showLineNumbers = false
-    
+
     private var filteredMessages: [StyledLogMessage] {
         let styled = logOutput.Messages.map { StyledLogMessage(from: $0) }
         return styled.filter { msg in
@@ -83,7 +86,7 @@ struct LogViewerUI: View {
             return matchesSearch && matchesFilter
         }
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header Bar
@@ -95,7 +98,7 @@ struct LogViewerUI: View {
                 showLineNumbers: $showLineNumbers,
                 allMessages: logOutput.Messages
             )
-            
+
             // Search & Filters
             if showFilters {
                 LogFilterBar(
@@ -107,7 +110,7 @@ struct LogViewerUI: View {
                     removal: .push(from: .bottom).combined(with: .opacity)
                 ))
             }
-            
+
             // Log Content
             LogContentView(
                 messages: filteredMessages,
@@ -122,6 +125,7 @@ struct LogViewerUI: View {
 }
 
 // MARK: - Header Bar
+
 struct LogHeaderBar: View {
     let messageCount: Int
     let totalCount: Int
@@ -129,10 +133,10 @@ struct LogHeaderBar: View {
     @Binding var showFilters: Bool
     @Binding var showLineNumbers: Bool
     let allMessages: [LogMessage]
-    
+
     @State private var showShareSheet = false
     @State private var logFileURL: URL?
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Icon & Title
@@ -140,11 +144,11 @@ struct LogHeaderBar: View {
                 Image(systemName: "doc.text.magnifyingglass")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.haven)
-                
+
                 Text("Log")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
-                
+
                 // Message count badge
                 Text("\(messageCount)")
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
@@ -154,9 +158,9 @@ struct LogHeaderBar: View {
                     .background(Color.haven.opacity(0.15))
                     .clipShape(Capsule())
             }
-            
+
             Spacer()
-            
+
             // Action buttons
             HStack(spacing: 4) {
                 LogActionButton(
@@ -166,7 +170,7 @@ struct LogHeaderBar: View {
                 ) {
                     showFilters.toggle()
                 }
-                
+
                 LogActionButton(
                     icon: showLineNumbers ? "list.number" : "list.bullet",
                     isActive: showLineNumbers,
@@ -174,7 +178,7 @@ struct LogHeaderBar: View {
                 ) {
                     showLineNumbers.toggle()
                 }
-                
+
                 LogActionButton(
                     icon: autoScroll ? "play.circle.fill" : "pause.circle",
                     isActive: autoScroll,
@@ -182,7 +186,7 @@ struct LogHeaderBar: View {
                 ) {
                     autoScroll.toggle()
                 }
-                
+
                 LogActionButton(
                     icon: "square.and.arrow.up",
                     isActive: false,
@@ -201,18 +205,18 @@ struct LogHeaderBar: View {
             }
         }
     }
-    
+
     private func exportLogs() {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let timestamp = dateFormatter.string(from: Date())
         let fileName = "haven_\(timestamp).log"
-        
+
         let logContent = allMessages.map { $0.Msg }.joined(separator: "\n")
-        
+
         let tempDir = FileManager.default.temporaryDirectory
         let fileURL = tempDir.appendingPathComponent(fileName)
-        
+
         do {
             try logContent.write(to: fileURL, atomically: true, encoding: .utf8)
             logFileURL = fileURL
@@ -224,23 +228,25 @@ struct LogHeaderBar: View {
 }
 
 // MARK: - Share Sheet
+
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
+
+    func makeUIViewController(context _: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: items, applicationActivities: nil)
     }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+
+    func updateUIViewController(_: UIActivityViewController, context _: Context) {}
 }
 
 // MARK: - Action Button
+
 struct LogActionButton: View {
     let icon: String
     let isActive: Bool
     let activeColor: Color
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: {
             let impact = UIImpactFeedbackGenerator(style: .light)
@@ -259,10 +265,11 @@ struct LogActionButton: View {
 }
 
 // MARK: - Filter Bar
+
 struct LogFilterBar: View {
     @Binding var searchText: String
     @Binding var selectedFilter: LogLevel
-    
+
     var body: some View {
         VStack(spacing: 12) {
             // Search Field
@@ -270,12 +277,12 @@ struct LogFilterBar: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
-                
+
                 TextField("Search logs...", text: $searchText)
                     .font(.system(size: 14, design: .monospaced))
                     .foregroundColor(.primary)
                     .tint(.haven)
-                
+
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
@@ -290,7 +297,7 @@ struct LogFilterBar: View {
             .background(Color(uiColor: .tertiarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .padding(.horizontal, 16)
-            
+
             // Filter Pills
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -315,17 +322,18 @@ struct LogFilterBar: View {
 }
 
 // MARK: - Filter Pill
+
 struct LogFilterPill: View {
     let level: LogLevel
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Image(systemName: level.icon)
                     .font(.system(size: 11, weight: .semibold))
-                
+
                 Text(level.rawValue)
                     .font(.system(size: 12, weight: .semibold, design: .monospaced))
             }
@@ -345,16 +353,17 @@ struct LogFilterPill: View {
 }
 
 // MARK: - Log Content
+
 struct LogContentView: View {
     let messages: [StyledLogMessage]
     let autoScroll: Bool
     let searchText: String
     let showLineNumbers: Bool
-    
+
     @State private var isAtBottom = true
     @State private var showButton = false
     @Namespace private var bottomID
-    
+
     private func scrollToBottom(proxy: ScrollViewProxy) {
         // Multiple attempts to overcome scroll inertia
         proxy.scrollTo(bottomID, anchor: .bottom)
@@ -368,7 +377,7 @@ struct LogContentView: View {
             proxy.scrollTo(bottomID, anchor: .bottom)
         }
     }
-    
+
     var body: some View {
         ScrollViewReader { proxy in
             ZStack(alignment: .bottom) {
@@ -384,7 +393,7 @@ struct LogContentView: View {
                             )
                             .id(message.id)
                         }
-                        
+
                         // Bottom anchor
                         Color.clear
                             .frame(height: 1)
@@ -416,7 +425,7 @@ struct LogContentView: View {
                         }
                     }
                 }
-                
+
                 // Scroll to bottom button
                 if showButton {
                     HStack(spacing: 6) {
@@ -444,13 +453,14 @@ struct LogContentView: View {
 }
 
 // MARK: - Log Row
+
 struct LogRow: View {
     let message: StyledLogMessage
     let lineNumber: Int
     let searchText: String
     let isAlternate: Bool
     let showLineNumbers: Bool
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
             // Line number
@@ -461,7 +471,7 @@ struct LogRow: View {
                     .frame(width: 40, alignment: .trailing)
                     .padding(.trailing, 12)
             }
-            
+
             // Message text with highlighting
             HighlightedText(
                 text: message.text,
@@ -472,7 +482,7 @@ struct LogRow: View {
             .font(.system(size: 12, weight: .regular, design: .monospaced))
             .lineSpacing(2)
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             Spacer(minLength: 16)
         }
         .padding(.vertical, 6)
@@ -487,7 +497,7 @@ struct LogRow: View {
             }
         }
     }
-    
+
     private func textColor(for level: LogLevel) -> Color {
         switch level {
         case .error: return .red
@@ -500,12 +510,13 @@ struct LogRow: View {
 }
 
 // MARK: - Highlighted Text
+
 struct HighlightedText: View {
     let text: String
     let highlight: String
     let baseColor: Color
     let highlightColor: Color
-    
+
     var body: some View {
         if highlight.isEmpty {
             Text(text)
@@ -514,52 +525,54 @@ struct HighlightedText: View {
             highlightedAttributedText
         }
     }
-    
+
     private var highlightedAttributedText: Text {
         let ranges = text.ranges(of: highlight, options: .caseInsensitive)
         var result = Text("")
         var currentIndex = text.startIndex
-        
+
         for range in ranges {
             // Add non-highlighted part
             if currentIndex < range.lowerBound {
-                result = result + Text(text[currentIndex..<range.lowerBound])
+                result = result + Text(text[currentIndex ..< range.lowerBound])
                     .foregroundColor(baseColor)
             }
             // Add highlighted part with bold styling
             result = result + Text(text[range])
                 .foregroundColor(highlightColor)
                 .bold()
-            
+
             currentIndex = range.upperBound
         }
-        
+
         // Add remaining text
         if currentIndex < text.endIndex {
             result = result + Text(text[currentIndex...])
                 .foregroundColor(baseColor)
         }
-        
+
         return result
     }
 }
 
 // MARK: - String Extension for finding ranges
+
 extension String {
     func ranges(of substring: String, options: CompareOptions = []) -> [Range<Index>] {
         var ranges: [Range<Index>] = []
-        var searchRange = startIndex..<endIndex
-        
-        while let range = self.range(of: substring, options: options, range: searchRange) {
+        var searchRange = startIndex ..< endIndex
+
+        while let range = range(of: substring, options: options, range: searchRange) {
             ranges.append(range)
-            searchRange = range.upperBound..<endIndex
+            searchRange = range.upperBound ..< endIndex
         }
-        
+
         return ranges
     }
 }
 
 // MARK: - Preview
+
 #Preview("Log Viewer") {
     LogViewerUI()
         .environmentObject(LogViewer())

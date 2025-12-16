@@ -12,14 +12,14 @@ struct Reactions: View {
     let reactions: [MessageReactionModel]
     @State private var showReactors = false
     @State private var selectedEmoji: String?
-    
+
     /// Groups reactions by emoji
     private var groupedReactions: [(emoji: String, reactions: [MessageReactionModel])] {
         Dictionary(grouping: reactions, by: { $0.emoji })
             .map { (emoji: $0.key, reactions: $0.value) }
             .sorted { $0.reactions.count > $1.reactions.count }
     }
-    
+
     var body: some View {
         if !reactions.isEmpty {
             HStack(spacing: 4) {
@@ -69,14 +69,14 @@ struct ReactorsSheet: View {
     let groupedReactions: [(emoji: String, reactions: [MessageReactionModel])]
     let selectedEmoji: String?
     @State private var currentEmoji: String?
-    
+
     var displayedReactions: [MessageReactionModel] {
         if let emoji = currentEmoji ?? selectedEmoji {
             return groupedReactions.first { $0.emoji == emoji }?.reactions ?? []
         }
         return groupedReactions.flatMap { $0.reactions }
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -96,8 +96,8 @@ struct ReactorsSheet: View {
                                 .padding(.vertical, 8)
                                 .background(
                                     (currentEmoji ?? selectedEmoji) == group.emoji
-                                    ? Color.accentColor.opacity(0.2)
-                                    : Color.secondary.opacity(0.1)
+                                        ? Color.accentColor.opacity(0.2)
+                                        : Color.secondary.opacity(0.1)
                                 )
                                 .clipShape(Capsule())
                             }
@@ -107,9 +107,9 @@ struct ReactorsSheet: View {
                     .padding(.horizontal)
                 }
                 .padding(.vertical, 12)
-                
+
                 Divider()
-                
+
                 // Reactors list
                 List(displayedReactions, id: \.id) { reaction in
                     HStack {

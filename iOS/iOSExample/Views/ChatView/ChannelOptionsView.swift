@@ -5,15 +5,15 @@
 //  Created by Om More
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 import UniformTypeIdentifiers
 
 struct MutedUserRow: View {
     let pubKey: Data
     var onUnmute: (() -> Void)?
     @Query private var senders: [MessageSenderModel]
-    
+
     init(pubKey: Data, onUnmute: (() -> Void)? = nil) {
         self.pubKey = pubKey
         self.onUnmute = onUnmute
@@ -21,7 +21,7 @@ struct MutedUserRow: View {
             sender.pubkey == pubKey
         })
     }
-    
+
     var body: some View {
         HStack {
             Image(systemName: "speaker.slash.fill")
@@ -67,11 +67,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
     @State private var showDeleteConfirmation: Bool = false
     @State private var channelNickname: String = ""
     @FocusState private var isNicknameFocused: Bool
-    
+
     private var isDM: Bool {
         chat?.dmToken != nil
     }
-    
+
     var body: some View {
         NavigationView {
             List {
@@ -83,7 +83,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         Text(chat?.name ?? "Unknown")
                             .font(.body)
                     }
-                    
+
                     if !isDM, let description = chat?.channelDescription, !description.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Description")
@@ -93,7 +93,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                 .font(.body)
                         }
                     }
-                    
+
                     if !isDM {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Your Nickname")
@@ -127,7 +127,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                             }
                         }
                     }
-                    
+
                     if !isDM {
                         Toggle("Direct Messages", isOn: $isDMEnabled)
                             .tint(.haven)
@@ -145,7 +145,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                 }
                             }
                     }
-                    
+
                     if !isDM, let urlString = shareURL, let url = URL(string: urlString) {
                         ShareLink(item: url) {
                             HStack {
@@ -157,7 +157,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                             }
                         }
                         .tint(.haven)
-                        
+
                         if let password = sharePassword, !password.isEmpty {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -213,7 +213,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         print("Failed to fetch channel nickname: \(error)")
                     }
                 }
-                
+
                 // Admin section - only visible for channel admins (not for DMs)
                 if !isDM, let _ = chat?.id, isAdmin {
                     Section(header: Text("Admin")) {
@@ -232,7 +232,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         .tint(.primary)
                     }
                 }
-                
+
                 // Muted Users section - only visible for admins (not for DMs)
                 if !isDM, let _ = chat?.id, isAdmin {
                     Section(header: Text("Muted Users")) {
@@ -262,7 +262,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         }
                     }
                 }
-                
+
                 // Import key section - only visible for non-admins and not for DMs
                 if !isDM, let _ = chat?.id, !isAdmin {
                     Section {
@@ -281,7 +281,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         .tint(.primary)
                     }
                 }
-                
+
                 // Chat Background section
                 Section(header: Text("Appearance")) {
                     Button {
@@ -299,7 +299,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                     .tint(.primary)
                 }
-                
+
                 Section {
                     Button(role: .destructive) {
                         if isDM {
@@ -316,7 +316,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     }
                 }
                 .alert("Leave Channel", isPresented: $showLeaveConfirmation) {
-                    Button("Cancel", role: .cancel) { }
+                    Button("Cancel", role: .cancel) {}
                     Button("Leave", role: .destructive) {
                         onLeaveChannel()
                         dismiss()
@@ -325,7 +325,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     Text("Are you sure you want to leave \"\(chat?.name ?? "this channel")\"?")
                 }
                 .alert("Delete Chat", isPresented: $showDeleteConfirmation) {
-                    Button("Cancel", role: .cancel) { }
+                    Button("Cancel", role: .cancel) {}
                     Button("Delete", role: .destructive) {
                         onDeleteChat?()
                         dismiss()
@@ -407,7 +407,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
             .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
                 guard let channelId = chat?.id else { return }
                 if let notificationChannelID = notification.userInfo?["channelID"] as? String,
-                   notificationChannelID == channelId {
+                   notificationChannelID == channelId
+                {
                     do {
                         mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
                     } catch {
@@ -417,11 +418,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
             }
         }
     }
-    
+
     private func refreshAdminStatus() {
         isAdmin = chat?.isAdmin ?? false
     }
-    
+
     private func saveNickname() {
         guard let channelId = chat?.id else { return }
         do {
@@ -442,13 +443,13 @@ struct ChannelOptionsView<T: XXDKP>: View {
 
 struct TextFileDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.plainText] }
-    
+
     var text: String
-    
+
     init(text: String) {
         self.text = text
     }
-    
+
     init(configuration: ReadConfiguration) throws {
         if let data = configuration.file.regularFileContents {
             text = String(data: data, encoding: .utf8) ?? ""
@@ -456,8 +457,8 @@ struct TextFileDocument: FileDocument {
             text = ""
         }
     }
-    
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+
+    func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: text.data(using: .utf8) ?? Data())
     }
 }
@@ -472,11 +473,11 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
     @State private var encryptionPassword = ""
     @State private var document = TextFileDocument(text: "")
     @State private var errorMessage: String?
-    
+
     private var isPasswordValid: Bool {
         !encryptionPassword.isEmpty
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
@@ -484,17 +485,17 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                     .font(.system(size: 48))
                     .foregroundColor(.haven)
                     .padding(.top, 32)
-                
+
                 Text("Export Admin Key")
                     .font(.title2)
                     .fontWeight(.semibold)
-                
+
                 Text("Export the admin key for \"\(channelName)\" to share admin privileges with another user.")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Encryption Password")
                         .font(.caption)
@@ -514,14 +515,14 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                     )
                 }
                 .padding(.horizontal, 24)
-                
+
                 if let error = errorMessage {
                     Text(error)
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.horizontal, 24)
                 }
-                
+
                 VStack(spacing: 12) {
                     Button {
                         exportToFile()
@@ -537,7 +538,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                         .cornerRadius(10)
                     }
                     .disabled(!isPasswordValid)
-                    
+
                     Button {
                         copyToClipboard()
                     } label: {
@@ -554,9 +555,9 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                     .disabled(!isPasswordValid)
                 }
                 .padding(.horizontal, 24)
-                
+
                 Spacer()
-                
+
                 Text("Keep this key secure. Anyone with this key can manage the channel.")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -581,18 +582,18 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                 defaultFilename: "\(channelName)_admin_key.txt"
             ) { result in
                 switch result {
-                case .success(let url):
+                case let .success(url):
                     print("File saved to: \(url)")
                     onSuccess("Exported to File")
                     dismiss()
-                case .failure(let error):
+                case let .failure(error):
                     print("Failed to save file: \(error)")
                     errorMessage = "Failed to save: \(error.localizedDescription)"
                 }
             }
         }
     }
-    
+
     private func exportToFile() {
         do {
             let key = try xxdk.exportChannelAdminKey(channelId: channelId, encryptionPassword: encryptionPassword)
@@ -603,7 +604,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
             errorMessage = "Failed to export key: \(error.localizedDescription)"
         }
     }
-    
+
     private func copyToClipboard() {
         do {
             let key = try xxdk.exportChannelAdminKey(channelId: channelId, encryptionPassword: encryptionPassword)
@@ -627,15 +628,15 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
     @State private var decryptionPassword = ""
     @State private var importedKeyContent: String?
     @State private var errorMessage: String?
-    
+
     private var isPasswordValid: Bool {
         !decryptionPassword.isEmpty
     }
-    
+
     private var canImport: Bool {
         isPasswordValid && importedKeyContent != nil
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
@@ -643,17 +644,17 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                     .font(.system(size: 48))
                     .foregroundColor(.haven)
                     .padding(.top, 32)
-                
+
                 Text("Import Admin Key")
                     .font(.title2)
                     .fontWeight(.semibold)
-                
+
                 Text("Import an admin key for \"\(channelName)\" to gain admin privileges.")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                
+
                 Button {
                     showFileImporter = true
                 } label: {
@@ -669,7 +670,7 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                     .cornerRadius(10)
                 }
                 .padding(.horizontal, 24)
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Decryption Password")
                         .font(.caption)
@@ -689,14 +690,14 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                     )
                 }
                 .padding(.horizontal, 24)
-                
+
                 if let error = errorMessage {
                     Text(error)
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.horizontal, 24)
                 }
-                
+
                 Button {
                     importKey()
                 } label: {
@@ -712,9 +713,9 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                 }
                 .disabled(!canImport)
                 .padding(.horizontal, 24)
-                
+
                 Spacer()
-                
+
                 Text("You will need the password used to encrypt this key.")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -738,7 +739,7 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
-                case .success(let urls):
+                case let .success(urls):
                     guard let url = urls.first else { return }
                     do {
                         guard url.startAccessingSecurityScopedResource() else {
@@ -752,19 +753,19 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                     } catch {
                         errorMessage = "Failed to read file: \(error.localizedDescription)"
                     }
-                case .failure(let error):
+                case let .failure(error):
                     errorMessage = "Failed to select file: \(error.localizedDescription)"
                 }
             }
         }
     }
-    
+
     private func importKey() {
         guard let keyContent = importedKeyContent else {
             errorMessage = "No key file selected"
             return
         }
-        
+
         do {
             try xxdk.importChannelAdminKey(channelId: channelId, encryptionPassword: decryptionPassword, privateKey: keyContent)
             errorMessage = nil
@@ -781,14 +782,14 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
         for: ChatModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
-    
+
     let mockChat = ChatModel(
         channelId: "mock-channel-123",
         name: "General Discussion",
-        description: "A channel for general team discussions and announcements",
+        description: "A channel for general team discussions and announcements"
     )
     container.mainContext.insert(mockChat)
-    
+
     return ChannelOptionsView<XXDKMock>(chat: mockChat) {
         print("Leave channel tapped")
     }

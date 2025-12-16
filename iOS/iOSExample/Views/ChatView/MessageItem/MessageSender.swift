@@ -14,7 +14,6 @@ struct MessageSender: View {
     @Environment(\.colorScheme) var colorScheme
     var body: some View {
         HStack {
-
             if !isIncoming {
                 Text("You")
                     .font(.caption)
@@ -35,7 +34,6 @@ struct MessageSender: View {
                         )
                     )
             }
-
         }
     }
 }

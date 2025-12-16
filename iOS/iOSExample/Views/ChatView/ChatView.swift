@@ -9,10 +9,11 @@ import SwiftData
 import SwiftUI
 
 // MARK: - Floating Date Header
+
 struct FloatingDateHeader: View {
     let date: Date?
     let scrollingToOlder: Bool
-    
+
     private var dateText: String {
         guard let date else { return "" }
         let calendar = Calendar.current
@@ -26,7 +27,7 @@ struct FloatingDateHeader: View {
             return formatter.string(from: date)
         }
     }
-    
+
     var body: some View {
         if date != nil {
             Text(dateText)
@@ -47,10 +48,11 @@ struct FloatingDateHeader: View {
 }
 
 // MARK: - Date Separator Badge
+
 struct DateSeparatorBadge: View {
     let date: Date
     let isFirst: Bool
-    
+
     private var dateText: String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
@@ -63,7 +65,7 @@ struct DateSeparatorBadge: View {
             return formatter.string(from: date)
         }
     }
-    
+
     var body: some View {
         HStack {
             Spacer()
@@ -82,6 +84,7 @@ struct DateSeparatorBadge: View {
 }
 
 // MARK: - Visible Message Tracker
+
 struct VisibleMessagePreferenceKey: PreferenceKey {
     static var defaultValue: Date? = nil
     static func reduce(value: inout Date?, nextValue: () -> Date?) {
@@ -95,6 +98,7 @@ struct VisibleMessagePreferenceKey: PreferenceKey {
 }
 
 // MARK: - Empty Chat State
+
 struct EmptyChatView: View {
     var body: some View {
         VStack {
@@ -115,7 +119,7 @@ struct ChatView<T: XXDKP>: View {
     let width: CGFloat
     let chatId: String
     let chatTitle: String
-    
+
     @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @Query private var chatResults: [ChatModel]
@@ -127,6 +131,7 @@ struct ChatView<T: XXDKP>: View {
         let chatMessages = allMessages.filter { $0.chat.id == chatId }
         return chatMessages.sorted { $0.timestamp < $1.timestamp }
     }
+
     private var isChannel: Bool {
         guard let chat else { return false }
         return chat.name != "<self>" && chat.dmToken == nil
@@ -148,21 +153,20 @@ struct ChatView<T: XXDKP>: View {
     @State private var highlightedMessageId: String? = nil
     @State private var fileDataRefreshTrigger: Int = 0
     @EnvironmentObject var xxdk: T
-    
+
     private func markMessagesAsRead() {
         guard let chat else { return }
         let unreadMessages = chat.messages.filter { $0.isIncoming && !$0.isRead && $0.timestamp > chat.joinedAt }
         guard !unreadMessages.isEmpty else { return }
-        
+
         for message in unreadMessages {
             message.isRead = true
         }
         chat.unreadCount = 0
         try? swiftDataActor.save()
     }
-    
-    func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int)
-    {
+
+    func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int) {
         // Create a new DM chat
         let dmChat = ChatModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
 
@@ -176,6 +180,7 @@ struct ChatView<T: XXDKP>: View {
             print("Failed to create DM chat: \(error)")
         }
     }
+
     init(width: CGFloat, chatId: String, chatTitle: String) {
         self.width = width
         self.chatId = chatId
@@ -194,158 +199,158 @@ struct ChatView<T: XXDKP>: View {
             if messages.isEmpty {
                 EmptyChatView()
             } else {
-            ScrollViewReader { scrollProxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(messages.enumerated()), id: \.element.id) { index, result in
-                        // Show date separator if this is first message or date changed
-                        let showDateSeparator = index == 0 || (index > 0 && index < messages.count && !Calendar.current.isDate(result.timestamp, inSameDayAs: messages[index - 1].timestamp))
-                        if showDateSeparator {
-                            DateSeparatorBadge(date: result.timestamp, isFirst: index == 0)
-                        }
-                        
-                        // Show sender name only for first message in a group (same sender, same date)
-                        let isFirstInGroup: Bool = {
-                            guard index > 0 else { return true }
-                            let prev = messages[index - 1]
-                            if showDateSeparator { return true }
-                            return result.sender?.id != prev.sender?.id
-                        }()
-                        
-                        // Check if this is last message in group
-                        let isLastInGroup: Bool = {
-                            guard index < messages.count - 1 else { return true }
-                            let next = messages[index + 1]
-                            // Next message on different date
-                            if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
-                            // Next message has different sender
-                            return result.sender?.id != next.sender?.id
-                        }()
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(messages.enumerated()), id: \.element.id) { index, result in
+                                // Show date separator if this is first message or date changed
+                                let showDateSeparator = index == 0 || (index > 0 && index < messages.count && !Calendar.current.isDate(result.timestamp, inSameDayAs: messages[index - 1].timestamp))
+                                if showDateSeparator {
+                                    DateSeparatorBadge(date: result.timestamp, isFirst: index == 0)
+                                }
 
-                        // Show timestamp only on the last message before (day OR sender OR time) changes
-                        let showTimestamp: Bool = {
-                            guard index < messages.count - 1 else { return true }
-                            let next = messages[index + 1]
-                            // Next message on different date
-                            if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
-                            // Next message has different sender
-                            if result.sender?.id != next.sender?.id { return true }
-                            // Next message has different time (short style, same as UI)
-                            let currentTime = DateFormatter.localizedString(from: result.timestamp, dateStyle: .none, timeStyle: .short)
-                            let nextTime = DateFormatter.localizedString(from: next.timestamp, dateStyle: .none, timeStyle: .short)
-                            return currentTime != nextTime
-                        }()
-                        
-                        ChatMessageRow(
-                            result: result,
-                            isAdmin: isAdmin,
-                            isFirstInGroup: isFirstInGroup,
-                            isLastInGroup: isLastInGroup,
-                            showTimestamp: showTimestamp,
-                            onReply: { message in
-                                replyingTo = message
-                            },
-                            onDM: { codename, dmToken, pubKey, color  in
-                                createDMChatAndNavigate(
-                                    codename: codename,
-                                    dmToken: dmToken,
-                                    pubKey: pubKey, color: color
+                                // Show sender name only for first message in a group (same sender, same date)
+                                let isFirstInGroup: Bool = {
+                                    guard index > 0 else { return true }
+                                    let prev = messages[index - 1]
+                                    if showDateSeparator { return true }
+                                    return result.sender?.id != prev.sender?.id
+                                }()
+
+                                // Check if this is last message in group
+                                let isLastInGroup: Bool = {
+                                    guard index < messages.count - 1 else { return true }
+                                    let next = messages[index + 1]
+                                    // Next message on different date
+                                    if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
+                                    // Next message has different sender
+                                    return result.sender?.id != next.sender?.id
+                                }()
+
+                                // Show timestamp only on the last message before (day OR sender OR time) changes
+                                let showTimestamp: Bool = {
+                                    guard index < messages.count - 1 else { return true }
+                                    let next = messages[index + 1]
+                                    // Next message on different date
+                                    if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
+                                    // Next message has different sender
+                                    if result.sender?.id != next.sender?.id { return true }
+                                    // Next message has different time (short style, same as UI)
+                                    let currentTime = DateFormatter.localizedString(from: result.timestamp, dateStyle: .none, timeStyle: .short)
+                                    let nextTime = DateFormatter.localizedString(from: next.timestamp, dateStyle: .none, timeStyle: .short)
+                                    return currentTime != nextTime
+                                }()
+
+                                ChatMessageRow(
+                                    result: result,
+                                    isAdmin: isAdmin,
+                                    isFirstInGroup: isFirstInGroup,
+                                    isLastInGroup: isLastInGroup,
+                                    showTimestamp: showTimestamp,
+                                    onReply: { message in
+                                        replyingTo = message
+                                    },
+                                    onDM: { codename, dmToken, pubKey, color in
+                                        createDMChatAndNavigate(
+                                            codename: codename,
+                                            dmToken: dmToken,
+                                            pubKey: pubKey, color: color
+                                        )
+                                    },
+                                    onDelete: { message in
+                                        xxdk.deleteMessage(channelId: chatId, messageId: message.id)
+                                    },
+                                    onMute: { pubKey in
+                                        do {
+                                            try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: true)
+                                            withAnimation(.spring(response: 0.3)) {
+                                                toastMessage = "User muted"
+                                            }
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                                withAnimation {
+                                                    toastMessage = nil
+                                                }
+                                            }
+                                        } catch {
+                                            print("Failed to mute user: \(error)")
+                                        }
+                                    },
+                                    onUnmute: { pubKey in
+                                        do {
+                                            try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: false)
+                                            withAnimation(.spring(response: 0.3)) {
+                                                toastMessage = "User unmuted"
+                                            }
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                                withAnimation {
+                                                    toastMessage = nil
+                                                }
+                                            }
+                                        } catch {
+                                            print("Failed to unmute user: \(error)")
+                                        }
+                                    },
+                                    mutedUsers: mutedUsers,
+                                    highlightedMessageId: highlightedMessageId,
+                                    onScrollToReply: { messageId in
+                                        highlightedMessageId = messageId
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            scrollProxy.scrollTo(messageId, anchor: .center)
+                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                            withAnimation(.easeOut(duration: 0.3)) {
+                                                highlightedMessageId = nil
+                                            }
+                                        }
+                                    }
                                 )
-                            },
-                            onDelete: { message in
-                                xxdk.deleteMessage(channelId: chatId, messageId: message.id)
-                            },
-                            onMute: { pubKey in
-                                do {
-                                    try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: true)
-                                    withAnimation(.spring(response: 0.3)) {
-                                        toastMessage = "User muted"
+                                .background(
+                                    GeometryReader { geo in
+                                        let frame = geo.frame(in: .named("chatScroll"))
+                                        Color.clear
+                                            .preference(
+                                                key: VisibleMessagePreferenceKey.self,
+                                                value: frame.minY < 60 && frame.maxY > 0 ? result.timestamp : nil
+                                            )
                                     }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        withAnimation {
-                                            toastMessage = nil
-                                        }
-                                    }
-                                } catch {
-                                    print("Failed to mute user: \(error)")
-                                }
-                            },
-                            onUnmute: { pubKey in
-                                do {
-                                    try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: false)
-                                    withAnimation(.spring(response: 0.3)) {
-                                        toastMessage = "User unmuted"
-                                    }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        withAnimation {
-                                            toastMessage = nil
-                                        }
-                                    }
-                                } catch {
-                                    print("Failed to unmute user: \(error)")
-                                }
-                            },
-                            mutedUsers: mutedUsers,
-                            highlightedMessageId: highlightedMessageId,
-                            onScrollToReply: { messageId in
-                                highlightedMessageId = messageId
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    scrollProxy.scrollTo(messageId, anchor: .center)
-                                }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        highlightedMessageId = nil
-                                    }
-                                }
+                                )
                             }
-                        )
-                        .background(
-                            GeometryReader { geo in
-                                let frame = geo.frame(in: .named("chatScroll"))
-                                Color.clear
-                                    .preference(
-                                        key: VisibleMessagePreferenceKey.self,
-                                        value: frame.minY < 60 && frame.maxY > 0 ? result.timestamp : nil
-                                    )
-                            }
-                        )
+                            Spacer()
+                        }.padding().scrollTargetLayout()
                     }
-                    Spacer()
-                }.padding().scrollTargetLayout()
-            }
-            }
-            .coordinateSpace(name: "chatScroll")
-            .onPreferenceChange(VisibleMessagePreferenceKey.self) { date in
-                if let date {
-                    // Determine scroll direction
-                    if let oldDate = visibleDate {
-                        scrollingToOlder = date < oldDate
-                    }
-                    withAnimation(.spring(duration: 0.35)) {
-                        visibleDate = date
-                    }
-                    showDateHeader = true
-                    
-                    // Cancel previous hide task and schedule new one
-                    hideTask?.cancel()
-                    hideTask = Task {
-                        try? await Task.sleep(for: .seconds(4))
-                        if !Task.isCancelled {
-                            await MainActor.run {
-                                showDateHeader = false
+                }
+                .coordinateSpace(name: "chatScroll")
+                .onPreferenceChange(VisibleMessagePreferenceKey.self) { date in
+                    if let date {
+                        // Determine scroll direction
+                        if let oldDate = visibleDate {
+                            scrollingToOlder = date < oldDate
+                        }
+                        withAnimation(.spring(duration: 0.35)) {
+                            visibleDate = date
+                        }
+                        showDateHeader = true
+
+                        // Cancel previous hide task and schedule new one
+                        hideTask?.cancel()
+                        hideTask = Task {
+                            try? await Task.sleep(for: .seconds(4))
+                            if !Task.isCancelled {
+                                await MainActor.run {
+                                    showDateHeader = false
+                                }
                             }
                         }
                     }
                 }
-            }
-            .defaultScrollAnchor(.bottom)
-            
-            // Floating date header
-            FloatingDateHeader(date: visibleDate, scrollingToOlder: scrollingToOlder)
-                .padding(.top, 14)
-                .opacity(showDateHeader ? 1 : 0)
-                .animation(.easeOut(duration: 0.3), value: showDateHeader)
-                .animation(.spring(duration: 0.35), value: visibleDate?.formatted(date: .complete, time: .omitted))
+                .defaultScrollAnchor(.bottom)
+
+                // Floating date header
+                FloatingDateHeader(date: visibleDate, scrollingToOlder: scrollingToOlder)
+                    .padding(.top, 14)
+                    .opacity(showDateHeader ? 1 : 0)
+                    .animation(.easeOut(duration: 0.3), value: showDateHeader)
+                    .animation(.spring(duration: 0.35), value: visibleDate?.formatted(date: .complete, time: .omitted))
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -411,16 +416,16 @@ struct ChatView<T: XXDKP>: View {
                 Task {
                     do {
                         try xxdk.leaveChannel(channelId: chatId)
-                        
+
                         let descriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == chatId })
                         let chatsToDelete = try swiftDataActor.fetch(descriptor)
-                        
+
                         for chatToDelete in chatsToDelete {
                             swiftDataActor.delete(chatToDelete)
                         }
-                        
+
                         try? swiftDataActor.save()
-                        
+
                         await MainActor.run {
                             dismiss()
                         }
@@ -444,7 +449,8 @@ struct ChatView<T: XXDKP>: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
             if let channelID = notification.userInfo?["channelID"] as? String,
-               channelID == chatId {
+               channelID == chatId
+            {
                 isMuted = xxdk.isMuted(channelId: chatId)
                 do {
                     mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
@@ -473,8 +479,7 @@ struct ChatView<T: XXDKP>: View {
                 chatTitle: dmChat.name
             )
         }
-        
-        
+
         .background(ChatBackgroundView())
         .overlay {
             if let message = toastMessage {
@@ -508,9 +513,7 @@ struct ChatView<T: XXDKP>: View {
         ChatMessageModel.self,
         MessageReactionModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    );
-
-    {
+    ); {
         mockMsgs.forEach { container.mainContext.insert($0) }
 
         reactions.forEach { container.mainContext.insert($0) }

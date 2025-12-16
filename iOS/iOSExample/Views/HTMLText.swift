@@ -31,7 +31,7 @@ private extension NSAttributedString {
             let baseSize: CGFloat = preserveSizes
                 ? srcFont.pointSize
                 : UIFont.preferredFont(forTextStyle: baseTextStyle).pointSize
-            
+
             let size = customFontSize ?? (baseSize * 1.4)
 
             var weight: UIFont.Weight = .regular
@@ -118,7 +118,7 @@ private extension NSAttributedString {
 
 // MARK: - Parsing Logic
 
-private struct HTMLParsers {
+private enum HTMLParsers {
     static func parse(
         html: String,
         textColor: Color,
@@ -136,17 +136,17 @@ private struct HTMLParsers {
             underlineLinks: underlineLinks,
             customFontSize: customFontSize
         )
-        
+
         // Check cache
         if let cached = htmlCache.object(forKey: cacheKey as NSString) {
             return try? AttributedString(cached, including: \.uiKit)
         }
-        
+
         // Parse HTML
         guard let ns = makeNSAttributedString(fromHTML: html) else {
             return nil
         }
-        
+
         // Process
         let processed = ns
             .withSystemFonts(
@@ -159,13 +159,13 @@ private struct HTMLParsers {
             .withLinkColor(UIColor(linkColor), underline: underlineLinks)
             .trimmingTrailingNewlines()
             .removingBottomParagraphSpacing()
-        
+
         // Cache it
         htmlCache.setObject(processed, forKey: cacheKey as NSString)
-        
+
         return try? AttributedString(processed, including: \.uiKit)
     }
-    
+
     private static func makeCacheKey(
         html: String,
         textColor: Color,
@@ -175,12 +175,12 @@ private struct HTMLParsers {
     ) -> String {
         "\(html)_\(textColor.description)_\(linkColor.description)_\(underlineLinks)_\(customFontSize?.description ?? "nil")"
     }
-    
+
     private static func makeNSAttributedString(fromHTML html: String) -> NSAttributedString? {
         let data = Data(html.utf8)
         let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
             .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue
+            .characterEncoding: String.Encoding.utf8.rawValue,
         ]
         return try? NSAttributedString(data: data, options: options, documentAttributes: nil)
     }
@@ -188,9 +188,9 @@ private struct HTMLParsers {
 
 // MARK: - Skeleton Helper
 
-private struct SkeletonHelper {
+private enum SkeletonHelper {
     static func estimateLineCount(from html: String) -> Int {
-        return html.count/14
+        return html.count / 14
     }
 }
 
@@ -200,7 +200,7 @@ private struct SkeletonHelper {
 private struct SkeletonLine: View {
     let width: CGFloat
     @State private var animating = false
-    
+
     var body: some View {
         RoundedRectangle(cornerRadius: 4)
             .fill(Color.white.opacity(0.3))
@@ -213,7 +213,7 @@ private struct SkeletonLine: View {
                             gradient: Gradient(colors: [
                                 Color.white.opacity(0.0),
                                 Color.white.opacity(0.2),
-                                Color.white.opacity(0.0)
+                                Color.white.opacity(0.0),
                             ]),
                             startPoint: .leading,
                             endPoint: .trailing
@@ -236,10 +236,10 @@ private struct SkeletonLine: View {
 @available(iOS 15.0, *)
 private struct SkeletonPlaceholder: View {
     let lineCount: Int
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(0..<lineCount, id: \.self) { index in
+            ForEach(0 ..< lineCount, id: \.self) { index in
                 SkeletonLine(
                     width: index == lineCount - 1 ? .infinity * 0.7 : .infinity
                 )
@@ -261,7 +261,7 @@ struct HTMLText: View, Equatable {
     private let preserveSizes: Bool
     private let preserveBoldItalic: Bool
     private let customFontSize: CGFloat?
-    
+
     @State private var attributedString: AttributedString?
     @State private var estimatedLines: Int = 3
 
@@ -293,17 +293,17 @@ struct HTMLText: View, Equatable {
         self.preserveBoldItalic = preserveBoldItalic
         self.customFontSize = customFontSize
         self.lineLimit = lineLimit
-        self._estimatedLines = State(initialValue: lineLimit ?? SkeletonHelper.estimateLineCount(from: html))
+        _estimatedLines = State(initialValue: lineLimit ?? SkeletonHelper.estimateLineCount(from: html))
     }
-    
+
     // MARK: - Equatable
-    
+
     static func == (lhs: HTMLText, rhs: HTMLText) -> Bool {
         lhs.html == rhs.html &&
-        lhs.textColor == rhs.textColor &&
-        lhs.linkColor == rhs.linkColor &&
-        lhs.underlineLinks == rhs.underlineLinks &&
-        lhs.customFontSize == rhs.customFontSize
+            lhs.textColor == rhs.textColor &&
+            lhs.linkColor == rhs.linkColor &&
+            lhs.underlineLinks == rhs.underlineLinks &&
+            lhs.customFontSize == rhs.customFontSize
     }
 
     var body: some View {
@@ -319,9 +319,8 @@ struct HTMLText: View, Equatable {
                     loadAttributedString()
                 }
         }
-        
     }
-    
+
     /// Modifier to set a custom font size
     func fontSize(_ size: CGFloat) -> HTMLText {
         HTMLText(
@@ -336,9 +335,9 @@ struct HTMLText: View, Equatable {
             lineLimit: lineLimit
         )
     }
-    
+
     // MARK: - Private
-    
+
     private func loadAttributedString() {
         // Use DispatchQueue to defer state update outside view update cycle
         DispatchQueue.main.async {
@@ -363,25 +362,23 @@ struct HTMLText_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 20) {
             HTMLText("""
-                <p>This is a paragraph with a <a href="https://example.com">link</a>,
-                and <strong>bold</strong>/<em>italic</em> text.</p>
-                <h2>Heading keeps larger size</h2>
-                <p>Another paragraph to show multiple lines in the skeleton.</p>
-                """,
-                textColor: .white,
-                linkColor: .white,
-                underlineLinks: true,
-                baseTextStyle: .body,
-                preserveSizes: true,
-                preserveBoldItalic: true
-            )
-            
+                     <p>This is a paragraph with a <a href="https://example.com">link</a>,
+                     and <strong>bold</strong>/<em>italic</em> text.</p>
+                     <h2>Heading keeps larger size</h2>
+                     <p>Another paragraph to show multiple lines in the skeleton.</p>
+                     """,
+                     textColor: .white,
+                     linkColor: .white,
+                     underlineLinks: true,
+                     baseTextStyle: .body,
+                     preserveSizes: true,
+                     preserveBoldItalic: true)
+
             HTMLText("""
-                <p>This is another message with different HTML.</p>
-                """,
-                textColor: .white,
-                linkColor: .white
-            )
+                     <p>This is another message with different HTML.</p>
+                     """,
+                     textColor: .white,
+                     linkColor: .white)
         }
         .padding()
         .background(Color.blue)

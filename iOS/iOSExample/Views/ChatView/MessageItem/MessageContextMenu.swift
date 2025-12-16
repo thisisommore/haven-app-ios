@@ -14,22 +14,22 @@ struct MessageContextMenu: View {
     let isIncoming: Bool
     let sender: MessageSenderModel?
     let isAdmin: Bool
-    
+
     @Binding var selectedEmoji: MessageEmoji
     @Binding var shouldTriggerReply: Bool
-    
+
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onSelectText: (() -> Void)?
     var onDelete: (() -> Void)?
     var onMute: ((Data) -> Void)?
     var onUnmute: ((Data) -> Void)?
     let isSenderMuted: Bool
-    
+
     /// Check if user can delete this message (admin or message owner)
     private var canDelete: Bool {
         isAdmin || !isIncoming
     }
-    
+
     var body: some View {
         // Emoji picker
         Picker("React", selection: $selectedEmoji) {
@@ -39,25 +39,26 @@ struct MessageContextMenu: View {
             .tag(MessageEmoji.custom)
         }
         .pickerStyle(.palette)
-        
+
         // Reply button
         Button {
             shouldTriggerReply = true
         } label: {
             Label("Reply", systemImage: "arrowshape.turn.up.left")
         }
-        
+
         // DM button (only for incoming messages with DM token)
         if isIncoming,
            let sender = sender,
-           sender.dmToken != 0 {
+           sender.dmToken != 0
+        {
             Button {
                 onDM?(sender.codename, sender.dmToken, sender.pubkey, sender.color)
             } label: {
                 Label("Send DM", systemImage: "message")
             }
         }
-        
+
         // Copy button
         Button {
             UIPasteboard.general.setValue(
@@ -74,7 +75,7 @@ struct MessageContextMenu: View {
         } label: {
             Label("Select Text", systemImage: "crop")
         }
-        
+
         // Delete button (only for admin or message owner)
         if canDelete {
             Button(role: .destructive) {
@@ -83,7 +84,7 @@ struct MessageContextMenu: View {
                 Label("Delete", systemImage: "trash")
             }
         }
-        
+
         // Mute/Unmute button (only for admin on incoming messages)
         if isAdmin, isIncoming, let sender = sender {
             if isSenderMuted {

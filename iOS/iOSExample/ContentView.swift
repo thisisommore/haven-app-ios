@@ -51,7 +51,8 @@ struct ContentView: View {
                         if let key = xxdk.DM?.getPublicKey() {
                             xxdk.sendDM(
                                 msg: SendMessageTextInput, toPubKey: key,
-                                partnerToken: Int32(xxdk.DM?.getToken() ?? 0))
+                                partnerToken: Int32(xxdk.DM?.getToken() ?? 0)
+                            )
                         }
                         SendMessageTextInput = ""
                         return KeyPress.Result.handled
@@ -64,7 +65,8 @@ struct ContentView: View {
                         if let key = xxdk.DM?.getPublicKey() {
                             xxdk.sendDM(
                                 msg: SendMessageTextInput, toPubKey: key,
-                                partnerToken: Int32(xxdk.DM?.getToken() ?? 0))
+                                partnerToken: Int32(xxdk.DM?.getToken() ?? 0)
+                            )
                         }
                         SendMessageTextInput = ""
                     },

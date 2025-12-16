@@ -13,9 +13,9 @@ struct MessageReplyPreview: View {
     let text: String
     let isIncoming: Bool
     var onTap: (() -> Void)?
-    
+
     var body: some View {
-        HStack() {
+        HStack {
             HTMLText(
                 text,
                 textColor: .messageReplyPreview,

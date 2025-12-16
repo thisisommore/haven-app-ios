@@ -5,9 +5,10 @@
 //  Created by Om More on 19/10/25.
 //
 
+import SwiftHTMLtoMarkdown
 import SwiftUI
 import UniformTypeIdentifiers
-import SwiftHTMLtoMarkdown
+
 /// The main message bubble containing text and context menu
 struct MessageBubble: View {
     let text: String
@@ -33,7 +34,7 @@ struct MessageBubble: View {
     // Corner radius values
     private let fullRadius: CGFloat = 16
     private let smallRadius: CGFloat = 4
-    
+
     init(
         text: String,
         isIncoming: Bool,
@@ -68,8 +69,8 @@ struct MessageBubble: View {
         self.isHighlighted = isHighlighted
 
         // Initialize @Binding properties
-        self._selectedEmoji = selectedEmoji
-        self._shouldTriggerReply = shouldTriggerReply
+        _selectedEmoji = selectedEmoji
+        _shouldTriggerReply = shouldTriggerReply
 
         // Compute markdown from HTML and initialize @State
         var document = BasicHTML(rawHTML: text)
@@ -77,14 +78,15 @@ struct MessageBubble: View {
         do {
             try document.parse()
             let md = try document.asMarkdown()
-            self._markdown = State(initialValue: md)
+            _markdown = State(initialValue: md)
         } catch {
-            self._markdown = State(initialValue: text)
+            _markdown = State(initialValue: text)
         }
-        
+
         // Parse channel link if present
-        self._parsedChannelLink = State(initialValue: ParsedChannelLink.parse(from: text))
+        _parsedChannelLink = State(initialValue: ParsedChannelLink.parse(from: text))
     }
+
     private var underlinedMarkdown: AttributedString {
         var attributed = (try? AttributedString(markdown: markdown)) ?? AttributedString(markdown)
         for run in attributed.runs {
@@ -94,7 +96,7 @@ struct MessageBubble: View {
         }
         return attributed
     }
-    
+
     /// Dynamic corner radii based on group position
     private var bubbleShape: UnevenRoundedRectangle {
         if isIncoming {
@@ -115,7 +117,7 @@ struct MessageBubble: View {
             )
         }
     }
-    
+
     @ViewBuilder
     private func channelLinkContent(link: ParsedChannelLink) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -134,7 +136,7 @@ struct MessageBubble: View {
                         .foregroundStyle(isIncoming ? Color.messageText : Color.white)
                         .tint(isIncoming ? .blue : .white)
                         .lineLimit(isLinkExpanded ? nil : 1)
-                    
+
                     if !isLinkExpanded {
                         Button {
                             withAnimation { isLinkExpanded = true }
@@ -156,7 +158,7 @@ struct MessageBubble: View {
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
             .background(isIncoming ? Color.messageBubble : Color.haven)
-            
+
             // White section with channel preview (includes timestamp)
             ChannelInviteLinkPreview(
                 link: link,
@@ -166,7 +168,7 @@ struct MessageBubble: View {
         }
         .clipShape(bubbleShape)
     }
-    
+
     @ViewBuilder
     private var regularMessageContent: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -182,7 +184,7 @@ struct MessageBubble: View {
                     Text(underlinedMarkdown)
                         .font(.system(size: 16))
                         .foregroundColor(isIncoming ? Color.messageText : Color.white)
-                    + Text("    \(timestamp)")
+                        + Text("    \(timestamp)")
                         .font(.system(size: 10))
                         .foregroundColor(.clear)
                 )
@@ -208,7 +210,7 @@ struct MessageBubble: View {
         .background(isIncoming ? Color.messageBubble : Color.haven)
         .clipShape(bubbleShape)
     }
-    
+
     var body: some View {
         Group {
             if let link = parsedChannelLink {
@@ -252,7 +254,8 @@ struct MessageBubble: View {
         .padding(.top, isFirstInGroup ? 6 : 2)
     }
 }
-//#Preview {
+
+// #Preview {
 //    ScrollView {
 //        VStack(spacing: 16) {
 //            // Incoming bubble with sender
@@ -351,5 +354,4 @@ struct MessageBubble: View {
 //        }
 //        .padding()
 //    }
-//}
-
+// }

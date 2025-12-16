@@ -5,10 +5,11 @@
 //  File transfer UI components for channels
 //
 
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 // MARK: - File Transfer State
+
 enum FileTransferState: Equatable {
     case idle
     case selecting
@@ -19,41 +20,42 @@ enum FileTransferState: Equatable {
 }
 
 // MARK: - File Transfer Manager
+
 @MainActor
 class FileTransferManager: ObservableObject, FtSentProgressCallback {
     @Published var state: FileTransferState = .idle
     @Published var selectedFileData: Data?
     @Published var selectedFileName: String?
     @Published var selectedFileType: String?
-    
+
     private var currentFileID: Data?
     private var fileLinkJSON: Data?
     private var pendingChannelId: String?
     private var xxdkRef: (any XXDKP)?
     private var fileLinkObserver: NSObjectProtocol?
     private var uploadCompleted: Bool = false
-    private var pendingFileLink: Data?  // Store file link if received before progress completes
-    
-    nonisolated func callback(payload: Data, partTracker: Any?, error: Error?) {
+    private var pendingFileLink: Data? // Store file link if received before progress completes
+
+    nonisolated func callback(payload: Data, partTracker _: Any?, error: Error?) {
         Task { @MainActor in
             if let error = error {
                 self.state = .failed(error: error.localizedDescription)
                 self.cleanupObserver()
                 return
             }
-            
+
             do {
                 let progress = try Parser.decodeFtSentProgress(from: payload)
                 let progressPercent = progress.total > 0 ? Double(progress.received) / Double(progress.total) : 0
-                
+
                 print("[FT] Progress: \(progress.sent)/\(progress.total) sent, \(progress.received) received, completed: \(progress.completed)")
-                
+
                 if progress.completed {
                     // Upload complete
                     print("[FT] Upload complete!")
                     self.uploadCompleted = true
                     self.state = .uploading(progress: 1.0, fileName: self.selectedFileName ?? "File")
-                    
+
                     // Check if we already received the file link
                     if let fileLink = self.pendingFileLink {
                         print("[FT] Using pending file link...")
@@ -69,23 +71,23 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
             }
         }
     }
-    
+
     func selectFile(data: Data, name: String, type: String) {
         // Validate file size
         guard data.count <= FileTransferLimits.maxFileSize else {
             state = .failed(error: "File too large. Max size is 250 KB.")
             return
         }
-        
+
         // Truncate name if needed
         let truncatedName = String(name.prefix(FileTransferLimits.maxFileNameLen))
         let truncatedType = String(type.prefix(FileTransferLimits.maxFileTypeLen))
-        
+
         selectedFileData = data
         selectedFileName = truncatedName
         selectedFileType = truncatedType
     }
-    
+
     func uploadAndSend<T: XXDKP>(xxdk: T, channelId: String) {
         print("[FT] uploadAndSend called for channel: \(channelId)")
         guard let fileData = selectedFileData else {
@@ -93,14 +95,14 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
             state = .failed(error: "No file selected")
             return
         }
-        
+
         print("[FT] File size: \(fileData.count) bytes, name: \(selectedFileName ?? "unknown")")
         state = .uploading(progress: 0, fileName: selectedFileName ?? "File")
-        
+
         // Store references for when file link arrives
         pendingChannelId = channelId
         xxdkRef = xxdk
-        
+
         // Listen for file link notification
         fileLinkObserver = NotificationCenter.default.addObserver(
             forName: .fileLinkReceived,
@@ -109,14 +111,14 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
         ) { [weak self] notification in
             self?.handleFileLinkReceived(notification)
         }
-        
+
         Task {
             do {
                 // Initialize file transfer if needed
                 print("[FT] Initializing file transfer...")
                 try xxdk.initChannelsFileTransfer(paramsJson: nil)
                 print("[FT] File transfer initialized")
-                
+
                 // Upload file
                 print("[FT] Starting upload...")
                 let fileID = try xxdk.uploadFile(
@@ -127,9 +129,9 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                 )
                 currentFileID = fileID
                 print("[FT] Upload started, fileID: \(fileID.base64EncodedString())")
-                
+
                 // Wait for file link via notification (handled in handleFileLinkReceived)
-                
+
             } catch {
                 print("[FT] ERROR: \(error.localizedDescription)")
                 await MainActor.run {
@@ -139,26 +141,28 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
             }
         }
     }
-    
+
     private func handleFileLinkReceived(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let fileID = userInfo["fileID"] as? Data,
-              let fileLink = userInfo["fileLink"] as? Data else {
+              let fileLink = userInfo["fileLink"] as? Data
+        else {
             print("[FT] Invalid file link notification")
             return
         }
-        
+
         let status = userInfo["status"] as? Int ?? -1
-        
+
         // Check if this is for our current upload
         guard let currentID = currentFileID,
-              fileID == currentID else {
+              fileID == currentID
+        else {
             print("[FT] File link for different file, ignoring")
             return
         }
-        
+
         print("[FT] Received file link for our upload, status: \(status), uploadCompleted: \(uploadCompleted)")
-        
+
         // If upload already complete, send now
         if uploadCompleted {
             sendFileToChannel(fileLink: fileLink)
@@ -168,21 +172,22 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
             pendingFileLink = fileLink
         }
     }
-    
+
     private func sendFileToChannel(fileLink: Data) {
         guard let channelId = pendingChannelId,
               let xxdk = xxdkRef,
               let fileName = selectedFileName,
-              let fileType = selectedFileType else {
+              let fileType = selectedFileType
+        else {
             print("[FT] Missing data for send")
             state = .failed(error: "Missing channel or file info")
             cleanupObserver()
             return
         }
-        
+
         print("[FT] Sending file to channel: \(channelId)")
         state = .sending(fileName: fileName)
-        
+
         Task {
             do {
                 let report = try xxdk.sendFile(
@@ -194,7 +199,7 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                     validUntilMS: 0
                 )
                 print("[FT] File sent successfully, messageID: \(report.messageID?.base64EncodedString() ?? "nil")")
-                
+
                 await MainActor.run {
                     self.state = .completed(fileName: fileName)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -207,11 +212,11 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                     self.state = .failed(error: error.localizedDescription)
                 }
             }
-            
+
             cleanupObserver()
         }
     }
-    
+
     private func cleanupObserver() {
         if let observer = fileLinkObserver {
             NotificationCenter.default.removeObserver(observer)
@@ -220,7 +225,7 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
         pendingChannelId = nil
         xxdkRef = nil
     }
-    
+
     func reset() {
         state = .idle
         selectedFileData = nil
@@ -232,7 +237,7 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
         pendingFileLink = nil
         cleanupObserver()
     }
-    
+
     func cancel<T: XXDKP>(xxdk: T) {
         if let fileID = currentFileID {
             try? xxdk.closeFileSend(fileIDBytes: fileID)
@@ -242,9 +247,10 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
 }
 
 // MARK: - File Attachment Button
+
 struct FileAttachmentButton: View {
     @Binding var showFilePicker: Bool
-    
+
     var body: some View {
         Button {
             showFilePicker = true
@@ -258,25 +264,26 @@ struct FileAttachmentButton: View {
 }
 
 // MARK: - Upload Progress Overlay
+
 struct UploadProgressOverlay: View {
     let state: FileTransferState
     let onCancel: () -> Void
-    
+
     var body: some View {
         switch state {
-        case .uploading(let progress, let fileName):
+        case let .uploading(progress, fileName):
             uploadingView(progress: progress, fileName: fileName)
-        case .sending(let fileName):
+        case let .sending(fileName):
             sendingView(fileName: fileName)
-        case .completed(let fileName):
+        case let .completed(fileName):
             completedView(fileName: fileName)
-        case .failed(let error):
+        case let .failed(error):
             failedView(error: error)
         default:
             EmptyView()
         }
     }
-    
+
     private func uploadingView(progress: Double, fileName: String) -> some View {
         VStack(spacing: 12) {
             HStack {
@@ -291,10 +298,10 @@ struct UploadProgressOverlay: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            
+
             ProgressView(value: progress)
                 .tint(.haven)
-            
+
             Text("Uploading... \(Int(progress * 100))%")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -304,7 +311,7 @@ struct UploadProgressOverlay: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
     }
-    
+
     private func sendingView(fileName: String) -> some View {
         HStack(spacing: 12) {
             ProgressView()
@@ -316,7 +323,7 @@ struct UploadProgressOverlay: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
     }
-    
+
     private func completedView(fileName: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
@@ -330,7 +337,7 @@ struct UploadProgressOverlay: View {
         .padding(.horizontal)
         .transition(.scale.combined(with: .opacity))
     }
-    
+
     private func failedView(error: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -357,11 +364,12 @@ struct UploadProgressOverlay: View {
 }
 
 // MARK: - File Preview (Selected file before upload)
+
 struct SelectedFilePreview: View {
     let fileName: String
     let fileSize: Int
     let onRemove: () -> Void
-    
+
     private var formattedSize: String {
         if fileSize < 1024 {
             return "\(fileSize) B"
@@ -371,13 +379,13 @@ struct SelectedFilePreview: View {
             return String(format: "%.1f MB", Double(fileSize) / (1024 * 1024))
         }
     }
-    
+
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "doc.fill")
                 .font(.title2)
                 .foregroundStyle(.haven)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(fileName)
                     .font(.subheadline.weight(.medium))
@@ -386,9 +394,9 @@ struct SelectedFilePreview: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            
+
             Spacer()
-            
+
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.secondary)
@@ -401,12 +409,13 @@ struct SelectedFilePreview: View {
 }
 
 // MARK: - File Picker Sheet
+
 struct FilePickerSheet: View {
     @Binding var isPresented: Bool
     @ObservedObject var manager: FileTransferManager
     @State private var selectedItem: PhotosPickerItem?
     @State private var showDocumentPicker = false
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Drag indicator
@@ -415,7 +424,7 @@ struct FilePickerSheet: View {
                 .frame(width: 36, height: 5)
                 .padding(.top, 8)
                 .padding(.bottom, 20)
-            
+
             // Options row
             HStack(spacing: 32) {
                 // Photo option
@@ -427,7 +436,7 @@ struct FilePickerSheet: View {
                     )
                 }
                 .buttonStyle(.plain)
-                
+
                 // File option
                 Button {
                     showDocumentPicker = true
@@ -441,7 +450,7 @@ struct FilePickerSheet: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 40)
-            
+
             // Size limit hint
             Text("Max 250 KB")
                 .font(.caption)
@@ -464,7 +473,7 @@ struct FilePickerSheet: View {
         }
         .fileImporter(isPresented: $showDocumentPicker, allowedContentTypes: [.data]) { result in
             switch result {
-            case .success(let url):
+            case let .success(url):
                 if url.startAccessingSecurityScopedResource() {
                     defer { url.stopAccessingSecurityScopedResource() }
                     if let data = try? Data(contentsOf: url) {
@@ -474,28 +483,27 @@ struct FilePickerSheet: View {
                     }
                 }
                 isPresented = false
-            case .failure(let error):
+            case let .failure(error):
                 print("File import failed: \(error)")
             }
         }
     }
-    
+
     private func attachmentOption(icon: String, title: String, color: Color) -> some View {
         VStack(spacing: 10) {
             ZStack {
                 Circle()
                     .fill(color.opacity(0.12))
                     .frame(width: 60, height: 60)
-                
+
                 Image(systemName: icon)
                     .font(.system(size: 24))
                     .foregroundStyle(color)
             }
-            
+
             Text(title)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.primary)
         }
     }
 }
-

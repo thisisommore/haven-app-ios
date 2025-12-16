@@ -6,6 +6,7 @@
 //
 import SwiftData
 import SwiftUI
+
 struct ChatMessageRow: View {
     let result: ChatMessageModel
     let isAdmin: Bool
@@ -23,11 +24,11 @@ struct ChatMessageRow: View {
     @Query private var chatReactions: [MessageReactionModel]
     @Query private var repliedTo: [ChatMessageModel]
     @Query private var messageSender: [MessageSenderModel]
-    
+
     private var isHighlighted: Bool {
         highlightedMessageId == result.id
     }
-    
+
     init(result: ChatMessageModel, isAdmin: Bool = false, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: ((ChatMessageModel) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessageModel) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
         self.result = result
         self.isAdmin = isAdmin
@@ -49,12 +50,13 @@ struct ChatMessageRow: View {
         })
         self.onDM = onDM
         _repliedTo = Query(filter: #Predicate<ChatMessageModel> { r in
-            if (replyTo != nil) { r.id == replyTo! } else { false }
+            if replyTo != nil { r.id == replyTo! } else { false }
         })
         _messageSender = Query(filter: #Predicate<MessageSenderModel> { s in
-            if (senderId != nil) { s.id == senderId! } else { false }
+            if senderId != nil { s.id == senderId! } else { false }
         })
     }
+
     var body: some View {
         HStack(spacing: 0) {
             VStack(
@@ -88,11 +90,10 @@ struct ChatMessageRow: View {
                 )
                 Reactions(reactions: chatReactions)
             }
-            if result.isIncoming {  // incoming aligns left
+            if result.isIncoming { // incoming aligns left
                 Spacer()
             }
         }
         .id(result.id)
     }
 }
-

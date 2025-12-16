@@ -8,16 +8,16 @@ import SwiftUI
 struct NicknamePickerView<T: XXDKP>: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var xxdk: T
-    
+
     @State private var nickname: String = ""
     @State private var isSaving: Bool = false
     @State private var errorMessage: String?
     @FocusState private var isNicknameFocused: Bool
-    
+
     let codename: String
-    
+
     private let maxNicknameLength = 24
-    
+
     private var displayName: String {
         if nickname.isEmpty {
             return codename
@@ -25,17 +25,17 @@ struct NicknamePickerView<T: XXDKP>: View {
         let truncatedNick = nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
         return "\(truncatedNick) aka \(codename)"
     }
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 28) {
                     // Nickname input
                     nicknameInput
-                    
+
                     // Info text
                     infoSection
-                    
+
                     Spacer(minLength: 40)
                 }
                 .padding(.horizontal, 20)
@@ -58,8 +58,9 @@ struct NicknamePickerView<T: XXDKP>: View {
             .onAppear { loadCurrentNickname() }
         }
     }
-    
+
     // MARK: - Nickname Input
+
     private var nicknameInput: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
@@ -72,7 +73,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                         .font(.caption)
                         .foregroundStyle(nickname.count > maxNicknameLength ? .red : .secondary)
                 }
-                
+
                 HStack(spacing: 12) {
                     Image(systemName: "person.text.rectangle")
                         .foregroundColor(.haven)
@@ -86,7 +87,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                                 nickname = String(newValue.prefix(maxNicknameLength))
                             }
                         }
-                    
+
                     if !nickname.isEmpty {
                         Button {
                             nickname = ""
@@ -104,7 +105,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                         .stroke(isNicknameFocused ? Color.haven : Color.clear, lineWidth: 1.5)
                 )
             }
-            
+
             if nickname.count > 10 {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -114,7 +115,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                         .foregroundColor(.orange)
                 }
             }
-            
+
             if let error = errorMessage {
                 Text(error)
                     .font(.caption)
@@ -127,8 +128,9 @@ struct NicknamePickerView<T: XXDKP>: View {
                 .fill(Color(.systemBackground))
         )
     }
-    
+
     // MARK: - Info Section
+
     private var infoSection: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
@@ -140,7 +142,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                     .foregroundStyle(.primary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack(spacing: 12) {
                 Image(systemName: "info.circle.fill")
                     .foregroundStyle(.haven)
@@ -149,7 +151,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack(spacing: 12) {
                 Image(systemName: "number.square")
                     .foregroundStyle(.haven)
@@ -158,7 +160,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack(spacing: 12) {
                 Image(systemName: "textformat.size")
                     .foregroundStyle(.haven)
@@ -167,7 +169,7 @@ struct NicknamePickerView<T: XXDKP>: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack(spacing: 12) {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .foregroundStyle(.haven)
@@ -183,8 +185,9 @@ struct NicknamePickerView<T: XXDKP>: View {
                 .fill(Color(.systemBackground))
         )
     }
-    
+
     // MARK: - Actions
+
     private func loadCurrentNickname() {
         do {
             let currentNickname = try xxdk.getDMNickname()
@@ -194,18 +197,18 @@ struct NicknamePickerView<T: XXDKP>: View {
             nickname = ""
         }
     }
-    
+
     private func saveNickname() {
         isSaving = true
         errorMessage = nil
-        
+
         do {
             try xxdk.setDMNickname(nickname)
             dismiss()
         } catch {
             errorMessage = "Failed to save: \(error.localizedDescription)"
         }
-        
+
         isSaving = false
     }
 }

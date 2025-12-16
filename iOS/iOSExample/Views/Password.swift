@@ -3,7 +3,6 @@ import SwiftUI
 
 @MainActor
 public struct PasswordCreationView: View {
-
     @State private var password: String = ""
     @State private var confirm: String = ""
     @State private var attemptedSubmit: Bool = false
@@ -17,9 +16,11 @@ public struct PasswordCreationView: View {
     @Environment(\.navigation) var navigation
 
     // MARK: - Focus
+
     private enum Field { case password, confirm }
 
     // MARK: - Rules
+
     private enum PasswordRule: CaseIterable {
         case length, upper, lower, digit, symbol
 
@@ -52,9 +53,11 @@ public struct PasswordCreationView: View {
     private var failingRules: [PasswordRule] {
         PasswordRule.allCases.filter { !$0.isSatisfied(by: password) }
     }
+
     private var passwordsMatch: Bool {
         !password.isEmpty && password == confirm
     }
+
     private var canContinue: Bool { password.count >= 1 && passwordsMatch }
 
     private var strength: Double {
@@ -73,14 +76,14 @@ public struct PasswordCreationView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                    Text("Enter a password to secure your Haven identity")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                .onAppear {
-                    Task.detached {
-                        await xxdk.downloadNdf()
+                Text("Enter a password to secure your Haven identity")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .onAppear {
+                        Task.detached {
+                            await xxdk.downloadNdf()
+                        }
                     }
-                }
 
                 // Fields with clear affordance
                 VStack(spacing: 14) {
@@ -113,7 +116,7 @@ public struct PasswordCreationView: View {
                         HStack(spacing: 8) {
                             Image(
                                 systemName: ok
-                                ? "checkmark.circle.fill" : "xmark.circle"
+                                    ? "checkmark.circle.fill" : "xmark.circle"
                             )
                             .foregroundStyle(
                                 ok ? BranchColor.primary : .secondary
@@ -127,27 +130,27 @@ public struct PasswordCreationView: View {
                         }
                         .font(.footnote)
                     }
-                    
+
                     if !confirm.isEmpty || attemptedSubmit {
                         HStack(spacing: 8) {
                             Image(
                                 systemName: passwordsMatch
-                                ? "checkmark.circle.fill"
-                                : "exclamationmark.triangle.fill"
+                                    ? "checkmark.circle.fill"
+                                    : "exclamationmark.triangle.fill"
                             )
                             .foregroundStyle(
                                 passwordsMatch ? BranchColor.primary : .orange
                             )
                             Text(
                                 passwordsMatch
-                                ? "Passwords match"
-                                : "Passwords don't match"
+                                    ? "Passwords match"
+                                    : "Passwords don't match"
                             )
                         }
                         .font(.footnote)
                         .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    
+
                     // Strength
                     VStack(alignment: .leading, spacing: 4) {
                         ProgressView(value: strength)
@@ -159,7 +162,6 @@ public struct PasswordCreationView: View {
                     .opacity(password.isEmpty ? 0 : 1)
                     .animation(.easeInOut, value: password)
                 }
-            
 
                 // Import account button
                 Button(action: { showImportSheet = true }) {
@@ -189,14 +191,14 @@ public struct PasswordCreationView: View {
                                 ProgressView()
                                     .frame(width: 16, height: 16)
                             }
-                            Text(isLoading ? xxdk.status : "Continue").fontWeight((!canContinue || isLoading) ? .regular : .bold ).foregroundStyle((!canContinue || isLoading) ? .gray : .haven)
+                            Text(isLoading ? xxdk.status : "Continue").fontWeight((!canContinue || isLoading) ? .regular : .bold).foregroundStyle((!canContinue || isLoading) ? .gray : .haven)
                         }
                         .frame(maxWidth: .infinity)
                         .foregroundStyle(.white)
                     }
                     .disabled(!canContinue || isLoading)
                     .privacySensitive()
-                    
+
                 }.hiddenSharedBackground()
             }
         }
@@ -205,10 +207,10 @@ public struct PasswordCreationView: View {
         .sheet(isPresented: $showImportSheet) {
             ImportAccountSheet(importPassword: $importPassword)
         }
-
     }
 
     // MARK: - Actions
+
     private func handleSubmit() {
         attemptedSubmit = true
         guard canContinue else { return }
@@ -240,6 +242,7 @@ public struct PasswordCreationView: View {
     }
 
     // MARK: - Helpers
+
     private func strengthLabel(for value: Double) -> String {
         switch value {
         case ..<0.4: return "Weak"
@@ -250,6 +253,7 @@ public struct PasswordCreationView: View {
 }
 
 // MARK: - Branch Color Palette
+
 private enum BranchColor {
     static let primary = Color.haven
     static let secondary = Color(
@@ -266,6 +270,7 @@ private enum BranchColor {
 }
 
 // MARK: - Custom Button Style
+
 private struct BranchButtonStyle: ButtonStyle {
     let isEnabled: Bool
     var isSecondary: Bool = false
@@ -302,6 +307,7 @@ private struct BranchButtonStyle: ButtonStyle {
 }
 
 // MARK: - Reusable field with clear affordance
+
 private struct LabeledSecureField: View {
     let title: String
     @Binding var text: String
@@ -345,17 +351,18 @@ private struct LabeledSecureField: View {
     }
 }
 
-extension Color {
-    fileprivate static let separator = Color(UIColor.separator)
+private extension Color {
+    static let separator = Color(UIColor.separator)
 }
 
 // MARK: - Import Account Sheet
+
 private struct ImportAccountSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.navigation) var navigation
     @EnvironmentObject var xxdk: XXDK
     @EnvironmentObject var sm: SecretManager
-    
+
     @Binding var importPassword: String
     @State private var selectedFileURL: URL?
     @State private var showFilePicker = false
@@ -453,11 +460,11 @@ private struct ImportAccountSheet: View {
                 }.hiddenSharedBackground()
             }
             .alert("Import Failed", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "Unknown error")
             }
-            
+
             if isImporting {
                 VStack {
                     Text(xxdk.status)
@@ -472,7 +479,7 @@ private struct ImportAccountSheet: View {
             allowedContentTypes: [.json],
             allowsMultipleSelection: false
         ) { result in
-            if case .success(let urls) = result, let url = urls.first {
+            if case let .success(urls) = result, let url = urls.first {
                 selectedFileURL = url
             }
         }
@@ -481,7 +488,7 @@ private struct ImportAccountSheet: View {
     private func handleImport() {
         guard let url = selectedFileURL else { return }
         isImporting = true
-        
+
         // Access security scoped resource
         let accessing = url.startAccessingSecurityScopedResource()
         defer {
@@ -489,25 +496,25 @@ private struct ImportAccountSheet: View {
                 url.stopAccessingSecurityScopedResource()
             }
         }
-        
+
         do {
             let data = try Data(contentsOf: url)
             // Call import
             let identity = try xxdk.importIdentity(password: importPassword, data: data)
-            
+
             // Use the import password as the app password
             try sm.storePassword(importPassword)
-            
+
             Task.detached {
                 // Initialize Cmix before loading identity
                 await xxdk.setUpCmix()
-                
+
                 // Start network follower to ensure connectivity before load blocks
                 await xxdk.startNetworkFollower()
-                
+
                 await xxdk.load(privateIdentity: identity)
             }
-            
+
             // Navigate immediately
             isImporting = false
             dismiss()

@@ -10,8 +10,8 @@ import UIKit
 
 struct SelectableTextView: UIViewRepresentable {
     let text: String
-    
-    func makeUIView(context: Context) -> UITextView {
+
+    func makeUIView(context _: Context) -> UITextView {
         let textView = UITextView()
         textView.isEditable = false
         textView.isSelectable = true
@@ -24,8 +24,8 @@ struct SelectableTextView: UIViewRepresentable {
         textView.dataDetectorTypes = .all
         return textView
     }
-    
-    func updateUIView(_ uiView: UITextView, context: Context) {
+
+    func updateUIView(_ uiView: UITextView, context _: Context) {
         uiView.text = text
     }
 }
@@ -39,7 +39,7 @@ struct TextSelectionView: View {
             ZStack {
                 Color(uiColor: .systemGroupedBackground)
                     .ignoresSafeArea()
-                
+
                 SelectableTextView(text: text)
                     .padding()
                     .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)

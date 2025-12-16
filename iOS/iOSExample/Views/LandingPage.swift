@@ -10,7 +10,6 @@ struct LandingPage<T>: View where T: XXDKP {
     @Environment(\.navigation) var navigation
     @State private var isLoadingDone = false
     var body: some View {
-
         VStack(spacing: 12) {
             VStack(alignment: .leading) {
                 Text("XXNetwork").bold().font(.system(size: 22, design: .serif))
@@ -25,7 +24,6 @@ struct LandingPage<T>: View where T: XXDKP {
                         .gray
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
-                   
                     .onChange(of: xxdk.statusPercentage) { _, newValue in
                         if newValue == 100 && !isLoadingDone {
                             isLoadingDone = true
@@ -60,13 +58,12 @@ struct LandingPage<T>: View where T: XXDKP {
             }
         }
         .onChange(of: showProgress) { _, newValue in
-             if newValue && xxdk.statusPercentage == 100 && !isLoadingDone {
-                 isLoadingDone = true
-                 // Clear path to reset stack for main app view
-                 navigation.path = NavigationPath()
-             }
+            if newValue && xxdk.statusPercentage == 100 && !isLoadingDone {
+                isLoadingDone = true
+                // Clear path to reset stack for main app view
+                navigation.path = NavigationPath()
+            }
         }
-
     }
 }
 
@@ -75,7 +72,7 @@ struct LandingPage<T>: View where T: XXDKP {
         for: ChatModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
-    ["Tom", "Mayur", "Shashank"].forEach { name in
+    for name in ["Tom", "Mayur", "Shashank"] {
         container.mainContext.insert(
             ChatModel(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
         )

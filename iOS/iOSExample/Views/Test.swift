@@ -21,33 +21,33 @@ struct TestV: View {
                 Rectangle()
                     .fill(.red)
                     .frame(width: 40, height: 40)
-                
+
                 Rectangle()
                     .fill(.blue)
                     .frame(width: 60, height: 40)
-                
+
                 Rectangle()
                     .fill(.green)
                     .frame(width: 80, height: 40)
-                
+
                 Rectangle()
                     .fill(.orange)
                     .frame(width: 50, height: 40)
-                
+
                 Rectangle()
                     .fill(.purple)
                     .frame(width: 70, height: 40)
-                
-                ForEach(0..<5) { i in
+
+                ForEach(0 ..< 5) { _ in
                     Rectangle()
                         .fill(.pink)
                         .frame(width: 45, height: 40)
                 }
             }
-            
+
             Divider()
                 .padding(.vertical)
-            
+
             // OLD: Using helper function (still works)
             FlexibleView(
                 availableWidth: 300,
@@ -56,11 +56,11 @@ struct TestV: View {
         }
         .frame(width: 300)
     }
-    
+
     // function to render some boxes into the flexibleView
     @ViewBuilder
     func renderSomeBox() -> some View {
-        ForEach(0..<10, id: \.self) { _ in
+        ForEach(0 ..< 10, id: \.self) { _ in
             Rectangle()
                 .fill(.cyan)
                 .frame(width: 40, height: 40)
@@ -73,17 +73,19 @@ struct TestV: View {
 }
 
 import WebKit
+
 struct HTMLStringView: UIViewRepresentable {
     let htmlContent: String
 
-    func makeUIView(context: Context) -> WKWebView {
+    func makeUIView(context _: Context) -> WKWebView {
         return WKWebView()
     }
 
-    func updateUIView(_ uiView: WKWebView, context: Context) {
+    func updateUIView(_ uiView: WKWebView, context _: Context) {
         uiView.loadHTMLString(htmlContent, baseURL: nil)
     }
 }
+
 struct Test: View {
     var body: some View {
         VStack {

@@ -22,8 +22,7 @@ struct Root: View {
         Group {
             // we use split view when setup is completed
             if secretManager.isSetupComplete {
-                NavigationSplitView(columnVisibility: .constant(.doubleColumn))
-                {
+                NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
                     NavigationStack(path: $navigation.path) {
                         HomeView<XXDK>(width: UIScreen.w(100))
                             .navigationDestination(for: Destination.self) {
@@ -108,16 +107,16 @@ struct DeepLinkHandler: ViewModifier {
                 let queryItems = components?.queryItems ?? []
 
                 switch host {
-                    case "chat":
-                        let pathComponents = url.pathComponents.filter { $0 != "/" }
-                        if let chatId = pathComponents.first {
-                            selectedChat.select(id: chatId, title: "")
-                        }
-                    case "dm":
-                        handleDMDeepLink(queryItems: queryItems)
-                    default:
-                        break
+                case "chat":
+                    let pathComponents = url.pathComponents.filter { $0 != "/" }
+                    if let chatId = pathComponents.first {
+                        selectedChat.select(id: chatId, title: "")
                     }
+                case "dm":
+                    handleDMDeepLink(queryItems: queryItems)
+                default:
+                    break
+                }
             }
             .alert(
                 "Error",
@@ -135,10 +134,10 @@ struct DeepLinkHandler: ViewModifier {
     private func handleDMDeepLink(queryItems: [URLQueryItem]) {
         guard
             let tokenStr = queryItems.first(where: { $0.name == "token" })?
-                .value,
+            .value,
             let token64 = Int64(tokenStr),
             let pubKeyBase64 = queryItems.first(where: { $0.name == "pubKey" })?
-                .value,
+            .value,
             let pubKey = Data(base64Encoded: pubKeyBase64)
         else {
             print("[DeepLink] Missing token or pubKey")
@@ -150,7 +149,7 @@ struct DeepLinkHandler: ViewModifier {
 
         guard
             let codesetStr = queryItems.first(where: { $0.name == "codeset" })?
-                .value,
+            .value,
             let codeset = Int(codesetStr)
         else {
             print("[DeepLink] Missing codeset")

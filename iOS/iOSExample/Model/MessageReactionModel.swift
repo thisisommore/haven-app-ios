@@ -14,7 +14,7 @@ class MessageReactionModel {
     init(id: String, internalId: Int64, targetMessageId: String, emoji: String, sender: MessageSenderModel? = nil, isMe: Bool = false) {
         self.targetMessageId = targetMessageId
         self.emoji = emoji
-        self.timestamp = Date()
+        timestamp = Date()
         self.isMe = isMe
         self.sender = sender
         self.id = id

@@ -11,7 +11,7 @@ extension View {
     @ViewBuilder
     func glassEffectIfAvailable() -> some View {
         if #available(iOS 26.0, *) {
-            self.glassEffect(in: .rect(cornerRadius: 0))
+            glassEffect(in: .rect(cornerRadius: 0))
         } else {
             self
         }
@@ -27,7 +27,7 @@ struct MessageForm<T: XXDKP>: View {
     @EnvironmentObject private var xxdk: T
     @State private var showSendButton: Bool = false
     @Namespace private var namespace
-    
+
     // File transfer state
     @StateObject private var fileTransferManager = FileTransferManager()
     @State private var showFilePicker: Bool = false
@@ -51,11 +51,12 @@ struct MessageForm<T: XXDKP>: View {
                 }
                 .padding(.bottom, 8)
             }
-            
+
             // Selected file preview
             if let fileName = fileTransferManager.selectedFileName,
                let fileData = fileTransferManager.selectedFileData,
-               case .idle = fileTransferManager.state {
+               case .idle = fileTransferManager.state
+            {
                 SelectedFilePreview(
                     fileName: fileName,
                     fileSize: fileData.count,
@@ -63,7 +64,7 @@ struct MessageForm<T: XXDKP>: View {
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            
+
             // Reply preview
             if let replyTo = replyTo {
                 HStack {
@@ -98,21 +99,21 @@ struct MessageForm<T: XXDKP>: View {
                 if chat?.dmToken == nil {
                     FileAttachmentButton(showFilePicker: $showFilePicker)
                 }
-                
+
                 TextField(
                     "",
                     text: $abc,
                     axis: .vertical
-                ).lineLimit(1...10)
-                .onSubmit {
-                    sendMessage()
-                }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 18)
-                .background(.formBG.opacity(0.1))
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 40))
-                .padding(.trailing, 8)
+                ).lineLimit(1 ... 10)
+                    .onSubmit {
+                        sendMessage()
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 18)
+                    .background(.formBG.opacity(0.1))
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 40))
+                    .padding(.trailing, 8)
 
                 if fileTransferManager.selectedFileData != nil && abc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     // Send file button
@@ -151,7 +152,6 @@ struct MessageForm<T: XXDKP>: View {
                 .spring(response: 0.3, dampingFraction: 0.7),
                 value: fileTransferManager.selectedFileName
             )
-
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: replyTo?.id)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: fileTransferManager.state)
@@ -176,24 +176,20 @@ struct MessageForm<T: XXDKP>: View {
                 if let pubKey = Data(base64Encoded: chat.id) {
                     if let replyTo = replyTo {
                         Task {
-
                             xxdk.sendReply(
                                 msg: trimmed,
                                 toPubKey: pubKey,
                                 partnerToken: token,
                                 replyToMessageIdB64: replyTo.id
                             )
-
                         }
                     } else {
                         Task {
-
                             xxdk.sendDM(
                                 msg: trimmed,
                                 toPubKey: pubKey,
                                 partnerToken: token
                             )
-
                         }
                     }
                 }
@@ -223,7 +219,7 @@ struct MessageForm<T: XXDKP>: View {
         abc = ""
         onCancelReply?()
     }
-    
+
     private func sendFile() {
         guard let chat = chat, chat.dmToken == nil else { return }
         fileTransferManager.uploadAndSend(xxdk: xxdk, channelId: chat.id)
@@ -243,7 +239,7 @@ struct MessageForm<T: XXDKP>: View {
     let previewChat = ChatModel(channelId: "previewChannelId", name: "Preview Chat")
     container.mainContext.insert(previewChat)
     return ZStack {
-           Color(.appBackground).edgesIgnoringSafeArea(.all)
+        Color(.appBackground).edgesIgnoringSafeArea(.all)
         VStack {
             Spacer()
             MessageForm<XXDKMock>(
@@ -254,8 +250,7 @@ struct MessageForm<T: XXDKP>: View {
             .modelContainer(container)
             .environmentObject(XXDKMock())
         }
-       }
-    
+    }
 }
 
 #Preview("Reply Mode") {
@@ -274,7 +269,7 @@ struct MessageForm<T: XXDKP>: View {
     // Create a message to reply to
     let messageToReplyTo = ChatMessageModel(
         message:
-            "<p>Hey! Can you check out this <a href=\"https://example.com\">link</a>? It has some really interesting information about the project we discussed yesterday.</p>",
+        "<p>Hey! Can you check out this <a href=\"https://example.com\">link</a>? It has some really interesting information about the project we discussed yesterday.</p>",
         isIncoming: true,
         chat: previewChat,
         sender: MessageSenderModel(

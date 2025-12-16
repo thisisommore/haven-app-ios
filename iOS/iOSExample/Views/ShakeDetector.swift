@@ -7,13 +7,15 @@ import SwiftUI
 import UIKit
 
 // MARK: - Shake Notification
+
 extension UIDevice {
     static let shakeNotification = Notification.Name("deviceDidShake")
 }
 
 // MARK: - UIWindow Extension to detect shake
+
 extension UIWindow {
-    open override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+    override open func motionEnded(_ motion: UIEvent.EventSubtype, with _: UIEvent?) {
         if motion == .motionShake {
             NotificationCenter.default.post(name: UIDevice.shakeNotification, object: nil)
         }
@@ -21,9 +23,10 @@ extension UIWindow {
 }
 
 // MARK: - Shake View Modifier
+
 struct ShakeDetectorModifier: ViewModifier {
     let onShake: () -> Void
-    
+
     func body(content: Content) -> some View {
         content
             .onReceive(NotificationCenter.default.publisher(for: UIDevice.shakeNotification)) { _ in
@@ -34,15 +37,16 @@ struct ShakeDetectorModifier: ViewModifier {
 
 extension View {
     func onShake(perform action: @escaping () -> Void) -> some View {
-        self.modifier(ShakeDetectorModifier(onShake: action))
+        modifier(ShakeDetectorModifier(onShake: action))
     }
 }
 
 // MARK: - Log Viewer Alert Modifier
+
 struct LogViewerShakeModifier: ViewModifier {
     @State private var showLogViewerAlert = false
     @State private var showLogViewerSheet = false
-    
+
     func body(content: Content) -> some View {
         content
             .onShake {
@@ -65,6 +69,7 @@ struct LogViewerShakeModifier: ViewModifier {
 }
 
 // MARK: - Log Viewer Sheet
+
 struct LogViewerSheet: View {
     var body: some View {
         LogViewerUI()
@@ -75,7 +80,6 @@ struct LogViewerSheet: View {
 
 extension View {
     func logViewerOnShake() -> some View {
-        self.modifier(LogViewerShakeModifier())
+        modifier(LogViewerShakeModifier())
     }
 }
-

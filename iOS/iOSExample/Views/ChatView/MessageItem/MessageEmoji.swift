@@ -16,9 +16,9 @@ enum MessageEmoji: String, CaseIterable, Identifiable {
     case like = "👍"
     case custom
     case none
-    
+
     var id: Self { self }
-    
+
     /// Get emoji tag from string
     static func from(_ emoji: String) -> MessageEmoji {
         switch emoji {

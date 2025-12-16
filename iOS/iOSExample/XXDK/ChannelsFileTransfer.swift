@@ -5,15 +5,17 @@
 //  Channel File Transfer API implementation
 //
 
-import Foundation
 import Bindings
+import Foundation
 
 // MARK: - Debug Logging
+
 private func ftLog(_ message: String) {
     print("[FT] \(message)")
 }
 
 // MARK: - File Transfer Limits
+
 public enum FileTransferLimits {
     /// Maximum file size: 250,000 bytes (250 KB)
     public static let maxFileSize: Int = 250_000
@@ -26,6 +28,7 @@ public enum FileTransferLimits {
 }
 
 // MARK: - File Part Tracker
+
 /// Wrapper for tracking individual file part status
 public class ChFilePartTracker {
     private let tracker: Bindings.BindingsChFilePartTracker?
@@ -47,12 +50,13 @@ public class ChFilePartTracker {
 }
 
 // MARK: - Progress Callback Wrappers
+
 /// Internal wrapper to bridge Swift callback to Bindings protocol for uploads
 class FtSentProgressCallbackWrapper: NSObject, BindingsFtSentProgressCallbackProtocol {
     private weak var progressCallback: FtSentProgressCallback?
 
     init(callback: FtSentProgressCallback) {
-        self.progressCallback = callback
+        progressCallback = callback
         super.init()
     }
 
@@ -68,7 +72,7 @@ class FtReceivedProgressCallbackWrapper: NSObject, BindingsFtReceivedProgressCal
     private weak var progressCallback: FtReceivedProgressCallback?
 
     init(callback: FtReceivedProgressCallback) {
-        self.progressCallback = callback
+        progressCallback = callback
         super.init()
     }
 
@@ -80,6 +84,7 @@ class FtReceivedProgressCallbackWrapper: NSObject, BindingsFtReceivedProgressCal
 }
 
 // MARK: - Channels File Transfer
+
 /// File transfer manager for channels
 public class ChannelsFileTransfer {
     private let fileTransfer: Bindings.BindingsChannelsFileTransfer
@@ -98,14 +103,14 @@ public class ChannelsFileTransfer {
     /// - Throws: Error if initialization fails
     public static func initialize(e2eID: Int, paramsJson: Data? = nil) throws -> ChannelsFileTransfer {
         ftLog("Initializing with e2eID: \(e2eID)")
-        
+
         var err: NSError?
         let params = paramsJson ?? {
             let defaultParams = FileTransferParamsJSON()
             ftLog("Using default params")
             return try? Parser.encodeFileTransferParams(defaultParams)
         }()
-        
+
         ftLog("Params: \(params?.count ?? 0) bytes - \(params?.utf8 ?? "nil")")
         ftLog("Calling BindingsInitChannelsFileTransfer...")
 
@@ -257,7 +262,7 @@ public class ChannelsFileTransfer {
 }
 
 // MARK: - ValidForever Helper
+
 public func validForever() -> Int {
     return Int(Bindings.BindingsValidForeverBindings)
 }
-

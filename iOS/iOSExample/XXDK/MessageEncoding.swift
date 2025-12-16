@@ -5,8 +5,8 @@
 //  Created by Om More on 25/09/25.
 //
 
-import Foundation
 import Compression
+import Foundation
 
 /// Compress data using zlib compression.
 /// This implementation manually adds the zlib header since compression_encode_buffer
@@ -18,7 +18,7 @@ func compressZlib(_ data: Data) -> Data? {
     let bufferSize = data.count + 32
     let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
     defer { buffer.deallocate() }
-    
+
     // Compress using DEFLATE (not true zlib)
     let compressedSize = data.withUnsafeBytes { bytes in
         guard let baseAddress = bytes.baseAddress else { return 0 }
@@ -28,28 +28,28 @@ func compressZlib(_ data: Data) -> Data? {
             nil, COMPRESSION_ZLIB
         )
     }
-    
+
     guard compressedSize > 0 else { return nil }
-    
+
     // Create proper zlib format: header + DEFLATE data + ADLER32 checksum
     var result = Data()
-    
+
     // Add zlib header (2 bytes)
     result.append(0x78) // CMF (Compression Method and flags)
     result.append(0x9C) // FLG (Flags)
-    
+
     // Add the DEFLATE compressed data
     result.append(Data(bytes: buffer, count: compressedSize))
-    
+
     // Calculate ADLER32 checksum of original data
     let adler32 = calculateAdler32(data)
-    
+
     // Add ADLER32 checksum (4 bytes, big-endian)
     result.append(UInt8((adler32 >> 24) & 0xFF))
     result.append(UInt8((adler32 >> 16) & 0xFF))
     result.append(UInt8((adler32 >> 8) & 0xFF))
     result.append(UInt8(adler32 & 0xFF))
-    
+
     return result
 }
 
@@ -59,12 +59,12 @@ func compressZlib(_ data: Data) -> Data? {
 private func calculateAdler32(_ data: Data) -> UInt32 {
     var a: UInt32 = 1
     var b: UInt32 = 0
-    
+
     for byte in data {
         a = (a + UInt32(byte)) % 65521
         b = (b + a) % 65521
     }
-    
+
     return (b << 16) | a
 }
 
@@ -74,7 +74,7 @@ private func calculateAdler32(_ data: Data) -> UInt32 {
 /// - Returns: The base64-encoded string if successful, otherwise `nil`.
 func encodeMessage(_ message: String, compress: Bool = true) -> String? {
     guard let utf8Data = message.data(using: .utf8) else { return nil }
-    
+
     let dataToEncode: Data
     if compress {
         guard let compressedData = compressZlib(utf8Data) else { return nil }
@@ -82,25 +82,26 @@ func encodeMessage(_ message: String, compress: Bool = true) -> String? {
     } else {
         dataToEncode = utf8Data
     }
-    
+
     return dataToEncode.base64EncodedString()
 }
 
 /// Debug helper to print out encoding attempts for an example message.
 func encodeAny(message: String = "Hello, World!") {
     print("Original message: \(message)")
-    
+
     if let encoded = encodeMessage(message, compress: false) {
         print("Base64 (no compression): \(encoded)")
     }
-    
+
     if let encodedCompressed = encodeMessage(message, compress: true) {
         print("Base64 (with zlib): \(encodedCompressed)")
     }
-    
+
     // Test round-trip
     if let encodedCompressed = encodeMessage(message, compress: true),
-       let decoded = decodeMessage(encodedCompressed) {
+       let decoded = decodeMessage(encodedCompressed)
+    {
         print("Round-trip successful: \(decoded == message)")
     }
 }

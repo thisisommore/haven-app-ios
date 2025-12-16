@@ -1,5 +1,5 @@
 //
-//  iOSExampleApp.swift
+//  Main.swift
 //  iOSExample
 //
 //  Created by Richard Carback on 3/4/24.
@@ -19,4 +19,3 @@ struct Main: App {
         }
     }
 }
-
