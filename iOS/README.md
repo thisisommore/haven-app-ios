@@ -36,6 +36,9 @@ And you should see the following in the file browser:
 
 ![Opening the iOS Project](README-images/files-after.png)
 
+## Formating
+
+swiftformat .
 
 ## How This Example Was Built
 
@@ -44,7 +47,7 @@ the SwiftUI visual editor:
 
 ![Content View](README-images/contentview.png)
 
-After getting the basic widgets in place, we closed XCode. Then we added 
+After getting the basic widgets in place, we closed XCode. Then we added
 the following to a new file called `Podfile`:
 
 ```
@@ -86,8 +89,7 @@ Yielding the following files in the file browser:
 
 ![New Files](README-images/files-after-2.png)
 
-
-Then we fixed the `$(inherited)` setting by opening our `TARGETS` target, 
+Then we fixed the `$(inherited)` setting by opening our `TARGETS` target,
 finding `Runpath Search Paths` and changing it accordingly:
 
 ![Runpaths](README-images/inherited-2.png)
