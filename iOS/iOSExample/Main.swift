@@ -11,12 +11,29 @@ import SwiftUI
 
 @main
 struct Main: App {
-    @StateObject var logOutput = LogViewer()
-    @StateObject var xxdk = XXDK()
-    @StateObject private var sM = SecretManager()
+    var body: some Scene {
+        WindowGroup {
+            Provider {
+                Root()
+            }
+        }
+    }
+}
+
+struct Provider<Content: View>: View {
+    @StateObject private var logOutput = LogViewer()
+    @StateObject private var xxdk = XXDK()
+    @StateObject private var secretManager = SecretManager()
     @StateObject private var navigation = AppNavigationPath()
-    var modelData  = {
-        // Include all SwiftData models used by the app
+    @StateObject private var selectedChat = SelectedChat()
+
+    @ViewBuilder let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    private var modelContainer: ModelContainer = {
         let schema = Schema([
             ChatModel.self,
             ChatMessageModel.self,
@@ -24,56 +41,119 @@ struct Main: App {
             MessageSenderModel.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema)
-        
+
         do {
-            let mC = try ModelContainer(
+            let modelContainer = try ModelContainer(
                 for: schema,
                 configurations: [modelConfiguration]
             )
-            return (mC: mC, da: SwiftDataActor(modelContainer: mC))
+            return modelContainer
         } catch {
-            fatalError("Could not create ModelContainer: \(error.localizedDescription)")
-        }
-    }()
-    
-    @State private var deepLinkError: String?
-    @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
-    @StateObject private var selectedChat = SelectedChat()
-    
-    var body: some Scene {
-        WindowGroup {
-            RootContentView(
-                xxdk: xxdk,
-                sM: sM,
-                navigation: navigation,
-                modelData: modelData,
-                logOutput: logOutput,
-                columnVisibility: $columnVisibility,
-                selectedChat: selectedChat
+            fatalError(
+                "Could not create ModelContainer: \(error.localizedDescription)"
             )
         }
+    }()
+
+    private var modelDataActor: SwiftDataActor {
+        SwiftDataActor(modelContainer: modelContainer)
+    }
+
+    var body: some View {
+        content
+            .modelContainer(modelContainer)
+            .environmentObject(logOutput)
+            .environmentObject(secretManager)
+            .environmentObject(xxdk)
+            .environmentObject(selectedChat)
+            .environmentObject(navigation)
+            .environmentObject(modelDataActor)
     }
 }
 
-struct RootContentView: View {
-    @ObservedObject var xxdk: XXDK
-    @ObservedObject var sM: SecretManager
-    @ObservedObject var navigation: AppNavigationPath
-    var modelData: (mC: ModelContainer, da: SwiftDataActor)
-    @ObservedObject var logOutput: LogViewer
-    @Binding var columnVisibility: NavigationSplitViewVisibility
-    @ObservedObject var selectedChat: SelectedChat
-    
+struct Root: View {
+    @EnvironmentObject var logOutput: LogViewer
+    @EnvironmentObject var xxdk: XXDK
+    @EnvironmentObject var secretManager: SecretManager
+    @EnvironmentObject var selectedChat: SelectedChat
+    @EnvironmentObject var modelDataActor: SwiftDataActor
+    @EnvironmentObject var navigation: AppNavigationPath
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @State private var deepLinkError: String?
+
+    var body: some View {
+        Group {
+            if secretManager.isSetupComplete {
+                NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+                    NavigationStack(path: $navigation.path) {
+                        HomeView<XXDK>(width: UIScreen.w(100))
+                            .navigationDestination(for: Destination.self) { destination in
+                                destination.destinationView()
+                            }
+                    }
+                } detail: {
+                    if let chatId = selectedChat.chatId {
+                        ChatView<XXDK>(
+                            width: UIScreen.w(100),
+                            chatId: chatId,
+                            chatTitle: selectedChat.chatTitle
+                        )
+                        .id(chatId)
+                    } else if horizontalSizeClass == .regular {
+                        EmptyChatSelectionView()
+                    }
+                }
+                .navigationSplitViewStyle(.balanced)
+            } else {
+                NavigationStack(path: $navigation.path) {
+                    Color.clear
+                        .navigationDestination(for: Destination.self) { destination in
+                            destination.destinationView()
+                        }
+                        .onAppear {
+                            xxdk.setModelContainer(mActor: modelDataActor, sm: secretManager)
+                            Task {
+                                await xxdk.logout()
+                                try? modelDataActor.deleteAll(ChatMessageModel.self)
+                                try? modelDataActor.deleteAll(MessageReactionModel.self)
+                                try? modelDataActor.deleteAll(MessageSenderModel.self)
+                                try? modelDataActor.deleteAll(ChatModel.self)
+                                try? modelDataActor.save()
+                                secretManager.clearAll()
+                                navigation.path.append(Destination.password)
+                            }
+                        }
+                }
+            }
+        }
+        .onAppear {
+            xxdk.setModelContainer(mActor: modelDataActor, sm: secretManager)
+        }
+        .logViewerOnShake()
+        .onOpenURL { url in
+            handleDeepLink(url)
+        }
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { deepLinkError != nil },
+                set: { if !$0 { deepLinkError = nil } }
+            )
+        ) {
+            Button("OK") { deepLinkError = nil }
+        } message: {
+            Text(deepLinkError ?? "")
+        }
+    }
 
     private func handleDeepLink(_ url: URL) {
         guard url.scheme == "haven" else { return }
         guard let host = url.host else { return }
-        
+
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let queryItems = components?.queryItems ?? []
-        
+
         switch host {
         case "chat":
             let pathComponents = url.pathComponents.filter { $0 != "/" }
@@ -86,35 +166,40 @@ struct RootContentView: View {
             break
         }
     }
-    
+
     private func handleDMDeepLink(queryItems: [URLQueryItem]) {
-        // haven://dm?token={dmToken}&pubKey={base64PubKey}&codeset={codeset}
-        guard let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
-              let token64 = Int64(tokenStr),
-              let pubKeyBase64 = queryItems.first(where: { $0.name == "pubKey" })?.value,
-              let pubKey = Data(base64Encoded: pubKeyBase64) else {
+        guard
+            let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
+            let token64 = Int64(tokenStr),
+            let pubKeyBase64 = queryItems.first(where: { $0.name == "pubKey" })?.value,
+            let pubKey = Data(base64Encoded: pubKeyBase64)
+        else {
             print("[DeepLink] Missing token or pubKey")
             deepLinkError = "Invalid link: missing token or pubKey"
             return
         }
-        
+
         let token = Int32(bitPattern: UInt32(truncatingIfNeeded: token64))
-        
-        guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
-              let codeset = Int(codesetStr) else {
+
+        guard
+            let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
+            let codeset = Int(codesetStr)
+        else {
             print("[DeepLink] Missing codeset")
             deepLinkError = "Invalid link: missing codeset"
             return
         }
-        
+
         var err: NSError?
-        guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err),
-              err == nil else {
+        guard
+            let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err),
+            err == nil
+        else {
             print("[DeepLink] BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown")")
             deepLinkError = "Failed to derive identity"
             return
         }
-        
+
         let name: String
         let color: Int
         do {
@@ -131,87 +216,22 @@ struct RootContentView: View {
             deepLinkError = "Failed to decode identity"
             return
         }
-        
-        let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
-        
+
+        let newChat = ChatModel(
+            pubKey: pubKey,
+            name: name,
+            dmToken: token,
+            color: color
+        )
+
         Task {
-            modelData.da.insert(newChat)
-            try? modelData.da.save()
+            modelDataActor.insert(newChat)
+            try? modelDataActor.save()
             print("[DeepLink] Chat saved for user: \(name)")
-            
+
             await MainActor.run {
                 selectedChat.select(id: newChat.id, title: name)
             }
         }
     }
-    
-    var body: some View {
-        Group {
-            if sM.isSetupComplete {
-                // Split view for main app (iPad/Mac optimized)
-                NavigationSplitView(columnVisibility: $columnVisibility) {
-                    NavigationStack(path: $navigation.path) {
-                        HomeView<XXDK>(width: UIScreen.w(100))
-                            .navigationDestination(for: Destination.self) { destination in
-                                destination.destinationView()
-                                    .toolbarBackground(.ultraThinMaterial)
-                            }
-                    }
-                } detail: {
-                    if let chatId = selectedChat.chatId {
-                        ChatView<XXDK>(width: UIScreen.w(100), chatId: chatId, chatTitle: selectedChat.chatTitle)
-                            .id(chatId) // Force view refresh when chat changes
-                    } else if horizontalSizeClass == .regular {
-                        EmptyChatSelectionView()
-                    }
-                }
-                .navigationSplitViewStyle(.balanced)
-            } else {
-                // Full screen for onboarding
-                NavigationStack(path: $navigation.path) {
-                    Color.clear
-                        .navigationDestination(for: Destination.self) { destination in
-                            destination.destinationView()
-                                .toolbarBackground(.ultraThinMaterial)
-                        }
-                        .onAppear {
-                            xxdk.setModelContainer(mActor: modelData.da, sm: sM)
-                            Task {
-                                await xxdk.logout()
-                                try? modelData.da.deleteAll(ChatMessageModel.self)
-                                try? modelData.da.deleteAll(MessageReactionModel.self)
-                                try? modelData.da.deleteAll(MessageSenderModel.self)
-                                try? modelData.da.deleteAll(ChatModel.self)
-                                try? modelData.da.save()
-                                sM.clearAll()
-                                navigation.path.append(Destination.password)
-                            }
-                        }
-                }
-            }
-        }
-        .onAppear {
-            xxdk.setModelContainer(mActor: modelData.da, sm: sM)
-        }
-        .logViewerOnShake()
-        .modelContainer(modelData.mC)
-        .environmentObject(sM)
-        .environmentObject(xxdk)
-        .environmentObject(logOutput)
-        .environmentObject(selectedChat)
-        .environment(\.navigation, navigation)
-        .environmentObject(modelData.da)
-        .onOpenURL { url in
-            handleDeepLink(url)
-        }
-        .alert("Error", isPresented: Binding(
-            get: { deepLinkError != nil },
-            set: { if !$0 { deepLinkError = nil } }
-        )) {
-            Button("OK") { deepLinkError = nil }
-        } message: {
-            Text(deepLinkError ?? "")
-        }
-    }
-
 }

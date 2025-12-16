@@ -5,7 +5,8 @@
             "label": "Build App",
             "type": "sweetpad",
             "action": "build",
-            "scheme": "iOSExample", // Change this to your actual scheme name (e.g. "MyApp")
+            "scheme": "iOSExample",
+            "workspace": "/Users/ommore/Documents/github/xx-network/ios/haven/iOS/iOSExample.xcworkspace",
             "configuration": "Debug",
             "problemMatcher": [
                 "$sweetpad-xcodebuild-default",

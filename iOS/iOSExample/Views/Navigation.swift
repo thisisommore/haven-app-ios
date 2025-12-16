@@ -44,26 +44,33 @@ enum Destination: Hashable {
 // MARK: - Navigation Destination Views
 extension Destination {
     @MainActor @ViewBuilder
-    func destinationView() -> some View {
+    func _destinationView() -> some View {
         switch self {
         case .landing:
             LandingPage<XXDK>()
-                .navigationBarBackButtonHidden()
+                
         case .home:
             HomeView<XXDK>(width: UIScreen.w(100))
-                .navigationBarBackButtonHidden()
+                
         case .codenameGenerator:
             CodenameGeneratorView()
-                .navigationBarBackButtonHidden()
+                
         case .password:
             PasswordCreationView()
-                .navigationBarBackButtonHidden()
+                
         case let .chat(chatId, chatTitle):
             ChatView<XXDK>(width: UIScreen.w(100), chatId: chatId, chatTitle: chatTitle)
-                .navigationBarBackButtonHidden()
+                
         case .logViewer:
             LogViewerUI()
-                .navigationBarBackButtonHidden()
+                
         }
+    }
+    
+    @MainActor @ViewBuilder
+    func destinationView() -> some View {
+        _destinationView()
+            .navigationBarBackButtonHidden()
+            .toolbarBackground(.ultraThinMaterial)
     }
 }

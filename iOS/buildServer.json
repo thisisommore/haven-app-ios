@@ -12,8 +12,8 @@
 	"argv": [
 		"/opt/homebrew/bin/xcode-build-server"
 	],
-	"workspace": "/Users/ommore/Documents/github/xx-network/ios/xxdk-examples/iOS/iOSExample.xcworkspace",
-	"build_root": "/Users/ommore/Library/Developer/Xcode/DerivedData/iOSExample-bkwqlrgyzqtqgmfwpnadmuskenea",
+	"workspace": "/Users/ommore/Documents/github/xx-network/ios/haven/iOS/iOSExample.xcworkspace",
+	"build_root": "/Users/ommore/Library/Developer/Xcode/DerivedData/iOSExample-emfoyimkfvnroggmaykdumqfqlho",
 	"scheme": "iOSExample",
 	"kind": "xcode"
 }
