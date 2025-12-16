@@ -5,9 +5,9 @@
 //  Created by Om More on 16/12/25.
 //
 
-import SwiftUI
-import SwiftData
 import Bindings
+import SwiftData
+import SwiftUI
 
 struct Root: View {
     @EnvironmentObject var logOutput: LogViewer
@@ -18,15 +18,16 @@ struct Root: View {
     @EnvironmentObject var navigation: AppNavigationPath
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    @State private var deepLinkError: String?
-
     var body: some View {
         Group {
+            // we use split view when setup is completed
             if secretManager.isSetupComplete {
-                NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+                NavigationSplitView(columnVisibility: .constant(.doubleColumn))
+                {
                     NavigationStack(path: $navigation.path) {
                         HomeView<XXDK>(width: UIScreen.w(100))
-                            .navigationDestination(for: Destination.self) { destination in
+                            .navigationDestination(for: Destination.self) {
+                                destination in
                                 destination.destinationView()
                             }
                     }
@@ -38,24 +39,39 @@ struct Root: View {
                             chatTitle: selectedChat.chatTitle
                         )
                         .id(chatId)
-                    } else if horizontalSizeClass == .regular {
+                    }
+                    // only display empty chat selection view for big screen, for small screen there is not enough space for that
+                    else if horizontalSizeClass == .regular {
                         EmptyChatSelectionView()
                     }
                 }
                 .navigationSplitViewStyle(.balanced)
-            } else {
+            }
+            // for setup we don't use split view
+            else {
                 NavigationStack(path: $navigation.path) {
-                    Color.clear
-                        .navigationDestination(for: Destination.self) { destination in
+                    EmptyView()
+                        .navigationDestination(for: Destination.self) {
+                            destination in
                             destination.destinationView()
                         }
                         .onAppear {
-                            xxdk.setModelContainer(mActor: modelDataActor, sm: secretManager)
+                            xxdk.setModelContainer(
+                                mActor: modelDataActor,
+                                sm: secretManager
+                            )
+
                             Task {
                                 await xxdk.logout()
-                                try? modelDataActor.deleteAll(ChatMessageModel.self)
-                                try? modelDataActor.deleteAll(MessageReactionModel.self)
-                                try? modelDataActor.deleteAll(MessageSenderModel.self)
+                                try? modelDataActor.deleteAll(
+                                    ChatMessageModel.self
+                                )
+                                try? modelDataActor.deleteAll(
+                                    MessageReactionModel.self
+                                )
+                                try? modelDataActor.deleteAll(
+                                    MessageSenderModel.self
+                                )
                                 try? modelDataActor.deleteAll(ChatModel.self)
                                 try? modelDataActor.save()
                                 secretManager.clearAll()
@@ -69,47 +85,60 @@ struct Root: View {
             xxdk.setModelContainer(mActor: modelDataActor, sm: secretManager)
         }
         .logViewerOnShake()
-        .onOpenURL { url in
-            handleDeepLink(url)
-        }
-        .alert(
-            "Error",
-            isPresented: Binding(
-                get: { deepLinkError != nil },
-                set: { if !$0 { deepLinkError = nil } }
-            )
-        ) {
-            Button("OK") { deepLinkError = nil }
-        } message: {
-            Text(deepLinkError ?? "")
-        }
+        .handleDeepLinks()
     }
+}
 
-    private func handleDeepLink(_ url: URL) {
-        guard url.scheme == "haven" else { return }
-        guard let host = url.host else { return }
+struct DeepLinkHandler: ViewModifier {
+    @EnvironmentObject var selectedChat: SelectedChat
+    @EnvironmentObject var modelDataActor: SwiftDataActor
 
-        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        let queryItems = components?.queryItems ?? []
+    @State private var deepLinkError: String?
 
-        switch host {
-        case "chat":
-            let pathComponents = url.pathComponents.filter { $0 != "/" }
-            if let chatId = pathComponents.first {
-                selectedChat.select(id: chatId, title: "")
+    func body(content: Content) -> some View {
+        content
+            .onOpenURL { url in
+                guard url.scheme == "haven" else { return }
+                guard let host = url.host else { return }
+
+                let components = URLComponents(
+                    url: url,
+                    resolvingAgainstBaseURL: false
+                )
+                let queryItems = components?.queryItems ?? []
+
+                switch host {
+                    case "chat":
+                        let pathComponents = url.pathComponents.filter { $0 != "/" }
+                        if let chatId = pathComponents.first {
+                            selectedChat.select(id: chatId, title: "")
+                        }
+                    case "dm":
+                        handleDMDeepLink(queryItems: queryItems)
+                    default:
+                        break
+                    }
             }
-        case "dm":
-            handleDMDeepLink(queryItems: queryItems)
-        default:
-            break
-        }
+            .alert(
+                "Error",
+                isPresented: Binding(
+                    get: { deepLinkError != nil },
+                    set: { if !$0 { deepLinkError = nil } }
+                )
+            ) {
+                Button("OK") { deepLinkError = nil }
+            } message: {
+                Text(deepLinkError ?? "")
+            }
     }
 
     private func handleDMDeepLink(queryItems: [URLQueryItem]) {
         guard
-            let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
+            let tokenStr = queryItems.first(where: { $0.name == "token" })?
+                .value,
             let token64 = Int64(tokenStr),
-            let pubKeyBase64 = queryItems.first(where: { $0.name == "pubKey" })?.value,
+            let pubKeyBase64 = queryItems.first(where: { $0.name == "pubKey" })?
+                .value,
             let pubKey = Data(base64Encoded: pubKeyBase64)
         else {
             print("[DeepLink] Missing token or pubKey")
@@ -120,7 +149,8 @@ struct Root: View {
         let token = Int32(bitPattern: UInt32(truncatingIfNeeded: token64))
 
         guard
-            let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
+            let codesetStr = queryItems.first(where: { $0.name == "codeset" })?
+                .value,
             let codeset = Int(codesetStr)
         else {
             print("[DeepLink] Missing codeset")
@@ -130,10 +160,16 @@ struct Root: View {
 
         var err: NSError?
         guard
-            let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err),
+            let identityData = Bindings.BindingsConstructIdentity(
+                pubKey,
+                codeset,
+                &err
+            ),
             err == nil
         else {
-            print("[DeepLink] BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown")")
+            print(
+                "[DeepLink] BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown")"
+            )
             deepLinkError = "Failed to derive identity"
             return
         }
@@ -148,7 +184,9 @@ struct Root: View {
                 colorStr.removeFirst(2)
             }
             color = Int(colorStr, radix: 16) ?? 0xE97451
-            print("[DeepLink] Derived identity - codename: \(name), color: \(color)")
+            print(
+                "[DeepLink] Derived identity - codename: \(name), color: \(color)"
+            )
         } catch {
             print("[DeepLink] Failed to decode identity: \(error)")
             deepLinkError = "Failed to decode identity"
@@ -171,5 +209,11 @@ struct Root: View {
                 selectedChat.select(id: newChat.id, title: name)
             }
         }
+    }
+}
+
+extension View {
+    func handleDeepLinks() -> some View {
+        modifier(DeepLinkHandler())
     }
 }
