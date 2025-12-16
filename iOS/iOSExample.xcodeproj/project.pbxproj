@@ -46,6 +46,7 @@
 		A10030F62E83AA070096767A /* Model */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Model; sourceTree = "<group>"; };
 		A10030FB2E83CE8B0096767A /* XXDK */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = XXDK; sourceTree = "<group>"; };
 		A17427A72EA2770D00D39261 /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
+		A19FC0D12EF1A8C7007FDD0F /* Pages */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Pages; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +92,7 @@
 		980A0D6B2B96723C004FB15A /* iOSExample */ = {
 			isa = PBXGroup;
 			children = (
+				A19FC0D12EF1A8C7007FDD0F /* Pages */,
 				A19FC0CF2EF1A29D007FDD0F /* Root.swift */,
 				A19FC0CD2EF1A254007FDD0F /* Provider.swift */,
 				A17324322EA515BF00388AC0 /* Info.plist */,
@@ -156,6 +158,7 @@
 				A10030F62E83AA070096767A /* Model */,
 				A10030FB2E83CE8B0096767A /* XXDK */,
 				A17427A72EA2770D00D39261 /* Views */,
+				A19FC0D12EF1A8C7007FDD0F /* Pages */,
 			);
 			name = iOSExample;
 			productName = iOSExample;
