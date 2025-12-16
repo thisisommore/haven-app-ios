@@ -166,12 +166,6 @@ struct RootContentView: View {
                     }
                 }
                 .navigationSplitViewStyle(.balanced)
-                .onChange(of: selectedChat.chatId) { _, newValue in
-                    if newValue == nil && horizontalSizeClass == .compact {
-                        // On iPhone, clearing selection should show sidebar
-                         columnVisibility = .all
-                    }
-                }
             } else {
                 // Full screen for onboarding
                 NavigationStack(path: $navigation.path) {
