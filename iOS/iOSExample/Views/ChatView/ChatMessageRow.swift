@@ -22,7 +22,7 @@ struct ChatMessageRow: View {
     var onScrollToReply: ((String) -> Void)?
     @Query private var chatReactions: [MessageReactionModel]
     @Query private var repliedTo: [ChatMessageModel]
-    @Query private var messageSender: [SenderModel]
+    @Query private var messageSender: [MessageSenderModel]
     
     private var isHighlighted: Bool {
         highlightedMessageId == result.id
@@ -51,7 +51,7 @@ struct ChatMessageRow: View {
         _repliedTo = Query(filter: #Predicate<ChatMessageModel> { r in
             if (replyTo != nil) { r.id == replyTo! } else { false }
         })
-        _messageSender = Query(filter: #Predicate<SenderModel> { s in
+        _messageSender = Query(filter: #Predicate<MessageSenderModel> { s in
             if (senderId != nil) { s.id == senderId! } else { false }
         })
     }

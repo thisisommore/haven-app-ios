@@ -21,7 +21,7 @@ struct Main: App {
             ChatModelModel.self,
             ChatMessageModel.self,
             MessageReactionModel.self,
-            SenderModel.self,
+            MessageSenderModel.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema)
         
@@ -180,7 +180,7 @@ struct RootContentView: View {
                                 await xxdk.logout()
                                 try? modelData.da.deleteAll(ChatMessageModel.self)
                                 try? modelData.da.deleteAll(MessageReactionModel.self)
-                                try? modelData.da.deleteAll(SenderModel.self)
+                                try? modelData.da.deleteAll(MessageSenderModel.self)
                                 try? modelData.da.deleteAll(ChatModelModel.self)
                                 try? modelData.da.save()
                                 sM.clearAll()

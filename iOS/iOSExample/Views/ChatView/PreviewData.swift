@@ -9,7 +9,7 @@ import Foundation
 // Create a mock chat and some messages
 let previewChatId = "previewChatId"
 let chat = ChatModelModel(channelId: previewChatId, name: "Mayur")
-let mockSender = SenderModel(id: "mock-sender-id", pubkey: Data(), codename: "Mayur", dmToken: 0, color: greenColorInt)
+let mockSender = MessageSenderModel(id: "mock-sender-id", pubkey: Data(), codename: "Mayur", dmToken: 0, color: greenColorInt)
 let greenColorInt = 0x0b421f
 var mockMsgs = [
     ChatMessageModel(

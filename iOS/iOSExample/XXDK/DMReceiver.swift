@@ -199,17 +199,17 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
 
                     // Create or update Sender object
                     let senderId = partnerKey.base64EncodedString()
-                    let senderDescriptor = FetchDescriptor<SenderModel>(
+                    let senderDescriptor = FetchDescriptor<MessageSenderModel>(
                         predicate: #Predicate { $0.id == senderId }
                     )
-                    let sender: SenderModel
+                    let sender: MessageSenderModel
                     if let existingSender = try? backgroundContext.fetch(senderDescriptor).first {
                         // Update existing sender's dmToken
                         existingSender.dmToken = dmToken
                         sender = existingSender
                     } else {
                         // Create new sender
-                        sender = SenderModel(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
+                        sender = MessageSenderModel(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
                         print("DMReceiver: Created new Sender for \(name) with dmToken: \(dmToken)")
                     }
 

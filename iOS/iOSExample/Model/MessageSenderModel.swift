@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @Model
-class SenderModel: Encodable {
+class MessageSenderModel: Encodable {
     @Attribute(.unique) var id: String
     var pubkey: Data
     //codename

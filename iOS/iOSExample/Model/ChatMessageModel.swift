@@ -23,7 +23,7 @@ class ChatMessageModel: Identifiable {
     var timestamp: Date
     var isIncoming: Bool
     var isRead: Bool
-    var sender: SenderModel?
+    var sender: MessageSenderModel?
     var chat: ChatModelModel
     var replyTo: String?
     
@@ -45,7 +45,7 @@ class ChatMessageModel: Identifiable {
         return ["jpg", "jpeg", "png", "gif", "webp", "heic"].contains(type)
     }
     
-    init(message: String, isIncoming: Bool, chat: ChatModelModel, sender: SenderModel? = nil, id: String, internalId: Int64, replyTo: String? = nil, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3), isRead: Bool = false) {
+    init(message: String, isIncoming: Bool, chat: ChatModelModel, sender: MessageSenderModel? = nil, id: String, internalId: Int64, replyTo: String? = nil, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3), isRead: Bool = false) {
         self.id = id
         self.internalId = internalId
         self.message = message
@@ -69,7 +69,7 @@ class ChatMessageModel: Identifiable {
         fileLinkJSON: String?,
         isIncoming: Bool,
         chat: ChatModelModel,
-        sender: SenderModel?,
+        sender: MessageSenderModel?,
         id: String,
         internalId: Int64,
         timestamp: Int64

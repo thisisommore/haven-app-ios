@@ -9,9 +9,9 @@ class MessageReactionModel {
     var emoji: String
     var timestamp: Date
     var isMe: Bool
-    var sender: SenderModel?
+    var sender: MessageSenderModel?
 
-    init(id: String, internalId: Int64, targetMessageId: String, emoji: String, sender: SenderModel? = nil, isMe: Bool = false) {
+    init(id: String, internalId: Int64, targetMessageId: String, emoji: String, sender: MessageSenderModel? = nil, isMe: Bool = false) {
         self.targetMessageId = targetMessageId
         self.emoji = emoji
         self.timestamp = Date()

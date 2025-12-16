@@ -191,12 +191,12 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
 
             // Create or update Sender object if we have codename and pubkey
-            var sender: SenderModel? = nil
+            var sender: MessageSenderModel? = nil
             if let codename = senderCodename, let pubKey = senderPubKey {
                 let senderId = pubKey.base64EncodedString()
 
                 // Check if sender already exists and update dmToken
-                let senderDescriptor = FetchDescriptor<SenderModel>(
+                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
                     predicate: #Predicate { $0.id == senderId }
                 )
                 if let existingSender = try? actor.fetch(
@@ -213,7 +213,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     
                 } else {
                     // Create new sender
-                    sender = SenderModel(
+                    sender = MessageSenderModel(
                         id: senderId,
                         pubkey: pubKey,
                         codename: codename,
@@ -414,12 +414,12 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
             // Create or update Sender object if we have codename and pubkey
-            var sender: SenderModel? = nil
+            var sender: MessageSenderModel? = nil
             if let pubKey = pubKey {
                 let senderId = pubKey.base64EncodedString()
 
                 // Check if sender already exists and update dmToken
-                let senderDescriptor = FetchDescriptor<SenderModel>(
+                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
                     predicate: #Predicate { $0.id == senderId }
                 )
                 
@@ -434,7 +434,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
            
                 } else {
                     // Create new sender
-                    sender = SenderModel(
+                    sender = MessageSenderModel(
                         id: senderId,
                         pubkey: pubKey,
                         codename: codename,
@@ -947,10 +947,10 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
             
             // Get or create sender
-            var sender: SenderModel? = nil
+            var sender: MessageSenderModel? = nil
             if let pubKey = pubKey {
                 let senderId = pubKey.base64EncodedString()
-                let senderDescriptor = FetchDescriptor<SenderModel>(
+                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
                     predicate: #Predicate { $0.id == senderId }
                 )
                 if let existingSender = try? actor.fetch(senderDescriptor).first {
@@ -958,7 +958,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     // Note: handleFileMessage doesn't receive nickname parameter
                     sender = existingSender
                 } else {
-                    sender = SenderModel(
+                    sender = MessageSenderModel(
                         id: senderId,
                         pubkey: pubKey,
                         codename: identity.codename,

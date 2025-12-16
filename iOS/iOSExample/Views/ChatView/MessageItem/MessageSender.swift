@@ -10,7 +10,7 @@ import SwiftUI
 /// Displays the sender's name/codename for a message
 struct MessageSender: View {
     let isIncoming: Bool
-    let sender: SenderModel?
+    let sender: MessageSenderModel?
     @Environment(\.colorScheme) var colorScheme
     var body: some View {
         HStack {

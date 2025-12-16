@@ -12,12 +12,12 @@ import UniformTypeIdentifiers
 struct MutedUserRow: View {
     let pubKey: Data
     var onUnmute: (() -> Void)?
-    @Query private var senders: [SenderModel]
+    @Query private var senders: [MessageSenderModel]
     
     init(pubKey: Data, onUnmute: (() -> Void)? = nil) {
         self.pubKey = pubKey
         self.onUnmute = onUnmute
-        _senders = Query(filter: #Predicate<SenderModel> { sender in
+        _senders = Query(filter: #Predicate<MessageSenderModel> { sender in
             sender.pubkey == pubKey
         })
     }

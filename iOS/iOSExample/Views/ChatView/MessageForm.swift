@@ -277,7 +277,7 @@ struct MessageForm<T: XXDKP>: View {
             "<p>Hey! Can you check out this <a href=\"https://example.com\">link</a>? It has some really interesting information about the project we discussed yesterday.</p>",
         isIncoming: true,
         chat: previewChat,
-        sender: SenderModel(
+        sender: MessageSenderModel(
             id: "alice-id",
             pubkey: Data(),
             codename: "Alice",

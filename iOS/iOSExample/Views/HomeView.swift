@@ -172,7 +172,7 @@ struct HomeView<T: XXDKP>: View {
                     // Clear SwiftData
                     try? swiftDataActor.deleteAll(ChatMessageModel.self)
                     try? swiftDataActor.deleteAll(MessageReactionModel.self)
-                    try? swiftDataActor.deleteAll(SenderModel.self)
+                    try? swiftDataActor.deleteAll(MessageSenderModel.self)
                     try? swiftDataActor.deleteAll(ChatModelModel.self)
                     try? swiftDataActor.save()
                     

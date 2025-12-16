@@ -204,7 +204,7 @@ struct FileMessageBubble: View {
             message: "📎 photo.jpg",
             isIncoming: true,
             chat: ChatModelModel(channelId: "test", name: "Test"),
-            sender: SenderModel(id: "1", pubkey: Data(), codename: "Alice", dmToken: 0, color: 0x2196F3),
+            sender: MessageSenderModel(id: "1", pubkey: Data(), codename: "Alice", dmToken: 0, color: 0x2196F3),
             id: "1",
             internalId: 1
         )

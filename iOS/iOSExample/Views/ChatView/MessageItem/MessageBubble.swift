@@ -12,7 +12,7 @@ import SwiftHTMLtoMarkdown
 struct MessageBubble: View {
     let text: String
     let isIncoming: Bool
-    let sender: SenderModel?
+    let sender: MessageSenderModel?
     let isFirstInGroup: Bool
     let isLastInGroup: Bool
     let timestamp: String
@@ -37,7 +37,7 @@ struct MessageBubble: View {
     init(
         text: String,
         isIncoming: Bool,
-        sender: SenderModel?,
+        sender: MessageSenderModel?,
         isFirstInGroup: Bool = true,
         isLastInGroup: Bool = true,
         timestamp: String,
