@@ -118,10 +118,10 @@ struct ChatView<T: XXDKP>: View {
     
     @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
-    @Query private var chatResults: [ChatModelModel]
+    @Query private var chatResults: [ChatModel]
     @Query private var allMessages: [ChatMessageModel]
 
-    private var chat: ChatModelModel? { chatResults.first }
+    private var chat: ChatModel? { chatResults.first }
     private var messages: [ChatMessageModel] {
         // Filter messages for this chat - using @Query ensures updates trigger refresh
         let chatMessages = allMessages.filter { $0.chat.id == chatId }
@@ -136,7 +136,7 @@ struct ChatView<T: XXDKP>: View {
     @State var abc: String = ""
     @State private var replyingTo: ChatMessageModel? = nil
     @State private var showChannelOptions: Bool = false
-    @State private var navigateToDMChat: ChatModelModel? = nil
+    @State private var navigateToDMChat: ChatModel? = nil
     @State private var visibleDate: Date? = nil
     @State private var showDateHeader: Bool = false
     @State private var hideTask: Task<Void, Never>? = nil
@@ -164,7 +164,7 @@ struct ChatView<T: XXDKP>: View {
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int)
     {
         // Create a new DM chat
-        let dmChat = ChatModelModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
+        let dmChat = ChatModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
 
         do {
             swiftDataActor.insert(dmChat)
@@ -181,7 +181,7 @@ struct ChatView<T: XXDKP>: View {
         self.chatId = chatId
         self.chatTitle = chatTitle
         _chatResults = Query(
-            filter: #Predicate<ChatModelModel> { chat in
+            filter: #Predicate<ChatModel> { chat in
                 chat.id == chatId
             }
         )
@@ -412,7 +412,7 @@ struct ChatView<T: XXDKP>: View {
                     do {
                         try xxdk.leaveChannel(channelId: chatId)
                         
-                        let descriptor = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.id == chatId })
+                        let descriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == chatId })
                         let chatsToDelete = try swiftDataActor.fetch(descriptor)
                         
                         for chatToDelete in chatsToDelete {
@@ -504,7 +504,7 @@ struct ChatView<T: XXDKP>: View {
 #Preview {
     // In-memory SwiftData container for previewing ChatView with mock data
     let container = try! ModelContainer(
-        for: ChatModelModel.self,
+        for: ChatModel.self,
         ChatMessageModel.self,
         MessageReactionModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)

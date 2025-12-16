@@ -203,7 +203,7 @@ struct FileMessageBubble: View {
         let imageMsg = ChatMessageModel(
             message: "📎 photo.jpg",
             isIncoming: true,
-            chat: ChatModelModel(channelId: "test", name: "Test"),
+            chat: ChatModel(channelId: "test", name: "Test"),
             sender: MessageSenderModel(id: "1", pubkey: Data(), codename: "Alice", dmToken: 0, color: 0x2196F3),
             id: "1",
             internalId: 1
@@ -221,7 +221,7 @@ struct FileMessageBubble: View {
         let fileMsg = ChatMessageModel(
             message: "📎 document.pdf",
             isIncoming: false,
-            chat: ChatModelModel(channelId: "test", name: "Test"),
+            chat: ChatModel(channelId: "test", name: "Test"),
             id: "2",
             internalId: 2
         )

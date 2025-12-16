@@ -233,22 +233,22 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         }
     }
 
-    private func fetchOrCreateDMChat(codename: String, ctx: SwiftDataActor, pubKey: Data?, dmToken: Int32?, color: Int) throws -> ChatModelModel {
+    private func fetchOrCreateDMChat(codename: String, ctx: SwiftDataActor, pubKey: Data?, dmToken: Int32?, color: Int) throws -> ChatModel {
         if let pubKey {
             let pubKeyB64 = pubKey.base64EncodedString()
-            let byKey = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.id == pubKeyB64 })
+            let byKey = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == pubKeyB64 })
             if let existingByKey = try ctx.fetch(byKey).first {
                 return existingByKey
             } else {
                 guard let dmToken else { throw MyError.runtimeError("dmToken is required to create chat with pubKey") }
-                let newChat = ChatModelModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
+                let newChat = ChatModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
                 ctx.insert(newChat)
                 try ctx.save()
                 return newChat
             }
         } else {
             // Fallback to codename-based lookup (may collide)
-            let byName = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.name == codename })
+            let byName = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == codename })
             if let existingByName = try ctx.fetch(byName).first {
                 return existingByName
             } else {
@@ -258,9 +258,9 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     }
 
     // MARK: - Helper Methods
-    private func isSenderSelf(chat: ChatModelModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
+    private func isSenderSelf(chat: ChatModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
         // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey
-        let selfChatDescriptor = FetchDescriptor<ChatModelModel>(predicate: #Predicate { $0.name == "<self>" })
+        let selfChatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == "<self>" })
         if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
             guard let senderPubKey = senderPubKey else { return false }
             return Data(base64Encoded: selfChat.id) == senderPubKey

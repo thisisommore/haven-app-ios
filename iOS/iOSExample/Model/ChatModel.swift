@@ -11,7 +11,7 @@ import Foundation
 
 
 @Model
-class ChatModelModel {
+class ChatModel {
     // For channels, this is the channel ID. For DMs, this is the pub key.
     @Attribute(.unique) var id: String
     // Human-readable name (channel name or partner codename)

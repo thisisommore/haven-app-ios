@@ -49,7 +49,7 @@ struct MutedUserRow: View {
 }
 
 struct ChannelOptionsView<T: XXDKP>: View {
-    let chat: ChatModelModel?
+    let chat: ChatModel?
     let onLeaveChannel: () -> Void
     var onDeleteChat: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
@@ -778,11 +778,11 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
 
 #Preview {
     let container = try! ModelContainer(
-        for: ChatModelModel.self,
+        for: ChatModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     
-    let mockChat = ChatModelModel(
+    let mockChat = ChatModel(
         channelId: "mock-channel-123",
         name: "General Discussion",
         description: "A channel for general team discussions and announcements",

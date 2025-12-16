@@ -15,7 +15,7 @@ struct HomeView<T: XXDKP>: View {
     @State private var showNicknamePicker = false
     @State private var currentNickname: String?
     @State private var searchText: String = ""
-    @Query private var chats: [ChatModelModel]
+    @Query private var chats: [ChatModel]
 
     @EnvironmentObject var xxdk: T
     @State private var didStartLoad = false
@@ -28,7 +28,7 @@ struct HomeView<T: XXDKP>: View {
     var width: CGFloat
     @State private var showTooltip = false
     
-    private var filteredChats: [ChatModelModel] {
+    private var filteredChats: [ChatModel] {
         if searchText.isEmpty {
             return chats
         }
@@ -173,7 +173,7 @@ struct HomeView<T: XXDKP>: View {
                     try? swiftDataActor.deleteAll(ChatMessageModel.self)
                     try? swiftDataActor.deleteAll(MessageReactionModel.self)
                     try? swiftDataActor.deleteAll(MessageSenderModel.self)
-                    try? swiftDataActor.deleteAll(ChatModelModel.self)
+                    try? swiftDataActor.deleteAll(ChatModel.self)
                     try? swiftDataActor.save()
                     
                     secretManager.clearAll()
@@ -300,7 +300,7 @@ struct HomeView<T: XXDKP>: View {
             return
         }
         
-        let newChat = ChatModelModel(pubKey: pubKey, name: name, dmToken: token, color: color)
+        let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
         
         print("[HomeView] Creating new chat for user: \(name), token: \(token) (original: \(token64))")
 
@@ -496,7 +496,7 @@ struct NewChatView<T: XXDKP>: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
 
-            let newChat = ChatModelModel(channelId: channelId, name: joinedChannel.name, isSecret: isPrivateChannel)
+            let newChat = ChatModel(channelId: channelId, name: joinedChannel.name, isSecret: isPrivateChannel)
             swiftDataActor.insert(newChat)
             try swiftDataActor.save()
 
@@ -720,11 +720,11 @@ struct ExportIdentitySheet<T: XXDKP>: View {
     @Previewable @StateObject var selectedChat = SelectedChat()
     @Previewable @State var container: ModelContainer = {
         let c = try! ModelContainer(
-            for: ChatModelModel.self,
+            for: ChatModel.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         for name in ["<self>", "Tom", "Mayur", "Shashank"] {
-            let chat = ChatModelModel(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
+            let chat = ChatModel(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
             c.mainContext.insert(chat)
             c.mainContext.insert(
                 ChatMessageModel(

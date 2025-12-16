@@ -18,7 +18,7 @@ struct Main: App {
     var modelData  = {
         // Include all SwiftData models used by the app
         let schema = Schema([
-            ChatModelModel.self,
+            ChatModel.self,
             ChatMessageModel.self,
             MessageReactionModel.self,
             MessageSenderModel.self,
@@ -132,7 +132,7 @@ struct RootContentView: View {
             return
         }
         
-        let newChat = ChatModelModel(pubKey: pubKey, name: name, dmToken: token, color: color)
+        let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
         
         Task {
             modelData.da.insert(newChat)
@@ -181,7 +181,7 @@ struct RootContentView: View {
                                 try? modelData.da.deleteAll(ChatMessageModel.self)
                                 try? modelData.da.deleteAll(MessageReactionModel.self)
                                 try? modelData.da.deleteAll(MessageSenderModel.self)
-                                try? modelData.da.deleteAll(ChatModelModel.self)
+                                try? modelData.da.deleteAll(ChatModel.self)
                                 try? modelData.da.save()
                                 sM.clearAll()
                                 navigation.path.append(Destination.password)

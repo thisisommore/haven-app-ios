@@ -42,7 +42,7 @@ struct UnreadBadge: View {
 }
 
 struct ChatRowView<T: XXDKP>: View {
-    let chat: ChatModelModel
+    let chat: ChatModel
     @EnvironmentObject var xxdk: T
     
     private var isChannel: Bool {

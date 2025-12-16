@@ -197,7 +197,7 @@ struct ChannelInviteLinkPreview: View {
     
     private func checkIfAlreadyJoined() {
         do {
-            let descriptor = FetchDescriptor<ChatModelModel>()
+            let descriptor = FetchDescriptor<ChatModel>()
             let allChats = try swiftDataActor.fetch(descriptor)
             
             // Try matching by channelId first
@@ -235,7 +235,7 @@ struct ChannelInviteLinkPreview: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
             
-            let newChat = ChatModelModel(channelId: channelId, name: joinedChannel.name, isSecret: link.level == "Secret")
+            let newChat = ChatModel(channelId: channelId, name: joinedChannel.name, isSecret: link.level == "Secret")
             swiftDataActor.insert(newChat)
             try swiftDataActor.save()
             

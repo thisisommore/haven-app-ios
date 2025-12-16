@@ -21,7 +21,7 @@ extension View {
 struct MessageForm<T: XXDKP>: View {
     @State private var abc: String = ""
     @State private var isSendingMessage: Bool = false
-    var chat: ChatModelModel?
+    var chat: ChatModel?
     var replyTo: ChatMessageModel?
     var onCancelReply: (() -> Void)?
     @EnvironmentObject private var xxdk: T
@@ -233,14 +233,14 @@ struct MessageForm<T: XXDKP>: View {
 #Preview {
     // In-memory SwiftData container for previewing MessageForm
     let container = try! ModelContainer(
-        for: ChatModelModel.self,
+        for: ChatModel.self,
         ChatMessageModel.self,
         MessageReactionModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
 
     // Create a simple preview chat
-    let previewChat = ChatModelModel(channelId: "previewChannelId", name: "Preview Chat")
+    let previewChat = ChatModel(channelId: "previewChannelId", name: "Preview Chat")
     container.mainContext.insert(previewChat)
     return ZStack {
            Color(.appBackground).edgesIgnoringSafeArea(.all)
@@ -261,14 +261,14 @@ struct MessageForm<T: XXDKP>: View {
 #Preview("Reply Mode") {
     // In-memory SwiftData container for previewing MessageForm with reply
     let container = try! ModelContainer(
-        for: ChatModelModel.self,
+        for: ChatModel.self,
         ChatMessageModel.self,
         MessageReactionModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
 
     // Create a simple preview chat
-    let previewChat = ChatModelModel(channelId: "previewChannelId", name: "Preview Chat")
+    let previewChat = ChatModel(channelId: "previewChannelId", name: "Preview Chat")
     container.mainContext.insert(previewChat)
 
     // Create a message to reply to

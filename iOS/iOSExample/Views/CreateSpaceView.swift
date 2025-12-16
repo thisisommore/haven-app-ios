@@ -97,7 +97,7 @@ struct CreateSpaceView<T: XXDKP>: View {
                     throw MyError.runtimeError("Channel ID is missing")
                 }
                 
-                let newChat = ChatModelModel(channelId: channelId, name: channel.name, isAdmin: true, isSecret: privacyLevel == .secret)
+                let newChat = ChatModel(channelId: channelId, name: channel.name, isAdmin: true, isSecret: privacyLevel == .secret)
                 swiftDataActor.insert(newChat)
                 try swiftDataActor.save()
                 
