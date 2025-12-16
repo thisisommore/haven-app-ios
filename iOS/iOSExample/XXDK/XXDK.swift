@@ -1127,27 +1127,32 @@ public class XXDK: XXDKP {
                 "could not load notifications dummy: \(e.localizedDescription)"
             )
         }
-        print("BindingsLoadChannelsManager: tag - \(storageTag)")
-        let cm = Bindings.BindingsLoadChannelsManager(
-            cmixId,
-            storageTag,
-            /* dbFilePath: */ eventModelBuilder,
-            /* extensionBuilderIDsJSON: */ nil,
-            /* notificationsID: */ noti.getID(),
-            /* uiCallbacks: */ channelUICallbacks,
-            &err
-        )
-        if let e = err {
-            throw MyError.runtimeError(
-                "could not load channels manager: \(e.localizedDescription)"
-            )
+        
+        // Use existing channels manager if available to preserve extensions
+        let cm: Bindings.BindingsChannelsManager
+        if let existingCm = self.channelsManager {
+            cm = existingCm
+        } else {
+            print("BindingsLoadChannelsManager: tag - \(storageTag)")
+            // NOTE: This path loads without extensions (nil passed for extensionBuilderIDsJSON)
+            // This is only safe if extensions are not needed or this is a bare reload.
+            // Ideally channelsManager should always be initialized in startNetworkFollower.
+            guard let loadedCm = Bindings.BindingsLoadChannelsManager(
+                cmixId,
+                storageTag,
+                /* dbFilePath: */ eventModelBuilder,
+                /* extensionBuilderIDsJSON: */ nil,
+                /* notificationsID: */ noti.getID(),
+                /* uiCallbacks: */ channelUICallbacks,
+                &err
+            ) else {
+                throw MyError.runtimeError(
+                    "could not load channels manager: \(err?.localizedDescription ?? "unknown error")"
+                )
+            }
+            cm = loadedCm
+            self.channelsManager = cm
         }
-        guard let cm else {
-            throw MyError.runtimeError("channels manager was nil")
-        }
-
-        // Retain Channels Manager for channel operations
-        self.channelsManager = cm
 
         // Join the channel and parse the returned JSON
         let raw = try cm.joinChannel(prettyPrint)
@@ -1740,7 +1745,16 @@ public class XXDK: XXDKP {
             throw MyError.runtimeError("File transfer not initialized")
         }
         
-        let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+        // Clean the channel ID string
+        let cleanChannelId = channelId.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Decode base64 strictly
+        guard let channelIdData = Data(base64Encoded: cleanChannelId) else {
+            print("[FT] ERROR: Failed to decode channelId base64: \(cleanChannelId)")
+            throw MyError.runtimeError("Invalid channel ID format")
+        }
+        
+        print("[FT] Sending file to channel (ID: \(cleanChannelId), bytes: \(channelIdData.count))")
         
         let reportData = try ft.send(
             channelIdBytes: channelIdData,
