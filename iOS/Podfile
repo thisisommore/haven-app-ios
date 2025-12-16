@@ -6,8 +6,8 @@ use_frameworks!
 
 target 'iOSExample' do
   # Use local XXDK (path should be the folder that contains the .podspec)
-  pod 'XXDK'
-#  pod 'XXDK', :path => '/Users/ommore/Documents/github/xx-network/client'
+  # pod 'XXDK'
+  pod 'XXDK', :path => '/Users/ommore/Documents/github/xx-network/clean/xx_network/client'
 
   pod 'Kronos'
 end
