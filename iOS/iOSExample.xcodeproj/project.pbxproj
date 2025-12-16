@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1662B707BC8225B49C368183 /* Pods_iOSExample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0A4ED193EDC7519BB5AFA4 /* Pods_iOSExample.framework */; };
-		980A0D6D2B96723C004FB15A /* iOSExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980A0D6C2B96723C004FB15A /* iOSExampleApp.swift */; };
+		980A0D6D2B96723C004FB15A /* Main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980A0D6C2B96723C004FB15A /* Main.swift */; };
 		980A0D732B96723E004FB15A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D722B96723E004FB15A /* Assets.xcassets */; };
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
@@ -23,7 +23,7 @@
 /* Begin PBXFileReference section */
 		70A4CA2706503377F74DA753 /* Pods-iOSExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSExample.debug.xcconfig"; path = "Target Support Files/Pods-iOSExample/Pods-iOSExample.debug.xcconfig"; sourceTree = "<group>"; };
 		980A0D692B96723C004FB15A /* iOSExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		980A0D6C2B96723C004FB15A /* iOSExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSExampleApp.swift; sourceTree = "<group>"; };
+		980A0D6C2B96723C004FB15A /* Main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Main.swift; sourceTree = "<group>"; };
 		980A0D722B96723E004FB15A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		980A0D742B96723E004FB15A /* iOSExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iOSExample.entitlements; sourceTree = "<group>"; };
 		980A0D762B96723E004FB15A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -94,7 +94,7 @@
 				A10030FB2E83CE8B0096767A /* XXDK */,
 				A10030F62E83AA070096767A /* Model */,
 				9854D57A2B98C238009437B8 /* Resources */,
-				980A0D6C2B96723C004FB15A /* iOSExampleApp.swift */,
+				980A0D6C2B96723C004FB15A /* Main.swift */,
 				980A0D722B96723E004FB15A /* Assets.xcassets */,
 				A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */,
 				980A0D742B96723E004FB15A /* iOSExample.entitlements */,
@@ -260,7 +260,7 @@
 			files = (
 				A14987572EA202BC00E72C00 /* UIScreen.swift in Sources */,
 				A1E0DB012EA35F3500E344DC /* Secret.swift in Sources */,
-				980A0D6D2B96723C004FB15A /* iOSExampleApp.swift in Sources */,
+				980A0D6D2B96723C004FB15A /* Main.swift in Sources */,
 				A1F7A71C2EE3F92400EC5C52 /* ChatBackgroundSettings.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

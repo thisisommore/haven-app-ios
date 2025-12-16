@@ -10,7 +10,7 @@ import SwiftData
 import SwiftUI
 
 @main
-struct iOS_ExampleApp: App {
+struct Main: App {
     @StateObject var logOutput = LogViewer()
     @StateObject var xxdk = XXDK()
     @StateObject private var sM = SecretManager()
