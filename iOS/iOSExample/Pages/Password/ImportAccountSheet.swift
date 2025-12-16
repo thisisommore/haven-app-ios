@@ -10,7 +10,7 @@ import SwiftUI
 
 struct ImportAccountSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.navigation) var navigation
+    @EnvironmentObject var navigation: AppNavigationPath
     @EnvironmentObject var xxdk: XXDK
     @EnvironmentObject var sm: SecretManager
 
