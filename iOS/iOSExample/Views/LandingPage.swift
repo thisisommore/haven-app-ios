@@ -29,7 +29,8 @@ struct LandingPage<T>: View where T: XXDKP {
                     .onChange(of: xxdk.statusPercentage) { _, newValue in
                         if newValue == 100 && !isLoadingDone {
                             isLoadingDone = true
-                            navigation.path.append(Destination.home)
+                            // Clear path to reset stack for main app view (handled by isSetupComplete)
+                            navigation.path = NavigationPath()
                         }
                     }
                 }.frame(width: 120)
@@ -57,6 +58,13 @@ struct LandingPage<T>: View where T: XXDKP {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.9)) {
                 showProgress = true
             }
+        }
+        .onChange(of: showProgress) { _, newValue in
+             if newValue && xxdk.statusPercentage == 100 && !isLoadingDone {
+                 isLoadingDone = true
+                 // Clear path to reset stack for main app view
+                 navigation.path = NavigationPath()
+             }
         }
 
     }

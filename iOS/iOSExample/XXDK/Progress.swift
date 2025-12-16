@@ -96,7 +96,7 @@ public enum XXDKProgressStatus {
         case .networkFollowerComplete:
             return 7
         case .ready:
-            return 9  // Final step brings us to 100%
+            return -1  // Final step brings us to 100%
         case .readyExistingUser:
             return 9 + XXDKProgressStatus.joiningChannels.increment + XXDKProgressStatus.creatingIdentity.increment + XXDKProgressStatus.downloadingNDF.increment  // Final step brings us to 100%
         case .final:
