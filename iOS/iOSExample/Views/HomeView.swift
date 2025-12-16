@@ -21,7 +21,7 @@ struct HomeView<T: XXDKP>: View {
     @State private var didStartLoad = false
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @EnvironmentObject private var secretManager: SecretManager
-    @Environment(\.navigation) private var navigation
+    @EnvironmentObject private var navigation: AppNavigationPath
     @Environment(\.isSplitView) private var isSplitView
     @EnvironmentObject private var selectedChat: SelectedChat
 

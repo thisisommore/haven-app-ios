@@ -28,7 +28,6 @@ class SelectedChat: ObservableObject {
 }
 
 extension EnvironmentValues {
-    @Entry var navigation: AppNavigationPath = .init()
     @Entry var isSplitView: Bool = false
 }
 

@@ -7,7 +7,7 @@ struct LandingPage<T>: View where T: XXDKP {
     @EnvironmentObject var xxdk: T
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @EnvironmentObject private var sm: SecretManager
-    @Environment(\.navigation) var navigation
+    @EnvironmentObject var navigation: AppNavigationPath
     @State private var isLoadingDone = false
     var body: some View {
         VStack(spacing: 12) {
