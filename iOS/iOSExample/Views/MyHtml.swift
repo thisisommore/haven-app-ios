@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - HTML Element Types
 
 enum HTMLElement {
     case text(String)
@@ -72,7 +71,6 @@ struct ParagraphView: View {
     }
 }
 
-// MARK: - Fast Path for Simple Content
 
 private extension String {
     var isSimpleParagraph: Bool {
@@ -92,7 +90,6 @@ private extension String {
     }
 }
 
-// MARK: - HTML Parser
 
 class HTMLParser {
     static let shared = HTMLParser()
@@ -565,7 +562,6 @@ class HTMLParser {
     }
 }
 
-// MARK: - HTML View
 
 struct HTMLView: View {
     let html: String
@@ -690,7 +686,6 @@ struct HTMLView: View {
     }
 }
 
-// MARK: - Preview
 
 struct HTMLView_Previews: PreviewProvider {
     static var previews: some View {

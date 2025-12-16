@@ -137,7 +137,6 @@ struct CodenameGeneratorView: View {
     }
 }
 
-// MARK: - Header View
 
 struct HeaderView: View {
     // State to control the tooltip popover visibility
@@ -173,7 +172,6 @@ struct HeaderView: View {
     }
 }
 
-// MARK: - Codename Card
 
 struct CodenameCard: View {
     let codename: Codename
@@ -231,7 +229,6 @@ struct CodenameCard: View {
     }
 }
 
-// MARK: - Bottom Actions
 
 struct BottomActionsView: View {
     @Binding var isGenerating: Bool
@@ -283,7 +280,6 @@ struct BottomActionsView: View {
     }
 }
 
-// MARK: - Previews
 
 #Preview("Codename Generator") {
     CodenameGeneratorView()

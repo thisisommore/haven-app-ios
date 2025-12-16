@@ -15,29 +15,24 @@ enum KeychainError: Error {
 }
 
 public class SecretManager: ObservableObject {
-    // MARK: - Published Properties
 
     @Published var isPasswordSet: Bool = false
 
-    // MARK: - Private Properties
 
     private let serviceName = "internalPassword"
     private let setupCompleteKey = "isSetupComplete"
 
-    // MARK: - Setup Complete (single source of truth for app state)
 
     var isSetupComplete: Bool {
         get { UserDefaults.standard.bool(forKey: setupCompleteKey) }
         set { UserDefaults.standard.set(newValue, forKey: setupCompleteKey) }
     }
 
-    // MARK: - Initialization
 
     init() {
         updatePasswordStatus()
     }
 
-    // MARK: - Public Methods
 
     /// Store password in keychain
     func storePassword(_ password: String) throws {
@@ -141,7 +136,6 @@ public class SecretManager: ObservableObject {
         updatePasswordStatus()
     }
 
-    // MARK: - Private Methods
 
     /// Clear all keychain items
     private func clearKeychain() {
@@ -165,7 +159,6 @@ public class SecretManager: ObservableObject {
     }
 }
 
-// MARK: - Usage Example
 
 /*
 

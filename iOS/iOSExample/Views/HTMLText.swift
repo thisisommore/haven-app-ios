@@ -12,7 +12,6 @@ import UIKit
 // Thread-safe synchronous cache
 private let htmlCache = NSCache<NSString, NSAttributedString>()
 
-// MARK: - Attributed helpers
 
 private extension NSAttributedString {
     /// Replace every font run with a system font, preserving bold/italic and (optionally) the original point size.
@@ -116,7 +115,6 @@ private extension NSAttributedString {
     }
 }
 
-// MARK: - Parsing Logic
 
 private enum HTMLParsers {
     static func parse(
@@ -186,7 +184,6 @@ private enum HTMLParsers {
     }
 }
 
-// MARK: - Skeleton Helper
 
 private enum SkeletonHelper {
     static func estimateLineCount(from html: String) -> Int {
@@ -194,7 +191,6 @@ private enum SkeletonHelper {
     }
 }
 
-// MARK: - Skeleton View
 
 @available(iOS 15.0, *)
 private struct SkeletonLine: View {
@@ -248,7 +244,6 @@ private struct SkeletonPlaceholder: View {
     }
 }
 
-// MARK: - View
 
 @available(iOS 15.0, *)
 struct HTMLText: View, Equatable {
@@ -296,7 +291,6 @@ struct HTMLText: View, Equatable {
         _estimatedLines = State(initialValue: lineLimit ?? SkeletonHelper.estimateLineCount(from: html))
     }
 
-    // MARK: - Equatable
 
     static func == (lhs: HTMLText, rhs: HTMLText) -> Bool {
         lhs.html == rhs.html &&
@@ -336,7 +330,6 @@ struct HTMLText: View, Equatable {
         )
     }
 
-    // MARK: - Private
 
     private func loadAttributedString() {
         // Use DispatchQueue to defer state update outside view update cycle
@@ -355,7 +348,6 @@ struct HTMLText: View, Equatable {
     }
 }
 
-// MARK: - Preview
 
 @available(iOS 15.0, *)
 struct HTMLText_Previews: PreviewProvider {

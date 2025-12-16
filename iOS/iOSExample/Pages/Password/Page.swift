@@ -15,11 +15,9 @@ public struct PasswordCreationView: View {
     @EnvironmentObject var swiftDataActor: SwiftDataActor
     @Environment(\.navigation) var navigation
 
-    // MARK: - Focus
 
     private enum Field { case password, confirm }
 
-    // MARK: - Rules
 
     private enum PasswordRule: CaseIterable {
         case length, upper, lower, digit, symbol
@@ -209,7 +207,6 @@ public struct PasswordCreationView: View {
         }
     }
 
-    // MARK: - Actions
 
     private func handleSubmit() {
         attemptedSubmit = true
@@ -241,7 +238,6 @@ public struct PasswordCreationView: View {
         }
     }
 
-    // MARK: - Helpers
 
     private func strengthLabel(for value: Double) -> String {
         switch value {
@@ -252,7 +248,6 @@ public struct PasswordCreationView: View {
     }
 }
 
-// MARK: - Branch Color Palette
 
 private enum BranchColor {
     static let primary = Color.haven
@@ -269,7 +264,6 @@ private enum BranchColor {
     static let light = Color(red: 246 / 255, green: 206 / 255, blue: 136 / 255)
 }
 
-// MARK: - Custom Button Style
 
 private struct BranchButtonStyle: ButtonStyle {
     let isEnabled: Bool
@@ -306,7 +300,6 @@ private struct BranchButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Reusable field with clear affordance
 
 private struct LabeledSecureField: View {
     let title: String
@@ -355,7 +348,6 @@ private extension Color {
     static let separator = Color(UIColor.separator)
 }
 
-// MARK: - Import Account Sheet
 
 private struct ImportAccountSheet: View {
     @Environment(\.dismiss) private var dismiss

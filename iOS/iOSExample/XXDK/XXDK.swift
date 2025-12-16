@@ -1205,7 +1205,6 @@ public class XXDK: XXDKP {
         return ndf!
     }
 
-    // MARK: - Channel URL Utilities
 
     /// Get the privacy level for a given channel URL
     /// - Parameter url: The channel share URL
@@ -1693,7 +1692,6 @@ public class XXDK: XXDKP {
         }
     }
 
-    // MARK: - File Transfer API
 
     // E2e object for file transfer
     private var e2e: BindingsE2e?
@@ -1809,7 +1807,6 @@ public class XXDK: XXDKP {
         return try ft.download(fileInfoJSON: fileInfoJSON, progressCB: progressCB, periodMS: periodMS)
     }
 
-    // MARK: - Channel Nickname API
 
     public func getChannelNickname(channelId: String) throws -> String {
         guard let cm = channelsManager else {
@@ -1834,7 +1831,6 @@ public class XXDK: XXDKP {
         try cm.setNickname(nickname, channelIDBytes: channelIdBytes)
     }
 
-    // MARK: - DM Nickname API
 
     public func getDMNickname() throws -> String {
         guard let dm = DM else {

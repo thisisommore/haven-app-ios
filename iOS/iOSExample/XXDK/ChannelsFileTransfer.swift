@@ -8,13 +8,11 @@
 import Bindings
 import Foundation
 
-// MARK: - Debug Logging
 
 private func ftLog(_ message: String) {
     print("[FT] \(message)")
 }
 
-// MARK: - File Transfer Limits
 
 public enum FileTransferLimits {
     /// Maximum file size: 250,000 bytes (250 KB)
@@ -27,7 +25,6 @@ public enum FileTransferLimits {
     public static let maxPreviewSize: Int = 297
 }
 
-// MARK: - File Part Tracker
 
 /// Wrapper for tracking individual file part status
 public class ChFilePartTracker {
@@ -49,7 +46,6 @@ public class ChFilePartTracker {
     }
 }
 
-// MARK: - Progress Callback Wrappers
 
 /// Internal wrapper to bridge Swift callback to Bindings protocol for uploads
 class FtSentProgressCallbackWrapper: NSObject, BindingsFtSentProgressCallbackProtocol {
@@ -83,7 +79,6 @@ class FtReceivedProgressCallbackWrapper: NSObject, BindingsFtReceivedProgressCal
     }
 }
 
-// MARK: - Channels File Transfer
 
 /// File transfer manager for channels
 public class ChannelsFileTransfer {
@@ -93,7 +88,6 @@ public class ChannelsFileTransfer {
         self.fileTransfer = fileTransfer
     }
 
-    // MARK: - Initialization
 
     /// Creates a file transfer manager for channels
     /// - Parameters:
@@ -129,7 +123,6 @@ public class ChannelsFileTransfer {
         return ChannelsFileTransfer(fileTransfer: ft)
     }
 
-    // MARK: - Limits
 
     /// Maximum file size in bytes (250 KB)
     public static func maxFileSize() -> Int {
@@ -151,7 +144,6 @@ public class ChannelsFileTransfer {
         return FileTransferLimits.maxPreviewSize
     }
 
-    // MARK: - Upload
 
     /// Starts uploading the file to a new ID
     /// - Parameters:
@@ -169,7 +161,6 @@ public class ChannelsFileTransfer {
         return fileID
     }
 
-    // MARK: - Send
 
     /// Sends the file info to a channel. Call this after upload is complete.
     /// - Parameters:
@@ -205,7 +196,6 @@ public class ChannelsFileTransfer {
         )
     }
 
-    // MARK: - Download
 
     /// Downloads a file from a received file message
     /// - Parameters:
@@ -222,7 +212,6 @@ public class ChannelsFileTransfer {
         return fileID
     }
 
-    // MARK: - Recovery Methods
 
     /// Retries a failed upload
     /// - Parameters:
@@ -253,7 +242,6 @@ public class ChannelsFileTransfer {
         try fileTransfer.registerSentProgressCallback(fileIDBytes, progressCB: wrapper, periodMS: periodMS)
     }
 
-    // MARK: - Helper
 
     /// Get the extension builder ID for channel manager
     public func getExtensionBuilderID() -> Int {
@@ -261,7 +249,6 @@ public class ChannelsFileTransfer {
     }
 }
 
-// MARK: - ValidForever Helper
 
 public func validForever() -> Int {
     return Int(Bindings.BindingsValidForeverBindings)

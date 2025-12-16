@@ -7,7 +7,6 @@ import AVFoundation
 import SwiftUI
 import UIKit
 
-// MARK: - QR Scanner Constants
 
 private let kScannerBlurRadius: CGFloat = 10
 private let kScannerDarkAmount: CGFloat = 0.5
@@ -19,7 +18,6 @@ struct QRData: Identifiable {
     let codeset: Int
 }
 
-// MARK: - QR Code Generator
 
 func generateQRCode(from string: String) -> UIImage? {
     let data = string.data(using: .ascii)
@@ -38,7 +36,6 @@ func generateQRCode(from string: String) -> UIImage? {
     return nil
 }
 
-// MARK: - QR Code View
 
 struct QRCodeView: View {
     @Environment(\.dismiss) private var dismiss
@@ -160,7 +157,6 @@ struct QRCodeView: View {
     }
 }
 
-// MARK: - QR Code Scanner
 
 struct QRScannerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -332,7 +328,6 @@ struct QRScannerView: View {
     }
 }
 
-// MARK: - Camera Preview
 
 struct CameraPreviewView: UIViewControllerRepresentable {
     let onCodeFound: (String) -> Void

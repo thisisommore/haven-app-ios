@@ -5,7 +5,6 @@
 
 import SwiftUI
 
-// MARK: - Log Level Detection
 
 enum LogLevel: String, CaseIterable {
     case all = "ALL"
@@ -52,7 +51,6 @@ enum LogLevel: String, CaseIterable {
     }
 }
 
-// MARK: - Styled Log Message
 
 struct StyledLogMessage: Identifiable {
     let id: UUID
@@ -68,7 +66,6 @@ struct StyledLogMessage: Identifiable {
     }
 }
 
-// MARK: - Main Log Viewer UI
 
 struct LogViewerUI: View {
     @EnvironmentObject var logOutput: LogViewer
@@ -124,7 +121,6 @@ struct LogViewerUI: View {
     }
 }
 
-// MARK: - Header Bar
 
 struct LogHeaderBar: View {
     let messageCount: Int
@@ -227,7 +223,6 @@ struct LogHeaderBar: View {
     }
 }
 
-// MARK: - Share Sheet
 
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
@@ -239,7 +234,6 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_: UIActivityViewController, context _: Context) {}
 }
 
-// MARK: - Action Button
 
 struct LogActionButton: View {
     let icon: String
@@ -264,7 +258,6 @@ struct LogActionButton: View {
     }
 }
 
-// MARK: - Filter Bar
 
 struct LogFilterBar: View {
     @Binding var searchText: String
@@ -321,7 +314,6 @@ struct LogFilterBar: View {
     }
 }
 
-// MARK: - Filter Pill
 
 struct LogFilterPill: View {
     let level: LogLevel
@@ -352,7 +344,6 @@ struct LogFilterPill: View {
     }
 }
 
-// MARK: - Log Content
 
 struct LogContentView: View {
     let messages: [StyledLogMessage]
@@ -452,7 +443,6 @@ struct LogContentView: View {
     }
 }
 
-// MARK: - Log Row
 
 struct LogRow: View {
     let message: StyledLogMessage
@@ -509,7 +499,6 @@ struct LogRow: View {
     }
 }
 
-// MARK: - Highlighted Text
 
 struct HighlightedText: View {
     let text: String
@@ -555,7 +544,6 @@ struct HighlightedText: View {
     }
 }
 
-// MARK: - String Extension for finding ranges
 
 extension String {
     func ranges(of substring: String, options: CompareOptions = []) -> [Range<Index>] {
@@ -571,7 +559,6 @@ extension String {
     }
 }
 
-// MARK: - Preview
 
 #Preview("Log Viewer") {
     LogViewerUI()

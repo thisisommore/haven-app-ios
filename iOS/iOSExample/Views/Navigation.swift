@@ -41,7 +41,6 @@ enum Destination: Hashable {
     case logViewer
 }
 
-// MARK: - Navigation Destination Views
 
 extension Destination {
     @MainActor @ViewBuilder

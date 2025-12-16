@@ -59,7 +59,6 @@ struct NicknamePickerView<T: XXDKP>: View {
         }
     }
 
-    // MARK: - Nickname Input
 
     private var nicknameInput: some View {
         VStack(spacing: 16) {
@@ -129,7 +128,6 @@ struct NicknamePickerView<T: XXDKP>: View {
         )
     }
 
-    // MARK: - Info Section
 
     private var infoSection: some View {
         VStack(spacing: 12) {
@@ -186,7 +184,6 @@ struct NicknamePickerView<T: XXDKP>: View {
         )
     }
 
-    // MARK: - Actions
 
     private func loadCurrentNickname() {
         do {

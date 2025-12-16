@@ -10,7 +10,6 @@ import SwiftData
 
 @ModelActor
 public actor SwiftDataActor: ObservableObject {
-    // MARK: - Actor Methods (Async)
 
     private func insert_<T: PersistentModel>(_ m: T) {
         modelContext.insert(m)
@@ -32,7 +31,6 @@ public actor SwiftDataActor: ObservableObject {
         try modelContext.delete(model: type)
     }
 
-    // MARK: - Non-Isolated Blocking Methods
 
     nonisolated func insert<T: PersistentModel>(_ m: T) {
         let semaphore = DispatchSemaphore(value: 0)
@@ -134,7 +132,6 @@ public extension SwiftDataActor {
     }
 }
 
-// MARK: - Usage Examples
 
 /*
 

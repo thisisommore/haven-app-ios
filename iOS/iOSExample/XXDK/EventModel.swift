@@ -134,7 +134,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
     }
 
-    // MARK: - Helpers
 
     private func log(_ message: String) {
         print("[EventModel] \(message)")
@@ -870,7 +869,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
     }
 
-    // MARK: - File Message Handling
 
     private func handleFileMessage(
         channelID: Data?,
@@ -1012,7 +1010,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
     }
 
-    // MARK: - Helper Methods
 
     private func isSenderSelf(chat _: ChatModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
         // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey

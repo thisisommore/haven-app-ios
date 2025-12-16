@@ -8,7 +8,6 @@
 import SwiftData
 import SwiftUI
 
-// MARK: - Floating Date Header
 
 struct FloatingDateHeader: View {
     let date: Date?
@@ -47,7 +46,6 @@ struct FloatingDateHeader: View {
     }
 }
 
-// MARK: - Date Separator Badge
 
 struct DateSeparatorBadge: View {
     let date: Date
@@ -83,7 +81,6 @@ struct DateSeparatorBadge: View {
     }
 }
 
-// MARK: - Visible Message Tracker
 
 struct VisibleMessagePreferenceKey: PreferenceKey {
     static var defaultValue: Date? = nil
@@ -97,7 +94,6 @@ struct VisibleMessagePreferenceKey: PreferenceKey {
     }
 }
 
-// MARK: - Empty Chat State
 
 struct EmptyChatView: View {
     var body: some View {

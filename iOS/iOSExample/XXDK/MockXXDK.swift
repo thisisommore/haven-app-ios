@@ -256,7 +256,6 @@ public class XXDKMock: XXDKP {
         return false
     }
 
-    // MARK: - Channel Nickname API (Mock)
 
     func getChannelNickname(channelId _: String) throws -> String {
         return ""
@@ -266,7 +265,6 @@ public class XXDKMock: XXDKP {
         // Mock: do nothing
     }
 
-    // MARK: - DM Nickname API (Mock)
 
     func getDMNickname() throws -> String {
         return ""
@@ -276,7 +274,6 @@ public class XXDKMock: XXDKP {
         // Mock: do nothing
     }
 
-    // MARK: - File Transfer API (Mock)
 
     func initChannelsFileTransfer(paramsJson _: Data?) throws {
         // Mock: no-op
