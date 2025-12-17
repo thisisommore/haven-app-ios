@@ -13,7 +13,6 @@
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A14987572EA202BC00E72C00 /* UIScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14987562EA202B800E72C00 /* UIScreen.swift */; };
-		A193D12E2EF2653E00BE3590 /* LogViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A193D1092EF2653E00BE3590 /* LogViewer.swift */; };
 		A193D1312EF2653E00BE3590 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A193D10C2EF2653E00BE3590 /* Navigation.swift */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
 		A19FC0D02EF1A2A0007FDD0F /* Root.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CF2EF1A29D007FDD0F /* Root.swift */; };
@@ -34,7 +33,6 @@
 		9854D57B2B98C269009437B8 /* mainnet.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = mainnet.crt; sourceTree = "<group>"; };
 		A14987562EA202B800E72C00 /* UIScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIScreen.swift; sourceTree = "<group>"; };
 		A17324322EA515BF00388AC0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		A193D1092EF2653E00BE3590 /* LogViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewer.swift; sourceTree = "<group>"; };
 		A193D10C2EF2653E00BE3590 /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
 		A19FC0CD2EF1A254007FDD0F /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		A19FC0CF2EF1A29D007FDD0F /* Root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Root.swift; sourceTree = "<group>"; };
@@ -114,7 +112,6 @@
 				A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */,
 				A193D10C2EF2653E00BE3590 /* Navigation.swift */,
 				A14987562EA202B800E72C00 /* UIScreen.swift */,
-				A193D1092EF2653E00BE3590 /* LogViewer.swift */,
 			);
 			path = iOSExample;
 			sourceTree = "<group>";
@@ -277,7 +274,6 @@
 				A1E0DB012EA35F3500E344DC /* Secret.swift in Sources */,
 				A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */,
 				980A0D6D2B96723C004FB15A /* Main.swift in Sources */,
-				A193D12E2EF2653E00BE3590 /* LogViewer.swift in Sources */,
 				A193D1312EF2653E00BE3590 /* Navigation.swift in Sources */,
 				A19FC0D02EF1A2A0007FDD0F /* Root.swift in Sources */,
 				A1F7A71C2EE3F92400EC5C52 /* ChatBackgroundSettings.swift in Sources */,
