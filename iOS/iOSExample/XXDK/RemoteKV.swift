@@ -41,7 +41,7 @@ final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRe
     // Called by the Bindings RemoteKV when the key changes. Adjust the method name/signature
     // if the generated Swift interface differs.
     func callback(_: String?, old: Data?, new: Data?, opType _: Int8) {
-        log.info("RemoteKV new data for \(key), new: \(new!.base64EncodedString()), old: \(old!.base64EncodedString())")
+        log.info("RemoteKV new data for \(self.key), new: \(new!.base64EncodedString()), old: \(old!.base64EncodedString())")
         if new!.base64EncodedString() == "bnVsbA==", old!.base64EncodedString() == "bnVsbA==" {
             return
         }
