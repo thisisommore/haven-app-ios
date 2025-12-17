@@ -1,5 +1,5 @@
 //
-//  ChatView.swift
+//  Chat.page.swift
 //  iOSExample
 //
 //  Created by Om More on 22/09/25.
