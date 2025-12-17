@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -102,7 +102,6 @@
 				A17324322EA515BF00388AC0 /* Info.plist */,
 				A1E0DB002EA35F3200E344DC /* Secret.swift */,
 				A17427A72EA2770D00D39261 /* Views */,
-				A14987562EA202B800E72C00 /* UIScreen.swift */,
 				A10030FB2E83CE8B0096767A /* XXDK */,
 				A10030F62E83AA070096767A /* Model */,
 				9854D57A2B98C238009437B8 /* Resources */,
@@ -113,8 +112,9 @@
 				980A0D742B96723E004FB15A /* iOSExample.entitlements */,
 				980A0D752B96723E004FB15A /* Preview Content */,
 				A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */,
-				A193D1092EF2653E00BE3590 /* LogViewer.swift */,
 				A193D10C2EF2653E00BE3590 /* Navigation.swift */,
+				A14987562EA202B800E72C00 /* UIScreen.swift */,
+				A193D1092EF2653E00BE3590 /* LogViewer.swift */,
 			);
 			path = iOSExample;
 			sourceTree = "<group>";
