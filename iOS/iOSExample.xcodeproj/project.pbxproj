@@ -13,6 +13,8 @@
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A14987572EA202BC00E72C00 /* UIScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14987562EA202B800E72C00 /* UIScreen.swift */; };
+		A193D12E2EF2653E00BE3590 /* LogViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A193D1092EF2653E00BE3590 /* LogViewer.swift */; };
+		A193D1312EF2653E00BE3590 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A193D10C2EF2653E00BE3590 /* Navigation.swift */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
 		A19FC0D02EF1A2A0007FDD0F /* Root.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CF2EF1A29D007FDD0F /* Root.swift */; };
 		A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */; };
@@ -32,6 +34,8 @@
 		9854D57B2B98C269009437B8 /* mainnet.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = mainnet.crt; sourceTree = "<group>"; };
 		A14987562EA202B800E72C00 /* UIScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIScreen.swift; sourceTree = "<group>"; };
 		A17324322EA515BF00388AC0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A193D1092EF2653E00BE3590 /* LogViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewer.swift; sourceTree = "<group>"; };
+		A193D10C2EF2653E00BE3590 /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
 		A19FC0CD2EF1A254007FDD0F /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		A19FC0CF2EF1A29D007FDD0F /* Root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Root.swift; sourceTree = "<group>"; };
 		A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = HavenIcon.icon; sourceTree = "<group>"; };
@@ -43,50 +47,10 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A10030F62E83AA070096767A /* Model */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = Model;
-			sourceTree = "<group>";
-		};
-		A10030FB2E83CE8B0096767A /* XXDK */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = XXDK;
-			sourceTree = "<group>";
-		};
-		A17427A72EA2770D00D39261 /* Views */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
-		A19FC0D12EF1A8C7007FDD0F /* Pages */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = Pages;
-			sourceTree = "<group>";
-		};
+		A10030F62E83AA070096767A /* Model */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Model; sourceTree = "<group>"; };
+		A10030FB2E83CE8B0096767A /* XXDK */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = XXDK; sourceTree = "<group>"; };
+		A17427A72EA2770D00D39261 /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
+		A19FC0D12EF1A8C7007FDD0F /* Pages */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Pages; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,11 +108,13 @@
 				9854D57A2B98C238009437B8 /* Resources */,
 				980A0D6C2B96723C004FB15A /* Main.swift */,
 				980A0D722B96723E004FB15A /* Assets.xcassets */,
+				A1F7A71B2EE3F92400EC5C52 /* ChatBackgroundSettings.swift */,
 				A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */,
 				980A0D742B96723E004FB15A /* iOSExample.entitlements */,
 				980A0D752B96723E004FB15A /* Preview Content */,
 				A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */,
-				A1F7A71B2EE3F92400EC5C52 /* ChatBackgroundSettings.swift */,
+				A193D1092EF2653E00BE3590 /* LogViewer.swift */,
+				A193D10C2EF2653E00BE3590 /* Navigation.swift */,
 			);
 			path = iOSExample;
 			sourceTree = "<group>";
@@ -287,9 +253,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOSExample/Pods-iOSExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOSExample/Pods-iOSExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -307,6 +277,8 @@
 				A1E0DB012EA35F3500E344DC /* Secret.swift in Sources */,
 				A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */,
 				980A0D6D2B96723C004FB15A /* Main.swift in Sources */,
+				A193D12E2EF2653E00BE3590 /* LogViewer.swift in Sources */,
+				A193D1312EF2653E00BE3590 /* Navigation.swift in Sources */,
 				A19FC0D02EF1A2A0007FDD0F /* Root.swift in Sources */,
 				A1F7A71C2EE3F92400EC5C52 /* ChatBackgroundSettings.swift in Sources */,
 			);
