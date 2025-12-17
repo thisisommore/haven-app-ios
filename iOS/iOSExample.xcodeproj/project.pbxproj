@@ -95,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				A19FC0D12EF1A8C7007FDD0F /* Pages */,
+				980A0D6C2B96723C004FB15A /* Main.swift */,
 				A19FC0CF2EF1A29D007FDD0F /* Root.swift */,
 				A19FC0CD2EF1A254007FDD0F /* Provider.swift */,
 				A17324322EA515BF00388AC0 /* Info.plist */,
@@ -103,13 +104,12 @@
 				A10030FB2E83CE8B0096767A /* XXDK */,
 				A10030F62E83AA070096767A /* Model */,
 				9854D57A2B98C238009437B8 /* Resources */,
-				980A0D6C2B96723C004FB15A /* Main.swift */,
 				980A0D722B96723E004FB15A /* Assets.xcassets */,
-				A1F7A71B2EE3F92400EC5C52 /* ChatBackgroundSettings.swift */,
 				A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */,
 				980A0D742B96723E004FB15A /* iOSExample.entitlements */,
 				980A0D752B96723E004FB15A /* Preview Content */,
 				A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */,
+				A1F7A71B2EE3F92400EC5C52 /* ChatBackgroundSettings.swift */,
 				A193D10C2EF2653E00BE3590 /* Navigation.swift */,
 				A14987562EA202B800E72C00 /* UIScreen.swift */,
 			);
