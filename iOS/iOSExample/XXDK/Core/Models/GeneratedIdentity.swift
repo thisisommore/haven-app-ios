@@ -12,4 +12,3 @@ public struct GeneratedIdentity {
     public let codeset: Int
     public let pubkey: String
 }
-

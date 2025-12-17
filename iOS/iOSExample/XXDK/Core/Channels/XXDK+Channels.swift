@@ -6,9 +6,9 @@
 import Bindings
 import Foundation
 
-extension XXDK {
+public extension XXDK {
     /// Join a channel using a URL (public share link)
-    func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
+    internal func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
         var err: NSError?
 
         let prettyPrint = Bindings.BindingsDecodePublicURL(url, &err)
@@ -21,7 +21,7 @@ extension XXDK {
     }
 
     /// Join a channel using pretty print format
-    func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
+    internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
         try await Task.sleep(for: .seconds(20))
         guard let cmix else { throw MyError.runtimeError("no net") }
         guard let storageTagListener else {
@@ -77,7 +77,7 @@ extension XXDK {
     }
 
     /// Create a new channel
-    public func createChannel(
+    func createChannel(
         name: String,
         description: String,
         privacyLevel: PrivacyLevel,
@@ -116,7 +116,7 @@ extension XXDK {
     }
 
     /// Leave a channel
-    public func leaveChannel(channelId: String) throws {
+    func leaveChannel(channelId: String) throws {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -135,7 +135,7 @@ extension XXDK {
     }
 
     /// Get the share URL for a channel
-    public func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
+    func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -151,7 +151,7 @@ extension XXDK {
     }
 
     /// Get the privacy level for a given channel URL
-    public func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel {
+    func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel {
         var err: NSError?
         var typeValue = 0
         Bindings.BindingsGetShareUrlType(url, &typeValue, &err)
@@ -164,7 +164,7 @@ extension XXDK {
     }
 
     /// Get channel data from a channel URL
-    public func getChannelFromURL(url: String) throws -> ChannelJSON {
+    func getChannelFromURL(url: String) throws -> ChannelJSON {
         var err: NSError?
 
         let prettyPrint = Bindings.BindingsDecodePublicURL(url, &err)
@@ -197,7 +197,7 @@ extension XXDK {
     }
 
     /// Decode a private channel URL with password
-    public func decodePrivateURL(url: String, password: String) throws -> String {
+    func decodePrivateURL(url: String, password: String) throws -> String {
         var err: NSError?
         let prettyPrint = Bindings.BindingsDecodePrivateURL(url, password, &err)
 
@@ -209,7 +209,7 @@ extension XXDK {
     }
 
     /// Get channel data from a private channel URL with password
-    public func getPrivateChannelFromURL(url: String, password: String) throws
+    func getPrivateChannelFromURL(url: String, password: String) throws
         -> ChannelJSON
     {
         var err: NSError?
@@ -240,7 +240,7 @@ extension XXDK {
     }
 
     /// Enable direct messages for a channel
-    public func enableDirectMessages(channelId: String) throws {
+    func enableDirectMessages(channelId: String) throws {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -259,7 +259,7 @@ extension XXDK {
     }
 
     /// Disable direct messages for a channel
-    public func disableDirectMessages(channelId: String) throws {
+    func disableDirectMessages(channelId: String) throws {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -278,7 +278,7 @@ extension XXDK {
     }
 
     /// Check if direct messages are enabled for a channel
-    public func areDMsEnabled(channelId: String) throws -> Bool {
+    func areDMsEnabled(channelId: String) throws -> Bool {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -295,7 +295,7 @@ extension XXDK {
     }
 
     /// Check if current user is admin of a channel
-    public func isChannelAdmin(channelId: String) -> Bool {
+    func isChannelAdmin(channelId: String) -> Bool {
         guard let cm = channelsManager else {
             return false
         }
@@ -313,7 +313,7 @@ extension XXDK {
     }
 
     /// Export the admin key for a channel
-    public func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
+    func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
         guard let cm = channelsManager else {
             throw NSError(domain: "XXDK", code: -1, userInfo: [NSLocalizedDescriptionKey: "Channel manager not initialized"])
         }
@@ -325,7 +325,7 @@ extension XXDK {
     }
 
     /// Import an admin key for a channel
-    public func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
+    func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
         guard let cm = channelsManager else {
             throw NSError(domain: "XXDK", code: -1, userInfo: [NSLocalizedDescriptionKey: "Channel manager not initialized"])
         }
@@ -337,7 +337,7 @@ extension XXDK {
     }
 
     /// Get muted users for a channel
-    public func getMutedUsers(channelId: String) throws -> [Data] {
+    func getMutedUsers(channelId: String) throws -> [Data] {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -361,7 +361,7 @@ extension XXDK {
     }
 
     /// Mute or unmute a user in a channel
-    public func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
+    func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -374,7 +374,7 @@ extension XXDK {
     }
 
     /// Check if current user is muted in a channel
-    public func isMuted(channelId: String) -> Bool {
+    func isMuted(channelId: String) -> Bool {
         guard let cm = channelsManager else {
             return false
         }
@@ -391,7 +391,7 @@ extension XXDK {
         }
     }
 
-    public func getChannelNickname(channelId: String) throws -> String {
+    func getChannelNickname(channelId: String) throws -> String {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -404,7 +404,7 @@ extension XXDK {
         return nickname
     }
 
-    public func setChannelNickname(channelId: String, nickname: String) throws {
+    func setChannelNickname(channelId: String, nickname: String) throws {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
@@ -414,4 +414,3 @@ extension XXDK {
         try cm.setNickname(nickname, channelIDBytes: channelIdBytes)
     }
 }
-

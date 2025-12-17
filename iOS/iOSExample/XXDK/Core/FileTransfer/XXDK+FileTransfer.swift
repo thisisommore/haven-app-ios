@@ -6,9 +6,9 @@
 import Bindings
 import Foundation
 
-extension XXDK {
+public extension XXDK {
     /// Initialize channels file transfer
-    public func initChannelsFileTransfer(paramsJson _: Data? = nil) throws {
+    func initChannelsFileTransfer(paramsJson _: Data? = nil) throws {
         print("[FT] initChannelsFileTransfer called")
         guard channelsFileTransfer != nil else {
             print("[FT] ERROR: File transfer not initialized")
@@ -17,7 +17,7 @@ extension XXDK {
     }
 
     /// Upload a file
-    public func uploadFile(
+    func uploadFile(
         fileData: Data,
         retry: Float,
         progressCB: FtSentProgressCallback,
@@ -32,7 +32,7 @@ extension XXDK {
     }
 
     /// Send a file to a channel
-    public func sendFile(
+    func sendFile(
         channelId: String,
         fileLinkJSON: Data,
         fileName: String,
@@ -68,7 +68,7 @@ extension XXDK {
     }
 
     /// Retry a failed file upload
-    public func retryFileUpload(
+    func retryFileUpload(
         fileIDBytes: Data,
         progressCB: FtSentProgressCallback,
         periodMS: Int = 500
@@ -80,7 +80,7 @@ extension XXDK {
     }
 
     /// Close a file send operation
-    public func closeFileSend(fileIDBytes: Data) throws {
+    func closeFileSend(fileIDBytes: Data) throws {
         guard let ft = channelsFileTransfer else {
             throw MyError.runtimeError("File transfer not initialized")
         }
@@ -88,7 +88,7 @@ extension XXDK {
     }
 
     /// Register a progress callback for file upload
-    public func registerFileProgressCallback(
+    func registerFileProgressCallback(
         fileIDBytes: Data,
         progressCB: FtSentProgressCallback,
         periodMS: Int = 500
@@ -100,7 +100,7 @@ extension XXDK {
     }
 
     /// Download a file from a received file message
-    public func downloadFile(
+    func downloadFile(
         fileInfoJSON: Data,
         progressCB: FtReceivedProgressCallback,
         periodMS: Int = 500
@@ -112,7 +112,7 @@ extension XXDK {
         return try ft.download(fileInfoJSON: fileInfoJSON, progressCB: progressCB, periodMS: periodMS)
     }
 
-    func handleFileDownloadNeeded(_ notification: Notification) {
+    internal func handleFileDownloadNeeded(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let fileInfoJSON = userInfo["fileInfoJSON"] as? Data,
               let messageId = userInfo["messageId"] as? String
@@ -133,4 +133,3 @@ extension XXDK {
         }
     }
 }
-

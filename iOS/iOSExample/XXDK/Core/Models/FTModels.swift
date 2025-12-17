@@ -36,4 +36,3 @@ struct FtReceivedProgress: Codable {
     let received: Int
     let total: Int
 }
-
