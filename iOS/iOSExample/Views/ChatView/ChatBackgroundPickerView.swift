@@ -54,7 +54,6 @@ struct ChatBackgroundPickerView: View {
         }
     }
 
-
     private var backgroundPreview: some View {
         VStack(spacing: 12) {
             Text("Preview")
@@ -112,7 +111,6 @@ struct ChatBackgroundPickerView: View {
         }
     }
 
-
     private var typeSelector: some View {
         VStack(spacing: 12) {
             Text("Background Type")
@@ -169,7 +167,6 @@ struct ChatBackgroundPickerView: View {
         .buttonStyle(.plain)
     }
 
-
     private var doodleInfo: some View {
         VStack(spacing: 16) {
             Image("ChatDoodle")
@@ -194,7 +191,6 @@ struct ChatBackgroundPickerView: View {
                 .fill(Color(.systemBackground))
         )
     }
-
 
     private var colorGrid: some View {
         VStack(spacing: 16) {
@@ -276,7 +272,6 @@ struct ChatBackgroundPickerView: View {
         .scaleEffect(isSelected ? 1.05 : 1.0)
     }
 
-
     private var imagePicker: some View {
         VStack(spacing: 16) {
             if let data = settings.customImageData,
@@ -341,7 +336,6 @@ struct ChatBackgroundPickerView: View {
         )
     }
 }
-
 
 struct ChatBackgroundView: View {
     @ObservedObject private var settings = ChatBackgroundSettings.shared

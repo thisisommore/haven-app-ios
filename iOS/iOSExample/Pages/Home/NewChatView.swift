@@ -4,8 +4,8 @@
 //
 //  Created by Om More on 17/12/25.
 //
-import SwiftUI
 import Foundation
+import SwiftUI
 
 struct NewChatView<T: XXDKP>: View {
     @Environment(\.dismiss) var dismiss

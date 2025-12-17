@@ -40,7 +40,6 @@ enum Destination: Hashable {
     case logViewer
 }
 
-
 extension Destination {
     @MainActor @ViewBuilder
     func _destinationView() -> some View {

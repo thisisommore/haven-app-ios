@@ -15,24 +15,19 @@ enum KeychainError: Error {
 }
 
 public class SecretManager: ObservableObject {
-
     @Published var isPasswordSet: Bool = false
-
 
     private let serviceName = "internalPassword"
     private let setupCompleteKey = "isSetupComplete"
-
 
     var isSetupComplete: Bool {
         get { UserDefaults.standard.bool(forKey: setupCompleteKey) }
         set { UserDefaults.standard.set(newValue, forKey: setupCompleteKey) }
     }
 
-
     init() {
         updatePasswordStatus()
     }
-
 
     /// Store password in keychain
     func storePassword(_ password: String) throws {
@@ -136,7 +131,6 @@ public class SecretManager: ObservableObject {
         updatePasswordStatus()
     }
 
-
     /// Clear all keychain items
     private func clearKeychain() {
         let secClasses = [
@@ -158,7 +152,6 @@ public class SecretManager: ObservableObject {
         isPasswordSet = checkPasswordExists()
     }
 }
-
 
 /*
 

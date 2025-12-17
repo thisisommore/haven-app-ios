@@ -1205,7 +1205,6 @@ public class XXDK: XXDKP {
         return ndf!
     }
 
-
     /// Get the privacy level for a given channel URL
     /// - Parameter url: The channel share URL
     /// - Returns: PrivacyLevel indicating if password is required (secret) or not (public)
@@ -1692,7 +1691,6 @@ public class XXDK: XXDKP {
         }
     }
 
-
     // E2e object for file transfer
     private var e2e: BindingsE2e?
 
@@ -1807,7 +1805,6 @@ public class XXDK: XXDKP {
         return try ft.download(fileInfoJSON: fileInfoJSON, progressCB: progressCB, periodMS: periodMS)
     }
 
-
     public func getChannelNickname(channelId: String) throws -> String {
         guard let cm = channelsManager else {
             throw MyError.runtimeError("Channels Manager not initialized")
@@ -1830,7 +1827,6 @@ public class XXDK: XXDKP {
         }
         try cm.setNickname(nickname, channelIDBytes: channelIdBytes)
     }
-
 
     public func getDMNickname() throws -> String {
         guard let dm = DM else {

@@ -12,7 +12,6 @@ import UIKit
 // Thread-safe synchronous cache
 private let htmlCache = NSCache<NSString, NSAttributedString>()
 
-
 private extension NSAttributedString {
     /// Replace every font run with a system font, preserving bold/italic and (optionally) the original point size.
     func withSystemFonts(
@@ -115,7 +114,6 @@ private extension NSAttributedString {
     }
 }
 
-
 private enum HTMLParsers {
     static func parse(
         html: String,
@@ -184,13 +182,11 @@ private enum HTMLParsers {
     }
 }
 
-
 private enum SkeletonHelper {
     static func estimateLineCount(from html: String) -> Int {
         return html.count / 14
     }
 }
-
 
 @available(iOS 15.0, *)
 private struct SkeletonLine: View {
@@ -244,7 +240,6 @@ private struct SkeletonPlaceholder: View {
     }
 }
 
-
 @available(iOS 15.0, *)
 struct HTMLText: View, Equatable {
     private let html: String
@@ -291,7 +286,6 @@ struct HTMLText: View, Equatable {
         _estimatedLines = State(initialValue: lineLimit ?? SkeletonHelper.estimateLineCount(from: html))
     }
 
-
     static func == (lhs: HTMLText, rhs: HTMLText) -> Bool {
         lhs.html == rhs.html &&
             lhs.textColor == rhs.textColor &&
@@ -330,7 +324,6 @@ struct HTMLText: View, Equatable {
         )
     }
 
-
     private func loadAttributedString() {
         // Use DispatchQueue to defer state update outside view update cycle
         DispatchQueue.main.async {
@@ -347,7 +340,6 @@ struct HTMLText: View, Equatable {
         }
     }
 }
-
 
 @available(iOS 15.0, *)
 struct HTMLText_Previews: PreviewProvider {

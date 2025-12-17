@@ -8,11 +8,9 @@
 import Bindings
 import Foundation
 
-
 private func ftLog(_ message: String) {
     print("[FT] \(message)")
 }
-
 
 public enum FileTransferLimits {
     /// Maximum file size: 250,000 bytes (250 KB)
@@ -24,7 +22,6 @@ public enum FileTransferLimits {
     /// Maximum preview size: 297 bytes
     public static let maxPreviewSize: Int = 297
 }
-
 
 /// Wrapper for tracking individual file part status
 public class ChFilePartTracker {
@@ -45,7 +42,6 @@ public class ChFilePartTracker {
         return tracker.getNumParts()
     }
 }
-
 
 /// Internal wrapper to bridge Swift callback to Bindings protocol for uploads
 class FtSentProgressCallbackWrapper: NSObject, BindingsFtSentProgressCallbackProtocol {
@@ -79,7 +75,6 @@ class FtReceivedProgressCallbackWrapper: NSObject, BindingsFtReceivedProgressCal
     }
 }
 
-
 /// File transfer manager for channels
 public class ChannelsFileTransfer {
     private let fileTransfer: Bindings.BindingsChannelsFileTransfer
@@ -87,7 +82,6 @@ public class ChannelsFileTransfer {
     private init(fileTransfer: Bindings.BindingsChannelsFileTransfer) {
         self.fileTransfer = fileTransfer
     }
-
 
     /// Creates a file transfer manager for channels
     /// - Parameters:
@@ -123,7 +117,6 @@ public class ChannelsFileTransfer {
         return ChannelsFileTransfer(fileTransfer: ft)
     }
 
-
     /// Maximum file size in bytes (250 KB)
     public static func maxFileSize() -> Int {
         return FileTransferLimits.maxFileSize
@@ -144,7 +137,6 @@ public class ChannelsFileTransfer {
         return FileTransferLimits.maxPreviewSize
     }
 
-
     /// Starts uploading the file to a new ID
     /// - Parameters:
     ///   - fileData: File contents (max size: MaxFileSize)
@@ -160,7 +152,6 @@ public class ChannelsFileTransfer {
         ftLog("Upload started - fileID: \(fileID.base64EncodedString())")
         return fileID
     }
-
 
     /// Sends the file info to a channel. Call this after upload is complete.
     /// - Parameters:
@@ -196,7 +187,6 @@ public class ChannelsFileTransfer {
         )
     }
 
-
     /// Downloads a file from a received file message
     /// - Parameters:
     ///   - fileInfoJSON: JSON of FileInfo from received message (contains fileID, key, mac, etc.)
@@ -211,7 +201,6 @@ public class ChannelsFileTransfer {
         ftLog("Download started - fileID: \(fileID.base64EncodedString())")
         return fileID
     }
-
 
     /// Retries a failed upload
     /// - Parameters:
@@ -242,13 +231,11 @@ public class ChannelsFileTransfer {
         try fileTransfer.registerSentProgressCallback(fileIDBytes, progressCB: wrapper, periodMS: periodMS)
     }
 
-
     /// Get the extension builder ID for channel manager
     public func getExtensionBuilderID() -> Int {
         return fileTransfer.getExtensionBuilderID()
     }
 }
-
 
 public func validForever() -> Int {
     return Int(Bindings.BindingsValidForeverBindings)

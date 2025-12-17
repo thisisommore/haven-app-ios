@@ -5,7 +5,6 @@
 
 import SwiftUI
 
-
 enum LogLevel: String, CaseIterable {
     case all = "ALL"
     case error = "ERROR"
@@ -51,7 +50,6 @@ enum LogLevel: String, CaseIterable {
     }
 }
 
-
 struct StyledLogMessage: Identifiable {
     let id: UUID
     let text: String
@@ -65,7 +63,6 @@ struct StyledLogMessage: Identifiable {
         timestamp = Date()
     }
 }
-
 
 struct LogViewerUI: View {
     @EnvironmentObject var logOutput: LogViewer
@@ -120,7 +117,6 @@ struct LogViewerUI: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showFilters)
     }
 }
-
 
 struct LogHeaderBar: View {
     let messageCount: Int
@@ -223,7 +219,6 @@ struct LogHeaderBar: View {
     }
 }
 
-
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
 
@@ -233,7 +228,6 @@ struct ShareSheet: UIViewControllerRepresentable {
 
     func updateUIViewController(_: UIActivityViewController, context _: Context) {}
 }
-
 
 struct LogActionButton: View {
     let icon: String
@@ -257,7 +251,6 @@ struct LogActionButton: View {
         .buttonStyle(.plain)
     }
 }
-
 
 struct LogFilterBar: View {
     @Binding var searchText: String
@@ -314,7 +307,6 @@ struct LogFilterBar: View {
     }
 }
 
-
 struct LogFilterPill: View {
     let level: LogLevel
     let isSelected: Bool
@@ -343,7 +335,6 @@ struct LogFilterPill: View {
         .scaleEffect(isSelected ? 1.05 : 1.0)
     }
 }
-
 
 struct LogContentView: View {
     let messages: [StyledLogMessage]
@@ -443,7 +434,6 @@ struct LogContentView: View {
     }
 }
 
-
 struct LogRow: View {
     let message: StyledLogMessage
     let lineNumber: Int
@@ -499,7 +489,6 @@ struct LogRow: View {
     }
 }
 
-
 struct HighlightedText: View {
     let text: String
     let highlight: String
@@ -544,7 +533,6 @@ struct HighlightedText: View {
     }
 }
 
-
 extension String {
     func ranges(of substring: String, options: CompareOptions = []) -> [Range<Index>] {
         var ranges: [Range<Index>] = []
@@ -558,7 +546,6 @@ extension String {
         return ranges
     }
 }
-
 
 #Preview("Log Viewer") {
     LogViewerUI()

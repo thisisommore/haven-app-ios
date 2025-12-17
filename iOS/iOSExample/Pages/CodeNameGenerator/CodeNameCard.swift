@@ -1,12 +1,12 @@
 //
-//  Untitled.swift
+//  CodeNameCard.swift
 //  iOSExample
 //
 //  Created by Om More on 16/12/25.
 //
 
-import SwiftUI
 import Foundation
+import SwiftUI
 
 struct CodenameCard: View {
     let codename: Codename
@@ -63,4 +63,3 @@ struct CodenameCard: View {
         .scaleEffect(isSelected ? 1.02 : 1.0)
     }
 }
-

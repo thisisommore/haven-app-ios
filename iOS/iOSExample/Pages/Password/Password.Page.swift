@@ -10,7 +10,7 @@ public struct PasswordCreationView: View {
     @FocusState private var focusedField: PasswordField?
     @State private var showImportSheet: Bool = false
     @State private var importPassword: String = ""
-    
+
     @EnvironmentObject var sm: SecretManager
     @EnvironmentObject var xxdk: XXDK
     @EnvironmentObject var swiftDataActor: SwiftDataActor
@@ -88,14 +88,12 @@ public struct PasswordCreationView: View {
     }
 }
 
-
 enum BranchColor {
     static let primary = Color.haven
     static let secondary = Color(red: 180 / 255, green: 140 / 255, blue: 60 / 255)
     static let disabled = Color(red: 236 / 255, green: 186 / 255, blue: 96 / 255).opacity(0.5)
     static let light = Color(red: 246 / 255, green: 206 / 255, blue: 136 / 255)
 }
-
 
 #Preview {
     PasswordCreationView()

@@ -8,7 +8,6 @@
 import SwiftData
 import SwiftUI
 
-
 struct FloatingDateHeader: View {
     let date: Date?
     let scrollingToOlder: Bool
@@ -46,7 +45,6 @@ struct FloatingDateHeader: View {
     }
 }
 
-
 struct DateSeparatorBadge: View {
     let date: Date
     let isFirst: Bool
@@ -81,7 +79,6 @@ struct DateSeparatorBadge: View {
     }
 }
 
-
 struct VisibleMessagePreferenceKey: PreferenceKey {
     static var defaultValue: Date? = nil
     static func reduce(value: inout Date?, nextValue: () -> Date?) {
@@ -93,7 +90,6 @@ struct VisibleMessagePreferenceKey: PreferenceKey {
         }
     }
 }
-
 
 struct EmptyChatView: View {
     var body: some View {

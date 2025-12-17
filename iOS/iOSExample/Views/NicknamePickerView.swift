@@ -59,7 +59,6 @@ struct NicknamePickerView<T: XXDKP>: View {
         }
     }
 
-
     private var nicknameInput: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
@@ -128,7 +127,6 @@ struct NicknamePickerView<T: XXDKP>: View {
         )
     }
 
-
     private var infoSection: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
@@ -183,7 +181,6 @@ struct NicknamePickerView<T: XXDKP>: View {
                 .fill(Color(.systemBackground))
         )
     }
-
 
     private func loadCurrentNickname() {
         do {

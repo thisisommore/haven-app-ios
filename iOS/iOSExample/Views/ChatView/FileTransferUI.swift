@@ -8,7 +8,6 @@
 import PhotosUI
 import SwiftUI
 
-
 enum FileTransferState: Equatable {
     case idle
     case selecting
@@ -17,7 +16,6 @@ enum FileTransferState: Equatable {
     case completed(fileName: String)
     case failed(error: String)
 }
-
 
 @MainActor
 class FileTransferManager: ObservableObject, FtSentProgressCallback {
@@ -244,7 +242,6 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
     }
 }
 
-
 struct FileAttachmentButton: View {
     @Binding var showFilePicker: Bool
 
@@ -259,7 +256,6 @@ struct FileAttachmentButton: View {
         }
     }
 }
-
 
 struct UploadProgressOverlay: View {
     let state: FileTransferState
@@ -359,7 +355,6 @@ struct UploadProgressOverlay: View {
     }
 }
 
-
 struct SelectedFilePreview: View {
     let fileName: String
     let fileSize: Int
@@ -402,7 +397,6 @@ struct SelectedFilePreview: View {
         .background(Color(.systemGray6))
     }
 }
-
 
 struct FilePickerSheet: View {
     @Binding var isPresented: Bool

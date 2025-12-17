@@ -1,5 +1,5 @@
 //
-//  LandingPage.swift
+//  Landing.page.swift
 //  iOSExample
 //
 //  Created by Om More on 17/12/25.

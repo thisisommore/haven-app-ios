@@ -338,11 +338,6 @@ struct HomeView<T: XXDKP>: View {
     }
 }
 
-
-
-
-
-
 #Preview {
     @Previewable @StateObject var selectedChat = SelectedChat()
     @Previewable @State var container: ModelContainer = {

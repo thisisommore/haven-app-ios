@@ -39,9 +39,7 @@ enum ChannelEvent: Int64, CustomStringConvertible {
 }
 
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
-
     var modelActor: SwiftDataActor?
-
 
     private let logPrefix = "[ChannelUICallbacks]"
     private func log(_ message: String) {

@@ -6,11 +6,9 @@
 import SwiftUI
 import UIKit
 
-
 extension UIDevice {
     static let shakeNotification = Notification.Name("deviceDidShake")
 }
-
 
 extension UIWindow {
     override open func motionEnded(_ motion: UIEvent.EventSubtype, with _: UIEvent?) {
@@ -19,7 +17,6 @@ extension UIWindow {
         }
     }
 }
-
 
 struct ShakeDetectorModifier: ViewModifier {
     let onShake: () -> Void
@@ -37,7 +34,6 @@ extension View {
         modifier(ShakeDetectorModifier(onShake: action))
     }
 }
-
 
 struct LogViewerShakeModifier: ViewModifier {
     @State private var showLogViewerAlert = false
@@ -63,7 +59,6 @@ struct LogViewerShakeModifier: ViewModifier {
             }
     }
 }
-
 
 struct LogViewerSheet: View {
     var body: some View {

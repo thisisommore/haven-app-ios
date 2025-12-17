@@ -8,10 +8,8 @@
 import Bindings
 import Foundation
 
-
 // This file centralizes JSON models and decode helpers used across the app.
 // Add new payload models and decode helpers here to keep parsing consistent.
-
 
 public enum PrivacyLevel: Int {
     case publicChannel = 0
@@ -174,7 +172,6 @@ public struct MessageUpdateInfoJSON: Decodable {
     }
 }
 
-
 // Mirrors the TypeScript CMixParams shape
 public struct CMixParamsJSON: Codable {
     public var Network: NetworkParams
@@ -280,7 +277,6 @@ public enum Parser {
         return e
     }()
 
-
     public static func decodeIsReadyInfo(from data: Data) throws -> IsReadyInfoJSON {
         try decoder.decode(IsReadyInfoJSON.self, from: data)
     }
@@ -300,7 +296,6 @@ public enum Parser {
     public static func decodeString(from data: Data) throws -> String {
         try decoder.decode(String.self, from: data)
     }
-
 
     public static func encodeIdentity(_ identity: IdentityJSON) throws -> Data {
         try encoder.encode(identity)
@@ -322,7 +317,6 @@ public enum Parser {
         try encoder.encode(entry)
     }
 
-
     public static func decodeCMixParams(from data: Data) throws -> CMixParamsJSON {
         try decoder.decode(CMixParamsJSON.self, from: data)
     }
@@ -338,7 +332,6 @@ public enum Parser {
     public static func decodeMessageUpdateInfo(from data: Data) throws -> MessageUpdateInfoJSON {
         try decoder.decode(MessageUpdateInfoJSON.self, from: data)
     }
-
 
     public static func decodeFtSentProgress(from data: Data) throws -> FtSentProgressJSON {
         try decoder.decode(FtSentProgressJSON.self, from: data)
@@ -356,7 +349,6 @@ public enum Parser {
         try encoder.encode(params)
     }
 }
-
 
 /// File transfer params for InitChannelsFileTransfer
 public struct FileTransferParamsJSON: Codable {

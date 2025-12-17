@@ -155,7 +155,6 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         print("[DMReceiver] updateSentStatus called with uuid: \(uuid), messageID: \(messageID?.count ?? 0) bytes, timestamp: \(timestamp), roundID: \(roundID), status: \(status)")
     }
 
-
     private func persistIncomingIfPossible(message: String, codename: String?, messageId: Data, ctx: SwiftDataActor? = nil, color: Int) {
         let contextToUse = ctx ?? modelActor
         guard let contextToUse else { return }
@@ -251,7 +250,6 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             }
         }
     }
-
 
     private func isSenderSelf(chat _: ChatModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
         // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey

@@ -35,14 +35,14 @@ struct PasswordCreationUI: View {
     @Binding var showImportSheet: Bool
     @Binding var importPassword: String
     @FocusState.Binding var focusedField: PasswordField?
-    
+
     // Computed states passed in
     let canContinue: Bool
     let passwordsMatch: Bool
     let strength: Double
     let strengthColor: Color
     let statusText: String
-    
+
     // Callbacks
     var onSubmit: () -> Void
     var onImportTapped: () -> Void
@@ -163,7 +163,6 @@ struct PasswordCreationUI: View {
     }
 }
 
-
 struct BranchButtonStyle: ButtonStyle {
     let isEnabled: Bool
     var isSecondary: Bool = false
@@ -194,4 +193,3 @@ struct BranchButtonStyle: ButtonStyle {
         colorScheme == .dark ? 0.5 : 1.0
     }
 }
-

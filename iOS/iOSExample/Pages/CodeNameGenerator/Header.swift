@@ -4,8 +4,9 @@
 //
 //  Created by Om More on 16/12/25.
 //
-import SwiftUI
 import Foundation
+import SwiftUI
+
 struct HeaderView: View {
     // State to control the tooltip popover visibility
     @State private var showTooltip = false

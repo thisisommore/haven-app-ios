@@ -5,8 +5,8 @@
 //  Created by Om More on 16/12/25.
 //
 
-import SwiftUI
 import Foundation
+import SwiftUI
 
 struct BottomActionsView: View {
     @Binding var isGenerating: Bool

@@ -10,7 +10,6 @@ import SwiftData
 
 @ModelActor
 public actor SwiftDataActor: ObservableObject {
-
     private func insert_<T: PersistentModel>(_ m: T) {
         modelContext.insert(m)
     }
@@ -30,7 +29,6 @@ public actor SwiftDataActor: ObservableObject {
     private func deleteAll_<T: PersistentModel>(_ type: T.Type) throws {
         try modelContext.delete(model: type)
     }
-
 
     nonisolated func insert<T: PersistentModel>(_ m: T) {
         let semaphore = DispatchSemaphore(value: 0)
@@ -131,7 +129,6 @@ public extension SwiftDataActor {
         self.init(modelContainer: container)
     }
 }
-
 
 /*
 

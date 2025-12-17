@@ -137,10 +137,6 @@ struct CodenameGeneratorView: View {
     }
 }
 
-
-
-
-
 #Preview("Codename Generator") {
     CodenameGeneratorView()
 }
