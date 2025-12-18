@@ -152,39 +152,3 @@ public class SecretManager: ObservableObject {
         isPasswordSet = checkPasswordExists()
     }
 }
-
-/*
-
- // In your SwiftUI View:
- @StateObject private var keychainManager = KeychainManager()
-
- // Store password
- do {
-     try keychainManager.storePassword("mySecurePassword123")
-     print("Password stored successfully")
- } catch {
-     print("Error storing password: \(error)")
- }
-
- // Get password
- do {
-     let password = try keychainManager.getPassword()
-     print("Retrieved password: \(password)")
- } catch {
-     print("Error retrieving password: \(error)")
- }
-
- // Check if password exists (using published property)
- if keychainManager.isPasswordSet {
-     print("Password is set")
- }
-
- // Delete password
- do {
-     try keychainManager.deletePassword()
-     print("Password deleted")
- } catch {
-     print("Error deleting password: \(error)")
- }
-
- */
