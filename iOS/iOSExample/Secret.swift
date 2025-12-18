@@ -20,6 +20,21 @@ public class SecretManager: ObservableObject {
     private let serviceName = "internalPassword"
     private let setupCompleteKey = "isSetupComplete"
 
+    private var baseQuery: [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+        ]
+    }
+
+    private var searchQuery: [String: Any] {
+        var query = baseQuery
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        query[kSecReturnAttributes as String] = true
+        query[kSecReturnData as String] = true
+        return query
+    }
+
     var isSetupComplete: Bool {
         get { UserDefaults.standard.bool(forKey: setupCompleteKey) }
         set { UserDefaults.standard.set(newValue, forKey: setupCompleteKey) }
@@ -35,12 +50,9 @@ public class SecretManager: ObservableObject {
             throw KeychainError.unexpectedPasswordData
         }
 
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: serviceName,
-            kSecValueData as String: passData,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-        ]
+        var query = baseQuery
+        query[kSecValueData as String] = passData
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
 
         // Delete existing item if present
         SecItemDelete(query as CFDictionary)
@@ -56,16 +68,8 @@ public class SecretManager: ObservableObject {
 
     /// Retrieve password from keychain
     func getPassword() throws -> String {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: serviceName,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecReturnAttributes as String: true,
-            kSecReturnData as String: true,
-        ]
-
         var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
 
         guard status != errSecItemNotFound else {
             throw KeychainError.noPassword
@@ -87,28 +91,15 @@ public class SecretManager: ObservableObject {
 
     /// Check if password is set in keychain
     func checkPasswordExists() -> Bool {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: serviceName,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecReturnAttributes as String: true,
-            kSecReturnData as String: true,
-        ]
-
         var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
 
         return status == errSecSuccess
     }
 
     /// Delete password from keychain
     func deletePassword() throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: serviceName,
-        ]
-
-        let status = SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(baseQuery as CFDictionary)
 
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw KeychainError.unhandledError(status: status)
