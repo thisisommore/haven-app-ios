@@ -3,16 +3,30 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
+enum HomeSheet: Identifiable {
+    case newChat
+    case createSpace
+    case exportIdentity
+    case qrScanner
+    case nicknamePicker
+    case qrCode(QRData)
+    
+    var id: String {
+        switch self {
+        case .newChat: return "newChat"
+        case .createSpace: return "createSpace"
+        case .exportIdentity: return "exportIdentity"
+        case .qrScanner: return "qrScanner"
+        case .nicknamePicker: return "nicknamePicker"
+        case .qrCode: return "qrCode"
+        }
+    }
+}
+
 struct HomeView<T: XXDKP>: View {
-    @State private var showingSheet = false
-    @State private var showingCreateSpace = false
-    @State private var showExportIdentitySheet = false
-    @State private var showQRCodeSheet = false
-    @State private var showQRScanner = false
+    @State private var activeSheet: HomeSheet?
     @State private var toastMessage: String?
-    @State private var qrData: QRData?
     @State private var showLogoutAlert = false
-    @State private var showNicknamePicker = false
     @State private var currentNickname: String?
     @State private var searchText: String = ""
     @Query private var chats: [ChatModel]
@@ -80,10 +94,10 @@ struct HomeView<T: XXDKP>: View {
                             codename: xxdk.codename,
                             nickname: currentNickname,
                             onNicknameTap: {
-                                showNicknamePicker = true
+                                activeSheet = .nicknamePicker
                             },
                             onExport: {
-                                showExportIdentitySheet = true
+                                activeSheet = .exportIdentity
                             },
                             onShareQR: {
                                 guard let dm = xxdk.DM,
@@ -93,7 +107,7 @@ struct HomeView<T: XXDKP>: View {
                                     print("DM not ready: DM=\(xxdk.DM != nil), token=\(xxdk.DM?.getToken() ?? -1), pubKey=\(xxdk.DM?.getPublicKey()?.count ?? 0) bytes")
                                     return
                                 }
-                                qrData = QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset)
+                                activeSheet = .qrCode(QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset))
                             },
                             onLogout: {
                                 showLogoutAlert = true
@@ -113,57 +127,55 @@ struct HomeView<T: XXDKP>: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     PlusMenuButton(
-                        onJoinChannel: { showingSheet = true },
-                        onCreateSpace: { showingCreateSpace = true },
-                        onScanQR: { showQRScanner = true }
+                        onJoinChannel: { activeSheet = .newChat },
+                        onCreateSpace: { activeSheet = .createSpace },
+                        onScanQR: { activeSheet = .qrScanner }
                     )
                     .frame(width: 28, height: 28)
                 }.hiddenSharedBackground()
             }
 
         return listHeader
-            .sheet(isPresented: $showingSheet) {
-                NewChatView<T>()
-            }
-            .sheet(isPresented: $showingCreateSpace) {
-                CreateSpaceView<T>()
-            }
-            .sheet(item: $qrData) { data in
-                QRCodeView(dmToken: data.token, pubKey: data.pubKey, codeset: data.codeset)
-            }
-            .fullScreenCover(isPresented: $showQRScanner) {
-                QRScannerView(
-                    onCodeScanned: { code in
-                        handleAddUser(code: code)
-                    },
-                    onShowMyQR: {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            guard let dm = xxdk.DM, let pubKey = dm.getPublicKey() else { return }
-                            qrData = QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset)
-                        }
-                    }
-                )
-            }
-            .sheet(isPresented: $showNicknamePicker) {
-                NicknamePickerView<T>(codename: xxdk.codename ?? "")
-                    .onDisappear {
-                        loadCurrentNickname()
-                    }
-            }
-            .sheet(isPresented: $showExportIdentitySheet) {
-                ExportIdentitySheet(
-                    xxdk: xxdk,
-                    onSuccess: { message in
-                        withAnimation(.spring(response: 0.3)) {
-                            toastMessage = message
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation {
-                                toastMessage = nil
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .newChat:
+                    NewChatView<T>()
+                case .createSpace:
+                    CreateSpaceView<T>()
+                case .qrCode(let data):
+                    QRCodeView(dmToken: data.token, pubKey: data.pubKey, codeset: data.codeset)
+                case .qrScanner:
+                    QRScannerView(
+                        onCodeScanned: { code in
+                            handleAddUser(code: code)
+                        },
+                        onShowMyQR: {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                guard let dm = xxdk.DM, let pubKey = dm.getPublicKey() else { return }
+                                activeSheet = .qrCode(QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset))
                             }
                         }
-                    }
-                )
+                    )
+                case .nicknamePicker:
+                    NicknamePickerView<T>(codename: xxdk.codename ?? "")
+                        .onDisappear {
+                            loadCurrentNickname()
+                        }
+                case .exportIdentity:
+                    ExportIdentitySheet(
+                        xxdk: xxdk,
+                        onSuccess: { message in
+                            withAnimation(.spring(response: 0.3)) {
+                                toastMessage = message
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                withAnimation {
+                                    toastMessage = nil
+                                }
+                            }
+                        }
+                    )
+                }
             }
             .alert("Logout", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
