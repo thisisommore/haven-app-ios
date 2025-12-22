@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 @MainActor
-public struct PasswordCreationView: View {
+struct PasswordCreationView<T: XXDKP>: View {
     @State private var password: String = ""
     @State private var confirm: String = ""
     @State private var attemptedSubmit: Bool = false
@@ -12,7 +12,7 @@ public struct PasswordCreationView: View {
     @State private var importPassword: String = ""
 
     @EnvironmentObject var sm: SecretManager
-    @EnvironmentObject var xxdk: XXDK
+    @EnvironmentObject var xxdk: T
     @EnvironmentObject var swiftDataActor: SwiftDataActor
     @EnvironmentObject var navigation: AppNavigationPath
 
@@ -38,8 +38,8 @@ public struct PasswordCreationView: View {
         }
     }
 
-    public var body: some View {
-        PasswordCreationUI(
+    var body: some View {
+        PasswordCreationUI<T>(
             password: $password,
             confirm: $confirm,
             attemptedSubmit: $attemptedSubmit,
@@ -96,9 +96,9 @@ enum BranchColor {
 }
 
 #Preview {
-    PasswordCreationView()
+    PasswordCreationView<XXDKMock>()
         .environmentObject(SecretManager())
-        .environmentObject(XXDK())
+        .environmentObject(XXDKMock())
         .environmentObject(
             SwiftDataActor(
                 previewModelContainer: try! ModelContainer(

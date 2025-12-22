@@ -26,7 +26,7 @@ enum PasswordRule: CaseIterable {
     }
 }
 
-struct PasswordCreationUI: View {
+struct PasswordCreationUI<T: XXDKP>: View {
     // States
     @Binding var password: String
     @Binding var confirm: String
@@ -150,7 +150,7 @@ struct PasswordCreationUI: View {
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .privacySensitive()
         .sheet(isPresented: $showImportSheet) {
-            ImportAccountSheet(importPassword: $importPassword)
+            ImportAccountSheet<T>(importPassword: $importPassword)
         }
     }
 

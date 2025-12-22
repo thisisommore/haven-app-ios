@@ -42,6 +42,7 @@ protocol XXDKP: ObservableObject, AnyObject {
     func load(privateIdentity _privateIdentity: Data?) async
     func setUpCmix() async
     func startNetworkFollower() async
+    func downloadNdf() async
     func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity]
     func sendDM(msg: String, toPubKey: Data, partnerToken: Int32)
     func sendDM(msg: String, channelId: String)
@@ -64,6 +65,7 @@ protocol XXDKP: ObservableObject, AnyObject {
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
     func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws
     func exportIdentity(password: String) throws -> Data
+    func importIdentity(password: String, data: Data) throws -> Data
     func deleteMessage(channelId: String, messageId: String)
     func logout() async
     func getMutedUsers(channelId: String) throws -> [Data]

@@ -51,10 +51,10 @@ extension Destination {
             HomeView<XXDK>(width: UIScreen.w(100))
 
         case .codenameGenerator:
-            CodenameGeneratorView()
+            CodenameGeneratorView<XXDK>()
 
         case .password:
-            PasswordCreationView()
+            PasswordCreationView<XXDK>()
 
         case let .chat(chatId, chatTitle):
             ChatView<XXDK>(width: UIScreen.w(100), chatId: chatId, chatTitle: chatTitle)

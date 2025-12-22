@@ -8,10 +8,10 @@
 import Foundation
 import SwiftUI
 
-struct ImportAccountSheet: View {
+struct ImportAccountSheet<T: XXDKP>: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var navigation: AppNavigationPath
-    @EnvironmentObject var xxdk: XXDK
+    @EnvironmentObject var xxdk: T
     @EnvironmentObject var sm: SecretManager
 
     @Binding var importPassword: String

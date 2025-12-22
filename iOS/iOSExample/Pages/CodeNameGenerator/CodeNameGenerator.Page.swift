@@ -6,12 +6,12 @@ struct Codename: Identifiable {
     let color: Color
 }
 
-struct CodenameGeneratorView: View {
+struct CodenameGeneratorView<T: XXDKP>: View {
     @State private var codenames: [Codename] = []
     @State private var selectedCodename: Codename?
     @State private var isGenerating = false
     @State private var generatedIdentities: [GeneratedIdentity] = []
-    @EnvironmentObject private var xxdk: XXDK
+    @EnvironmentObject private var xxdk: T
     @EnvironmentObject private var navigation: AppNavigationPath
     private let adjectives1 = [
         "elector", "brother", "recruit", "clever", "swift", "mystic", "cosmic",
@@ -138,12 +138,14 @@ struct CodenameGeneratorView: View {
 }
 
 #Preview("Codename Generator") {
-    CodenameGeneratorView()
+    CodenameGeneratorView<XXDKMock>()
+        .mock()
 }
 
 #Preview("Dark Mode") {
-    CodenameGeneratorView()
+    CodenameGeneratorView<XXDKMock>()
         .preferredColorScheme(.dark)
+        .mock()
 }
 
 #Preview("Individual Cards") {
