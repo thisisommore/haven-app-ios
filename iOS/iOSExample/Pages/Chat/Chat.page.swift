@@ -500,16 +500,19 @@ struct ChatView<T: XXDKP>: View {
 
 #Preview {
     // In-memory SwiftData container for previewing ChatView with mock data
+    let (chat, mockMsgs, reactions) = createChatPreviewData()
+
     let container = try! ModelContainer(
         for: ChatModel.self,
         ChatMessageModel.self,
         MessageReactionModel.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    ); {
-        mockMsgs.forEach { container.mainContext.insert($0) }
+    )
 
-        reactions.forEach { container.mainContext.insert($0) }
-    }()
+    container.mainContext.insert(chat)
+    mockMsgs.forEach { container.mainContext.insert($0) }
+    reactions.forEach { container.mainContext.insert($0) }
+
     // Return the view wired up with our model container and mock XXDK service
 
     return NavigationStack {
