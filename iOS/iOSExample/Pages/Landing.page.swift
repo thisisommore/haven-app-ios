@@ -75,16 +75,5 @@ struct LandingPage<T>: View where T: XXDKP {
 }
 
 #Preview {
-    let container = try! ModelContainer(
-        for: ChatModel.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-    for name in ["Tom", "Mayur", "Shashank"] {
-        container.mainContext.insert(
-            ChatModel(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
-        )
-    }
-    let actor = SwiftDataActor(previewModelContainer: container)
-    return LandingPage<XXDKMock>().environmentObject(XXDKMock())
-        .environmentObject(actor).modelContainer(container)
+    return LandingPage<XXDKMock>().mock()
 }

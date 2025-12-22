@@ -351,38 +351,8 @@ struct HomeView<T: XXDKP>: View {
 }
 
 #Preview {
-    @Previewable @StateObject var selectedChat = SelectedChat()
-    @Previewable @State var container: ModelContainer = {
-        let c = try! ModelContainer(
-            for: ChatModel.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        for name in ["<self>", "Tom", "Mayur", "Shashank"] {
-            let chat = ChatModel(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
-            c.mainContext.insert(chat)
-            c.mainContext.insert(
-                ChatMessageModel(
-                    message: "<p>Hello world</p>",
-                    isIncoming: true,
-                    chat: chat,
-                    sender: nil,
-                    id: name,
-                    internalId: InternalIdGenerator.shared.next(),
-                    replyTo: nil,
-                    timestamp: 1
-                )
-            )
-        }
-        try! c.mainContext.save()
-        return c
-    }()
-
     NavigationStack {
         HomeView<XXDKMock>(width: UIScreen.w(100))
-            .modelContainer(container)
-            .environmentObject(XXDKMock())
-            .environmentObject(selectedChat)
-            .navigationTitle("Chat")
-            .navigationBarBackButtonHidden()
+            .mock()
     }
 }
