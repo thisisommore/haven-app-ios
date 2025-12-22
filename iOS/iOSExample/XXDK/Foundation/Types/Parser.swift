@@ -88,31 +88,34 @@ public struct ChannelJSON: Decodable, Identifiable {
 }
 
 // Channel send report returned by sendText/sendMessage
-// Keys map to: messageID ([]byte -> base64 in JSON), ephId (int64)
+// Keys map to: messageID ([]byte -> base64 in JSON), ephId (int64), roundsList
 public struct ChannelSendReportJSON: Decodable {
     public let messageID: Data?
     public let ephId: Int64?
+    public let roundsList: [Int64]?
 
     private enum CodingKeys: String, CodingKey {
         case messageID
         case ephId
+        case roundsList
     }
 
-    public init(messageID: Data?, ephId: Int64?) {
+    public init(messageID: Data?, ephId: Int64?, roundsList: [Int64]? = nil) {
         self.messageID = messageID
         self.ephId = ephId
+        self.roundsList = roundsList
     }
 }
 
 // Model message for getMessage responses
-// Minimal struct containing only required fields: PubKey and MessageID
+// Minimal struct containing only required fields: pubKey and messageID
 public struct ModelMessageJSON: Codable {
     public let pubKey: Data
     public let messageID: Data
 
     private enum CodingKeys: String, CodingKey {
-        case pubKey = "PubKey"
-        case messageID = "MessageID"
+        case pubKey = "pubKey"
+        case messageID = "messageID"
     }
 
     public init(pubKey: Data, messageID: Data) {
@@ -159,6 +162,12 @@ public struct MessageUpdateInfoJSON: Decodable {
     public let messageIDSet: Bool
     public let timestamp: Int64?
     public let timestampSet: Bool
+    public let roundID: Int64?
+    public let roundIDSet: Bool
+    public let pinned: Bool?
+    public let pinnedSet: Bool
+    public let hidden: Bool?
+    public let hiddenSet: Bool
     public let status: Int?
     public let statusSet: Bool
 
@@ -167,6 +176,12 @@ public struct MessageUpdateInfoJSON: Decodable {
         case messageIDSet = "MessageIDSet"
         case timestamp = "Timestamp"
         case timestampSet = "TimestampSet"
+        case roundID = "RoundID"
+        case roundIDSet = "RoundIDSet"
+        case pinned = "Pinned"
+        case pinnedSet = "PinnedSet"
+        case hidden = "Hidden"
+        case hiddenSet = "HiddenSet"
         case status = "Status"
         case statusSet = "StatusSet"
     }
@@ -241,7 +256,7 @@ public struct CMixCoreParams: Codable {
     public var RetryDelay: Int
     public var SendTimeout: Int
     public var DebugTag: String
-    public var BlacklistedNodes: [String: Bool]
+    public var BlacklistedNodes: [String: Bool]?
     public var Critical: Bool
 
     public init(
@@ -250,7 +265,7 @@ public struct CMixCoreParams: Codable {
         RetryDelay: Int,
         SendTimeout: Int,
         DebugTag: String,
-        BlacklistedNodes: [String: Bool],
+        BlacklistedNodes: [String: Bool]? = nil,
         Critical: Bool
     ) {
         self.RoundTries = RoundTries
