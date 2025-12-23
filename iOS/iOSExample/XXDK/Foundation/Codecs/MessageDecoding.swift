@@ -64,18 +64,3 @@ func decodeMessage(_ b64: String) -> String? {
 
     return nil
 }
-
-/// Debug helper to print out decoding attempts for an example payload.
-func decodeAny(b64: String = "eJyzKbBLz03PtdEvsAMAFoYDrA==") {
-    guard let data = Data(base64Encoded: b64) else {
-        return
-    }
-
-    if let utf8String = String(data: data, encoding: .utf8) {}
-
-    if data.count > 0, data[0] == 0x78 {
-        if let decompressed = decompressZlib(data) {
-            if let utf8String = String(data: decompressed, encoding: .utf8) {}
-        } else {}
-    }
-}
