@@ -255,103 +255,46 @@ struct MessageBubble<T: XXDKP>: View {
     }
 }
 
-// #Preview {
-//    ScrollView {
-//        VStack(spacing: 16) {
-//            // Incoming bubble with sender
-//            MessageBubble(
-//                text: "<p>Hey! How's it going? 👋</p>",
-//                isIncoming: true,
-//                sender: Sender(
-//                    id: "1",
-//                    pubkey: Data(),
-//                    codename: "Mayur",
-//                    dmToken: 123,
-//                    color: 0xcef8c5
-//                ),
-//                timestamp: "6:04pm",
-//                selectedEmoji: .constant(.none),
-//                shouldTriggerReply: .constant(false),
-//                onDM: { name, token, pubkey, color in
-//                    print("DM to \(name)")
-//                },
-//
-//            )
-//
-//            // Outgoing bubble
-//            MessageBubble(
-//                text: "I'm doing great, thanks for asking!",
-//                isIncoming: false,
-//                sender: nil,
-//                timestamp: "6:04pm",
-//                selectedEmoji: .constant(.none),
-//                shouldTriggerReply: .constant(false)
-//            )
-//
-//            // Incoming with link
-//            MessageBubble(
-//                text: """
-//                    <p>Hey <a href="https://www.example.com" rel="noopener noreferrer" target="_blank">Check this out!</a></p>
-//                    """,
-//                isIncoming: true,
-//                sender: Sender(
-//                    id: "2",
-//                    pubkey: Data(),
-//                    codename: "Alex",
-//                    dmToken: 456,
-//                    color: 0x2196F3
-//                ),
-//                timestamp: "6:04pm",
-//                selectedEmoji: .constant(.none),
-//                shouldTriggerReply: .constant(false)
-//            )
-//
-//            // Long message incoming
-//            MessageBubble(
-//                text:
-//                    "This is a longer message to demonstrate how the bubble handles multiple lines of text. It should wrap properly and maintain the correct styling throughout the entire message.",
-//                isIncoming: true,
-//                sender: Sender(
-//                    id: "3",
-//                    pubkey: Data(),
-//                    codename: "Sarah",
-//                    dmToken: 0,
-//                    color: 0xFF9800
-//                ),
-//                timestamp: "6:04pm",
-//                selectedEmoji: .constant(.none),
-//                shouldTriggerReply: .constant(false)
-//            )
-//
-//            // Long message outgoing
-//            MessageBubble(
-//                text:
-//                    "Absolutely! I completely agree with what you're saying. The implementation looks solid and should work well for our use case.",
-//                isIncoming: false,
-//                sender: nil,
-//                timestamp: "6:04pm",
-//                selectedEmoji: .constant(.none),
-//                shouldTriggerReply: .constant(false)
-//            )
-//
-//            // Short incoming without DM token
-//            MessageBubble(
-//                text: """
-//                <strong>Max Pro</strong></p><p><em>ultra</em></p><p><s>stk</s></p><p><a href="https://x.com/nikitabier/status/1481118406749220868" rel="noopener noreferrer" target="_blank">https://x.com/nikitabier/status/1481118406749220868</a></p><ol><li data-list="ordered"><span class="ql-ui" contenteditable="false"></span>max</li><li data-list="ordered"><span class="ql-ui" contenteditable="false"></span>pro</li></ol><p><br></p><ol><li data-list="true"><span class="ql-ui" contenteditable="false"></span>tetetwer</li><li data-list="true"><span class="ql-ui" contenteditable="false"></span><br></li></ol><blockquote>do it hehe</blockquote><p><br></p><p><code>print "hehe"</code></p><p><br></p><p>print nada
-//                """,
-//                isIncoming: true,
-//                sender: Sender(
-//                    id: "4",
-//                    pubkey: Data(),
-//                    codename: "Guest",
-//                    dmToken: 0,
-//                    color: 0x9E9E9E
-//                ),
-//                timestamp: "6:04pm",
-//                selectedEmoji: .constant(.none),
-//                shouldTriggerReply: .constant(false)
-//            )
-//        }
-//        .padding()
-//    }
-// }
+#Preview {
+    let mockSender = MessageSenderModel(
+        id: "mock-sender-1",
+        pubkey: Data(),
+        codename: "PreviewUser",
+        dmToken: 123,
+        color: 0x0B421F
+    )
+
+    ScrollView {
+        VStack(spacing: 16) {
+            MessageBubble<XXDKMock>(
+                text: "Hello, this is a preview message!",
+                isIncoming: true,
+                sender: mockSender,
+                timestamp: "10:00 AM",
+                selectedEmoji: .constant(.none),
+                shouldTriggerReply: .constant(false)
+            )
+            
+            MessageBubble<XXDKMock>(
+                text: "And this is a reply from me.",
+                isIncoming: false,
+                sender: nil,
+                timestamp: "10:05 AM",
+                selectedEmoji: .constant(.none),
+                shouldTriggerReply: .constant(false)
+            )
+            
+            MessageBubble<XXDKMock>(
+                text: "Another message from preview user.",
+                isIncoming: true,
+                sender: mockSender,
+                isFirstInGroup: false,
+                timestamp: "10:06 AM",
+                selectedEmoji: .constant(.none),
+                shouldTriggerReply: .constant(false)
+            )
+        }
+        .padding()
+    }
+    .mock()
+}
