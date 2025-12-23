@@ -85,6 +85,58 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         return data
     }
 
+    // MARK: - Helper Methods
+
+    /// Parse identity from pubKey and codeset, returning codename and color
+    private func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
+        var err: NSError?
+        guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err) else {
+            throw err ?? NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to construct identity"])
+        }
+        let identity = try Parser.decodeIdentity(from: identityData)
+        var colorStr = identity.color
+        if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
+            colorStr.removeFirst(2)
+        }
+        return (identity.codename, Int(colorStr, radix: 16) ?? 0)
+    }
+
+    /// Fetch or create a sender, updating dmToken and nickname if exists
+    private func upsertSender(
+        pubKey: Data,
+        codename: String,
+        nickname: String?,
+        dmToken: Int32,
+        color: Int
+    ) throws -> MessageSenderModel {
+        guard let actor = modelActor else {
+            throw NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "modelActor not available"])
+        }
+        let senderId = pubKey.base64EncodedString()
+        let descriptor = FetchDescriptor<MessageSenderModel>(predicate: #Predicate { $0.id == senderId })
+
+        if let existing = try actor.fetch(descriptor).first {
+            existing.dmToken = dmToken
+            if let nickname = nickname, !nickname.isEmpty {
+                existing.nickname = nickname
+            }
+            try actor.save()
+            return existing
+        }
+
+        let sender = MessageSenderModel(
+            id: senderId,
+            pubkey: pubKey,
+            codename: codename,
+            nickname: nickname,
+            dmToken: dmToken,
+            color: color
+        )
+        actor.insert(sender)
+        try actor.save()
+        return sender
+    }
+
     func update(
         fromMessageID _: Data?,
         messageUpdateInfoJSON _: Data?,
@@ -168,36 +220,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             // Create or update Sender object if we have codename and pubkey
             var sender: MessageSenderModel? = nil
             if let codename = senderCodename, let pubKey = senderPubKey {
-                let senderId = pubKey.base64EncodedString()
-
-                // Check if sender already exists and update dmToken
-                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
-                    predicate: #Predicate { $0.id == senderId }
+                sender = try upsertSender(
+                    pubKey: pubKey,
+                    codename: codename,
+                    nickname: nickname,
+                    dmToken: dmToken ?? 0,
+                    color: color
                 )
-                if let existingSender = try? actor.fetch(
-                    senderDescriptor
-                ).first {
-                    // Update existing sender's dmToken and nickname
-                    existingSender.dmToken = dmToken ?? 0
-                    if let nickname = nickname, !nickname.isEmpty {
-                        existingSender.nickname = nickname
-                    }
-                    sender = existingSender
-                    try modelActor?.save()
-
-                } else {
-                    // Create new sender
-                    sender = MessageSenderModel(
-                        id: senderId,
-                        pubkey: pubKey,
-                        codename: codename,
-                        nickname: nickname,
-                        dmToken: dmToken ?? 0,
-                        color: color
-                    )
-                    actor.insert(sender!)
-                    try modelActor?.save()
-                }
             }
 
             let msg: ChatMessageModel
@@ -272,31 +301,20 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
         }
 
-        var err: NSError?
-        let identityData = Bindings.BindingsConstructIdentity(
-            pubKey,
-            codeset,
-            &err
-        )
         do {
-            let identity = try Parser.decodeIdentity(from: identityData!)
+            let (codename, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
-            let nick = identity.codename
-            var _color: String = identity.color
-            if _color.hasPrefix("0x") || _color.hasPrefix("0X") {
-                _color.removeFirst(2)
-            }
             if let decodedText = decodeMessage(messageTextB64) {
-                // Persist into SwiftData chat if available
                 return persistIncomingMessageIfPossible(
                     channelId: channelIdB64,
                     channelName: "Channel \(String(channelIdB64.prefix(8)))",
                     text: decodedText,
-                    senderCodename: nick,
+                    senderCodename: codename,
                     senderPubKey: pubKey,
                     messageIdB64: messageIdB64,
                     timestamp: timestamp,
-                    dmToken: dmToken, color: Int(_color, radix: 16)!,
+                    dmToken: dmToken,
+                    color: color,
                     nickname: nickname
                 )
             }
@@ -325,25 +343,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         let reactionText = reaction ?? ""
         let targetMessageIdB64 = reactionTo?.base64EncodedString()
 
-        // Get codename using same approach as EventModelBuilder
-        var err: NSError?
-        let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err)
-        let color: Int
-        let codename: String
-        do {
-            let identity = try Parser.decodeIdentity(from: identityData!)
-            codename = identity.codename
-            var _color: String = identity.color
-            if _color.hasPrefix("0x") || _color.hasPrefix("0X") {
-                _color.removeFirst(2)
-            }
-            color = Int(_color, radix: 16)!
-        } catch {
-            fatalError("\(error)")
-        }
-
-        // Validate inputs
-
         guard let targetId = targetMessageIdB64, !targetId.isEmpty else {
             fatalError("no target id")
         }
@@ -356,34 +355,17 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 fatalError("no modelActor")
             }
 
-            // Create or update Sender object if we have codename and pubkey
+            let (codename, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
+
             var sender: MessageSenderModel? = nil
             if let pubKey = pubKey {
-                let senderId = pubKey.base64EncodedString()
-
-                // Check if sender already exists and update dmToken
-                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
-                    predicate: #Predicate { $0.id == senderId }
+                sender = try upsertSender(
+                    pubKey: pubKey,
+                    codename: codename,
+                    nickname: nickname,
+                    dmToken: dmToken,
+                    color: color
                 )
-
-                if let existingSender = try? actor.fetch(senderDescriptor).first {
-                    // Update existing sender's dmToken and nickname
-                    existingSender.dmToken = dmToken
-                    if let nickname = nickname, !nickname.isEmpty {
-                        existingSender.nickname = nickname
-                    }
-                    sender = existingSender
-
-                } else {
-                    // Create new sender
-                    sender = MessageSenderModel(
-                        id: senderId,
-                        pubkey: pubKey,
-                        codename: codename,
-                        nickname: nickname,
-                        dmToken: dmToken, color: color
-                    )
-                }
             }
 
             let internalId = InternalIdGenerator.shared.next()
@@ -445,22 +427,10 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         let messageIdB64 = messageID?.base64EncodedString()
         let replyTextB64 = text ?? ""
 
-        var err: NSError?
-        let identityData = Bindings.BindingsConstructIdentity(
-            pubKey,
-            codeset,
-            &err
-        )
         let nick: String
         let color: Int
         do {
-            let identity = try Parser.decodeIdentity(from: identityData!)
-            nick = identity.codename
-            var _color: String = identity.color
-            if _color.hasPrefix("0x") || _color.hasPrefix("0X") {
-                _color.removeFirst(2)
-            }
-            color = Int(_color, radix: 16)!
+            (nick, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
         } catch {
             fatalError("\(error)")
         }
@@ -763,23 +733,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
         do {
             let fileInfo = try Parser.decodeFileInfo(from: textData)
-
-            // Get sender identity
-            var err: NSError?
-            let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err)
-            guard let identityData = identityData else {
-                return 0
-            }
-
-            let identity = try Parser.decodeIdentity(from: identityData)
+            let (codename, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
             let messageIdB64 = messageID?.base64EncodedString() ?? ""
-
-            var colorStr = identity.color
-            if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
-                colorStr.removeFirst(2)
-            }
-            let color = Int(colorStr, radix: 16) ?? 0
 
             // Get or create chat
             let chat = try fetchOrCreateChannelChat(
@@ -790,25 +746,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             // Get or create sender
             var sender: MessageSenderModel? = nil
             if let pubKey = pubKey {
-                let senderId = pubKey.base64EncodedString()
-                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
-                    predicate: #Predicate { $0.id == senderId }
+                sender = try upsertSender(
+                    pubKey: pubKey,
+                    codename: codename,
+                    nickname: nil,
+                    dmToken: dmToken,
+                    color: color
                 )
-                if let existingSender = try? actor.fetch(senderDescriptor).first {
-                    existingSender.dmToken = dmToken
-                    // Note: handleFileMessage doesn't receive nickname parameter
-                    sender = existingSender
-                } else {
-                    sender = MessageSenderModel(
-                        id: senderId,
-                        pubkey: pubKey,
-                        codename: identity.codename,
-                        nickname: nil,
-                        dmToken: dmToken,
-                        color: color
-                    )
-                    actor.insert(sender!)
-                }
             }
 
             // Create file message
