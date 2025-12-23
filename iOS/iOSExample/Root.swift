@@ -24,7 +24,7 @@ struct Root: View {
             if secretManager.isSetupComplete {
                 NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
                     NavigationStack(path: $navigation.path) {
-                        HomeView<XXDK>(width: UIScreen.w(100))
+                        HomeView<XXDK>()
                             .navigationDestination(for: Destination.self) {
                                 destination in
                                 destination.destinationView()
@@ -33,7 +33,6 @@ struct Root: View {
                 } detail: {
                     if let chatId = selectedChat.chatId {
                         ChatView<XXDK>(
-                            width: UIScreen.w(100),
                             chatId: chatId,
                             chatTitle: selectedChat.chatTitle
                         )

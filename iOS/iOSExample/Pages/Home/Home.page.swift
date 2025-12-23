@@ -39,7 +39,6 @@ struct HomeView<T: XXDKP>: View {
     @Environment(\.isSplitView) private var isSplitView
     @EnvironmentObject private var selectedChat: SelectedChat
 
-    var width: CGFloat
     @State private var showTooltip = false
 
     private var filteredChats: [ChatModel] {
@@ -352,7 +351,7 @@ struct HomeView<T: XXDKP>: View {
 
 #Preview {
     NavigationStack {
-        HomeView<XXDKMock>(width: UIScreen.w(100))
+        HomeView<XXDKMock>()
             .mock()
     }
 }

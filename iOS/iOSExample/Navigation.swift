@@ -48,7 +48,7 @@ extension Destination {
             LandingPage<XXDK>()
 
         case .home:
-            HomeView<XXDK>(width: UIScreen.w(100))
+            HomeView<XXDK>()
 
         case .codenameGenerator:
             CodenameGeneratorView<XXDK>()
@@ -57,7 +57,7 @@ extension Destination {
             PasswordCreationView<XXDK>()
 
         case let .chat(chatId, chatTitle):
-            ChatView<XXDK>(width: UIScreen.w(100), chatId: chatId, chatTitle: chatTitle)
+            ChatView<XXDK>(chatId: chatId, chatTitle: chatTitle)
 
         case .logViewer:
             LogViewerUI()

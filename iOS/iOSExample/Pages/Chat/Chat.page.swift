@@ -108,7 +108,6 @@ struct EmptyChatView: View {
 }
 
 struct ChatView<T: XXDKP>: View {
-    let width: CGFloat
     let chatId: String
     let chatTitle: String
 
@@ -173,8 +172,7 @@ struct ChatView<T: XXDKP>: View {
         }
     }
 
-    init(width: CGFloat, chatId: String, chatTitle: String) {
-        self.width = width
+    init(chatId: String, chatTitle: String) {
         self.chatId = chatId
         self.chatTitle = chatTitle
         _chatResults = Query(
@@ -466,7 +464,6 @@ struct ChatView<T: XXDKP>: View {
         }
         .navigationDestination(item: $navigateToDMChat) { dmChat in
             ChatView<XXDK>(
-                width: width,
                 chatId: dmChat.id,
                 chatTitle: dmChat.name
             )
@@ -501,7 +498,6 @@ struct ChatView<T: XXDKP>: View {
 #Preview {
     NavigationStack {
         ChatView<XXDKMock>(
-            width: UIScreen.w(100),
             chatId: previewChatId,
             chatTitle: "Mayur"
         )
