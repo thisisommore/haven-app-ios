@@ -65,6 +65,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
 
     @EnvironmentObject var xxdk: T
     @EnvironmentObject var swiftDataActor: SwiftDataActor
+    @EnvironmentObject var selectedChat: SelectedChat
 
     @State private var isLoading = false
     @State private var isJoining = false
@@ -74,6 +75,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
     @State private var prettyPrint: String?
     @State private var errorMessage: String?
     @State private var isAlreadyJoined = false
+    @State private var existingChatId: String?
 
     var body: some View {
         InviteLinkPreviewContainer(isIncoming: isIncoming, timestamp: timestamp) {
@@ -86,10 +88,11 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
             InviteLinkButton(
                 isLoading: isLoading,
                 isCompleted: isAlreadyJoined,
-                completedText: "Joined",
+                completedText: "Open Chat",
                 actionText: "Join Channel",
                 errorMessage: errorMessage,
-                action: loadChannel
+                action: loadChannel,
+                completedAction: openChat
             )
 
             if let error = errorMessage {
@@ -162,15 +165,26 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
             if let channel = try? xxdk.getChannelFromURL(url: link.url),
                let channelId = channel.channelId
             {
-                isAlreadyJoined = allChats.contains { $0.id == channelId }
-                return
+                if let existingChat = allChats.first(where: { $0.id == channelId }) {
+                    isAlreadyJoined = true
+                    existingChatId = existingChat.id
+                    return
+                }
             }
 
             // Fallback: match by name (for secret channels or if URL parsing fails)
-            isAlreadyJoined = allChats.contains { $0.name == link.name }
+            if let existingChat = allChats.first(where: { $0.name == link.name }) {
+                isAlreadyJoined = true
+                existingChatId = existingChat.id
+            }
         } catch {
             // Ignore errors - if we can't check, assume not joined
         }
+    }
+
+    private func openChat() {
+        guard let chatId = existingChatId else { return }
+        selectedChat.select(id: chatId, title: link.name)
     }
 
     private func joinChannel(enableDM: Bool) async {

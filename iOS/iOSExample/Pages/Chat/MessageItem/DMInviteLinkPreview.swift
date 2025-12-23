@@ -80,6 +80,7 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var isAlreadyAdded = false
+    @State private var isSelfChat = false
     @State private var userName: String = "Unknown User"
     @State private var userColor: Int = 0xE97451
 
@@ -94,10 +95,11 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
             InviteLinkButton(
                 isLoading: isLoading,
                 isCompleted: isAlreadyAdded,
-                completedText: "Already Added",
+                completedText: "Open Chat",
                 actionText: "Add User",
                 errorMessage: errorMessage,
-                action: addUser
+                action: addUser,
+                completedAction: isSelfChat ? nil : openChat
             )
 
             if let error = errorMessage {
@@ -140,10 +142,19 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
         do {
             let descriptor = FetchDescriptor<ChatModel>()
             let allChats = try swiftDataActor.fetch(descriptor)
-            isAlreadyAdded = allChats.contains { $0.id == chatId }
+            if let existingChat = allChats.first(where: { $0.id == chatId }) {
+                isAlreadyAdded = true
+                isSelfChat = existingChat.name == "<self>"
+            }
         } catch {
             // Ignore errors
         }
+    }
+
+    private func openChat() {
+        guard !isSelfChat else { return }
+        let chatId = link.pubKey.base64EncodedString()
+        selectedChat.select(id: chatId, title: userName)
     }
 
     private func addUser() {

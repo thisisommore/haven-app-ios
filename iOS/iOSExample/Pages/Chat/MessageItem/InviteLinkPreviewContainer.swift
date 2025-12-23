@@ -75,9 +75,10 @@ struct InviteLinkButton: View {
     let actionText: String
     let errorMessage: String?
     let action: () -> Void
+    var completedAction: (() -> Void)?
 
     var body: some View {
-        Button(action: action) {
+        Button(action: isCompleted ? (completedAction ?? {}) : action) {
             HStack(spacing: 6) {
                 if isLoading {
                     ProgressView()
@@ -86,13 +87,13 @@ struct InviteLinkButton: View {
                 Text(isCompleted ? completedText : (isLoading ? "Loading..." : actionText))
                     .font(.subheadline.weight(.semibold))
             }
-            .foregroundStyle(isCompleted ? Color.secondary : Color.haven)
+            .foregroundStyle(isCompleted ? Color.haven : Color.haven)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(isCompleted ? Color.secondary.opacity(0.15) : Color.haven.opacity(0.15))
+            .background(isCompleted ? Color.haven.opacity(0.1) : Color.haven.opacity(0.15))
             .cornerRadius(8)
         }
-        .disabled(isLoading || isCompleted)
+        .disabled(isLoading || (isCompleted && completedAction == nil))
     }
 }
 
