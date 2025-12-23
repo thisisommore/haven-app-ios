@@ -91,7 +91,7 @@ public class ChannelsFileTransfer {
         }()
 
         guard let ft = BindingsInitChannelsFileTransfer(e2eID, params, &err) else {
-            throw err ?? NSError(domain: "ChannelsFileTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to initialize file transfer"])
+            throw err ?? FileTransferError.initializationFailed
         }
 
         if let error = err {

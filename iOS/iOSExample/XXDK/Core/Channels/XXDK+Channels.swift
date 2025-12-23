@@ -175,14 +175,7 @@ public extension XXDK {
                 &err
             )
         else {
-            throw err
-                ?? NSError(
-                    domain: "XXDK",
-                    code: -2,
-                    userInfo: [
-                        NSLocalizedDescriptionKey: "GetChannelJSON returned nil",
-                    ]
-                )
+            throw err ?? XXDKError.channelJsonNil
         }
 
         if let error = err {
@@ -218,14 +211,7 @@ public extension XXDK {
                 &err
             )
         else {
-            throw err
-                ?? NSError(
-                    domain: "XXDK",
-                    code: -2,
-                    userInfo: [
-                        NSLocalizedDescriptionKey: "GetChannelJSON returned nil",
-                    ]
-                )
+            throw err ?? XXDKError.channelJsonNil
         }
 
         if let error = err {
@@ -307,7 +293,7 @@ public extension XXDK {
     /// Export the admin key for a channel
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
         guard let cm = channelsManager else {
-            throw NSError(domain: "XXDK", code: -1, userInfo: [NSLocalizedDescriptionKey: "Channel manager not initialized"])
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
@@ -319,7 +305,7 @@ public extension XXDK {
     /// Import an admin key for a channel
     func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
         guard let cm = channelsManager else {
-            throw NSError(domain: "XXDK", code: -1, userInfo: [NSLocalizedDescriptionKey: "Channel manager not initialized"])
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
@@ -379,7 +365,7 @@ public extension XXDK {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
         guard let channelIdBytes = Data(base64Encoded: channelId) else {
-            throw NSError(domain: "XXDK", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid channel ID"])
+            throw XXDKError.invalidChannelId
         }
         var err: NSError?
         let nickname = cm.getNickname(channelIdBytes, error: &err)
@@ -392,7 +378,7 @@ public extension XXDK {
             throw MyError.runtimeError("Channels Manager not initialized")
         }
         guard let channelIdBytes = Data(base64Encoded: channelId) else {
-            throw NSError(domain: "XXDK", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid channel ID"])
+            throw XXDKError.invalidChannelId
         }
         try cm.setNickname(nickname, channelIDBytes: channelIdBytes)
     }

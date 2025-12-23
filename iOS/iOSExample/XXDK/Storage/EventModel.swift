@@ -91,7 +91,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     private func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
         var err: NSError?
         guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err) else {
-            throw err ?? NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to construct identity"])
+            throw err ?? EventModelError.identityConstructionFailed
         }
         let identity = try Parser.decodeIdentity(from: identityData)
         var colorStr = identity.color
@@ -110,7 +110,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         color: Int
     ) throws -> MessageSenderModel {
         guard let actor = modelActor else {
-            throw NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "modelActor not available"])
+            throw EventModelError.modelActorNotAvailable
         }
         let senderId = pubKey.base64EncodedString()
         let descriptor = FetchDescriptor<MessageSenderModel>(predicate: #Predicate { $0.id == senderId })
@@ -180,7 +180,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         channelName: String
     ) throws -> ChatModel {
         guard let actor = modelActor else {
-            throw NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "modelActor not available"])
+            throw EventModelError.modelActorNotAvailable
         }
         let descriptor = FetchDescriptor<ChatModel>(
             predicate: #Predicate { $0.id == channelId }
@@ -495,17 +495,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
     func getMessage(_ messageID: Data?) throws -> Data {
         guard let messageID = messageID else {
-            throw NSError(
-                domain: "EventModel",
-                code: 404,
-                userInfo: [NSLocalizedDescriptionKey: BindingsGetNoMessageErr()]
-            )
+            throw EventModelError.messageNotFound
         }
 
         let messageIdB64 = messageID.base64EncodedString()
 
         guard let actor = modelActor else {
-            throw NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "modelActor not available"])
+            throw EventModelError.modelActorNotAvailable
         }
 
         // Check ChatMessage
@@ -534,11 +530,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             return try Parser.encodeModelMessage(modelMsg)
         }
         // Not found
-        throw NSError(
-            domain: "EventModel",
-            code: 404,
-            userInfo: [NSLocalizedDescriptionKey: BindingsGetNoMessageErr()]
-        )
+        throw EventModelError.messageNotFound
     }
 
     func deleteMessage(_ messageID: Data?) throws {
@@ -602,11 +594,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     func getFile(_: Data?) throws -> Data {
         // TODO: Look up file in storage by fileID and return its data
         // For now, return the standard "no message" error that Go code recognizes
-        throw NSError(
-            domain: "EventModel",
-            code: 404,
-            userInfo: [NSLocalizedDescriptionKey: BindingsGetNoMessageErr()]
-        )
+        throw EventModelError.messageNotFound
     }
 
     func receiveFile(
