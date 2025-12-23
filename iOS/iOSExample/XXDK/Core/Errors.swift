@@ -32,7 +32,7 @@ enum XXDKError: LocalizedError {
         case .identityConstructionFailed: return "Failed to construct identity"
         case .importReturnedNil: return "Import returned nil"
         case .networkNotReady: return "Network not ready"
-        case .custom(let msg): return msg
+        case let .custom(msg): return msg
         }
     }
 }
@@ -66,4 +66,3 @@ enum FileTransferError: LocalizedError {
         }
     }
 }
-

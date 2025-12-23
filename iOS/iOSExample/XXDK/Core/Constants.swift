@@ -25,4 +25,3 @@ enum MyError: Error {
 }
 
 // MARK: - Modern Swift Error Types
-
