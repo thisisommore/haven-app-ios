@@ -209,5 +209,5 @@ struct NicknamePickerView<T: XXDKP>: View {
 
 #Preview {
     NicknamePickerView<XXDKMock>(codename: "juniorFunkyAntiquity")
-        .environmentObject(XXDKMock())
+        .mock()
 }

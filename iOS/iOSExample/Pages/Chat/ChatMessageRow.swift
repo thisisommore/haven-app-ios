@@ -7,7 +7,7 @@
 import SwiftData
 import SwiftUI
 
-struct ChatMessageRow: View {
+struct ChatMessageRow<T: XXDKP>: View {
     let result: ChatMessageModel
     let isAdmin: Bool
     let isFirstInGroup: Bool
@@ -63,7 +63,7 @@ struct ChatMessageRow: View {
                 alignment: result.isIncoming ? .leading : .trailing,
                 spacing: 0
             ) {
-                MessageItem(
+                MessageItem<T>(
                     text: result.message,
                     isIncoming: result.isIncoming,
                     repliedTo: repliedTo.first?.message,

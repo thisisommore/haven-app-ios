@@ -98,14 +98,6 @@ enum BranchColor {
 #Preview {
     PasswordCreationView<XXDKMock>()
         .environmentObject(SecretManager())
-        .environmentObject(XXDKMock())
-        .environmentObject(
-            SwiftDataActor(
-                previewModelContainer: try! ModelContainer(
-                    for: Schema([]),
-                    configurations: []
-                )
-            )
-        )
         .environmentObject(AppNavigationPath())
+        .mock()
 }

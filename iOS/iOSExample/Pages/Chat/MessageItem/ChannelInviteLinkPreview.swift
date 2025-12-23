@@ -58,12 +58,12 @@ struct ParsedChannelLink {
     }
 }
 
-struct ChannelInviteLinkPreview: View {
+struct ChannelInviteLinkPreview<T: XXDKP>: View {
     let link: ParsedChannelLink
     let isIncoming: Bool
     let timestamp: String
 
-    @EnvironmentObject var xxdk: XXDK
+    @EnvironmentObject var xxdk: T
     @EnvironmentObject var swiftDataActor: SwiftDataActor
 
     @State private var isLoading = false
@@ -252,7 +252,7 @@ struct ChannelInviteLinkPreview: View {
 
 #Preview {
     VStack(spacing: 16) {
-        ChannelInviteLinkPreview(
+        ChannelInviteLinkPreview<XXDKMock>(
             link: ParsedChannelLink(
                 url: "http://haven.xx.network/join?...",
                 name: "xxGeneralChat",
@@ -264,4 +264,5 @@ struct ChannelInviteLinkPreview: View {
         )
     }
     .padding()
+    .mock()
 }

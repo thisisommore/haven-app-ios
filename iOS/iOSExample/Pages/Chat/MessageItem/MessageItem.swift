@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct MessageItem: View {
+struct MessageItem<T: XXDKP>: View {
     let text: String
     let isIncoming: Bool
     let repliedTo: String?
@@ -89,7 +89,7 @@ struct MessageItem: View {
                             isHighlighted: isHighlighted
                         )
                     } else {
-                        MessageBubble(
+                        MessageBubble<T>(
                             text: text,
                             isIncoming: isIncoming,
                             sender: sender,
@@ -142,7 +142,7 @@ struct MessageItem: View {
     ScrollView {
         VStack(spacing: 2) {
             // Incoming message with reply
-            MessageItem(
+            MessageItem<XXDKMock>(
                 text: "<p>Yup here you go</p>",
                 isIncoming: true,
                 repliedTo:
@@ -165,7 +165,7 @@ struct MessageItem: View {
             )
 
             // Incoming message with link
-            MessageItem(
+            MessageItem<XXDKMock>(
                 text: """
                 <a href="https://www.example.com" rel="noopener noreferrer" target="_blank">
                 Check out this link!
@@ -183,7 +183,7 @@ struct MessageItem: View {
             )
 
             // Outgoing message with reply
-            MessageItem(
+            MessageItem<XXDKMock>(
                 text: "Thanks for sharing!",
                 isIncoming: false,
                 repliedTo: """
@@ -198,7 +198,7 @@ struct MessageItem: View {
             )
 
             // Simple incoming message
-            MessageItem(
+            MessageItem<XXDKMock>(
                 text: "Hello there 👋",
                 isIncoming: true,
                 repliedTo: nil,
@@ -212,7 +212,7 @@ struct MessageItem: View {
             )
 
             // Simple outgoing message
-            MessageItem(
+            MessageItem<XXDKMock>(
                 text: "Hi! How are you doing?",
                 isIncoming: false,
                 repliedTo: nil,
@@ -220,7 +220,7 @@ struct MessageItem: View {
             )
 
             // Long incoming message
-            MessageItem(
+            MessageItem<XXDKMock>(
                 text:
                 "This is a much longer message to test how the bubble handles multiple lines of text. It should wrap nicely and maintain proper styling throughout.",
                 isIncoming: true,
@@ -236,4 +236,5 @@ struct MessageItem: View {
         }
         .padding()
     }
+    .mock()
 }

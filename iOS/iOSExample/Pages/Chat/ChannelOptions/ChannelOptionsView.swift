@@ -340,7 +340,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 )
             }
             .sheet(isPresented: $showBackgroundPicker) {
-                ChatBackgroundPickerView()
+                ChatBackgroundPickerView<T>()
             }
             .overlay {
                 if let message = toastMessage {
@@ -402,23 +402,25 @@ struct ChannelOptionsView<T: XXDKP>: View {
 }
 
 #Preview {
-    let container = try! ModelContainer(
-        for: ChatModel.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
+    ChannelOptionsPreviewWrapper()
+        .mock()
+}
 
-    let mockChat = ChatModel(
-        channelId: "mock-channel-123",
-        name: "General Discussion",
-        description: "A channel for general team discussions and announcements"
-    )
-    container.mainContext.insert(mockChat)
-
-    return ChannelOptionsView<XXDKMock>(chat: mockChat) {
-        print("Leave channel tapped")
+private struct ChannelOptionsPreviewWrapper: View {
+    @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
+    
+    var body: some View {
+        if let chat = chats.first {
+            ChannelOptionsView<XXDKMock>(chat: chat) {
+                print("Leave channel tapped")
+            }
+            .task {
+                chat.channelDescription = "A channel for general team discussions and announcements"
+            }
+        } else {
+            ProgressView()
+        }
     }
-    .modelContainer(container)
-    .environmentObject(XXDKMock())
 }
 
 

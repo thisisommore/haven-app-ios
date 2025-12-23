@@ -116,5 +116,5 @@ struct CreateSpaceView<T: XXDKP>: View {
 
 #Preview {
     CreateSpaceView<XXDKMock>()
-        .environmentObject(XXDKMock())
+        .mock()
 }

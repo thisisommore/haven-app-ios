@@ -10,7 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// The main message bubble containing text and context menu
-struct MessageBubble: View {
+struct MessageBubble<T: XXDKP>: View {
     let text: String
     let isIncoming: Bool
     let sender: MessageSenderModel?
@@ -160,7 +160,7 @@ struct MessageBubble: View {
             .background(isIncoming ? Color.messageBubble : Color.haven)
 
             // White section with channel preview (includes timestamp)
-            ChannelInviteLinkPreview(
+            ChannelInviteLinkPreview<T>(
                 link: link,
                 isIncoming: isIncoming,
                 timestamp: showTimestamp ? timestamp : ""

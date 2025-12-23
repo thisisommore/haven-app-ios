@@ -133,7 +133,7 @@ struct ChatView<T: XXDKP>: View {
                                     return currentTime != nextTime
                                 }()
 
-                                ChatMessageRow(
+                                ChatMessageRow<T>(
                                     result: result,
                                     isAdmin: isAdmin,
                                     isFirstInGroup: isFirstInGroup,
@@ -257,7 +257,7 @@ struct ChatView<T: XXDKP>: View {
                 .padding()
                 .background(.ultraThinMaterial)
             } else {
-                MessageForm<XXDK>(
+                MessageForm<T>(
                     chat: chat,
                     replyTo: replyingTo,
                     onCancelReply: {
@@ -365,7 +365,7 @@ struct ChatView<T: XXDKP>: View {
             }
         }
         .navigationDestination(item: $navigateToDMChat) { dmChat in
-            ChatView<XXDK>(
+            ChatView<T>(
                 chatId: dmChat.id,
                 chatTitle: dmChat.name
             )

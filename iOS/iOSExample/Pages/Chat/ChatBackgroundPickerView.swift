@@ -6,7 +6,7 @@
 import PhotosUI
 import SwiftUI
 
-struct ChatBackgroundPickerView: View {
+struct ChatBackgroundPickerView<T: XXDKP>: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var settings = ChatBackgroundSettings.shared
     @State private var selectedPhoto: PhotosPickerItem?
@@ -73,7 +73,7 @@ struct ChatBackgroundPickerView: View {
 
                 VStack(spacing: 12) {
                     HStack {
-                        MessageBubble(
+                        MessageBubble<T>(
                             text: "<p>Love this background 👋</p>",
                             isIncoming: true,
                             sender: MessageSenderModel(
@@ -93,7 +93,7 @@ struct ChatBackgroundPickerView: View {
 
                     HStack {
                         Spacer()
-                        MessageBubble(
+                        MessageBubble<T>(
                             text: "<p>Yep, looks clean.</p>",
                             isIncoming: false,
                             sender: nil,
@@ -371,5 +371,6 @@ struct ChatBackgroundView: View {
 }
 
 #Preview {
-    ChatBackgroundPickerView()
+    ChatBackgroundPickerView<XXDKMock>()
+        .mock()
 }

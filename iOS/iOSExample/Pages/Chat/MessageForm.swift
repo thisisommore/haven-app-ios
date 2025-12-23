@@ -227,73 +227,35 @@ struct MessageForm<T: XXDKP>: View {
 }
 
 #Preview {
-    // In-memory SwiftData container for previewing MessageForm
-    let container = try! ModelContainer(
-        for: ChatModel.self,
-        ChatMessageModel.self,
-        MessageReactionModel.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-
-    // Create a simple preview chat
-    let previewChat = ChatModel(channelId: "previewChannelId", name: "Preview Chat")
-    container.mainContext.insert(previewChat)
-    return ZStack {
-        Color(.appBackground).edgesIgnoringSafeArea(.all)
-        VStack {
-            Spacer()
-            MessageForm<XXDKMock>(
-                chat: previewChat,
-                replyTo: nil,
-                onCancelReply: {}
-            )
-            .modelContainer(container)
-            .environmentObject(XXDKMock())
-        }
-    }
+    MessageFormPreviewWrapper()
+        .mock()
 }
 
 #Preview("Reply Mode") {
-    // In-memory SwiftData container for previewing MessageForm with reply
-    let container = try! ModelContainer(
-        for: ChatModel.self,
-        ChatMessageModel.self,
-        MessageReactionModel.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
+    MessageFormPreviewWrapper(replyMode: true)
+        .mock()
+}
 
-    // Create a simple preview chat
-    let previewChat = ChatModel(channelId: "previewChannelId", name: "Preview Chat")
-    container.mainContext.insert(previewChat)
-
-    // Create a message to reply to
-    let messageToReplyTo = ChatMessageModel(
-        message:
-        "<p>Hey! Can you check out this <a href=\"https://example.com\">link</a>? It has some really interesting information about the project we discussed yesterday.</p>",
-        isIncoming: true,
-        chat: previewChat,
-        sender: MessageSenderModel(
-            id: "alice-id",
-            pubkey: Data(),
-            codename: "Alice",
-            dmToken: 0,
-            color: greenColorInt
-        ),
-        id: "msg-123",
-        internalId: InternalIdGenerator.shared.next()
-    )
-    container.mainContext.insert(messageToReplyTo)
-
-    return VStack {
-        Spacer()
-        MessageForm<XXDKMock>(
-            chat: previewChat,
-            replyTo: messageToReplyTo,
-            onCancelReply: {
-                print("Cancel reply tapped")
+private struct MessageFormPreviewWrapper: View {
+    @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
+    @Query private var messages: [ChatMessageModel]
+    var replyMode: Bool = false
+    
+    var body: some View {
+        ZStack {
+            Color.appBackground.edgesIgnoringSafeArea(.all)
+            if let chat = chats.first {
+                VStack {
+                    Spacer()
+                    MessageForm<XXDKMock>(
+                        chat: chat,
+                        replyTo: replyMode ? messages.first : nil,
+                        onCancelReply: {
+                            print("Cancel reply tapped")
+                        }
+                    )
+                }
             }
-        )
-        .modelContainer(container)
-        .environmentObject(XXDKMock())
-    }.background(.appBackground)
+        }
+    }
 }
