@@ -44,20 +44,14 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                 let progress = try Parser.decodeFtSentProgress(from: payload)
                 let progressPercent = progress.total > 0 ? Double(progress.received) / Double(progress.total) : 0
 
-                print("[FT] Progress: \(progress.sent)/\(progress.total) sent, \(progress.received) received, completed: \(progress.completed)")
-
                 if progress.completed {
                     // Upload complete
-                    print("[FT] Upload complete!")
                     self.uploadCompleted = true
                     self.state = .uploading(progress: 1.0, fileName: self.selectedFileName ?? "File")
 
                     // Check if we already received the file link
                     if let fileLink = self.pendingFileLink {
-                        print("[FT] Using pending file link...")
                         self.sendFileToChannel(fileLink: fileLink)
-                    } else {
-                        print("[FT] Waiting for file link notification...")
                     }
                 } else {
                     self.state = .uploading(progress: progressPercent, fileName: self.selectedFileName ?? "File")
@@ -85,14 +79,12 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
     }
 
     func uploadAndSend<T: XXDKP>(xxdk: T, channelId: String) {
-        print("[FT] uploadAndSend called for channel: \(channelId)")
         guard let fileData = selectedFileData else {
             print("[FT] ERROR: No file selected")
             state = .failed(error: "No file selected")
             return
         }
 
-        print("[FT] File size: \(fileData.count) bytes, name: \(selectedFileName ?? "unknown")")
         state = .uploading(progress: 0, fileName: selectedFileName ?? "File")
 
         // Store references for when file link arrives
@@ -111,12 +103,9 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
         Task {
             do {
                 // Initialize file transfer if needed
-                print("[FT] Initializing file transfer...")
                 try xxdk.initChannelsFileTransfer(paramsJson: nil)
-                print("[FT] File transfer initialized")
 
                 // Upload file
-                print("[FT] Starting upload...")
                 let fileID = try xxdk.uploadFile(
                     fileData: fileData,
                     retry: 2.0,
@@ -124,7 +113,6 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                     periodMS: 250
                 )
                 currentFileID = fileID
-                print("[FT] Upload started, fileID: \(fileID.base64EncodedString())")
 
                 // Wait for file link via notification (handled in handleFileLinkReceived)
 
@@ -143,7 +131,6 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
               let fileID = userInfo["fileID"] as? Data,
               let fileLink = userInfo["fileLink"] as? Data
         else {
-            print("[FT] Invalid file link notification")
             return
         }
 
@@ -153,18 +140,14 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
         guard let currentID = currentFileID,
               fileID == currentID
         else {
-            print("[FT] File link for different file, ignoring")
             return
         }
-
-        print("[FT] Received file link for our upload, status: \(status), uploadCompleted: \(uploadCompleted)")
 
         // If upload already complete, send now
         if uploadCompleted {
             sendFileToChannel(fileLink: fileLink)
         } else {
             // Store for when upload completes
-            print("[FT] Storing file link, waiting for upload to complete...")
             pendingFileLink = fileLink
         }
     }
@@ -175,13 +158,11 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
               let fileName = selectedFileName,
               let fileType = selectedFileType
         else {
-            print("[FT] Missing data for send")
             state = .failed(error: "Missing channel or file info")
             cleanupObserver()
             return
         }
 
-        print("[FT] Sending file to channel: \(channelId)")
         state = .sending(fileName: fileName)
 
         Task {
@@ -194,7 +175,6 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                     preview: nil,
                     validUntilMS: 0
                 )
-                print("[FT] File sent successfully, messageID: \(report.messageID?.base64EncodedString() ?? "nil")")
 
                 await MainActor.run {
                     self.state = .completed(fileName: fileName)

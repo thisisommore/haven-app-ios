@@ -92,12 +92,10 @@ public class XXDKMock: XXDKP {
 
     func enableDirectMessages(channelId: String) throws {
         // Mock: no-op
-        print("Mock: Enabled direct messages for channel: \(channelId)")
     }
 
     func disableDirectMessages(channelId: String) throws {
         // Mock: no-op
-        print("Mock: Disabled direct messages for channel: \(channelId)")
     }
 
     func areDMsEnabled(channelId _: String) throws -> Bool {
@@ -107,7 +105,6 @@ public class XXDKMock: XXDKP {
 
     func leaveChannel(channelId: String) throws {
         // Mock: no-op
-        print("Mock: Left channel: \(channelId)")
     }
 
     func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
@@ -119,7 +116,6 @@ public class XXDKMock: XXDKP {
         // Mock: simulate channel creation
         try await Task.sleep(for: .seconds(1))
         let channelId = "mock-channel-\(UUID().uuidString)"
-        print("Mock: Created channel: \(name)")
         return ChannelJSON(
             receptionId: "mock-reception-id",
             channelId: channelId,
@@ -148,7 +144,6 @@ public class XXDKMock: XXDKP {
 
     func load(privateIdentity _: Data?) async {
         do {
-            print("starting wait")
             try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
             withAnimation {
                 statusPercentage = 30
@@ -170,7 +165,6 @@ public class XXDKMock: XXDKP {
             try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
             withAnimation {
                 statusPercentage = 100
-                print("wait done")
             }
 
         } catch {
@@ -257,7 +251,6 @@ public class XXDKMock: XXDKP {
 
     func muteUser(channelId: String, pubKey _: Data, mute: Bool) throws {
         // Mock: no-op
-        print("Mock: \(mute ? "Muted" : "Unmuted") user in channel: \(channelId)")
     }
 
     func isMuted(channelId _: String) -> Bool {

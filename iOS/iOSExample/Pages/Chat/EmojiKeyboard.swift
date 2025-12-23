@@ -101,7 +101,6 @@ struct EmojiKeyboard_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             EmojiKeyboard { emoji in
-                print("Selected emoji: \(emoji)")
             }
         }
     }

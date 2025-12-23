@@ -68,10 +68,7 @@ public class XXDK: XXDKP {
                     at: stateDir,
                     withIntermediateDirectories: true
                 )
-                print("📂 Created ekv directory: \(stateDir.path)")
             }
-
-            print("📂 Using ekv directory: \(stateDir.path)")
         } catch let err {
             fatalError(
                 "failed to get state directory: " + err.localizedDescription

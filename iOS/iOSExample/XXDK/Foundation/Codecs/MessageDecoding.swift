@@ -43,25 +43,18 @@ func decompressZlib(_ data: Data) -> Data? {
 /// - Parameter b64: Base64-encoded string.
 /// - Returns: The decoded UTF-8 string if successful, otherwise `nil`.
 func decodeMessage(_ b64: String) -> String? {
-    print("[MessageDecoding] Input base64: \(b64.prefix(50))...")
-
     // Convert base64 to Data
     guard let data = Data(base64Encoded: b64) else {
-        print("[MessageDecoding] Failed to decode base64")
         return nil
     }
 
-    print("[MessageDecoding] Base64 decoded to \(data.count) bytes")
-
     // Try direct UTF-8 decoding first
     if let utf8String = String(data: data, encoding: .utf8) {
-        print("[MessageDecoding] Direct UTF-8 decode: \(utf8String)")
         return utf8String
     }
 
     // Check if it looks like zlib/deflate (starts with 0x78)
     if data.count > 0, data[0] == 0x78 {
-        print("[MessageDecoding] Attempting zlib decompression")
         if let decompressed = decompressZlib(data),
            let utf8String = String(data: decompressed, encoding: .utf8)
         {
@@ -69,30 +62,23 @@ func decodeMessage(_ b64: String) -> String? {
         }
     }
 
-    print("[MessageDecoding] All decoding methods failed")
     return nil
 }
 
 /// Debug helper to print out decoding attempts for an example payload.
 func decodeAny(b64: String = "eJyzKbBLz03PtdEvsAMAFoYDrA==") {
     guard let data = Data(base64Encoded: b64) else {
-        print("Failed to decode base64")
         return
     }
 
-    print("Base64 bytes: \(data.count)")
-
     if let utf8String = String(data: data, encoding: .utf8) {
-        print("UTF-8 (direct): \(utf8String)")
     }
 
     if data.count > 0, data[0] == 0x78 {
         if let decompressed = decompressZlib(data) {
             if let utf8String = String(data: decompressed, encoding: .utf8) {
-                print("Inflated UTF-8: \(utf8String)")
             }
         } else {
-            print("Inflate failed: Could not decompress zlib data")
         }
     }
 }

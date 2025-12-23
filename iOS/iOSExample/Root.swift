@@ -139,7 +139,6 @@ struct DeepLinkHandler: ViewModifier {
             .value,
             let pubKey = Data(base64Encoded: pubKeyBase64)
         else {
-            print("[DeepLink] Missing token or pubKey")
             deepLinkError = "Invalid link: missing token or pubKey"
             return
         }
@@ -151,7 +150,6 @@ struct DeepLinkHandler: ViewModifier {
             .value,
             let codeset = Int(codesetStr)
         else {
-            print("[DeepLink] Missing codeset")
             deepLinkError = "Invalid link: missing codeset"
             return
         }
@@ -182,9 +180,6 @@ struct DeepLinkHandler: ViewModifier {
                 colorStr.removeFirst(2)
             }
             color = Int(colorStr, radix: 16) ?? 0xE97451
-            print(
-                "[DeepLink] Derived identity - codename: \(name), color: \(color)"
-            )
         } catch {
             print("[DeepLink] Failed to decode identity: \(error)")
             deepLinkError = "Failed to decode identity"
@@ -201,7 +196,6 @@ struct DeepLinkHandler: ViewModifier {
         Task {
             modelDataActor.insert(newChat)
             try? modelDataActor.save()
-            print("[DeepLink] Chat saved for user: \(name)")
 
             await MainActor.run {
                 selectedChat.select(id: newChat.id, title: name)

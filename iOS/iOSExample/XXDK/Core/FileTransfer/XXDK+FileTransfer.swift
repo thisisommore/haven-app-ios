@@ -9,7 +9,6 @@ import Foundation
 public extension XXDK {
     /// Initialize channels file transfer
     func initChannelsFileTransfer(paramsJson _: Data? = nil) throws {
-        print("[FT] initChannelsFileTransfer called")
         guard channelsFileTransfer != nil else {
             print("[FT] ERROR: File transfer not initialized")
             throw MyError.runtimeError("File transfer not available")
@@ -23,7 +22,6 @@ public extension XXDK {
         progressCB: FtSentProgressCallback,
         periodMS: Int
     ) throws -> Data {
-        print("[FT] uploadFile called - size: \(fileData.count) bytes")
         guard let ft = channelsFileTransfer else {
             print("[FT] ERROR: File transfer not initialized")
             throw MyError.runtimeError("File transfer not initialized")
@@ -50,8 +48,6 @@ public extension XXDK {
             print("[FT] ERROR: Failed to decode channelId base64: \(cleanChannelId)")
             throw MyError.runtimeError("Invalid channel ID format")
         }
-
-        print("[FT] Sending file to channel (ID: \(cleanChannelId), bytes: \(channelIdData.count))")
 
         let reportData = try ft.send(
             channelIdBytes: channelIdData,
@@ -108,7 +104,6 @@ public extension XXDK {
         guard let ft = channelsFileTransfer else {
             throw MyError.runtimeError("File transfer not initialized")
         }
-        print("[FT] downloadFile called - fileInfoJSON: \(fileInfoJSON.count) bytes")
         return try ft.download(fileInfoJSON: fileInfoJSON, progressCB: progressCB, periodMS: periodMS)
     }
 
@@ -117,11 +112,8 @@ public extension XXDK {
               let fileInfoJSON = userInfo["fileInfoJSON"] as? Data,
               let messageId = userInfo["messageId"] as? String
         else {
-            print("[FT] Invalid fileDownloadNeeded notification")
             return
         }
-
-        print("[FT] Starting download for message: \(messageId)")
 
         Task {
             do {

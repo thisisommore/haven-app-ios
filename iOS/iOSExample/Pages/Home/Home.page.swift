@@ -103,7 +103,6 @@ struct HomeView<T: XXDKP>: View {
                                       let pubKey = dm.getPublicKey(),
                                       !pubKey.isEmpty
                                 else {
-                                    print("DM not ready: DM=\(xxdk.DM != nil), token=\(xxdk.DM?.getToken() ?? -1), pubKey=\(xxdk.DM?.getPublicKey()?.count ?? 0) bytes")
                                     return
                                 }
                                 activeSheet = .qrCode(QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset))
@@ -237,21 +236,16 @@ struct HomeView<T: XXDKP>: View {
     }
 
     private func handleAddUser(code: String) {
-        print("[HomeView] handleAddUser called with code: \(code)")
         guard let url = URL(string: code),
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         else {
-            print("[HomeView] Invalid URL")
             return
         }
-
-        print("[HomeView] URL Scheme: \(components.scheme ?? "nil"), Host: \(components.host ?? "nil")")
 
         guard components.scheme == "haven",
               components.host == "dm",
               let queryItems = components.queryItems
         else {
-            print("[HomeView] Invalid QR code structure")
             return
         }
 
@@ -260,7 +254,6 @@ struct HomeView<T: XXDKP>: View {
               let pubKeyStr = queryItems.first(where: { $0.name == "pubKey" })?.value,
               let pubKey = Data(base64Encoded: pubKeyStr)
         else {
-            print("[HomeView] Missing or invalid data. Token: \(queryItems.first(where: { $0.name == "token" })?.value ?? "nil"), PubKey: \(queryItems.first(where: { $0.name == "pubKey" })?.value ?? "nil")")
             return
         }
 
@@ -271,7 +264,6 @@ struct HomeView<T: XXDKP>: View {
         guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
               let codeset = Int(codesetStr)
         else {
-            print("[HomeView] Missing codeset in QR code")
             withAnimation(.spring(response: 0.3)) {
                 toastMessage = "Invalid QR code: missing codeset"
             }
@@ -306,7 +298,6 @@ struct HomeView<T: XXDKP>: View {
                 colorStr.removeFirst(2)
             }
             color = Int(colorStr, radix: 16) ?? 0xE97451
-            print("[HomeView] Derived identity - codename: \(name), color: \(color)")
         } catch {
             print("[HomeView] Failed to decode identity: \(error)")
             withAnimation(.spring(response: 0.3)) {
@@ -320,13 +311,9 @@ struct HomeView<T: XXDKP>: View {
 
         let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
 
-        print("[HomeView] Creating new chat for user: \(name), token: \(token) (original: \(token64))")
-
         Task.detached {
-            print("[HomeView] Inserting chat into database...")
             swiftDataActor.insert(newChat)
             try? swiftDataActor.save()
-            print("[HomeView] Chat saved successfully")
         }
 
         withAnimation(.spring(response: 0.3)) {

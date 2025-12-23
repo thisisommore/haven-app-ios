@@ -43,7 +43,7 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
 
     private let logPrefix = "[ChannelUICallbacks]"
     private func log(_ message: String) {
-        print("\(logPrefix) \(message)")
+        // Logging removed - only error logs are kept
     }
 
     private func short(_ data: Data?) -> String {

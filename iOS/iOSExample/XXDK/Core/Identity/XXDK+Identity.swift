@@ -37,10 +37,6 @@ extension XXDK {
             }
         }
 
-        print(
-            "Exported Codename Blob: " + privateIdentity.base64EncodedString()
-        )
-
         let publicIdentity: Data?
         publicIdentity = Bindings.BindingsGetPublicChannelIdentityFromPrivate(
             privateIdentity,
@@ -66,9 +62,6 @@ extension XXDK {
 
                 if let nameData = identity.codename.data(using: .utf8) {
                     do { try cmix.ekvSet("MyCodename", value: nameData) } catch {
-                        print(
-                            "could not persist codename: \(error.localizedDescription)"
-                        )
                     }
                 }
             } catch {
@@ -164,7 +157,6 @@ extension XXDK {
             }
 
             await progress(.creatingE2e)
-            print("[FT] Creating E2e for file transfer...")
             let receptionIdentity = try cmix.makeReceptionIdentity()
             var e2eErr: NSError?
             guard let e2eObj = BindingsLogin(
@@ -178,18 +170,14 @@ extension XXDK {
                 throw e2eErr ?? MyError.runtimeError("[FT] Failed to create E2e")
             }
             e2e = e2eObj
-            print("[FT] E2e created, ID: \(e2eObj.getID())")
 
-            print("[FT] Initializing file transfer...")
             channelsFileTransfer = try ChannelsFileTransfer.initialize(
                 e2eID: Int(e2eObj.getID()),
                 paramsJson: nil
             )
-            print("[FT] File transfer initialized, extension builder ID: \(channelsFileTransfer!.getExtensionBuilderID())")
 
             let extensionIDs = [channelsFileTransfer!.getExtensionBuilderID()]
             let extensionJSON = try JSONEncoder().encode(extensionIDs)
-            print("[FT] Extension builders JSON: \(String(data: extensionJSON, encoding: .utf8) ?? "nil")")
 
             if !(sm?.isSetupComplete ?? false) {
                 guard
@@ -207,7 +195,6 @@ extension XXDK {
                     fatalError("no cm")
                 }
                 channelsManager = cm
-                print("BindingsNewChannelsManager: tag - \(cm.getStorageTag())")
                 let timestamp = ISO8601DateFormatter().string(from: Date())
                 let storageTagDataJson = try Parser.encodeString(cm.getStorageTag())
                 let storageTagData = storageTagDataJson.base64EncodedString()
@@ -217,12 +204,10 @@ extension XXDK {
                     timestamp: timestamp
                 )
                 let entryData = try Parser.encodeRemoteKVEntry(entry)
-                print("ed=rkv \(entryData.base64EncodedString())")
                 try remoteKV!.set("channels-storage-tag", objectJSON: entryData)
                 self.storageTagListener!.data = cm.getStorageTag().data
             } else {
                 let storageTagString = self.storageTagListener!.data!.utf8
-                print("BindingsLoadChannelsManager: tag - \(storageTagString)")
                 let cm = Bindings.BindingsLoadChannelsManager(
                     cmix.getID(),
                     storageTagString,
@@ -247,9 +232,6 @@ extension XXDK {
                     from: readyData
                 )
                 if !readinessInfo.isReady {
-                    print(
-                        "cMix not ready yet (howClose=\(readinessInfo.howClose)) — retrying in 2s…"
-                    )
                     try? await Task.sleep(nanoseconds: 2_000_000_000)
                     continue
                 } else {
@@ -292,7 +274,6 @@ extension XXDK {
                         )
                         actor.insert(chat)
                         try actor.save()
-                        print("[XXDK] is ready = true")
                     }
                 }
             } catch {

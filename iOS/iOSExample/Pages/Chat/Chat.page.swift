@@ -354,7 +354,6 @@ struct ChatView<T: XXDKP>: View {
         .onReceive(NotificationCenter.default.publisher(for: .fileDataUpdated)) { _ in
             // Delay slightly to allow SwiftData to sync from background context
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                print("[FT] ChatView received fileDataUpdated, refreshing (trigger=\(fileDataRefreshTrigger + 1))")
                 fileDataRefreshTrigger += 1
             }
         }

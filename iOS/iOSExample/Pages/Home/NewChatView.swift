@@ -65,11 +65,9 @@ struct NewChatView<T: XXDKP>: View {
                                         errorMessage = nil
                                     } else {
                                         // Public channel - proceed directly
-                                        print("getting channel from url")
                                         let channel = try xxdk.getChannelFromURL(
                                             url: trimmed
                                         )
-                                        print("channel data \(channel)")
                                         channelData = channel
                                         showConfirmationSheet = true
                                         errorMessage = nil
@@ -144,8 +142,6 @@ struct NewChatView<T: XXDKP>: View {
         errorMessage = nil
 
         do {
-            print("Joining channel: \(channelData.name)")
-
             let joinedChannel: ChannelJSON
             // Use prettyPrint if available (private channel), otherwise decode from URL (public channel)
             if let pp = prettyPrint {
@@ -154,8 +150,6 @@ struct NewChatView<T: XXDKP>: View {
                 joinedChannel = try await xxdk.joinChannelFromURL(url)
             }
 
-            print("Successfully joined channel: \(joinedChannel)")
-
             // Create and save the chat to the database
             guard let channelId = joinedChannel.channelId else {
                 throw MyError.runtimeError("Channel ID is missing")
@@ -163,18 +157,14 @@ struct NewChatView<T: XXDKP>: View {
 
             // Enable or disable direct messages based on toggle
             if enableDM {
-                print("Enabling direct messages for channel: \(channelId)")
                 try xxdk.enableDirectMessages(channelId: channelId)
             } else {
-                print("Disabling direct messages for channel: \(channelId)")
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
 
             let newChat = ChatModel(channelId: channelId, name: joinedChannel.name, isSecret: isPrivateChannel)
             swiftDataActor.insert(newChat)
             try swiftDataActor.save()
-
-            print("Chat saved to database: \(newChat.name)")
 
             // Dismiss both sheets and reset state
             self.channelData = nil

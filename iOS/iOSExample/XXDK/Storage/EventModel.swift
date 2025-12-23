@@ -133,7 +133,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
 
     private func log(_ message: String) {
-        print("[EventModel] \(message)")
+        // Logging removed - only error logs are kept
     }
 
     private func short(_ data: Data?) -> String {

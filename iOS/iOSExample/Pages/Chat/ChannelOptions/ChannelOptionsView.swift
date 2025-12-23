@@ -158,7 +158,6 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         let shareData = try xxdk.getShareURL(channelId: channelId, host: "https://xxnetwork.com/join")
                         shareURL = shareData.url
                         sharePassword = shareData.password
-                        print("Share URL: \(shareURL ?? "nil")")
                     } catch {
                         print("Failed to fetch share URL: \(error)")
                     }
@@ -412,7 +411,6 @@ private struct ChannelOptionsPreviewWrapper: View {
     var body: some View {
         if let chat = chats.first {
             ChannelOptionsView<XXDKMock>(chat: chat) {
-                print("Leave channel tapped")
             }
             .task {
                 chat.channelDescription = "A channel for general team discussions and announcements"

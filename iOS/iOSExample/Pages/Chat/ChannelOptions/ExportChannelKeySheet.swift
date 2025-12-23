@@ -128,7 +128,6 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
             ) { result in
                 switch result {
                 case let .success(url):
-                    print("File saved to: \(url)")
                     onSuccess("Exported to File")
                     dismiss()
                 case let .failure(error):

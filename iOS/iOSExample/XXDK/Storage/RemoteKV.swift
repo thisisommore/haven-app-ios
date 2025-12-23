@@ -28,7 +28,6 @@ final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRe
             do {
                 let entry = try Parser.decodeRemoteKVEntry(from: v)
                 data = entry.Data.data
-                log.debug("RemoteKV initial get succeeded for key: \(self.key, privacy: .public) - Version: \(entry.Version), Timestamp: \(entry.Timestamp), Data length: \(entry.Data.count)")
             } catch {
                 log.warning("Failed to decode initial RemoteKV entry: \(error.localizedDescription)")
                 data = nil
@@ -41,7 +40,6 @@ final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRe
     // Called by the Bindings RemoteKV when the key changes. Adjust the method name/signature
     // if the generated Swift interface differs.
     func callback(_: String?, old: Data?, new: Data?, opType _: Int8) {
-        log.info("RemoteKV new data for \(self.key), new: \(new!.base64EncodedString()), old: \(old!.base64EncodedString())")
         if new!.base64EncodedString() == "bnVsbA==", old!.base64EncodedString() == "bnVsbA==" {
             return
         }
@@ -50,7 +48,6 @@ final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRe
             do {
                 let entry = try Parser.decodeRemoteKVEntry(from: newData)
                 data = try Parser.decodeString(from: Data(base64Encoded: entry.Data)!).data
-                log.debug("Decoded RemoteKV entry - Version: \(entry.Version), Timestamp: \(entry.Timestamp), Data length: \(entry.Data.count)")
             } catch {
                 fatalError("Failed to decode RemoteKV entry: \(error.localizedDescription)")
             }

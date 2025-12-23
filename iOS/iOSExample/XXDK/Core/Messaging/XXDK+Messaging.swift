@@ -16,7 +16,6 @@ extension XXDK {
         isMe: Bool = true
     ) {
         guard let actor = modelActor else {
-            print("persistReaction: modelActor not set")
             return
         }
         Task {
@@ -57,11 +56,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                    print(
-                        "Channel sendMessage messageID: \(msg) \(mid.base64EncodedString())"
-                    )
                 } else {
-                    print("Channel sendMessage returned no messageID")
                 }
             } catch {
                 print("Failed to decode ChannelSendReport: \(error)")
@@ -81,7 +76,6 @@ extension XXDK {
                 ?? Data()
         guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
         else {
-            print("sendReply(channel): invalid reply message id base64")
             return
         }
         do {
@@ -98,11 +92,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                    print(
-                        "Channel sendReply messageID: \(mid.base64EncodedString())"
-                    )
                 } else {
-                    print("Channel sendReply returned no messageID")
                 }
             } catch {
                 print("Failed to decode ChannelSendReport (reply): \(error)")
@@ -127,7 +117,6 @@ extension XXDK {
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
                 ?? Data()
         guard let targetMessageId = Data(base64Encoded: toMessageIdB64) else {
-            print("sendReaction(channel): invalid target message id base64")
             return
         }
         do {
@@ -143,11 +132,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                    print(
-                        "Channel sendReaction messageID: \(mid.base64EncodedString())"
-                    )
                 } else {
-                    print("Channel sendReaction returned no messageID")
                 }
                 persistReaction(
                     messageIdB64: report.messageID!.base64EncodedString(),
@@ -182,7 +167,6 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                    print("DM sendText messageID: \(mid.base64EncodedString())")
                     let chatId = toPubKey.base64EncodedString()
                     let _: String = {
                         if let actor = self.modelActor {
@@ -197,7 +181,6 @@ extension XXDK {
                     }()
 
                 } else {
-                    print("DM sendText returned no messageID")
                 }
             } catch {
                 print("Failed to decode ChannelSendReport: \(error)")
@@ -220,7 +203,6 @@ extension XXDK {
         }
         guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
         else {
-            print("sendReply(DM): invalid reply message id base64")
             return
         }
         do {
@@ -277,7 +259,6 @@ extension XXDK {
             fatalError("DM not there")
         }
         guard let targetMessageId = Data(base64Encoded: toMessageIdB64) else {
-            print("sendReaction(DM): invalid target message id base64")
             return
         }
         do {
@@ -293,11 +274,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                    print(
-                        "DM sendReaction messageID: \(mid.base64EncodedString())"
-                    )
                 } else {
-                    print("DM sendReaction returned no messageID")
                 }
                 persistReaction(
                     messageIdB64: report.messageID!.base64EncodedString(),
@@ -321,19 +298,16 @@ extension XXDK {
     /// Delete a message from a channel (admin or message owner only)
     public func deleteMessage(channelId: String, messageId: String) {
         guard let cm = channelsManager else {
-            print("deleteMessage: Channels Manager not initialized")
             return
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
         guard let messageIdData = Data(base64Encoded: messageId) else {
-            print("deleteMessage: invalid message id base64")
             return
         }
 
         do {
             try cm.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
-            print("Successfully deleted message: \(messageId)")
         } catch {
             print("deleteMessage failed: \(error.localizedDescription)")
         }

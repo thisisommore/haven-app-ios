@@ -125,8 +125,6 @@ struct CodenameGeneratorView<T: XXDKP>: View {
 
         // Store the private identity in XXDK for later use
         // This would typically be stored securely for the user's identity
-        print("✅ Claimed codename: \(selected.text)")
-        print("Private identity stored for later use")
 
         let success = UINotificationFeedbackGenerator()
         success.notificationOccurred(.success)

@@ -23,7 +23,6 @@ extension XXDK {
         defer { unlockTask() }
 
         do {
-            print("SwiftData: Deleted all local data at startup")
         } catch {
             print(
                 "SwiftData: Failed to delete all data at startup: \(error)"
@@ -88,11 +87,6 @@ extension XXDK {
             fatalError("cmix is not available")
         }
         await progress(.startingNetworkFollower)
-
-        print(
-            "DMPUBKEY: \(DM?.getPublicKey()?.base64EncodedString() ?? "empty pubkey")"
-        )
-        print("DMTOKEN: \(DM?.getToken() ?? 0)")
 
         do {
             try cmix.startNetworkFollower(50000)

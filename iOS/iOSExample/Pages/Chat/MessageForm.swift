@@ -251,7 +251,6 @@ private struct MessageFormPreviewWrapper: View {
                         chat: chat,
                         replyTo: replyMode ? messages.first : nil,
                         onCancelReply: {
-                            print("Cancel reply tapped")
                         }
                     )
                 }

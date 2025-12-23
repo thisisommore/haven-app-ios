@@ -52,7 +52,6 @@ public extension XXDK {
         if let existingCm = channelsManager {
             cm = existingCm
         } else {
-            print("BindingsLoadChannelsManager: tag - \(storageTag)")
             guard let loadedCm = Bindings.BindingsLoadChannelsManager(
                 cmixId,
                 storageTag,
@@ -72,7 +71,6 @@ public extension XXDK {
 
         let raw = try cm.joinChannel(prettyPrint)
         let channel = try Parser.decodeChannel(from: raw)
-        print("Joined channel: \(channel.name)")
         return channel
     }
 
@@ -130,8 +128,6 @@ public extension XXDK {
         } catch {
             fatalError("failed to leave channel \(error)")
         }
-
-        print("Successfully left channel: \(channelId)")
     }
 
     /// Get the share URL for a channel
@@ -254,8 +250,6 @@ public extension XXDK {
         } catch {
             fatalError("failed to enable direct messages \(error)")
         }
-
-        print("Successfully enabled direct messages for channel: \(channelId)")
     }
 
     /// Disable direct messages for a channel
@@ -273,8 +267,6 @@ public extension XXDK {
         } catch {
             fatalError("failed to disable direct messages \(error)")
         }
-
-        print("Successfully disabled direct messages for channel: \(channelId)")
     }
 
     /// Check if direct messages are enabled for a channel
@@ -346,17 +338,10 @@ public extension XXDK {
 
         let resultData = try cm.getMutedUsers(channelIdData)
 
-        print("getMutedUsers raw response: \(resultData.utf8)")
-
         guard let jsonArray = try? JSONSerialization.jsonObject(with: resultData) as? [String] else {
-            print("getMutedUsers: Failed to parse as [String], trying other formats...")
-            if let jsonObjects = try? JSONSerialization.jsonObject(with: resultData) {
-                print("getMutedUsers parsed object: \(jsonObjects)")
-            }
             return []
         }
 
-        print("getMutedUsers parsed \(jsonArray.count) users")
         return jsonArray.compactMap { Data(base64Encoded: $0) }
     }
 
@@ -369,8 +354,6 @@ public extension XXDK {
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
         try cm.muteUser(channelIdData, mutedUserPubKeyBytes: pubKey, undoAction: !mute, validUntilMS: Int(Bindings.BindingsValidForeverBindings), cmixParamsJSON: "".data)
-
-        print("Successfully \(mute ? "muted" : "unmuted") user in channel: \(channelId)")
     }
 
     /// Check if current user is muted in a channel

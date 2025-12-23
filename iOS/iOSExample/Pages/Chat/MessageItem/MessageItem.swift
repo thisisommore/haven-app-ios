@@ -155,10 +155,8 @@ struct MessageItem<T: XXDKP>: View {
                     color: 0x4CAF50
                 ),
                 onReply: {
-                    print("Reply tapped")
                 },
                 onDM: { name, _, _, _ in
-                    print("DM to \(name)")
                 },
                 selectedEmoji: MessageEmoji.none,
                 timestamp: Date()
@@ -193,7 +191,6 @@ struct MessageItem<T: XXDKP>: View {
                 """,
                 sender: nil,
                 onReply: {
-                    print("Reply tapped")
                 }, timestamp: Date()
             )
 

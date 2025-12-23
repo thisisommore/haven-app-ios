@@ -9,7 +9,7 @@ import Bindings
 import Foundation
 
 private func ftLog(_ message: String) {
-    print("[FT] \(message)")
+    // Logging removed - only error logs are kept
 }
 
 public enum FileTransferLimits {

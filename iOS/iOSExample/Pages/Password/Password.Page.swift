@@ -75,7 +75,6 @@ struct PasswordCreationView<T: XXDKP>: View {
             await xxdk.setUpCmix()
 
             await MainActor.run {
-                print("append time")
                 password = ""
                 confirm = ""
                 attemptedSubmit = false
