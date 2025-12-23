@@ -114,8 +114,8 @@ public struct ModelMessageJSON: Codable {
     public let messageID: Data
 
     private enum CodingKeys: String, CodingKey {
-        case pubKey = "pubKey"
-        case messageID = "messageID"
+        case pubKey
+        case messageID
     }
 
     public init(pubKey: Data, messageID: Data) {

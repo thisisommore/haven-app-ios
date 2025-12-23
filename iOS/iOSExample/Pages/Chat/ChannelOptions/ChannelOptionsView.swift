@@ -138,7 +138,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                     toastMessage = "Password copied"
                                 } label: {
                                     Image(systemName: "doc.on.doc")
-                                    .foregroundColor(.haven)
+                                        .foregroundColor(.haven)
                                 }
                                 .buttonStyle(.borderless)
                             }
@@ -407,19 +407,15 @@ struct ChannelOptionsView<T: XXDKP>: View {
 
 private struct ChannelOptionsPreviewWrapper: View {
     @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
-    
+
     var body: some View {
         if let chat = chats.first {
-            ChannelOptionsView<XXDKMock>(chat: chat) {
-            }
-            .task {
-                chat.channelDescription = "A channel for general team discussions and announcements"
-            }
+            ChannelOptionsView<XXDKMock>(chat: chat) {}
+                .task {
+                    chat.channelDescription = "A channel for general team discussions and announcements"
+                }
         } else {
             ProgressView()
         }
     }
 }
-
-
-

@@ -51,7 +51,7 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                     HStack {
                         Image(systemName: importedKeyContent != nil ? "checkmark.circle.fill" : "doc.fill")
                             .foregroundColor(.haven)
-                            Text(importedKeyContent != nil ? "Key File Selected" : "Select Key File (.txt)")
+                        Text(importedKeyContent != nil ? "Key File Selected" : "Select Key File (.txt)")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -166,6 +166,3 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
         }
     }
 }
-
-
-

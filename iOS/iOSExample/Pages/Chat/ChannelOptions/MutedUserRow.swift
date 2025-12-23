@@ -46,6 +46,3 @@ struct MutedUserRow: View {
         }
     }
 }
-
-
-

@@ -154,9 +154,8 @@ struct MessageItem<T: XXDKP>: View {
                     dmToken: 123,
                     color: 0x4CAF50
                 ),
-                onReply: {
-                },
-                onDM: { name, _, _, _ in
+                onReply: {},
+                onDM: { _, _, _, _ in
                 },
                 selectedEmoji: MessageEmoji.none,
                 timestamp: Date()
@@ -190,8 +189,7 @@ struct MessageItem<T: XXDKP>: View {
                 </a>
                 """,
                 sender: nil,
-                onReply: {
-                }, timestamp: Date()
+                onReply: {}, timestamp: Date()
             )
 
             // Simple incoming message

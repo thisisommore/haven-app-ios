@@ -274,7 +274,7 @@ struct MessageBubble<T: XXDKP>: View {
                 selectedEmoji: .constant(.none),
                 shouldTriggerReply: .constant(false)
             )
-            
+
             MessageBubble<XXDKMock>(
                 text: "And this is a reply from me.",
                 isIncoming: false,
@@ -283,7 +283,7 @@ struct MessageBubble<T: XXDKP>: View {
                 selectedEmoji: .constant(.none),
                 shouldTriggerReply: .constant(false)
             )
-            
+
             MessageBubble<XXDKMock>(
                 text: "Another message from preview user.",
                 isIncoming: true,

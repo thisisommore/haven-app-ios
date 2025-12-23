@@ -100,7 +100,7 @@ struct EmojiKeyboard: View {
 struct EmojiKeyboard_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            EmojiKeyboard { emoji in
+            EmojiKeyboard { _ in
             }
         }
     }

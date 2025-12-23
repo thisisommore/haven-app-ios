@@ -10,7 +10,7 @@ enum HomeSheet: Identifiable {
     case qrScanner
     case nicknamePicker
     case qrCode(QRData)
-    
+
     var id: String {
         switch self {
         case .newChat: return "newChat"
@@ -140,7 +140,7 @@ struct HomeView<T: XXDKP>: View {
                     NewChatView<T>()
                 case .createSpace:
                     CreateSpaceView<T>()
-                case .qrCode(let data):
+                case let .qrCode(data):
                     QRCodeView(dmToken: data.token, pubKey: data.pubKey, codeset: data.codeset)
                 case .qrScanner:
                     QRScannerView(

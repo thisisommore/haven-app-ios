@@ -71,14 +71,11 @@ func decodeAny(b64: String = "eJyzKbBLz03PtdEvsAMAFoYDrA==") {
         return
     }
 
-    if let utf8String = String(data: data, encoding: .utf8) {
-    }
+    if let utf8String = String(data: data, encoding: .utf8) {}
 
     if data.count > 0, data[0] == 0x78 {
         if let decompressed = decompressZlib(data) {
-            if let utf8String = String(data: decompressed, encoding: .utf8) {
-            }
-        } else {
-        }
+            if let utf8String = String(data: decompressed, encoding: .utf8) {}
+        } else {}
     }
 }

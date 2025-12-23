@@ -90,11 +90,11 @@ public class XXDKMock: XXDKP {
         )
     }
 
-    func enableDirectMessages(channelId: String) throws {
+    func enableDirectMessages(channelId _: String) throws {
         // Mock: no-op
     }
 
-    func disableDirectMessages(channelId: String) throws {
+    func disableDirectMessages(channelId _: String) throws {
         // Mock: no-op
     }
 
@@ -103,7 +103,7 @@ public class XXDKMock: XXDKP {
         return true
     }
 
-    func leaveChannel(channelId: String) throws {
+    func leaveChannel(channelId _: String) throws {
         // Mock: no-op
     }
 
@@ -249,7 +249,7 @@ public class XXDKMock: XXDKP {
         return []
     }
 
-    func muteUser(channelId: String, pubKey _: Data, mute: Bool) throws {
+    func muteUser(channelId _: String, pubKey _: Data, mute _: Bool) throws {
         // Mock: no-op
     }
 

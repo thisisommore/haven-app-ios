@@ -40,4 +40,3 @@ struct DateSeparatorBadge: View {
         .padding(.bottom, 12)
     }
 }
-

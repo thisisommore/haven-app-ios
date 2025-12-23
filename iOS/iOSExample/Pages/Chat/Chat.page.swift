@@ -8,7 +8,6 @@
 import SwiftData
 import SwiftUI
 
-
 struct ChatView<T: XXDKP>: View {
     let chatId: String
     let chatTitle: String

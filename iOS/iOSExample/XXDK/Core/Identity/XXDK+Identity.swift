@@ -61,8 +61,7 @@ extension XXDK {
                 }
 
                 if let nameData = identity.codename.data(using: .utf8) {
-                    do { try cmix.ekvSet("MyCodename", value: nameData) } catch {
-                    }
+                    do { try cmix.ekvSet("MyCodename", value: nameData) } catch {}
                 }
             } catch {
                 print(

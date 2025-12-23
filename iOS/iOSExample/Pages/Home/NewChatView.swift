@@ -135,7 +135,7 @@ struct NewChatView<T: XXDKP>: View {
 
     private func joinChannel(
         url: String,
-        channelData: ChannelJSON,
+        channelData _: ChannelJSON,
         enableDM: Bool
     ) async {
         isJoining = true
@@ -167,14 +167,14 @@ struct NewChatView<T: XXDKP>: View {
             try swiftDataActor.save()
 
             // Dismiss both sheets and reset state
-            self.channelData = nil
+            channelData = nil
             prettyPrint = nil
             dismiss()
         } catch {
             print("Failed to join channel: \(error)")
             errorMessage =
                 "Failed to join channel: \(error.localizedDescription)"
-            self.channelData = nil
+            channelData = nil
             prettyPrint = nil
         }
 

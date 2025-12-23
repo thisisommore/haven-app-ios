@@ -8,7 +8,7 @@
 import Bindings
 import Foundation
 
-private func ftLog(_ message: String) {
+private func ftLog(_: String) {
     // Logging removed - only error logs are kept
 }
 

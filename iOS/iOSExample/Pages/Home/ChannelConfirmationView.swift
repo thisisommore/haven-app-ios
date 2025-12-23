@@ -82,7 +82,7 @@ struct ChannelConfirmationView: View {
         channelName: "xx Network General",
         channelURL: "http://haven.xx.network/join?0Name=xxGeneralChat&1Description=Talking+about+the+xx+network&2Level=Public&3Created=1674152234202224215&e=%2FqE8BEgQQkXC6n0yxeXGQjvyklaRH6Z%2BWu8qvbFxiuw%3D&k=RMfN%2B9pD%2FJCzPTIzPk%2Bpf0ThKPvI425hye4JqUxi3iA%3D&l=368&m=0&p=1&s=rb%2BrK0HsOYcPpTF6KkpuDWxh7scZbj74kVMHuwhgUR0%3D&v=1",
         isJoining: $isJoining,
-        onConfirm: { enableDM in
+        onConfirm: { _ in
         }
     )
 }

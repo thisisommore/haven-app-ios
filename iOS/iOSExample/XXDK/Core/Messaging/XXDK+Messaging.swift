@@ -56,8 +56,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                } else {
-                }
+                } else {}
             } catch {
                 print("Failed to decode ChannelSendReport: \(error)")
             }
@@ -92,8 +91,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                } else {
-                }
+                } else {}
             } catch {
                 print("Failed to decode ChannelSendReport (reply): \(error)")
             }
@@ -132,8 +130,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                } else {
-                }
+                } else {}
                 persistReaction(
                     messageIdB64: report.messageID!.base64EncodedString(),
                     emoji: emoji,
@@ -180,8 +177,7 @@ extension XXDK {
                         return "Direct Message"
                     }()
 
-                } else {
-                }
+                } else {}
             } catch {
                 print("Failed to decode ChannelSendReport: \(error)")
             }
@@ -274,8 +270,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                } else {
-                }
+                } else {}
                 persistReaction(
                     messageIdB64: report.messageID!.base64EncodedString(),
                     emoji: emoji,

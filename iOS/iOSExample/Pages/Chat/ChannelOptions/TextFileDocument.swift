@@ -29,6 +29,3 @@ struct TextFileDocument: FileDocument {
         FileWrapper(regularFileWithContents: text.data(using: .utf8) ?? Data())
     }
 }
-
-
-

@@ -240,7 +240,7 @@ private struct MessageFormPreviewWrapper: View {
     @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
     @Query private var messages: [ChatMessageModel]
     var replyMode: Bool = false
-    
+
     var body: some View {
         ZStack {
             Color.appBackground.edgesIgnoringSafeArea(.all)
@@ -250,8 +250,7 @@ private struct MessageFormPreviewWrapper: View {
                     MessageForm<XXDKMock>(
                         chat: chat,
                         replyTo: replyMode ? messages.first : nil,
-                        onCancelReply: {
-                        }
+                        onCancelReply: {}
                     )
                 }
             }

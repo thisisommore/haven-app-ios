@@ -42,7 +42,7 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
     var modelActor: SwiftDataActor?
 
     private let logPrefix = "[ChannelUICallbacks]"
-    private func log(_ message: String) {
+    private func log(_: String) {
         // Logging removed - only error logs are kept
     }
 

@@ -88,15 +88,12 @@ func encodeMessage(_ message: String, compress: Bool = true) -> String? {
 
 /// Debug helper to print out encoding attempts for an example message.
 func encodeAny(message: String = "Hello, World!") {
-    if let encoded = encodeMessage(message, compress: false) {
-    }
+    if let encoded = encodeMessage(message, compress: false) {}
 
-    if let encodedCompressed = encodeMessage(message, compress: true) {
-    }
+    if let encodedCompressed = encodeMessage(message, compress: true) {}
 
     // Test round-trip
     if let encodedCompressed = encodeMessage(message, compress: true),
        let decoded = decodeMessage(encodedCompressed)
-    {
-    }
+    {}
 }

@@ -22,8 +22,7 @@ class FileDownloadCallback: FtReceivedProgressCallback {
 
         // Parse progress - file storage is handled automatically by SDK via EventModel.updateFile
         if let progress = try? JSONDecoder().decode(FtReceivedProgress.self, from: payload) {
-            if progress.completed {
-            }
+            if progress.completed {}
         }
     }
 }
