@@ -35,31 +35,23 @@ struct ReceivedMessage: Identifiable {
 }
 
 class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings.BindingsDmCallbacksProtocol {
-    // Optional SwiftData container injected from SwiftUI
-//    public var modelContainer: ModelContainer?
     var modelActor: SwiftDataActor?
     private var msgCnt: Int64 = 0
-    func eventUpdate(_ eventType: Int64, jsonData: Data?) {
-        print("[DMReceiver] eventUpdate called with eventType: \(eventType), jsonData: \(jsonData?.count ?? 0) bytes")
-    }
+    func eventUpdate(_: Int64, jsonData _: Data?) {}
 
-    func deleteMessage(_ messageID: Data?, senderPubKey: Data?) -> Bool {
-        print("[DMReceiver] deleteMessage called with messageID: \(messageID?.count ?? 0) bytes, senderPubKey: \(senderPubKey?.count ?? 0) bytes")
+    func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
         return true
     }
 
-    func getConversation(_ senderPubKey: Data?) -> Data? {
-        print("[DMReceiver] getConversation called with senderPubKey: \(senderPubKey?.count ?? 0) bytes")
+    func getConversation(_: Data?) -> Data? {
         return "".data
     }
 
     func getConversations() -> Data? {
-        print("[DMReceiver] getConversations called")
         return "[]".data
     }
 
-    func receive(_ messageID: Data?, nickname: String?, text: Data?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, roundId: Int64, mType _: Int64, status _: Int64) -> Int64 {
-        print("[DMReceiver] receive called with nickname: \(nickname ?? "nil"), text: \(text?.count ?? 0) bytes, dmToken: \(dmToken), timestamp: \(timestamp), roundId: \(roundId)")
+    func receive(_ messageID: Data?, nickname _: String?, text: Data?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, mType _: Int64, status _: Int64) -> Int64 {
         // Ensure UI updates happen on main thread
 
         guard let messageID else { fatalError("no msg id") }
@@ -90,16 +82,14 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         return msgCnt
     }
 
-    func receiveReaction(_: Data?, reactionTo _: Data?, nickname: String?, reaction: String?, partnerKey _: Data?, senderKey _: Data?, dmToken: Int32, codeset _: Int, timestamp: Int64, roundId _: Int64, status _: Int64) -> Int64 {
-        print("[DMReceiver] receiveReaction called with nickname: \(nickname ?? "nil"), reaction: \(reaction ?? "nil"), dmToken: \(dmToken), timestamp: \(timestamp)")
+    func receiveReaction(_: Data?, reactionTo _: Data?, nickname _: String?, reaction _: String?, partnerKey _: Data?, senderKey _: Data?, dmToken _: Int32, codeset _: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         // Note: this should be a UUID in your database so
         // you can uniquely identify the message.
         msgCnt += 1
         return msgCnt
     }
 
-    func receiveReply(_ messageID: Data?, reactionTo _: Data?, nickname: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, status _: Int64) -> Int64 {
-        print("[DMReceiver] receiveReply called with nickname: \(nickname ?? "nil"), text: \(text ?? "nil"), dmToken: \(dmToken), timestamp: \(timestamp)")
+    func receiveReply(_ messageID: Data?, reactionTo _: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         guard let messageID else { fatalError("no msg id") }
 
         // Get codename using same approach as EventModelBuilder
@@ -125,8 +115,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         return msgCnt
     }
 
-    func receiveText(_ messageID: Data?, nickname: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, status _: Int64) -> Int64 {
-        print("[DMReceiver] receiveText called with nickname: \(nickname ?? "nil"), text: \(text ?? "nil"), dmToken: \(dmToken), timestamp: \(timestamp)")
+    func receiveText(_ messageID: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         guard let messageID else { fatalError("no msg id") }
 
         // Get codename using same approach as EventModelBuilder
@@ -151,79 +140,43 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         return msgCnt
     }
 
-    func updateSentStatus(_ uuid: Int64, messageID: Data?, timestamp: Int64, roundID: Int64, status: Int64) {
-        print("[DMReceiver] updateSentStatus called with uuid: \(uuid), messageID: \(messageID?.count ?? 0) bytes, timestamp: \(timestamp), roundID: \(roundID), status: \(status)")
-    }
+    func updateSentStatus(_: Int64, messageID _: Data?, timestamp _: Int64, roundID _: Int64, status _: Int64) {}
 
-    private func persistIncomingIfPossible(message: String, codename: String?, messageId: Data, ctx: SwiftDataActor? = nil, color: Int) {
-        let contextToUse = ctx ?? modelActor
-        guard let contextToUse else { return }
-
+    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int) {
+        guard let backgroundContext = modelActor else { return }
+        guard let partnerKey else { fatalError("partner key is not available") }
         let name = (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown"
+
         Task { @MainActor in
             do {
-                let chat = try fetchOrCreateDMChat(codename: name, ctx: contextToUse, pubKey: nil, dmToken: nil, color: color)
+                let chat = try fetchOrCreateDMChat(codename: name, ctx: backgroundContext, pubKey: partnerKey, dmToken: dmToken, color: color)
+
+                // Create or update Sender object
+                let senderId = partnerKey.base64EncodedString()
+                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
+                    predicate: #Predicate { $0.id == senderId }
+                )
+                let sender: MessageSenderModel
+                if let existingSender = try? backgroundContext.fetch(senderDescriptor).first {
+                    // Update existing sender's dmToken
+                    existingSender.dmToken = dmToken
+                    sender = existingSender
+                } else {
+                    // Create new sender
+                    sender = MessageSenderModel(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
+                }
 
                 // Check if sender's pubkey matches the pubkey of chat with id "<self>"
-                let isIncoming = !isSenderSelf(chat: chat, senderPubKey: nil, ctx: contextToUse)
+                let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderKey, ctx: backgroundContext)
                 let internalId = InternalIdGenerator.shared.next()
-                let msg = ChatMessageModel(message: message, isIncoming: isIncoming, chat: chat, id: messageId.base64EncodedString(), internalId: internalId)
+                let msg = ChatMessageModel(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
                 chat.messages.append(msg)
                 // Increment unread count for incoming messages after join time
                 if isIncoming && msg.timestamp > chat.joinedAt {
                     chat.unreadCount += 1
                 }
-                try contextToUse.save()
-                print("DMReceiver: ChatMessage(message: \"\(message)\", isIncoming: \(isIncoming), chat: \(chat.id), id: \(messageId.base64EncodedString()))")
-            } catch {
-                print("DMReceiver: Failed to save incoming message for \(name): \(error)")
-            }
-        }
-    }
-
-    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int) {
-        guard let backgroundContext = modelActor else { return }
-        let name = (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown"
-
-        Task { @MainActor in
-            do {
-                if let partnerKey {
-                    let chat = try fetchOrCreateDMChat(codename: name, ctx: backgroundContext, pubKey: partnerKey, dmToken: dmToken, color: color)
-                    print("DMReceiver: ChatMessage(message: \"\(message)\", isIncoming: \(chat.name != "<self>"), chat: \(chat.id), id: \(messageId.base64EncodedString()))")
-
-                    // Create or update Sender object
-                    let senderId = partnerKey.base64EncodedString()
-                    let senderDescriptor = FetchDescriptor<MessageSenderModel>(
-                        predicate: #Predicate { $0.id == senderId }
-                    )
-                    let sender: MessageSenderModel
-                    if let existingSender = try? backgroundContext.fetch(senderDescriptor).first {
-                        // Update existing sender's dmToken
-                        existingSender.dmToken = dmToken
-                        sender = existingSender
-                    } else {
-                        // Create new sender
-                        sender = MessageSenderModel(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
-                        print("DMReceiver: Created new Sender for \(name) with dmToken: \(dmToken)")
-                    }
-
-                    // Check if sender's pubkey matches the pubkey of chat with id "<self>"
-                    let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderKey, ctx: backgroundContext)
-                    let internalId = InternalIdGenerator.shared.next()
-                    let msg = ChatMessageModel(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
-                    chat.messages.append(msg)
-                    // Increment unread count for incoming messages after join time
-                    if isIncoming && msg.timestamp > chat.joinedAt {
-                        chat.unreadCount += 1
-                    }
-                    try backgroundContext.save()
-                } else {
-                    // Fallback if no partner key available
-                    persistIncomingIfPossible(message: message, codename: name, messageId: messageId, ctx: backgroundContext, color: color)
-                }
-            } catch {
-                print("DMReceiver: Failed to save incoming message for \(name): \(error)")
-            }
+                try backgroundContext.save()
+            } catch {}
         }
     }
 
