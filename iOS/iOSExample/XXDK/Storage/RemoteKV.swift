@@ -8,6 +8,8 @@ import Bindings
 import Kronos
 import OSLog
 
+private let base64Null = "null".data(using: .utf8)!.base64EncodedString()
+
 final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRemoteCallbackProtocol {
     let key: String
     var data: Data?
@@ -40,7 +42,7 @@ final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRe
     // Called by the Bindings RemoteKV when the key changes. Adjust the method name/signature
     // if the generated Swift interface differs.
     func callback(_: String?, old: Data?, new: Data?, opType _: Int8) {
-        if new!.base64EncodedString() == "bnVsbA==", old!.base64EncodedString() == "bnVsbA==" {
+        if new!.base64EncodedString() == base64Null, old!.base64EncodedString() == base64Null {
             return
         }
         // Decode the new data if available and store the decoded entry
