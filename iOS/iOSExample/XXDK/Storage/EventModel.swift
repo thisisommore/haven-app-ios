@@ -33,8 +33,6 @@ final class InternalIdGenerator {
 final class EventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
     private var r: EventModel
 
-    // Optional SwiftData container for the built EventModel
-    var modelContainer: ModelContainer?
     var modelActor: SwiftDataActor?
 
     // Allow late injection from the app so the EventModel can persist messages
@@ -165,7 +163,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         return newChat
     }
 
-    // Persist a message into SwiftData if modelContainer is set
+    // Persist a message into SwiftData if modelActor is set
     private func persistIncomingMessageIfPossible(
         channelId: String,
         channelName: String,
