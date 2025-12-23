@@ -129,27 +129,3 @@ public extension SwiftDataActor {
         self.init(modelContainer: container)
     }
 }
-
-/*
-
- // From synchronous context (like gomobile callbacks):
-
- let actor = SwiftDataActor(modelContainer: container)
-
- // Insert (blocking)
- let message = ChatMessage(...)
- actor.insert_(message)
-
- // Save (blocking, throws)
- try actor.save_()
-
- // Fetch (blocking, returns result, throws)
- let descriptor = FetchDescriptor<ChatMessage>(
-     predicate: #Predicate { $0.id == messageId }
- )
- let messages = try actor.fetch_(descriptor)
-
- // Delete (blocking)
- actor.delete_(message)
-
- */
