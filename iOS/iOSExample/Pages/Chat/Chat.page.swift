@@ -69,7 +69,7 @@ struct ChatView<T: XXDKP>: View {
             // Navigate to the new chat using the created chat object
             navigateToDMChat = dmChat
         } catch {
-            print("Failed to create DM chat: \(error)")
+            AppLogger.chat.error("Failed to create DM chat: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -163,7 +163,7 @@ struct ChatView<T: XXDKP>: View {
                                                 }
                                             }
                                         } catch {
-                                            print("Failed to mute user: \(error)")
+                                            AppLogger.channels.error("Failed to mute user: \(error.localizedDescription, privacy: .public)")
                                         }
                                     },
                                     onUnmute: { pubKey in
@@ -178,7 +178,7 @@ struct ChatView<T: XXDKP>: View {
                                                 }
                                             }
                                         } catch {
-                                            print("Failed to unmute user: \(error)")
+                                            AppLogger.channels.error("Failed to unmute user: \(error.localizedDescription, privacy: .public)")
                                         }
                                     },
                                     mutedUsers: mutedUsers,
@@ -321,7 +321,7 @@ struct ChatView<T: XXDKP>: View {
                             dismiss()
                         }
                     } catch {
-                        print("Failed to leave channel: \(error)")
+                        AppLogger.channels.error("Failed to leave channel: \(error.localizedDescription, privacy: .public)")
                     }
                 }
             }
@@ -333,7 +333,7 @@ struct ChatView<T: XXDKP>: View {
             do {
                 mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
             } catch {
-                print("Failed to fetch muted users: \(error)")
+                AppLogger.channels.error("Failed to fetch muted users: \(error.localizedDescription, privacy: .public)")
             }
             // Mark all incoming messages as read
             markMessagesAsRead()
@@ -346,7 +346,7 @@ struct ChatView<T: XXDKP>: View {
                 do {
                     mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
                 } catch {
-                    print("Failed to refresh muted users: \(error)")
+                    AppLogger.channels.error("Failed to refresh muted users: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }

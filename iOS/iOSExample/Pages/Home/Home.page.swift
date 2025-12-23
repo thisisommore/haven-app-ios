@@ -278,7 +278,7 @@ struct HomeView<T: XXDKP>: View {
         guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err),
               err == nil
         else {
-            print("[HomeView] BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown")")
+            AppLogger.home.error("BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown", privacy: .public)")
             withAnimation(.spring(response: 0.3)) {
                 toastMessage = "Failed to derive identity"
             }
@@ -299,7 +299,7 @@ struct HomeView<T: XXDKP>: View {
             }
             color = Int(colorStr, radix: 16) ?? 0xE97451
         } catch {
-            print("[HomeView] Failed to decode identity: \(error)")
+            AppLogger.home.error("Failed to decode identity: \(error.localizedDescription, privacy: .public)")
             withAnimation(.spring(response: 0.3)) {
                 toastMessage = "Failed to decode identity"
             }

@@ -24,9 +24,7 @@ extension XXDK {
 
         do {
         } catch {
-            print(
-                "SwiftData: Failed to delete all data at startup: \(error)"
-            )
+            AppLogger.storage.error("SwiftData: Failed to delete all data at startup: \(error.localizedDescription, privacy: .public)")
         }
 
         guard let sm else {
@@ -52,10 +50,7 @@ extension XXDK {
                 &err
             )
             if let err {
-                print(
-                    "ERROR: could not create new Cmix: "
-                        + err.localizedDescription
-                )
+                AppLogger.network.critical("could not create new Cmix: \(err.localizedDescription, privacy: .public)")
                 fatalError(
                     "could not create new Cmix: " + err.localizedDescription
                 )
@@ -74,7 +69,7 @@ extension XXDK {
             cmix = loadedCmix
         }
         if let err {
-            print("ERROR: could not load Cmix: " + err.localizedDescription)
+            AppLogger.network.critical("could not load Cmix: \(err.localizedDescription, privacy: .public)")
             fatalError("could not load Cmix: " + err.localizedDescription)
         }
     }
@@ -83,7 +78,7 @@ extension XXDK {
         lockTask()
         defer { unlockTask() }
         guard let cmix else {
-            print("ERROR: cmix is not available")
+            AppLogger.network.critical("cmix is not available")
             fatalError("cmix is not available")
         }
         await progress(.startingNetworkFollower)
@@ -92,7 +87,7 @@ extension XXDK {
             try cmix.startNetworkFollower(50000)
             cmix.wait(forNetwork: 10 * 60 * 1000)
         } catch {
-            print("ERROR: cannot start network: " + error.localizedDescription)
+            AppLogger.network.critical("cannot start network: \(error.localizedDescription, privacy: .public)")
             fatalError("cannot start network: " + error.localizedDescription)
         }
 
@@ -106,10 +101,7 @@ extension XXDK {
         do {
             certString = try String(contentsOfFile: certFilePath)
         } catch {
-            print(
-                "ERROR: Missing network certificate, please include a mainnet, testnet,or localnet certificate in the Resources folder: "
-                    + error.localizedDescription
-            )
+            AppLogger.network.critical("Missing network certificate: \(error.localizedDescription, privacy: .public)")
             fatalError(
                 "Missing network certificate, please include a mainnet, testnet,"
                     + "or localnet certificate in the Resources folder: "
@@ -124,10 +116,7 @@ extension XXDK {
             &err
         )
         if let err {
-            print(
-                "ERROR: DownloadAndverifySignedNdfWithUrl(\(url), \(certString)) error: "
-                    + err.localizedDescription
-            )
+            AppLogger.network.critical("DownloadAndVerifySignedNdfWithUrl failed: \(err.localizedDescription, privacy: .public)")
             fatalError(
                 "DownloadAndverifySignedNdfWithUrl(\(url), \(certString)) error: "
                     + err.localizedDescription

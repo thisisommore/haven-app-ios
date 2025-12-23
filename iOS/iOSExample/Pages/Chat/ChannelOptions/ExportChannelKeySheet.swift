@@ -131,7 +131,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                     onSuccess("Exported to File")
                     dismiss()
                 case let .failure(error):
-                    print("Failed to save file: \(error)")
+                    AppLogger.channels.error("Failed to save file: \(error.localizedDescription, privacy: .public)")
                     errorMessage = "Failed to save: \(error.localizedDescription)"
                 }
             }

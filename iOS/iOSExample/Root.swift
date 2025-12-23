@@ -163,9 +163,7 @@ struct DeepLinkHandler: ViewModifier {
             ),
             err == nil
         else {
-            print(
-                "[DeepLink] BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown")"
-            )
+            AppLogger.app.error("DeepLink: BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown", privacy: .public)")
             deepLinkError = "Failed to derive identity"
             return
         }
@@ -181,7 +179,7 @@ struct DeepLinkHandler: ViewModifier {
             }
             color = Int(colorStr, radix: 16) ?? 0xE97451
         } catch {
-            print("[DeepLink] Failed to decode identity: \(error)")
+            AppLogger.app.error("DeepLink: Failed to decode identity: \(error.localizedDescription, privacy: .public)")
             deepLinkError = "Failed to decode identity"
             return
         }

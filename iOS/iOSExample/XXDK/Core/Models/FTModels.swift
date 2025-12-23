@@ -16,7 +16,7 @@ class FileDownloadCallback: FtReceivedProgressCallback {
 
     func callback(payload: Data, fileData _: Data?, partTracker _: Any?, error: Error?) {
         if let error = error {
-            print("[FT] Download error for \(messageId): \(error.localizedDescription)")
+            AppLogger.fileTransfer.error("Download error for \(self.messageId, privacy: .public): \(error.localizedDescription, privacy: .public)")
             return
         }
 

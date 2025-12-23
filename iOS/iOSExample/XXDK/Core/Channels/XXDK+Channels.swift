@@ -25,11 +25,11 @@ public extension XXDK {
         try await Task.sleep(for: .seconds(20))
         guard let cmix else { throw MyError.runtimeError("no net") }
         guard let storageTagListener else {
-            print("ERROR: no storageTagListener")
+            AppLogger.channels.critical("no storageTagListener")
             fatalError("no storageTagListener")
         }
         guard let storageTagEntry = storageTagListener.data else {
-            print("ERROR: no storageTagListener data")
+            AppLogger.channels.critical("no storageTagListener data")
             fatalError("no storageTagListener data")
         }
         var err: NSError?
@@ -39,7 +39,7 @@ public extension XXDK {
 
         guard let noti = Bindings.BindingsLoadNotificationsDummy(cmixId, &err)
         else {
-            print("ERROR: notifications dummy was nil")
+            AppLogger.channels.critical("notifications dummy was nil")
             fatalError("notifications dummy was nil")
         }
         if let e = err {
@@ -299,7 +299,7 @@ public extension XXDK {
             try cm.isChannelAdmin(channelIdData, ret0_: &result)
             return result.boolValue
         } catch {
-            print("isChannelAdmin failed: \(error)")
+            AppLogger.channels.error("isChannelAdmin failed: \(error.localizedDescription, privacy: .public)")
             return false
         }
     }
@@ -369,7 +369,7 @@ public extension XXDK {
             try cm.muted(channelIdData, ret0_: &result)
             return result.boolValue
         } catch {
-            print("isMuted failed: \(error)")
+            AppLogger.channels.error("isMuted failed: \(error.localizedDescription, privacy: .public)")
             return false
         }
     }

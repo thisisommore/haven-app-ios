@@ -30,7 +30,7 @@ extension XXDK {
                 actor.insert(reaction)
                 try actor.save()
             } catch {
-                print("persistReaction failed: \(error)")
+                AppLogger.messaging.error("persistReaction failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -58,10 +58,10 @@ extension XXDK {
                 if let mid = report.messageID {
                 } else {}
             } catch {
-                print("Failed to decode ChannelSendReport: \(error)")
+                AppLogger.messaging.error("Failed to decode ChannelSendReport: \(error.localizedDescription, privacy: .public)")
             }
         } catch {
-            print("sendDM(channel) failed: \(error.localizedDescription)")
+            AppLogger.messaging.error("sendDM(channel) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -93,10 +93,10 @@ extension XXDK {
                 if let mid = report.messageID {
                 } else {}
             } catch {
-                print("Failed to decode ChannelSendReport (reply): \(error)")
+                AppLogger.messaging.error("Failed to decode ChannelSendReport (reply): \(error.localizedDescription, privacy: .public)")
             }
         } catch {
-            print("sendReply(channel) failed: \(error.localizedDescription)")
+            AppLogger.messaging.error("sendReply(channel) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -138,16 +138,16 @@ extension XXDK {
                     isMe: true
                 )
             } catch {
-                print("Failed to decode ChannelSendReport (reaction): \(error)")
+                AppLogger.messaging.error("Failed to decode ChannelSendReport (reaction): \(error.localizedDescription, privacy: .public)")
             }
         } catch {
-            print("sendReaction(channel) failed: \(error.localizedDescription)")
+            AppLogger.messaging.error("sendReaction(channel) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     func sendDM(msg: String, toPubKey: Data, partnerToken: Int32) {
         guard let DM else {
-            print("ERROR: DM not there")
+            AppLogger.messaging.critical("DM not there")
             fatalError("DM not there")
         }
         do {
@@ -179,10 +179,10 @@ extension XXDK {
 
                 } else {}
             } catch {
-                print("Failed to decode ChannelSendReport: \(error)")
+                AppLogger.messaging.error("Failed to decode ChannelSendReport: \(error.localizedDescription, privacy: .public)")
             }
         } catch {
-            print("ERROR: Unable to send: " + error.localizedDescription)
+            AppLogger.messaging.error("Unable to send: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -194,7 +194,7 @@ extension XXDK {
         replyToMessageIdB64: String
     ) {
         guard let DM else {
-            print("ERROR: DM not there")
+            AppLogger.messaging.critical("DM not there")
             fatalError("DM not there")
         }
         guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
@@ -215,9 +215,7 @@ extension XXDK {
                     from: reportData
                 )
                 if let mid = report.messageID {
-                    print(
-                        "DM sendReply messageID: \(mid.base64EncodedString())"
-                    )
+                    AppLogger.messaging.debug("DM sendReply messageID: \(mid.base64EncodedString(), privacy: .public)")
                     let chatId = toPubKey.base64EncodedString()
                     let _: String = {
                         if let actor = self.modelActor {
@@ -232,13 +230,13 @@ extension XXDK {
                     }()
 
                 } else {
-                    print("DM sendReply returned no messageID")
+                    AppLogger.messaging.warning("DM sendReply returned no messageID")
                 }
             } catch {
-                print("Failed to decode ChannelSendReport (DM reply): \(error)")
+                AppLogger.messaging.error("Failed to decode ChannelSendReport (DM reply): \(error.localizedDescription, privacy: .public)")
             }
         } catch {
-            print("ERROR: Unable to send reply: " + error.localizedDescription)
+            AppLogger.messaging.critical("Unable to send reply: \(error.localizedDescription, privacy: .public)")
             fatalError("Unable to send reply: " + error.localizedDescription)
         }
     }
@@ -251,7 +249,7 @@ extension XXDK {
         partnerToken: Int32
     ) {
         guard let DM else {
-            print("ERROR: DM not there")
+            AppLogger.messaging.critical("DM not there")
             fatalError("DM not there")
         }
         guard let targetMessageId = Data(base64Encoded: toMessageIdB64) else {
@@ -278,14 +276,10 @@ extension XXDK {
                     isMe: true
                 )
             } catch {
-                print(
-                    "Failed to decode ChannelSendReport (DM reaction): \(error)"
-                )
+                AppLogger.messaging.error("Failed to decode ChannelSendReport (DM reaction): \(error.localizedDescription, privacy: .public)")
             }
         } catch {
-            print(
-                "ERROR: Unable to send reaction: " + error.localizedDescription
-            )
+            AppLogger.messaging.critical("Unable to send reaction: \(error.localizedDescription, privacy: .public)")
             fatalError("Unable to send reaction: " + error.localizedDescription)
         }
     }
@@ -304,7 +298,7 @@ extension XXDK {
         do {
             try cm.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
         } catch {
-            print("deleteMessage failed: \(error.localizedDescription)")
+            AppLogger.messaging.error("deleteMessage failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

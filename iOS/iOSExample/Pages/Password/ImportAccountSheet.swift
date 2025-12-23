@@ -172,7 +172,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
             navigation.path.append(Destination.landing)
 
         } catch {
-            print("Import failed: \(error)")
+            AppLogger.identity.error("Import failed: \(error.localizedDescription, privacy: .public)")
             errorMessage = error.localizedDescription
             showError = true
             isImporting = false

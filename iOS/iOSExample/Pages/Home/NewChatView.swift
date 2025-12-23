@@ -171,7 +171,7 @@ struct NewChatView<T: XXDKP>: View {
             prettyPrint = nil
             dismiss()
         } catch {
-            print("Failed to join channel: \(error)")
+            AppLogger.channels.error("Failed to join channel: \(error.localizedDescription, privacy: .public)")
             errorMessage =
                 "Failed to join channel: \(error.localizedDescription)"
             channelData = nil

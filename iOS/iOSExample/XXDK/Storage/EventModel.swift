@@ -261,7 +261,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             try modelActor?.save()
             return msg.internalId
         } catch {
-            print("persist msg error \(error)")
+            AppLogger.storage.critical("persist msg error: \(error.localizedDescription, privacy: .public)")
             fatalError(
                 error.localizedDescription
             )
@@ -475,7 +475,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
             try actor.save()
         } catch {
-            print("EventModel: Failed to delete reaction: \(error)")
+            AppLogger.storage.error("EventModel: Failed to delete reaction: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -722,7 +722,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
         } catch {
-            print("EventModel: Failed to delete message/reaction: \(error)")
+            AppLogger.storage.error("EventModel: Failed to delete message/reaction: \(error.localizedDescription, privacy: .public)")
         }
     }
 

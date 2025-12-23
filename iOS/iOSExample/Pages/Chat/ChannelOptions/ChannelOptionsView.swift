@@ -100,7 +100,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                         try xxdk.disableDirectMessages(channelId: channelId)
                                     }
                                 } catch {
-                                    print("Failed to toggle DM: \(error)")
+                                    AppLogger.channels.error("Failed to toggle DM: \(error.localizedDescription, privacy: .public)")
                                     isDMEnabled = oldValue
                                 }
                             }
@@ -151,7 +151,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     do {
                         isDMEnabled = try xxdk.areDMsEnabled(channelId: channelId)
                     } catch {
-                        print("Failed to fetch DM status: \(error)")
+                        AppLogger.channels.error("Failed to fetch DM status: \(error.localizedDescription, privacy: .public)")
                         isDMEnabled = false
                     }
                     do {
@@ -159,17 +159,17 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         shareURL = shareData.url
                         sharePassword = shareData.password
                     } catch {
-                        print("Failed to fetch share URL: \(error)")
+                        AppLogger.channels.error("Failed to fetch share URL: \(error.localizedDescription, privacy: .public)")
                     }
                     do {
                         mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
                     } catch {
-                        print("Failed to fetch muted users: \(error)")
+                        AppLogger.channels.error("Failed to fetch muted users: \(error.localizedDescription, privacy: .public)")
                     }
                     do {
                         channelNickname = try xxdk.getChannelNickname(channelId: channelId)
                     } catch {
-                        print("Failed to fetch channel nickname: \(error)")
+                        AppLogger.channels.error("Failed to fetch channel nickname: \(error.localizedDescription, privacy: .public)")
                     }
                 }
 
@@ -214,7 +214,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                             }
                                         }
                                     } catch {
-                                        print("Failed to unmute user: \(error)")
+                                        AppLogger.channels.error("Failed to unmute user: \(error.localizedDescription, privacy: .public)")
                                     }
                                 }
                             }
@@ -371,7 +371,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     do {
                         mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
                     } catch {
-                        print("Failed to refresh muted users: \(error)")
+                        AppLogger.channels.error("Failed to refresh muted users: \(error.localizedDescription, privacy: .public)")
                     }
                 }
             }
@@ -395,7 +395,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 }
             }
         } catch {
-            print("Failed to save nickname: \(error)")
+            AppLogger.channels.error("Failed to save nickname: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

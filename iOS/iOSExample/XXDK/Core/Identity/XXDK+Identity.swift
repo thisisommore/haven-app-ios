@@ -13,7 +13,7 @@ extension XXDK {
         defer { unlockTask() }
         var err: NSError?
         guard let cmix else {
-            print("ERROR: cmix is not available")
+            AppLogger.identity.critical("cmix is not available")
             fatalError("cmix is not available")
         }
 
@@ -24,7 +24,7 @@ extension XXDK {
             do {
                 try cmix.ekvSet("MyPrivateIdentity", value: _privateIdentity)
             } catch {
-                print("ERROR: could not set ekv: " + error.localizedDescription)
+                AppLogger.identity.critical("could not set ekv: \(error.localizedDescription, privacy: .public)")
                 fatalError("could not set ekv: " + error.localizedDescription)
             }
             privateIdentity = _privateIdentity
@@ -32,7 +32,7 @@ extension XXDK {
             do {
                 privateIdentity = try cmix.ekvGet("MyPrivateIdentity")
             } catch {
-                print("ERROR: could not set ekv: " + error.localizedDescription)
+                AppLogger.identity.critical("could not get ekv: \(error.localizedDescription, privacy: .public)")
                 fatalError("could not set ekv: " + error.localizedDescription)
             }
         }
@@ -43,10 +43,7 @@ extension XXDK {
             &err
         )
         if let err {
-            print(
-                "ERROR: could not derive public identity: "
-                    + err.localizedDescription
-            )
+            AppLogger.identity.critical("could not derive public identity: \(err.localizedDescription, privacy: .public)")
             fatalError(
                 "could not derive public identity: " + err.localizedDescription
             )
@@ -64,9 +61,7 @@ extension XXDK {
                     do { try cmix.ekvSet("MyCodename", value: nameData) } catch {}
                 }
             } catch {
-                print(
-                    "failed to decode public identity json: \(error.localizedDescription)"
-                )
+                AppLogger.identity.error("failed to decode public identity json: \(error.localizedDescription, privacy: .public)")
             }
         }
 
@@ -77,10 +72,7 @@ extension XXDK {
             &err
         )
         if let err {
-            print(
-                "ERROR: could not load notifications: "
-                    + err.localizedDescription
-            )
+            AppLogger.identity.critical("could not load notifications: \(err.localizedDescription, privacy: .public)")
             fatalError(
                 "could not load notifications: " + err.localizedDescription
             )
@@ -100,9 +92,7 @@ extension XXDK {
         )
         DM = dmClient
         if let err {
-            print(
-                "ERROR: could not load dm client: " + err.localizedDescription
-            )
+            AppLogger.identity.critical("could not load dm client: \(err.localizedDescription, privacy: .public)")
             fatalError("could not load dm client: " + err.localizedDescription)
         }
 
@@ -121,7 +111,7 @@ extension XXDK {
                 localEvents: true
             )
         } catch {
-            print("ERROR: failed to set storageTagListener \(error)")
+            AppLogger.identity.critical("failed to set storageTagListener: \(error.localizedDescription, privacy: .public)")
             fatalError("failed to set storageTagListener \(error)")
         }
 
@@ -141,7 +131,7 @@ extension XXDK {
                     &err
                 )
             else {
-                print("ERROR: BindingsLoadNotificationsDummy returned nil")
+                AppLogger.identity.critical("BindingsLoadNotificationsDummy returned nil")
                 fatalError("BindingsLoadNotificationsDummy returned nil")
             }
 
@@ -165,7 +155,7 @@ extension XXDK {
                 nil,
                 &e2eErr
             ) else {
-                print("[FT] ERROR: Failed to create E2e: \(e2eErr?.localizedDescription ?? "unknown")")
+                AppLogger.fileTransfer.critical("Failed to create E2e: \(e2eErr?.localizedDescription ?? "unknown", privacy: .public)")
                 throw e2eErr ?? MyError.runtimeError("[FT] Failed to create E2e")
             }
             e2e = e2eObj
@@ -190,7 +180,7 @@ extension XXDK {
                         &err
                     )
                 else {
-                    print("ERROR: no cm")
+                    AppLogger.identity.critical("no cm")
                     fatalError("no cm")
                 }
                 channelsManager = cm
@@ -242,19 +232,19 @@ extension XXDK {
         }
 
         guard let codename, let DM else {
-            print("ERROR: codename/DM/modelContainer not there")
+            AppLogger.identity.critical("codename/DM/modelContainer not there")
             fatalError("codename/DM/modelContainer not there")
         }
         if !codename.isEmpty {
             guard let selfPubKeyData = DM.getPublicKey() else {
-                print("ERROR: self pub key data is nil")
+                AppLogger.identity.critical("self pub key data is nil")
                 fatalError("self pub key data is nil")
             }
             let selfPubKeyB64 = selfPubKeyData.base64EncodedString()
             do {
                 try await MainActor.run {
                     guard let actor = self.modelActor else {
-                        print("ERROR: modelActor not available")
+                        AppLogger.identity.error("modelActor not available")
                         return
                     }
                     let descriptor = FetchDescriptor<ChatModel>(
@@ -276,9 +266,7 @@ extension XXDK {
                     }
                 }
             } catch {
-                print(
-                    "HomeView: Failed to create self chat for \(codename): \(error)"
-                )
+                AppLogger.home.error("Failed to create self chat for \(codename, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         }
         do {
@@ -286,7 +274,7 @@ extension XXDK {
             let channelId = cd.channelId ?? "xxGeneralChat"
             try await MainActor.run {
                 guard let actor = self.modelActor else {
-                    print("ERROR: modelActor not available")
+                    AppLogger.identity.error("modelActor not available")
                     return
                 }
                 let check = FetchDescriptor<ChatModel>(
@@ -300,9 +288,7 @@ extension XXDK {
                 }
             }
         } catch {
-            print(
-                "HomeView: Failed to ensure initial channel xxGeneralChat: \(error)"
-            )
+            AppLogger.home.error("Failed to ensure initial channel xxGeneralChat: \(error.localizedDescription, privacy: .public)")
         }
 
         sm!.isSetupComplete = true
@@ -313,7 +299,7 @@ extension XXDK {
     /// Generate multiple channel identities
     func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity] {
         guard let cmix else {
-            print("ERROR: cmix is not available")
+            AppLogger.identity.error("cmix is not available")
             return []
         }
 
@@ -327,9 +313,9 @@ extension XXDK {
             )
 
             guard privateIdentity != nil else {
-                print("ERROR: Failed to generate private identity")
+                AppLogger.identity.error("Failed to generate private identity")
                 if let error = err {
-                    print("Error: \(error.localizedDescription)")
+                    AppLogger.identity.error("Error: \(error.localizedDescription, privacy: .public)")
                 }
                 continue
             }
@@ -347,9 +333,9 @@ extension XXDK {
                 )
 
             guard publicIdentity != nil else {
-                print("ERROR: Failed to derive public identity")
+                AppLogger.identity.error("Failed to derive public identity")
                 if let error = err {
-                    print("Error: \(error.localizedDescription)")
+                    AppLogger.identity.error("Error: \(error.localizedDescription, privacy: .public)")
                 }
                 continue
             }
@@ -373,9 +359,7 @@ extension XXDK {
                 identities.append(generatedIdentity)
 
             } catch {
-                print(
-                    "ERROR: Failed to decode identity JSON: \(error.localizedDescription)"
-                )
+                AppLogger.identity.error("Failed to decode identity JSON: \(error.localizedDescription, privacy: .public)")
             }
         }
 

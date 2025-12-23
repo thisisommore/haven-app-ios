@@ -57,7 +57,7 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                     self.state = .uploading(progress: progressPercent, fileName: self.selectedFileName ?? "File")
                 }
             } catch {
-                print("[FT] Failed to decode progress: \(error)")
+                AppLogger.fileTransfer.error("Failed to decode progress: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -80,7 +80,7 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
 
     func uploadAndSend<T: XXDKP>(xxdk: T, channelId: String) {
         guard let fileData = selectedFileData else {
-            print("[FT] ERROR: No file selected")
+            AppLogger.fileTransfer.error("No file selected")
             state = .failed(error: "No file selected")
             return
         }
@@ -117,7 +117,7 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                 // Wait for file link via notification (handled in handleFileLinkReceived)
 
             } catch {
-                print("[FT] ERROR: \(error.localizedDescription)")
+                AppLogger.fileTransfer.error("Upload failed: \(error.localizedDescription, privacy: .public)")
                 await MainActor.run {
                     self.state = .failed(error: error.localizedDescription)
                     self.cleanupObserver()
@@ -183,7 +183,7 @@ class FileTransferManager: ObservableObject, FtSentProgressCallback {
                     }
                 }
             } catch {
-                print("[FT] ERROR sending file: \(error.localizedDescription)")
+                AppLogger.fileTransfer.error("Sending file failed: \(error.localizedDescription, privacy: .public)")
                 await MainActor.run {
                     self.state = .failed(error: error.localizedDescription)
                 }
@@ -452,7 +452,7 @@ struct FilePickerSheet: View {
                 }
                 isPresented = false
             case let .failure(error):
-                print("File import failed: \(error)")
+                AppLogger.fileTransfer.error("File import failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }

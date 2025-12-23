@@ -103,7 +103,7 @@ struct LogHeaderBar: View {
             logFileURL = fileURL
             showShareSheet = true
         } catch {
-            print("Failed to export logs: \(error)")
+            AppLogger.app.error("Failed to export logs: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

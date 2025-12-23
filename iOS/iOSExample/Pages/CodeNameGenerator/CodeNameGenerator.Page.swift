@@ -101,7 +101,7 @@ struct CodenameGeneratorView<T: XXDKP>: View {
 
             withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
                 if newGeneratedIdentities.isEmpty {
-                    print("ERROR: No identities generated")
+                    AppLogger.identity.error("No identities generated")
                     // Could show an error message to the user here
                 } else {
                     codenames = newGeneratedIdentities.enumerated().map { index, identity in
@@ -119,7 +119,7 @@ struct CodenameGeneratorView<T: XXDKP>: View {
 
         // Find the corresponding identity from generatedIdentities
         guard let identity = generatedIdentities.first(where: { $0.codename == selected.text }) else {
-            print("ERROR: Could not find identity for codename: \(selected.text)")
+            AppLogger.identity.error("Could not find identity for codename: \(selected.text, privacy: .public)")
             return
         }
 

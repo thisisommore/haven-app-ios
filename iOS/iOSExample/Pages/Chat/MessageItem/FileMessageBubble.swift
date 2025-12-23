@@ -78,7 +78,7 @@ struct FileMessageBubble: View {
             try fileData.write(to: fileURL)
             previewURL = fileURL
         } catch {
-            print("Failed to write file for preview: \(error)")
+            AppLogger.fileTransfer.error("Failed to write file for preview: \(error.localizedDescription, privacy: .public)")
         }
     }
 

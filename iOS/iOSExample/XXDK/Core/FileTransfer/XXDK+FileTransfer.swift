@@ -10,7 +10,7 @@ public extension XXDK {
     /// Initialize channels file transfer
     func initChannelsFileTransfer(paramsJson _: Data? = nil) throws {
         guard channelsFileTransfer != nil else {
-            print("[FT] ERROR: File transfer not initialized")
+            AppLogger.fileTransfer.error("File transfer not initialized")
             throw MyError.runtimeError("File transfer not available")
         }
     }
@@ -23,7 +23,7 @@ public extension XXDK {
         periodMS: Int
     ) throws -> Data {
         guard let ft = channelsFileTransfer else {
-            print("[FT] ERROR: File transfer not initialized")
+            AppLogger.fileTransfer.error("File transfer not initialized")
             throw MyError.runtimeError("File transfer not initialized")
         }
         return try ft.upload(fileData: fileData, retry: retry, progressCB: progressCB, periodMS: periodMS)
@@ -45,7 +45,7 @@ public extension XXDK {
         let cleanChannelId = channelId.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let channelIdData = Data(base64Encoded: cleanChannelId) else {
-            print("[FT] ERROR: Failed to decode channelId base64: \(cleanChannelId)")
+            AppLogger.fileTransfer.error("Failed to decode channelId base64: \(cleanChannelId, privacy: .public)")
             throw MyError.runtimeError("Invalid channel ID format")
         }
 
@@ -120,7 +120,7 @@ public extension XXDK {
                 let callback = FileDownloadCallback(messageId: messageId)
                 _ = try downloadFile(fileInfoJSON: fileInfoJSON, progressCB: callback, periodMS: 500)
             } catch {
-                print("[FT] Download failed: \(error.localizedDescription)")
+                AppLogger.fileTransfer.error("Download failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
