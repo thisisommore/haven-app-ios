@@ -76,71 +76,28 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
     @State private var isAlreadyJoined = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                Image(systemName: link.level == "Secret" ? "lock.circle.fill" : "number.circle.fill")
-                    .foregroundStyle(Color.haven)
-                    .font(.title)
+        InviteLinkPreviewContainer(isIncoming: isIncoming, timestamp: timestamp) {
+            InviteLinkHeader(
+                icon: link.level == "Secret" ? "lock.circle.fill" : "number.circle.fill",
+                title: link.name,
+                subtitle: link.description
+            )
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(link.name)
-                        .font(.headline)
-                        .foregroundStyle(Color.primary)
-
-                    if !link.description.isEmpty {
-                        Text(link.description)
-                            .font(.subheadline)
-                            .foregroundStyle(Color.secondary)
-                            .lineLimit(2)
-                    }
-                }
-
-                Spacer()
-            }
-
-            Button(action: loadChannel) {
-                HStack(spacing: 6) {
-                    if isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
-                    Text(isAlreadyJoined ? "Joined" : (isLoading ? "Loading..." : "Join Channel"))
-                        .font(.subheadline.weight(.semibold))
-                }
-                .foregroundStyle(isAlreadyJoined ? Color.secondary : Color.haven)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(isAlreadyJoined ? Color.secondary.opacity(0.15) : Color.haven.opacity(0.15))
-                .cornerRadius(8)
-            }
-            .disabled(isLoading || isAlreadyJoined)
+            InviteLinkButton(
+                isLoading: isLoading,
+                isCompleted: isAlreadyJoined,
+                completedText: "Joined",
+                actionText: "Join Channel",
+                errorMessage: errorMessage,
+                action: loadChannel
+            )
 
             if let error = errorMessage {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
             }
-
-            HStack {
-                Spacer()
-                if !timestamp.isEmpty {
-                    Text(timestamp)
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color.secondary)
-                }
-            }
         }
-        .padding(10)
-        .background(Color.appBackground)
-        .overlay(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 0,
-                bottomLeadingRadius: isIncoming ? 0 : 16,
-                bottomTrailingRadius: isIncoming ? 16 : 0,
-                topTrailingRadius: 0
-            )
-            .strokeBorder(Color.messageBubble, lineWidth: 1)
-        )
         .sheet(isPresented: $showPasswordSheet) {
             PasswordInputView(
                 url: link.url,

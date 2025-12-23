@@ -23,6 +23,7 @@ struct MessageBubble<T: XXDKP>: View {
     @Binding var shouldTriggerReply: Bool
     @State private var markdown: String = ""
     @State private var parsedChannelLink: ParsedChannelLink?
+    @State private var parsedDMLink: ParsedDMLink?
     @State private var isLinkExpanded: Bool = false
     @State private var showTextSelection: Bool = false
     var onDM: ((String, Int32, Data, Int) -> Void)?
@@ -85,6 +86,8 @@ struct MessageBubble<T: XXDKP>: View {
 
         // Parse channel link if present
         _parsedChannelLink = State(initialValue: ParsedChannelLink.parse(from: text))
+        // Parse DM link if present
+        _parsedDMLink = State(initialValue: ParsedDMLink.parse(from: text))
     }
 
     private var underlinedMarkdown: AttributedString {
@@ -170,6 +173,57 @@ struct MessageBubble<T: XXDKP>: View {
     }
 
     @ViewBuilder
+    private func dmLinkContent(link: ParsedDMLink) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Colored section with message
+            VStack(alignment: .leading, spacing: 4) {
+                if isIncoming && isFirstInGroup {
+                    MessageSender(
+                        isIncoming: isIncoming,
+                        sender: sender
+                    )
+                }
+
+                HStack(alignment: .top, spacing: 4) {
+                    Text(underlinedMarkdown)
+                        .font(.system(size: 16))
+                        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+                        .tint(isIncoming ? .blue : .white)
+                        .lineLimit(isLinkExpanded ? nil : 1)
+
+                    if !isLinkExpanded {
+                        Button {
+                            withAnimation { isLinkExpanded = true }
+                        } label: {
+                            Text("expand")
+                                .font(.system(size: 14))
+                                .foregroundStyle(isIncoming ? Color.messageText.opacity(0.7) : Color.white.opacity(0.7))
+                                .underline()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation { isLinkExpanded.toggle() }
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
+            .background(isIncoming ? Color.messageBubble : Color.haven)
+
+            // White section with DM preview (includes timestamp)
+            DMInviteLinkPreview<T>(
+                link: link,
+                isIncoming: isIncoming,
+                timestamp: showTimestamp ? timestamp : ""
+            )
+        }
+        .clipShape(bubbleShape)
+    }
+
+    @ViewBuilder
     private var regularMessageContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             if isIncoming && isFirstInGroup {
@@ -215,6 +269,8 @@ struct MessageBubble<T: XXDKP>: View {
         Group {
             if let link = parsedChannelLink {
                 channelLinkContent(link: link)
+            } else if let dmLink = parsedDMLink {
+                dmLinkContent(link: dmLink)
             } else {
                 regularMessageContent
             }
