@@ -278,7 +278,9 @@ extension View {
             return c
         }()
         
-        return self
+        return NavigationStack {
+            self
+        }
             .modelContainer(container)
             .environmentObject(SwiftDataActor(previewModelContainer: container))
             .environmentObject(XXDKMock())

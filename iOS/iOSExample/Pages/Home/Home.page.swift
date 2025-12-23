@@ -350,8 +350,6 @@ struct HomeView<T: XXDKP>: View {
 }
 
 #Preview {
-    NavigationStack {
-        HomeView<XXDKMock>()
-            .mock()
-    }
+    HomeView<XXDKMock>()
+        .mock()
 }
