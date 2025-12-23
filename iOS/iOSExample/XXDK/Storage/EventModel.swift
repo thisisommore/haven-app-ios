@@ -67,56 +67,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
     // MARK: - Helper Methods
 
-    /// Parse identity from pubKey and codeset, returning codename and color
-    private func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
-        var err: NSError?
-        guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err) else {
-            throw err ?? EventModelError.identityConstructionFailed
-        }
-        let identity = try Parser.decodeIdentity(from: identityData)
-        var colorStr = identity.color
-        if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
-            colorStr.removeFirst(2)
-        }
-        return (identity.codename, Int(colorStr, radix: 16) ?? 0)
-    }
-
-    /// Fetch or create a sender, updating dmToken and nickname if exists
-    private func upsertSender(
-        pubKey: Data,
-        codename: String,
-        nickname: String?,
-        dmToken: Int32,
-        color: Int
-    ) throws -> MessageSenderModel {
-        guard let actor = modelActor else {
-            throw EventModelError.modelActorNotAvailable
-        }
-        let senderId = pubKey.base64EncodedString()
-        let descriptor = FetchDescriptor<MessageSenderModel>(predicate: #Predicate { $0.id == senderId })
-
-        if let existing = try actor.fetch(descriptor).first {
-            existing.dmToken = dmToken
-            if let nickname = nickname, !nickname.isEmpty {
-                existing.nickname = nickname
-            }
-            try actor.save()
-            return existing
-        }
-
-        let sender = MessageSenderModel(
-            id: senderId,
-            pubkey: pubKey,
-            codename: codename,
-            nickname: nickname,
-            dmToken: dmToken,
-            color: color
-        )
-        actor.insert(sender)
-        try actor.save()
-        return sender
-    }
-
     func update(
         fromMessageID _: Data?,
         messageUpdateInfoJSON _: Data?,
@@ -197,46 +147,24 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 channelName: channelName
             )
 
-            // Create or update Sender object if we have codename and pubkey
-            var sender: MessageSenderModel? = nil
-            if let codename = senderCodename, let pubKey = senderPubKey {
-                sender = try upsertSender(
-                    pubKey: pubKey,
-                    codename: codename,
-                    nickname: nickname,
-                    dmToken: dmToken ?? 0,
-                    color: color
-                )
-            }
-
-            let msg: ChatMessageModel
-            if let mid = messageIdB64, !mid.isEmpty {
-                // Check if sender's pubkey matches the pubkey of chat with id "<self>"
-                let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderPubKey, ctx: actor)
-                let internalId = InternalIdGenerator.shared.next()
-                msg = ChatMessageModel(
-                    message: text,
-                    isIncoming: isIncoming,
-                    chat: chat,
-                    sender: sender,
-                    id: mid,
-                    internalId: internalId,
-                    replyTo: replyTo,
-                    timestamp: timestamp
-                )
-
-                modelActor?.insert(msg)
-
-            } else {
+            guard let mid = messageIdB64, !mid.isEmpty else {
                 fatalError("no message id")
             }
 
-            chat.messages.append(msg)
-            // Increment unread count for incoming messages after join time
-            if msg.isIncoming && msg.timestamp > chat.joinedAt {
-                chat.unreadCount += 1
-            }
-            try modelActor?.save()
+            let msg = try ReceiverHelpers.persistIncomingMessage(
+                ctx: actor,
+                chat: chat,
+                text: text,
+                messageId: mid,
+                senderPubKey: senderPubKey,
+                senderCodename: senderCodename,
+                nickname: nickname,
+                dmToken: dmToken ?? 0,
+                color: color,
+                replyTo: replyTo,
+                timestamp: timestamp
+            )
+
             return msg.internalId
         } catch {
             AppLogger.storage.critical("persist msg error: \(error.localizedDescription, privacy: .public)")
@@ -282,7 +210,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         do {
-            let (codename, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
+            let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
             if let decodedText = decodeMessage(messageTextB64) {
                 return persistIncomingMessageIfPossible(
@@ -335,11 +263,12 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 fatalError("no modelActor")
             }
 
-            let (codename, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
+            let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
 
             var sender: MessageSenderModel? = nil
             if let pubKey = pubKey {
-                sender = try upsertSender(
+                sender = try ReceiverHelpers.upsertSender(
+                    ctx: actor,
                     pubKey: pubKey,
                     codename: codename,
                     nickname: nickname,
@@ -410,7 +339,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         let nick: String
         let color: Int
         do {
-            (nick, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
+            (nick, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
         } catch {
             fatalError("\(error)")
         }
@@ -701,7 +630,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
         do {
             let fileInfo = try Parser.decodeFileInfo(from: textData)
-            let (codename, color) = try parseIdentity(pubKey: pubKey, codeset: codeset)
+            let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
             let messageIdB64 = messageID?.base64EncodedString() ?? ""
 
@@ -714,7 +643,8 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             // Get or create sender
             var sender: MessageSenderModel? = nil
             if let pubKey = pubKey {
-                sender = try upsertSender(
+                sender = try ReceiverHelpers.upsertSender(
+                    ctx: actor,
                     pubKey: pubKey,
                     codename: codename,
                     nickname: nil,
@@ -724,7 +654,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
             // Create file message
-            let isIncoming = !isSenderSelf(chat: chat, senderPubKey: pubKey, ctx: actor)
+            let isIncoming = !ReceiverHelpers.isSenderSelf(senderPubKey: pubKey, ctx: actor)
             let internalId = InternalIdGenerator.shared.next()
 
             // Try to get cached file data
@@ -771,16 +701,5 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         } catch {
             return 0
         }
-    }
-
-    private func isSenderSelf(chat _: ChatModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
-        // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey
-        let selfChatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == "<self>" })
-        if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
-            guard let senderPubKey = senderPubKey else { return false }
-            return Data(base64Encoded: selfChat.id) == senderPubKey
-        }
-
-        return false
     }
 }

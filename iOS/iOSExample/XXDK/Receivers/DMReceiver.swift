@@ -57,19 +57,10 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         guard let text else { fatalError("no text") }
         guard let decodedMessage = decodeMessage(text.base64EncodedString()) else { fatalError("decode failed") }
 
-        // Get codename using same approach as EventModelBuilder
-        var err: NSError?
-        let identityData = Bindings.BindingsConstructIdentity(partnerKey, codeset, &err)
         let codename: String
         let color: Int
         do {
-            let identity = try Parser.decodeIdentity(from: identityData!)
-            codename = identity.codename
-            var _color: String = identity.color
-            if _color.hasPrefix("0x") || _color.hasPrefix("0X") {
-                _color.removeFirst(2)
-            }
-            color = Int(_color, radix: 16)!
+            (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: partnerKey, codeset: codeset)
         } catch {
             fatalError("\(error)")
         }
@@ -90,21 +81,11 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     func receiveReply(_ messageID: Data?, reactionTo _: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         guard let messageID else { fatalError("no msg id") }
 
-        // Get codename using same approach as EventModelBuilder
-        var err: NSError?
-        let identityData = Bindings.BindingsConstructIdentity(partnerKey, codeset, &err)
         let codename: String
         let color: Int
         do {
-            let identity = try Parser.decodeIdentity(from: identityData!)
-            codename = identity.codename
-            var _color: String = identity.color
-            if _color.hasPrefix("0x") || _color.hasPrefix("0X") {
-                _color.removeFirst(2)
-            }
-            color = Int(_color, radix: 16)!
+            (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: partnerKey, codeset: codeset)
         } catch {
-            // TODO:
             fatalError("\(error)")
         }
 
@@ -116,19 +97,10 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     func receiveText(_ messageID: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         guard let messageID else { fatalError("no msg id") }
 
-        // Get codename using same approach as EventModelBuilder
-        var err: NSError?
-        let identityData = Bindings.BindingsConstructIdentity(partnerKey, codeset, &err)
         let codename: String
         let color: Int
         do {
-            let identity = try Parser.decodeIdentity(from: identityData!)
-            codename = identity.codename
-            var _color: String = identity.color
-            if _color.hasPrefix("0x") || _color.hasPrefix("0X") {
-                _color.removeFirst(2)
-            }
-            color = Int(_color, radix: 16)!
+            (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: partnerKey, codeset: codeset)
         } catch {
             fatalError("\(error)")
         }
@@ -140,7 +112,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
 
     func updateSentStatus(_: Int64, messageID _: Data?, timestamp _: Int64, roundID _: Int64, status _: Int64) {}
 
-    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int, internalId: Int64) {
+    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int, internalId _: Int64) {
         guard let backgroundContext = modelActor else { return }
         guard let partnerKey else { fatalError("partner key is not available") }
         let name = (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown"
@@ -149,30 +121,16 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             do {
                 let chat = try fetchOrCreateDMChat(codename: name, ctx: backgroundContext, pubKey: partnerKey, dmToken: dmToken, color: color)
 
-                // Create or update Sender object
-                let senderId = partnerKey.base64EncodedString()
-                let senderDescriptor = FetchDescriptor<MessageSenderModel>(
-                    predicate: #Predicate { $0.id == senderId }
+                _ = try ReceiverHelpers.persistIncomingMessage(
+                    ctx: backgroundContext,
+                    chat: chat,
+                    text: message,
+                    messageId: messageId.base64EncodedString(),
+                    senderPubKey: senderKey,
+                    senderCodename: name,
+                    dmToken: dmToken,
+                    color: color
                 )
-                let sender: MessageSenderModel
-                if let existingSender = try? backgroundContext.fetch(senderDescriptor).first {
-                    // Update existing sender's dmToken
-                    existingSender.dmToken = dmToken
-                    sender = existingSender
-                } else {
-                    // Create new sender
-                    sender = MessageSenderModel(id: senderId, pubkey: partnerKey, codename: name, dmToken: dmToken, color: color)
-                }
-
-                // Check if sender's pubkey matches the pubkey of chat with id "<self>"
-                let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderKey, ctx: backgroundContext)
-                let msg = ChatMessageModel(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
-                chat.messages.append(msg)
-                // Increment unread count for incoming messages after join time
-                if isIncoming && msg.timestamp > chat.joinedAt {
-                    chat.unreadCount += 1
-                }
-                try backgroundContext.save()
             } catch {}
         }
     }
@@ -199,16 +157,5 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
                 throw MyError.runtimeError("pubkey is required to create chat")
             }
         }
-    }
-
-    private func isSenderSelf(chat _: ChatModel, senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
-        // Check if there's a chat with id "<self>" and compare its pubkey with sender's pubkey
-        let selfChatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == "<self>" })
-        if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
-            guard let senderPubKey = senderPubKey else { return false }
-            return Data(base64Encoded: selfChat.id) == senderPubKey
-        }
-
-        return false
     }
 }
