@@ -36,7 +36,6 @@ struct ReceivedMessage: Identifiable {
 
 class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings.BindingsDmCallbacksProtocol {
     var modelActor: SwiftDataActor?
-    private var msgCnt: Int64 = 0
     func eventUpdate(_: Int64, jsonData _: Data?) {}
 
     func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
@@ -75,18 +74,17 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             fatalError("\(error)")
         }
 
-        persistIncoming(message: decodedMessage, codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color)
+        let internalId = InternalIdGenerator.shared.next()
+        persistIncoming(message: decodedMessage, codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId)
         // Note: this should be a UUID in your database so
         // you can uniquely identify the message.
-        msgCnt += 1
-        return msgCnt
+        return internalId
     }
 
     func receiveReaction(_: Data?, reactionTo _: Data?, nickname _: String?, reaction _: String?, partnerKey _: Data?, senderKey _: Data?, dmToken _: Int32, codeset _: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         // Note: this should be a UUID in your database so
         // you can uniquely identify the message.
-        msgCnt += 1
-        return msgCnt
+        return InternalIdGenerator.shared.next()
     }
 
     func receiveReply(_ messageID: Data?, reactionTo _: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
@@ -110,9 +108,9 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             fatalError("\(error)")
         }
 
-        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color)
-        msgCnt += 1
-        return msgCnt
+        let internalId = InternalIdGenerator.shared.next()
+        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId)
+        return internalId
     }
 
     func receiveText(_ messageID: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
@@ -135,14 +133,14 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             fatalError("\(error)")
         }
 
-        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color)
-        msgCnt += 1
-        return msgCnt
+        let internalId = InternalIdGenerator.shared.next()
+        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId)
+        return internalId
     }
 
     func updateSentStatus(_: Int64, messageID _: Data?, timestamp _: Int64, roundID _: Int64, status _: Int64) {}
 
-    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int) {
+    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int, internalId: Int64) {
         guard let backgroundContext = modelActor else { return }
         guard let partnerKey else { fatalError("partner key is not available") }
         let name = (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown"
@@ -168,7 +166,6 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
 
                 // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                 let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderKey, ctx: backgroundContext)
-                let internalId = InternalIdGenerator.shared.next()
                 let msg = ChatMessageModel(message: message, isIncoming: isIncoming, chat: chat, sender: sender, id: messageId.base64EncodedString(), internalId: internalId)
                 chat.messages.append(msg)
                 // Increment unread count for incoming messages after join time
