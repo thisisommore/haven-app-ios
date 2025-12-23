@@ -41,11 +41,6 @@ enum ChannelEvent: Int64, CustomStringConvertible {
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
     var modelActor: SwiftDataActor?
 
-    private let logPrefix = "[ChannelUICallbacks]"
-    private func log(_: String) {
-        // Logging removed - only error logs are kept
-    }
-
     private func short(_ data: Data?) -> String {
         guard let d = data else { return "nil" }
         let b64 = d.base64EncodedString()
@@ -95,39 +90,26 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
 
     override init() {
         super.init()
-        log("init()")
     }
 
     func configure(modelActor: SwiftDataActor? = nil) {
-        log("configure(modelActor set: \(modelActor != nil))")
         self.modelActor = modelActor
     }
 
     var modelContainer: ModelContainer?
 
     private func fetchOrCreateChannelChat(channelId: String, channelName: String, ctx: SwiftDataActor) throws -> ChatModel {
-        log("fetchOrCreateChannelChat channelId=\(channelId) channelName=\(channelName)")
         let descriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == channelId })
         if let existing = try ctx.fetch(descriptor).first {
-            log("found existing Chat id=\(existing.id) name=\(existing.name) messages=\(existing.messages.count)")
             return existing
         } else {
             let newChat = ChatModel(channelId: channelId, name: channelName)
             ctx.insert(newChat)
-            log("inserting new Chat id=\(newChat.id) name=\(newChat.name)")
             try ctx.save()
             return newChat
         }
     }
 
     // Event notifications (generic JSON payloads)
-    func eventUpdate(_ eventType: Int64, jsonData: Data?) {
-        let eventName = ChannelEvent(rawValue: eventType)?.description ?? "UNKNOWN(\(eventType))"
-        let utf8String = jsonData.flatMap { String(data: $0, encoding: .utf8) }
-        if let s = utf8String {
-            log("eventUpdate eventType=\(eventType) name=\(eventName) json(utf8)=\(s)")
-        } else {
-            log("eventUpdate eventType=\(eventType) name=\(eventName) json(fallback)=\(short(jsonData))")
-        }
-    }
+    func eventUpdate(_: Int64, jsonData _: Data?) {}
 }

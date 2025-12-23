@@ -8,10 +8,6 @@
 import Bindings
 import Foundation
 
-private func ftLog(_: String) {
-    // Logging removed - only error logs are kept
-}
-
 public enum FileTransferLimits {
     /// Maximum file size: 250,000 bytes (250 KB)
     public static let maxFileSize: Int = 250_000
@@ -53,7 +49,6 @@ class FtSentProgressCallbackWrapper: NSObject, BindingsFtSentProgressCallbackPro
     }
 
     func callback(_ payload: Data?, fpt: Bindings.BindingsChFilePartTracker?, err: Error?) {
-        ftLog("Progress callback - payload: \(payload?.count ?? 0) bytes, error: \(err?.localizedDescription ?? "none")")
         let tracker: Any? = fpt != nil ? ChFilePartTracker(tracker: fpt) : nil
         progressCallback?.callback(payload: payload ?? Data(), partTracker: tracker, error: err)
     }
@@ -69,7 +64,6 @@ class FtReceivedProgressCallbackWrapper: NSObject, BindingsFtReceivedProgressCal
     }
 
     func callback(_ payload: Data?, fpt: Bindings.BindingsChFilePartTracker?, err: Error?) {
-        ftLog("Download progress callback - payload: \(payload?.count ?? 0) bytes, error: \(err?.localizedDescription ?? "none")")
         let tracker: Any? = fpt != nil ? ChFilePartTracker(tracker: fpt) : nil
         progressCallback?.callback(payload: payload ?? Data(), fileData: nil, partTracker: tracker, error: err)
     }
@@ -90,30 +84,20 @@ public class ChannelsFileTransfer {
     /// - Returns: ChannelsFileTransfer instance
     /// - Throws: Error if initialization fails
     public static func initialize(e2eID: Int, paramsJson: Data? = nil) throws -> ChannelsFileTransfer {
-        ftLog("Initializing with e2eID: \(e2eID)")
-
         var err: NSError?
         let params = paramsJson ?? {
             let defaultParams = FileTransferParamsJSON()
-            ftLog("Using default params")
             return try? Parser.encodeFileTransferParams(defaultParams)
         }()
 
-        ftLog("Params: \(params?.count ?? 0) bytes - \(params?.utf8 ?? "nil")")
-        ftLog("Calling BindingsInitChannelsFileTransfer...")
-
         guard let ft = BindingsInitChannelsFileTransfer(e2eID, params, &err) else {
-            ftLog("ERROR: BindingsInitChannelsFileTransfer returned nil")
-            ftLog("ERROR details: \(err?.localizedDescription ?? "unknown")")
             throw err ?? NSError(domain: "ChannelsFileTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to initialize file transfer"])
         }
 
         if let error = err {
-            ftLog("ERROR after init: \(error.localizedDescription)")
             throw error
         }
 
-        ftLog("Successfully initialized file transfer")
         return ChannelsFileTransfer(fileTransfer: ft)
     }
 
@@ -146,10 +130,8 @@ public class ChannelsFileTransfer {
     /// - Returns: Marshalled fileTransfer.ID - unique file identifier
     /// - Throws: Error if upload fails to start
     public func upload(fileData: Data, retry: Float, progressCB: FtSentProgressCallback, periodMS: Int) throws -> Data {
-        ftLog("Upload starting - size: \(fileData.count) bytes, retry: \(retry), periodMS: \(periodMS)")
         let wrapper = FtSentProgressCallbackWrapper(callback: progressCB)
         let fileID = try fileTransfer.upload(fileData, retry: retry, progressCB: wrapper, periodMS: periodMS)
-        ftLog("Upload started - fileID: \(fileID.base64EncodedString())")
         return fileID
     }
 
@@ -195,10 +177,8 @@ public class ChannelsFileTransfer {
     /// - Returns: Marshalled fileTransfer.ID
     /// - Throws: Error if download fails to start
     public func download(fileInfoJSON: Data, progressCB: FtReceivedProgressCallback, periodMS: Int) throws -> Data {
-        ftLog("Download starting - fileInfoJSON: \(fileInfoJSON.count) bytes, periodMS: \(periodMS)")
         let wrapper = FtReceivedProgressCallbackWrapper(callback: progressCB)
         let fileID = try fileTransfer.download(fileInfoJSON, progressCB: wrapper, periodMS: periodMS)
-        ftLog("Download started - fileID: \(fileID.base64EncodedString())")
         return fileID
     }
 

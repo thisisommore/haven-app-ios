@@ -75,7 +75,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         fileDataLock.lock()
         fileDataCache[fileID] = data
         fileDataLock.unlock()
-        log("[FT] Cached file data for \(fileID), size: \(data.count) bytes")
     }
 
     // Retrieve and remove file data from cache
@@ -83,27 +82,16 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         fileDataLock.lock()
         let data = fileDataCache[fileID]
         fileDataLock.unlock()
-        if data != nil {
-            log("[FT] Retrieved cached file data for \(fileID), size: \(data!.count) bytes")
-        }
         return data
     }
 
     func update(
-        fromMessageID messageID: Data?,
-        messageUpdateInfoJSON: Data?,
+        fromMessageID _: Data?,
+        messageUpdateInfoJSON _: Data?,
         ret0_ _: UnsafeMutablePointer<Int64>?
-    ) throws {
-        log(
-            "update - messageID \(short(messageID)) | messageUpdateInfoJSON \(messageUpdateInfoJSON!.utf8)"
-        )
-    }
+    ) throws {}
 
     func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
-        log(
-            "update - uuid \(uuid) | messageUpdateInfoJSON \(messageUpdateInfoJSON?.utf8 ?? "nil")"
-        )
-
         guard let jsonData = messageUpdateInfoJSON else {
             return
         }
@@ -115,7 +103,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         guard let actor = modelActor else {
-            log("update(fromUUID): no modelActor available")
             return
         }
 
@@ -126,14 +113,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         if let message = try actor.fetch(descriptor).first {
             message.id = newMessageId
             try actor.save()
-            log("update(fromUUID): Updated message internalId=\(uuid) with new id=\(newMessageId)")
-        } else {
-            log("update(fromUUID): No message found with internalId=\(uuid)")
         }
-    }
-
-    private func log(_: String) {
-        // Logging removed - only error logs are kept
     }
 
     private func short(_ data: Data?) -> String {
@@ -156,7 +136,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         if let existing = try actor.fetch(descriptor).first {
             return existing
         }
-        log("Chat(channelId: \(channelId), name: \(channelName))")
         let newChat = ChatModel(channelId: channelId, name: channelName)
         actor.insert(newChat)
         try actor.save()
@@ -198,7 +177,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 if let existingSender = try? actor.fetch(
                     senderDescriptor
                 ).first {
-                    log("text=\(text) sender= id=\(existingSender.id) codename=\(existingSender.codename) dmToken=\(existingSender.dmToken)")
                     // Update existing sender's dmToken and nickname
                     existingSender.dmToken = dmToken ?? 0
                     if let nickname = nickname, !nickname.isEmpty {
@@ -219,9 +197,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     )
                     actor.insert(sender!)
                     try modelActor?.save()
-                    log(
-                        "Created new Sender for \(codename) with dmToken: \(dmToken ?? 0)"
-                    )
                 }
             }
 
@@ -230,12 +205,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 // Check if sender's pubkey matches the pubkey of chat with id "<self>"
                 let isIncoming = !isSenderSelf(chat: chat, senderPubKey: senderPubKey, ctx: actor)
                 let internalId = InternalIdGenerator.shared.next()
-                log(
-                    "ChatMessage(message: \(text), isIncoming: \(isIncoming), chat: \(chat.name), sender: \(sender!.codename), id: \(mid), internalId: \(internalId))"
-                )
-                log(
-                    "Sender(codename: \(sender!.codename), dmToken: \(sender!.dmToken))"
-                )
                 msg = ChatMessageModel(
                     message: text,
                     isIncoming: isIncoming,
@@ -290,8 +259,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         let messageIdB64 = messageID?.base64EncodedString()
         let messageTextB64 = text ?? ""
 
-        log("[EventReceived] messageType: \(messageType) | \(messageIdB64 ?? "nil")")
-
         // Check if this is a file message (type 40000)
         if messageType == 40000 {
             return handleFileMessage(
@@ -302,12 +269,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 dmToken: dmToken,
                 codeset: codeset,
                 timestamp: timestamp
-            )
-        }
-
-        if let decodedText = decodeMessage(messageTextB64) {
-            log(
-                "[EventReceived] new | \(messageIdB64 ?? "nil") | | \(decodedText)"
             )
         }
 
@@ -361,10 +322,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         status _: Int64,
         hidden _: Bool
     ) -> Int64 {
-        log(
-            "[EventReceived] new | \(messageID?.base64EncodedString() ?? "nil") | \(reactionTo?.base64EncodedString() ?? "nil") | \(reaction ?? "")"
-        )
-
         let reactionText = reaction ?? ""
         let targetMessageIdB64 = reactionTo?.base64EncodedString()
 
@@ -426,9 +383,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                         nickname: nickname,
                         dmToken: dmToken, color: color
                     )
-                    log(
-                        "Created new Sender for \(codename) with dmToken: \(dmToken)"
-                    )
                 }
             }
 
@@ -442,9 +396,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
             actor.insert(record)
             try actor.save()
-            log(
-                "MessageReaction(id: \(messageID!.base64EncodedString()), internalId: \(internalId), targetMessageId: \(targetId), emoji: \(reactionText), sender: \(sender))"
-            )
             return record.internalId
         } catch {
             fatalError(
@@ -454,11 +405,8 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
 
     func deleteReaction(messageId: String, emoji: String) {
-        log("[EventReceived] delete | \(messageId) | | \(emoji)")
-
         do {
             guard let actor = modelActor else {
-                log("deleteReaction: no modelActor available")
                 return
             }
             let descriptor = FetchDescriptor<MessageReactionModel>(
@@ -470,7 +418,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
             for reaction in reactions {
                 actor.delete(reaction)
-                log("Deleted reaction: \(emoji) from message \(messageId)")
             }
 
             try actor.save()
@@ -497,11 +444,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     ) -> Int64 {
         let messageIdB64 = messageID?.base64EncodedString()
         let replyTextB64 = text ?? ""
-        if let decodedReply = decodeMessage(replyTextB64) {
-            log(
-                "[EventReceived] reply | \(messageIdB64 ?? "nil") | \(reactionTo?.base64EncodedString() ?? "nil") | \(decodedReply)"
-            )
-        }
 
         var err: NSError?
         let identityData = Bindings.BindingsConstructIdentity(
@@ -544,23 +486,16 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
 
     func updateFromMessageID(
-        _ messageID: Data?,
-        messageUpdateInfoJSON: Data?,
+        _: Data?,
+        messageUpdateInfoJSON _: Data?,
         ret0_ _: UnsafeMutablePointer<Int64>?
     ) throws -> Bool {
-        log(
-            "updateFromMessageID - messageID \(messageID?.utf8) | messageUpdateInfoJSON \(messageUpdateInfoJSON?.utf8)"
-        )
         return true
     }
 
     func updateFromUUID(_ uuid: Int64, messageUpdateInfoJSON: Data?) throws
         -> Bool
     {
-        log(
-            "updateFromUUID - uuid \(uuid) | messageUpdateInfoJSON \(messageUpdateInfoJSON?.utf8 ?? "nil")"
-        )
-
         guard let jsonData = messageUpdateInfoJSON else {
             return false
         }
@@ -572,7 +507,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         guard let actor = modelActor else {
-            log("updateFromUUID: no modelActor available")
             return false
         }
 
@@ -583,11 +517,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         if let message = try actor.fetch(descriptor).first {
             message.id = newMessageId
             try actor.save()
-            log("updateFromUUID: Updated message internalId=\(uuid) with new id=\(newMessageId)")
             return true
         }
 
-        log("updateFromUUID: No message found with internalId=\(uuid)")
         return false
     }
 
@@ -601,7 +533,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         let messageIdB64 = messageID.base64EncodedString()
-        log("[EventReceived] get | \(messageIdB64) | | ")
 
         guard let actor = modelActor else {
             throw NSError(domain: "EventModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "modelActor not available"])
@@ -646,7 +577,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         let messageIdB64 = messageID.base64EncodedString()
-        log("[EventReceived] delete | \(messageIdB64) | | ")
 
         guard let actor = modelActor else {
             fatalError("deleteMessage: no modelActor available")
@@ -660,33 +590,14 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             let messages = try actor.fetch(messageDescriptor)
 
             if !messages.isEmpty {
-                let chatId = messages.first?.chat.id
                 for message in messages {
-                    log(
-                        "deleteMessage: Deleting ChatMessage with id=\(messageIdB64)"
-                    )
                     actor.delete(message)
                 }
                 try actor.save()
-                log("deleteMessage: ChatMessage deleted successfully")
-
-                // Log remaining messages in the chat
-                if let chatId {
-                    let chatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == chatId })
-                    if let chat = try? actor.fetch(chatDescriptor).first {
-                        log("deleteMessage: Remaining messages in chat '\(chat.name)':")
-                        for msg in chat.messages {
-                            log("  - id=\(msg.id), text=\(msg.message)")
-                        }
-                    }
-                }
                 return
             }
 
             // If no message found, check for reactions
-            log(
-                "deleteMessage: No ChatMessage found, checking for MessageReaction"
-            )
             let reactionDescriptor = FetchDescriptor<MessageReactionModel>(
                 predicate: #Predicate { $0.id == messageIdB64 }
             )
@@ -694,31 +605,10 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
             if !reactions.isEmpty {
                 for reaction in reactions {
-                    log(
-                        "deleteMessage: Deleting MessageReaction with messageId=\(messageIdB64), emoji=\(reaction.emoji)"
-                    )
                     actor.delete(reaction)
                 }
                 try actor.save()
-                log("deleteMessage: MessageReaction(s) deleted successfully")
                 return
-            }
-
-            // Neither message nor reaction found
-            log(
-                "deleteMessage: Warning - No ChatMessage or MessageReaction found for id=\(messageIdB64)"
-            )
-
-            // Debug: Log ChatMessages for chat "Bho"
-            let chatName = "Bho"
-            let bhoMessagesDescriptor = FetchDescriptor<ChatMessageModel>(
-                predicate: #Predicate { $0.chat.name == chatName }
-            )
-            if let bhoMessages = try? actor.fetch(bhoMessagesDescriptor) {
-                log("deleteMessage: ChatMessages in '\(chatName)' (\(bhoMessages.count) total):")
-                for msg in bhoMessages {
-                    log("  - id=\(msg.id), text=\(msg.message.prefix(30))")
-                }
             }
 
         } catch {
@@ -726,11 +616,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
     }
 
-    func muteUser(_ channelID: Data?, pubkey: Data?, unmute: Bool) {
-        log(
-            "muteUser - channelID \(short(channelID)) | pubkey \(short(pubkey)) | unmute \(unmute)"
-        )
-
+    func muteUser(_ channelID: Data?, pubkey _: Data?, unmute _: Bool) {
         // Post notification for UI to refresh mute status
         DispatchQueue.main.async {
             NotificationCenter.default.post(
@@ -741,15 +627,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
     }
 
-    func deleteFile(_ fileID: Data?) throws {
-        let fileIdB64 = fileID?.base64EncodedString() ?? "nil"
-        log("deleteFile - fileID: \(fileIdB64)")
-    }
+    func deleteFile(_: Data?) throws {}
 
-    func getFile(_ fileID: Data?) throws -> Data {
-        let fileIdB64 = fileID?.base64EncodedString() ?? "nil"
-        log("getFile - fileID: \(fileIdB64)")
-
+    func getFile(_: Data?) throws -> Data {
         // TODO: Look up file in storage by fileID and return its data
         // For now, return the standard "no message" error that Go code recognizes
         throw NSError(
@@ -763,13 +643,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         _ fileID: Data?,
         fileLink: Data?,
         fileData: Data?,
-        timestamp: Int64,
+        timestamp _: Int64,
         status: Int
     ) throws {
-        log(
-            "receiveFile - fileID: \(short(fileID)) | fileLink: \(short(fileLink)) | fileData: \(fileData?.count ?? 0) bytes | timestamp: \(timestamp) | status: \(status)"
-        )
-
         // Cache file data for later use when file message arrives
         if let fileID = fileID, let fileData = fileData, !fileData.isEmpty {
             let fileIdStr = fileID.base64EncodedString()
@@ -796,13 +672,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         _ fileID: Data?,
         fileLink: Data?,
         fileData: Data?,
-        timestamp: Int64,
+        timestamp _: Int64,
         status: Int
     ) throws {
-        log(
-            "updateFile - fileID: \(short(fileID)) | fileLink: \(short(fileLink)) | fileData: \(fileData?.count ?? 0) bytes | timestamp: \(timestamp) | status: \(status)"
-        )
-
         // Cache file data for later use when file message arrives
         if let fileID = fileID, let fileData = fileData, !fileData.isEmpty {
             let fileIdStr = fileID.base64EncodedString()
@@ -830,7 +702,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
     private func updateMessageWithFileData(fileID: String, fileData: Data) {
         guard let actor = modelActor else {
-            log("[FT] No modelActor to update message with file data")
             return
         }
 
@@ -851,17 +722,14 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
                 if updatedCount > 0 {
                     try actor.save()
-                    log("[FT] Updated \(updatedCount) message(s) with file data, fileID: \(fileID)")
 
                     // Notify UI to refresh
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(name: .fileDataUpdated, object: nil)
                     }
-                } else {
-                    log("[FT] No message found for fileID: \(fileID)")
                 }
             } catch {
-                log("[FT] Error updating message with file data: \(error)")
+                // Error updating message with file data
             }
         }
     }
@@ -875,40 +743,31 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         codeset: Int,
         timestamp: Int64
     ) -> Int64 {
-        log("[FT] Received file message, text: \(text ?? "nil")")
-
         guard let actor = modelActor else {
-            log("[FT] ERROR: no modelActor for file message")
             return 0
         }
 
         guard let text = text, !text.isEmpty else {
-            log("[FT] ERROR: no text for file message")
             return 0
         }
 
         // Try to decode - might be base64 encoded or raw JSON
         var textData: Data
         if let decoded = Data(base64Encoded: text) {
-            log("[FT] Decoded base64 text")
             textData = decoded
         } else if let utf8Data = text.data(using: .utf8) {
-            log("[FT] Using UTF-8 text")
             textData = utf8Data
         } else {
-            log("[FT] ERROR: cannot convert text to data")
             return 0
         }
 
         do {
             let fileInfo = try Parser.decodeFileInfo(from: textData)
-            log("[FT] File info: name=\(fileInfo.name), type=\(fileInfo.type), size=\(fileInfo.size)")
 
             // Get sender identity
             var err: NSError?
             let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err)
             guard let identityData = identityData else {
-                log("[FT] ERROR: failed to construct identity")
                 return 0
             }
 
@@ -958,7 +817,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
             // Try to get cached file data
             let cachedFileData = retrieveFileData(fileID: fileInfo.fileID)
-            log("[FT] Creating file message, cached data: \(cachedFileData?.count ?? 0) bytes")
 
             let fileMessage = ChatMessageModel.fileMessage(
                 fileName: fileInfo.name,
@@ -982,11 +840,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
             try actor.save()
-            log("[FT] File message persisted: \(fileInfo.name)")
 
             // Trigger download for incoming files without cached data
             if isIncoming && cachedFileData == nil {
-                log("[FT] Requesting download for: \(fileInfo.name)")
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(
                         name: .fileDownloadNeeded,
@@ -1001,7 +857,6 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
             return internalId
         } catch {
-            log("[FT] ERROR parsing file message: \(error)")
             return 0
         }
     }
