@@ -33,7 +33,6 @@ struct ChatView<T: XXDKP>: View {
     @State var abc: String = ""
     @State private var replyingTo: ChatMessageModel? = nil
     @State private var showChannelOptions: Bool = false
-    @State private var navigateToDMChat: ChatModel? = nil
     @State private var visibleDate: Date? = nil
     @State private var showDateHeader: Bool = false
     @State private var hideTask: Task<Void, Never>? = nil
@@ -66,8 +65,8 @@ struct ChatView<T: XXDKP>: View {
             swiftDataActor.insert(dmChat)
             try swiftDataActor.save()
 
-            // Navigate to the new chat using the created chat object
-            navigateToDMChat = dmChat
+            // Navigate to the new chat using SelectedChat
+            selectedChat.select(id: dmChat.id, title: dmChat.name)
         } catch {
             AppLogger.chat.error("Failed to create DM chat: \(error.localizedDescription, privacy: .public)")
         }
@@ -362,13 +361,6 @@ struct ChatView<T: XXDKP>: View {
                 isAdmin = chat?.isAdmin ?? false
             }
         }
-        .navigationDestination(item: $navigateToDMChat) { dmChat in
-            ChatView<T>(
-                chatId: dmChat.id,
-                chatTitle: dmChat.name
-            )
-        }
-
         .background(ChatBackgroundView())
         .overlay {
             if let message = toastMessage {
