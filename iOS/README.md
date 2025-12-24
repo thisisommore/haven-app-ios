@@ -1,29 +1,90 @@
-# iOS
+# Intro
 
-An xxdk example written for iOS.
+Haven App for iOS and iPadOS \
+This is based on the iOS example in xxdk-examples \
+https://git.xx.network/xx_network/xxdk-examples/-/tree/f64201e9c426a64b15e9d2608003939f3c9184e5/iOS
 
-## Running This Example
+# Structure
 
-You will need a mac and XCode 15 or higher:
+### Startup
+
+Everything starts with Main.swift
+It initiates Provider and uses Root
+Root handles all the initial logic,
+like
+
+- navigation stack
+- deep link
+- initial routing according to new or old user
+
+### Navigation
+
+For navigation, we use a Destination enum with navigation destination
+
+```swift
+enum Destination: Hashable {
+    case home
+    case landing
+    // ...
+}
+
+extension Destination {
+    @MainActor @ViewBuilder
+    func _destinationView() -> some View {
+        switch self {
+        case .landing:
+            LandingPage<XXDK>()
+
+        case .home:
+            HomeView<XXDK>()
+        // ...
+```
+
+See Navigation.swift for more info
+
+### Pages
+
+All pages/screens are stored in the Pages folder, the entry point is defined by \*.page.swift
+Previews are used to quickly build UI without waiting for heavy builds to complete.
+PreviewUtils contains mock function which can be attached to any preview to quickly setup all necessary data and environment for preview.
+
+### Data
+
+All Swift data models are defined in the Model folder
+
+### Secrets
+
+Secret.swift is used to store the password used for cmix
+
+### XXDK
+
+All XXDK related code is in the XXDK folder, including documentation
+
+# Requirements
+
+### Xcode
+
+This was developed with Xcode 26 \
+Current latest version should work
 
 https://developer.apple.com/xcode/resources/
 
-You will then need to ensure you have a simulator for at least iOS 17
-available for the project to run. XCode will prompt you and we recommend
-using its suggested defaults.
+### CocoaPod
 
-You will need to install Cocoapods, assuming you have the default Ruby
-install, you can install it in the Terminal with:
+This project uses Swift Package Manager along with CocoaPods, Xcode should take care of the former.
+For CocoaPods, it is required to install the dependencies or else build will fail
+
+You will need to install CocoaPods
 
 ```
-sudo gem install cocoapods
+brew install cocoapods
 ```
 
 After it is installed, you can run the following in the Terminal to download
 the dependencies to the `Pods` folder:
 
 ```
-pod update
+pod install
 ```
 
 Now open the project with:
@@ -34,82 +95,23 @@ open iOSExample.xcworkspace
 
 And you should see the following in the file browser:
 
-![Opening the iOS Project](README-images/files-after.png)
+![Opening the iOS Project](README-images/xcode-open.png)
 
-## Formating
+# Contributing
 
+## Formatting
+
+SwiftFormat is used to format Swift files
+https://github.com/nicklockwood/SwiftFormat
+
+Installing
+
+```bash
+brew install swiftformat
+```
+
+Running
+
+```
 swiftformat .
-
-## How This Example Was Built
-
-We started with a blank project then built a visual template using
-the SwiftUI visual editor:
-
-![Content View](README-images/contentview.png)
-
-After getting the basic widgets in place, we closed XCode. Then we added
-the following to a new file called `Podfile`:
-
 ```
-# xxdk is built for this version of iOS or higher.
-platform :ios, '17.0'
-
-# This is required for swift since it does not support static libraries.
-use_frameworks!
-
-target 'iOSExample' do
-  pod 'XXDK'
-  pod 'Kronos'
-end
-```
-
-We need Kronos for time tracking and XXDK to work with the xx
-network. Then we ran the following to download our pods to the `Pods`
-folder:
-
-```
-pod install
-```
-
-When it completed we were warned about `$(inherited)`:
-
-![Inherited warning](README-images/inherited.png)
-
-and we were warned to open the project a specific way:
-
-![Special opening](README-images/special-open.png)
-
-We opened the project again accordingly with:
-
-```
-open iOSExample.xcworkspace
-```
-
-Yielding the following files in the file browser:
-
-![New Files](README-images/files-after-2.png)
-
-Then we fixed the `$(inherited)` setting by opening our `TARGETS` target,
-finding `Runpath Search Paths` and changing it accordingly:
-
-![Runpaths](README-images/inherited-2.png)
-
-We also went through the build settings and made sure we were only
-building for and targeting iOS:
-
-![Target iOS](README-images/architectures.png)
-
-Technically the library does support macos, but we have not tested
-it. If you get it working please let us know and/or send a pull
-request to update this project.
-
-To set up the xx network connection, we put our `mainnet.crt`
-certificate file inside the `Resources` folder. This allowed us to
-call the download NDF function and complete the connection using the
-standard methods.
-
-All the other details can be found in XXDK.swift, with the
-ContentView.swift hooked appropriately. One note is that the xxdk must
-be controlled by the main thread. There is no handling in the example
-but when the app sleeps and awakes it should stop and start the
-network follower.
