@@ -9,13 +9,17 @@ import Foundation
 import SwiftData
 import SwiftUI
 
-#if DEBUG
-    // Create a mock chat and some messages
-    let previewChatId = "previewChatId"
-    let greenColorInt = 0x0B421F
+import Foundation
+import SwiftData
+import SwiftUI
 
-    extension View {
-        func mock() -> some View {
+// Create a mock chat and some messages
+let previewChatId = "previewChatId"
+let greenColorInt = 0x0B421F
+
+extension View {
+    func mock() -> some View {
+        #if DEBUG
             let container: ModelContainer = {
                 let c = try! ModelContainer(
                     for: ChatModel.self,
@@ -286,6 +290,8 @@ import SwiftUI
             .environmentObject(XXDKMock())
             .environmentObject(SelectedChat())
             .navigationBarBackButtonHidden()
-        }
+        #else
+            return self
+        #endif
     }
-#endif
+}
