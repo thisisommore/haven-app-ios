@@ -1,99 +1,117 @@
-# xxdk-examples
+# Intro
 
-This repository contains examples in different programming languages
-for working with xx network's `xxdk`. Libraries are available for
-the following systems and languages:
+Haven App for iOS and iPadOS \
+This is based on the iOS example in xxdk-examples \
+https://git.xx.network/xx_network/xxdk-examples/-/tree/f64201e9c426a64b15e9d2608003939f3c9184e5/iOS
 
-1. Desktop: Golang (full), C# (partial)
-2. Web (Chrome/Safari): Javascript (Client side rendering only),
-   Typescript (Client side rendering only)
-3. Android: Kotlin, Java
-4. iOS: Swift, Objective C
+# Structure
 
-Libraries for other languages are planned. At this time, we are
-looking at completing C# support, Javascript server side in Node, and
-Rust. We are also in the process of reworking the design to simplify
-deployment in different languages.
+### Startup
 
-## Organization
+Everything starts with Main.swift
+It initiates Provider and uses Root
+Root handles all the initial logic,
+like
 
-Each folder contains an example project in the provided language:
+- navigation stack
+- deep link
+- initial routing according to new or old user
 
-1. `android` - Kotlin example written with Android Studio
-2. `iOS` - Swift example written with XCode
-3. `reactjs` - Javascript example written with Visual Studio Code and
-   React framework.
-4. `golang` - Golang example for the command line. This is useful for
-   writing bots.
+### Navigation
 
-Please see the README inside each folder for platform specific
-details. The examples all use the Direct Messaging module, which is
-specified at the elixxir/docs repository:
+For navigation, we use a Destination enum with navigation destination
 
-https://git.xx.network/elixxir/docs/-/blob/1ce87f00db92fba7b0fb09d4a4cf22d0f7815ac2/dm.md
+```swift
+enum Destination: Hashable {
+    case home
+    case landing
+    // ...
+}
 
-There are several modules developers can use. The `xxdk` is complex
-software. The primary repositories to explore it are:
+extension Destination {
+    @MainActor @ViewBuilder
+    func _destinationView() -> some View {
+        switch self {
+        case .landing:
+            LandingPage<XXDK>()
 
-1. https://git.xx.network/elixxir/client - Android/iOS/Golang. The
-   primary client development library.
-2. https://git.xx.network/elixxir/xxdk-wasm - Javascript library and
-   npm packaging.
-3. https://git.xx.network/elixxir/libxxdk - C library bindings and C#
-   implementation.
-
-While the library is somewhat mature, the API itself is not stable and
-is subject to change. We will post transition guides to the README and
-this repository when that happens.
-
-## Support
-
-Please file issues on the project at `git.xx.network`.
-
-There is a forum for questions here:
-
-https://forum.xx.network/
-
-You can find us on Discord here:
-
-https://discord.gg/d9SHXS4V
-
-## Contributing
-
-We are open to contributions, please open a Merge Request / Pull Request
-and we will take a look.
-
-## Authors and acknowledgment
-
-We appreciate everyone who has contributed to this project. The key
-individuals are:
-
-- Richard Carback, main author
-- Sidhant Sharma, feedback
-- Matthieu Bertin, feedback
-
-## License
-
-These examples are licensed under 2-Clause BSD. See `LICENSE.md` for
-more information.
-
-## Project status
-
-These examples were last updated for the xxdk client library
-for Golang, iOS, and Android for this version:
-
-```
-v4.7.2
+        case .home:
+            HomeView<XXDK>()
+        // ...
 ```
 
-The xxdk-wasm package used was:
+See Navigation.swift for more info
+
+### Pages
+
+All pages/screens are stored in the Pages folder, the entry point is defined by \*.page.swift
+Previews are used to quickly build UI without waiting for heavy builds to complete.
+PreviewUtils contains mock function which can be attached to any preview to quickly setup all necessary data and environment for preview.
+
+### Data
+
+All Swift data models are defined in the Model folder
+
+### Secrets
+
+Secret.swift is used to store the password used for cmix
+
+### XXDK
+
+All XXDK related code is in the XXDK folder, including documentation
+
+# Requirements
+
+### Xcode
+
+This was developed with Xcode 26 \
+Current latest version should work
+
+https://developer.apple.com/xcode/resources/
+
+### CocoaPod
+
+This project uses Swift Package Manager along with CocoaPods, Xcode should take care of the former.
+For CocoaPods, it is required to install the dependencies or else build will fail
+
+You will need to install CocoaPods
 
 ```
-v0.3.19
+brew install cocoapods
 ```
 
-The NuGet package version used was:
+After it is installed, you can run the following in the Terminal to download
+the dependencies to the `Pods` folder:
 
 ```
-# TODO: We have one but it needs to be added.
+pod install
+```
+
+Now open the project with:
+
+```
+open iOSExample.xcworkspace
+```
+
+And you should see the following in the file browser:
+
+![Opening the iOS Project](README-images/xcode-open.png)
+
+# Contributing
+
+## Formatting
+
+SwiftFormat is used to format Swift files
+https://github.com/nicklockwood/SwiftFormat
+
+Installing
+
+```bash
+brew install swiftformat
+```
+
+Running
+
+```
+swiftformat .
 ```
