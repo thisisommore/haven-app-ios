@@ -265,10 +265,10 @@ struct UploadProgressOverlay: View {
                     .lineLimit(1)
                     .font(.subheadline.weight(.medium))
                 Spacer()
-                Button(action: onCancel) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
+            Button(action: onCancel) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.haven)
+            }
             }
 
             ProgressView(value: progress)
@@ -369,7 +369,7 @@ struct SelectedFilePreview: View {
 
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.haven)
             }
         }
         .padding(.horizontal, 16)
