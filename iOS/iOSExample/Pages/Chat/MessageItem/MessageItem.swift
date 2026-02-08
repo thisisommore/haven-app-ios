@@ -114,6 +114,9 @@ struct MessageItem<T: XXDKP>: View {
             }
             ConditionalSpacer(isIncoming)
         }
+        .swipeToReply {
+            onReply?()
+        }
 
         .sheet(isPresented: $isEmojiSheetPresented) {
             EmojiKeyboard { _ in
