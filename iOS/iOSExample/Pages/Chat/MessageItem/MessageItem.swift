@@ -1,6 +1,12 @@
 import Foundation
 import SwiftUI
 
+private let shortTimeFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.timeStyle = .short
+    return f
+}()
+
 struct MessageItem<T: XXDKP>: View {
     let text: String
     let isIncoming: Bool
@@ -47,9 +53,7 @@ struct MessageItem<T: XXDKP>: View {
         _isEmojiSheetPresented = State(initialValue: isEmojiSheetPresented)
         _shouldTriggerReply = State(initialValue: shouldTriggerReply)
         _selectedEmoji = State(initialValue: selectedEmoji)
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        timeStamp = formatter.string(from: timestamp)
+        timeStamp = shortTimeFormatter.string(from: timestamp)
     }
 
     @State private var isEmojiSheetPresented = false
