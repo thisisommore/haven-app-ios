@@ -37,7 +37,10 @@ public class SecretManager: ObservableObject {
 
     var isSetupComplete: Bool {
         get { UserDefaults.standard.bool(forKey: setupCompleteKey) }
-        set { UserDefaults.standard.set(newValue, forKey: setupCompleteKey) }
+        set {
+            objectWillChange.send()
+            UserDefaults.standard.set(newValue, forKey: setupCompleteKey)
+        }
     }
 
     init() {

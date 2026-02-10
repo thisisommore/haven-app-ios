@@ -67,7 +67,7 @@ protocol XXDKP: ObservableObject, AnyObject {
     func exportIdentity(password: String) throws -> Data
     func importIdentity(password: String, data: Data) throws -> Data
     func deleteMessage(channelId: String, messageId: String)
-    func logout() async
+    func logout() async throws
     func getMutedUsers(channelId: String) throws -> [Data]
     func muteUser(channelId: String, pubKey: Data, mute: Bool) throws
     func isMuted(channelId: String) -> Bool

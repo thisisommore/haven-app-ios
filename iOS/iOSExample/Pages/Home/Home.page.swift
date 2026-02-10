@@ -29,6 +29,7 @@ struct HomeView<T: XXDKP>: View {
     @State private var showLogoutAlert = false
     @State private var currentNickname: String?
     @State private var searchText: String = ""
+    @State private var isLoggingOut = false
     @Query private var chats: [ChatModel]
 
     @EnvironmentObject var xxdk: T
@@ -178,15 +179,18 @@ struct HomeView<T: XXDKP>: View {
             .alert("Logout", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Logout", role: .destructive) {
+                    isLoggingOut = true
                     Task {
-                        await xxdk.logout()
+        
+                        try! await xxdk.logout()
+            
 
                         // Clear SwiftData
-                        try? swiftDataActor.deleteAll(ChatMessageModel.self)
-                        try? swiftDataActor.deleteAll(MessageReactionModel.self)
-                        try? swiftDataActor.deleteAll(MessageSenderModel.self)
-                        try? swiftDataActor.deleteAll(ChatModel.self)
-                        try? swiftDataActor.save()
+                        try! swiftDataActor.deleteAll(MessageReactionModel.self)
+                        try! swiftDataActor.deleteAll(MessageSenderModel.self)
+                        // ChatModel cascade-deletes ChatMessageModel
+                        try! swiftDataActor.deleteAll(ChatModel.self)
+                        try! swiftDataActor.save()
 
                         secretManager.clearAll()
                         await MainActor.run {
@@ -218,6 +222,28 @@ struct HomeView<T: XXDKP>: View {
                         .padding(.bottom, 50)
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .overlay {
+                if isLoggingOut {
+                    ZStack {
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                            .onTapGesture { } // Block taps
+                        
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .controlSize(.large)
+                                .tint(.white)
+                            
+                            Text(xxdk.status)
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                        }
+                        .padding(30)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(16)
+                    }
                 }
             }
             .background(Color.appBackground)

@@ -23,6 +23,7 @@ public class XXDK: XXDKP {
 
     var downloadedNdf: Data?
     var nsLock = NSLock()
+    var baseDir: URL
     var stateDir: URL
 
     var storageTagListener: RemoteKVKeyChangeListener?
@@ -49,26 +50,38 @@ public class XXDK: XXDKP {
         Bindings.BindingsSetTimeSource(netTime)
 
         do {
-            let basePath = try FileManager.default.url(
+            baseDir = try FileManager.default.url(
                 for: .documentDirectory,
                 in: .userDomainMask,
                 appropriateFor: nil,
                 create: false
             )
-            stateDir = basePath.appendingPathComponent("xxAppState")
-            if !FileManager.default.fileExists(atPath: stateDir.path) {
+        } catch {
+            fatalError("failed to get documents directory: " + error.localizedDescription)
+        }
+        stateDir = XXDK.setupStateDirectories(baseDir: baseDir)
+    }
+
+    /// Creates (or recreates) the xxAppState/ekv directory structure and returns the ekv path.
+    static func setupStateDirectories(baseDir: URL) -> URL {
+        do {
+            var dir = baseDir.appendingPathComponent("xxAppState")
+            if !FileManager.default.fileExists(atPath: dir.path) {
+                AppLogger.xxdk.info("Creating state directory: \(dir.path)")
                 try FileManager.default.createDirectory(
-                    at: stateDir,
+                    at: dir,
                     withIntermediateDirectories: true
                 )
             }
-            stateDir = stateDir.appendingPathComponent("ekv")
-            if !FileManager.default.fileExists(atPath: stateDir.path) {
+            dir = dir.appendingPathComponent("ekv")
+            if !FileManager.default.fileExists(atPath: dir.path) {
+                AppLogger.xxdk.info("Creating ekv directory: \(dir.path)")
                 try FileManager.default.createDirectory(
-                    at: stateDir,
+                    at: dir,
                     withIntermediateDirectories: true
                 )
             }
+            return dir
         } catch let err {
             fatalError(
                 "failed to get state directory: " + err.localizedDescription
@@ -100,9 +113,32 @@ public class XXDK: XXDKP {
 
     // MARK: - Logout
 
-    public func logout() async {
+    public func logout() async throws {
+        await MainActor.run { self.status = "Stopping network follower..." }
+        // 1. Stop network follower
         try! cmix?.stopNetworkFollower()
 
+        await MainActor.run { self.status = "Waiting for processes..." }
+        // 2. Wait for all running processes to finish
+        var retryCount = 0
+        while cmix?.hasRunningProcessies() == true {
+            if retryCount > 30 { // 3 seconds timeout
+                AppLogger.xxdk.warning("Force stopping processes after timeout")
+                break
+            }
+            try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            retryCount += 1
+        }
+
+        await MainActor.run { self.status = "Cleaning up..." }
+        // 3. Remove cmix from Go-side tracker to release references
+        if let cmixId = cmix?.getID() {
+            var err: NSError?
+            Bindings.BindingsDeleteCmixInstance(cmixId, &err)
+            if let err { throw err }
+        }
+
+        // 4. Nil all binding objects
         channelsManager = nil
         DM = nil
         cmix = nil
@@ -111,26 +147,14 @@ public class XXDK: XXDKP {
         eventModelBuilder = nil
         e2e = nil
 
-        let basePath = try? FileManager.default.url(
-            for: .documentDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: false
-        )
-
-        if let basePath {
-            let appStateDir = basePath.appendingPathComponent("xxAppState")
-            try? FileManager.default.removeItem(at: appStateDir)
-
-            let contents = try? FileManager.default.contentsOfDirectory(at: basePath, includingPropertiesForKeys: nil)
-            contents?.forEach { url in
-                let name = url.lastPathComponent
-                if name.contains("channel") || name.contains("dm") || name.hasPrefix("xx") {
-                    try? FileManager.default.removeItem(at: url)
-                }
-            }
+        await MainActor.run { self.status = "Deleting data..." }
+        // 5. Delete xxAppState (which contains ekv) and recreate it
+        let appStateDir = baseDir.appendingPathComponent("xxAppState")
+        guard FileManager.default.fileExists(atPath: appStateDir.path) else {
+            throw MyError.appStateDirNotFound
         }
-
+        try FileManager.default.removeItem(at: appStateDir)
+        stateDir = XXDK.setupStateDirectories(baseDir: baseDir)
         downloadedNdf = nil
 
         await MainActor.run {

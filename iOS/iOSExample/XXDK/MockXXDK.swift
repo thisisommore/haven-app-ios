@@ -236,7 +236,7 @@ public class XXDKMock: XXDKP {
         return "mock-private-identity".data(using: .utf8) ?? Data()
     }
 
-    func logout() async {
+    func logout() async throws {
         // Mock: reset state
         codename = nil
         codeset = 0

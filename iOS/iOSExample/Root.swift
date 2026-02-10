@@ -60,18 +60,21 @@ struct Root: View {
                             )
 
                             Task {
-                                await xxdk.logout()
-                                try? modelDataActor.deleteAll(
-                                    ChatMessageModel.self
-                                )
-                                try? modelDataActor.deleteAll(
+                                do {
+                                    try await xxdk.logout()
+                                } catch MyError.appStateDirNotFound {
+                                    AppLogger.xxdk.warning("logout: appStateDir does not exist, skipping removal")
+                                } catch {
+                                    fatalError("logout failed: \(error.localizedDescription)")
+                                }
+                                try! modelDataActor.deleteAll(
                                     MessageReactionModel.self
                                 )
-                                try? modelDataActor.deleteAll(
+                                try! modelDataActor.deleteAll(
                                     MessageSenderModel.self
                                 )
-                                try? modelDataActor.deleteAll(ChatModel.self)
-                                try? modelDataActor.save()
+                                try! modelDataActor.deleteAll(ChatModel.self)
+                                try! modelDataActor.save()
                                 secretManager.clearAll()
                                 navigation.path.append(Destination.password)
                             }
@@ -81,6 +84,11 @@ struct Root: View {
         }
         .onAppear {
             xxdk.setModelContainer(mActor: modelDataActor, sm: secretManager)
+        }
+        .onChange(of: secretManager.isSetupComplete) { _, newValue in
+            if newValue {
+                navigation.path = NavigationPath()
+            }
         }
         .logViewerOnShake()
         .handleDeepLinks()
