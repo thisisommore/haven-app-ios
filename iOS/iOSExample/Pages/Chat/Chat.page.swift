@@ -95,7 +95,6 @@ struct ChatView<T: XXDKP>: View {
     @State private var isMuted: Bool = false
     @State private var mutedUsers: [Data] = []
     @State private var highlightedMessageId: String? = nil
-    @State private var fileDataRefreshTrigger: Int = 0
     @EnvironmentObject var xxdk: T
 
     private func markMessagesAsRead() {
@@ -365,13 +364,7 @@ struct ChatView<T: XXDKP>: View {
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .fileDataUpdated)) { _ in
-            // Delay slightly to allow SwiftData to sync from background context
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                fileDataRefreshTrigger += 1
-            }
-        }
-        .id("chat-\(chatId)-\(fileDataRefreshTrigger)")
+        .id("chat-\(chatId)")
         .onChange(of: showChannelOptions) { _, newValue in
             if !newValue {
                 isAdmin = chat?.isAdmin ?? false
