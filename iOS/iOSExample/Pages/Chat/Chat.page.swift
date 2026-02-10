@@ -19,6 +19,58 @@ struct ChatView<T: XXDKP>: View {
 
     private var chat: ChatModel? { chatResults.first }
 
+    private struct MessageDisplayInfo: Identifiable {
+        let id: String
+        let message: ChatMessageModel
+        let showDateSeparator: Bool
+        let isFirst: Bool
+        let isFirstInGroup: Bool
+        let isLastInGroup: Bool
+        let showTimestamp: Bool
+    }
+
+    private var displayMessages: [MessageDisplayInfo] {
+        let calendar = Calendar.current
+        let count = messages.count
+        return messages.enumerated().map { index, msg in
+            let prevMsg = index > 0 ? messages[index - 1] : nil
+            let nextMsg = index < count - 1 ? messages[index + 1] : nil
+
+            let showDateSeparator = prevMsg == nil || !calendar.isDate(msg.timestamp, inSameDayAs: prevMsg!.timestamp)
+
+            let isFirstInGroup: Bool = {
+                guard let prev = prevMsg else { return true }
+                if showDateSeparator { return true }
+                return msg.sender?.id != prev.sender?.id
+            }()
+
+            let isLastInGroup: Bool = {
+                guard let next = nextMsg else { return true }
+                if !calendar.isDate(msg.timestamp, inSameDayAs: next.timestamp) { return true }
+                return msg.sender?.id != next.sender?.id
+            }()
+
+            let showTimestamp: Bool = {
+                guard let next = nextMsg else { return true }
+                if !calendar.isDate(msg.timestamp, inSameDayAs: next.timestamp) { return true }
+                if msg.sender?.id != next.sender?.id { return true }
+                let currentTime = DateFormatter.localizedString(from: msg.timestamp, dateStyle: .none, timeStyle: .short)
+                let nextTime = DateFormatter.localizedString(from: next.timestamp, dateStyle: .none, timeStyle: .short)
+                return currentTime != nextTime
+            }()
+
+            return MessageDisplayInfo(
+                id: msg.id,
+                message: msg,
+                showDateSeparator: showDateSeparator,
+                isFirst: index == 0,
+                isFirstInGroup: isFirstInGroup,
+                isLastInGroup: isLastInGroup,
+                showTimestamp: showTimestamp
+            )
+        }
+    }
+
     private var isChannel: Bool {
         guard let chat else { return false }
         return chat.name != "<self>" && chat.dmToken == nil
@@ -92,51 +144,17 @@ struct ChatView<T: XXDKP>: View {
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(messages.enumerated()), id: \.element.id) { index, result in
-                                // Show date separator if this is first message or date changed
-                                let showDateSeparator = index == 0 || (index > 0 && index < messages.count && !Calendar.current.isDate(result.timestamp, inSameDayAs: messages[index - 1].timestamp))
-                                if showDateSeparator {
-                                    DateSeparatorBadge(date: result.timestamp, isFirst: index == 0)
+                            ForEach(displayMessages) { info in
+                                if info.showDateSeparator {
+                                    DateSeparatorBadge(date: info.message.timestamp, isFirst: info.isFirst)
                                 }
 
-                                // Show sender name only for first message in a group (same sender, same date)
-                                let isFirstInGroup: Bool = {
-                                    guard index > 0 else { return true }
-                                    let prev = messages[index - 1]
-                                    if showDateSeparator { return true }
-                                    return result.sender?.id != prev.sender?.id
-                                }()
-
-                                // Check if this is last message in group
-                                let isLastInGroup: Bool = {
-                                    guard index < messages.count - 1 else { return true }
-                                    let next = messages[index + 1]
-                                    // Next message on different date
-                                    if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
-                                    // Next message has different sender
-                                    return result.sender?.id != next.sender?.id
-                                }()
-
-                                // Show timestamp only on the last message before (day OR sender OR time) changes
-                                let showTimestamp: Bool = {
-                                    guard index < messages.count - 1 else { return true }
-                                    let next = messages[index + 1]
-                                    // Next message on different date
-                                    if !Calendar.current.isDate(result.timestamp, inSameDayAs: next.timestamp) { return true }
-                                    // Next message has different sender
-                                    if result.sender?.id != next.sender?.id { return true }
-                                    // Next message has different time (short style, same as UI)
-                                    let currentTime = DateFormatter.localizedString(from: result.timestamp, dateStyle: .none, timeStyle: .short)
-                                    let nextTime = DateFormatter.localizedString(from: next.timestamp, dateStyle: .none, timeStyle: .short)
-                                    return currentTime != nextTime
-                                }()
-
                                 ChatMessageRow<T>(
-                                    result: result,
+                                    result: info.message,
                                     isAdmin: isAdmin,
-                                    isFirstInGroup: isFirstInGroup,
-                                    isLastInGroup: isLastInGroup,
-                                    showTimestamp: showTimestamp,
+                                    isFirstInGroup: info.isFirstInGroup,
+                                    isLastInGroup: info.isLastInGroup,
+                                    showTimestamp: info.showTimestamp,
                                     onReply: { message in
                                         replyingTo = message
                                     },
