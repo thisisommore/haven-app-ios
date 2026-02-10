@@ -32,6 +32,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var showDateHeader: Bool = false
     @State private var hideTask: Task<Void, Never>? = nil
     @State private var scrollingToOlder: Bool = true
+    @State private var topVisibleMessageId: String?
     @State private var isAdmin: Bool = false
     @State private var toastMessage: String? = nil
     @State private var isMuted: Bool = false
@@ -193,41 +194,33 @@ struct ChatView<T: XXDKP>: View {
                                         }
                                     }
                                 )
-                                .background(
-                                    GeometryReader { geo in
-                                        let frame = geo.frame(in: .named("chatScroll"))
-                                        Color.clear
-                                            .preference(
-                                                key: VisibleMessagePreferenceKey.self,
-                                                value: frame.minY < 60 && frame.maxY > 0 ? result.timestamp : nil
-                                            )
-                                    }
-                                )
                             }
                             Spacer()
                         }.padding().scrollTargetLayout()
                     }
+                    .scrollPosition(id: $topVisibleMessageId, anchor: .top)
                 }
-                .coordinateSpace(name: "chatScroll")
-                .onPreferenceChange(VisibleMessagePreferenceKey.self) { date in
-                    if let date {
-                        // Determine scroll direction
-                        if let oldDate = visibleDate {
-                            scrollingToOlder = date < oldDate
-                        }
-                        withAnimation(.spring(duration: 0.35)) {
-                            visibleDate = date
-                        }
-                        showDateHeader = true
+                .onChange(of: topVisibleMessageId) { _, newId in
+                    guard let newId,
+                          let message = messages.first(where: { $0.id == newId })
+                    else { return }
 
-                        // Cancel previous hide task and schedule new one
-                        hideTask?.cancel()
-                        hideTask = Task {
-                            try? await Task.sleep(for: .seconds(4))
-                            if !Task.isCancelled {
-                                await MainActor.run {
-                                    showDateHeader = false
-                                }
+                    let date = message.timestamp
+                    if let oldDate = visibleDate {
+                        scrollingToOlder = date < oldDate
+                    }
+                    withAnimation(.spring(duration: 0.35)) {
+                        visibleDate = date
+                    }
+                    showDateHeader = true
+
+                    // Cancel previous hide task and schedule new one
+                    hideTask?.cancel()
+                    hideTask = Task {
+                        try? await Task.sleep(for: .seconds(4))
+                        if !Task.isCancelled {
+                            await MainActor.run {
+                                showDateHeader = false
                             }
                         }
                     }
