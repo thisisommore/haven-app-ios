@@ -22,11 +22,6 @@ extension XXDK {
         lockTask()
         defer { unlockTask() }
 
-        do {
-        } catch {
-            AppLogger.storage.error("SwiftData: Failed to delete all data at startup: \(error.localizedDescription, privacy: .public)")
-        }
-
         guard let sm else {
             fatalError("no secret manager")
         }
