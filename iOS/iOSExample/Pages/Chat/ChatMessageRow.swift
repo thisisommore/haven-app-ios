@@ -13,6 +13,7 @@ struct ChatMessageRow<T: XXDKP>: View {
     let isFirstInGroup: Bool
     let isLastInGroup: Bool
     let showTimestamp: Bool
+    let repliedToMessage: String?
     var onReply: ((ChatMessageModel) -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: ((ChatMessageModel) -> Void)?
@@ -22,19 +23,20 @@ struct ChatMessageRow<T: XXDKP>: View {
     let highlightedMessageId: String?
     var onScrollToReply: ((String) -> Void)?
     @Query private var chatReactions: [MessageReactionModel]
-    @Query private var repliedTo: [ChatMessageModel]
-    @Query private var messageSender: [MessageSenderModel]
+
+    private var sender: MessageSenderModel? { result.sender }
 
     private var isHighlighted: Bool {
         highlightedMessageId == result.id
     }
 
-    init(result: ChatMessageModel, isAdmin: Bool = false, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: ((ChatMessageModel) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessageModel) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
+    init(result: ChatMessageModel, isAdmin: Bool = false, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, repliedToMessage: String? = nil, onReply: ((ChatMessageModel) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessageModel) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
         self.result = result
         self.isAdmin = isAdmin
         self.isFirstInGroup = isFirstInGroup
         self.isLastInGroup = isLastInGroup
         self.showTimestamp = showTimestamp
+        self.repliedToMessage = repliedToMessage
         self.onReply = onReply
         self.onDelete = onDelete
         self.onMute = onMute
@@ -42,18 +44,10 @@ struct ChatMessageRow<T: XXDKP>: View {
         self.mutedUsers = mutedUsers
         self.highlightedMessageId = highlightedMessageId
         self.onScrollToReply = onScrollToReply
+        self.onDM = onDM
         let messageId = result.id
-        let replyTo = result.replyTo
-        let senderId = result.sender?.id
         _chatReactions = Query(filter: #Predicate<MessageReactionModel> { r in
             r.targetMessageId == messageId
-        })
-        self.onDM = onDM
-        _repliedTo = Query(filter: #Predicate<ChatMessageModel> { r in
-            if replyTo != nil { r.id == replyTo! } else { false }
-        })
-        _messageSender = Query(filter: #Predicate<MessageSenderModel> { s in
-            if senderId != nil { s.id == senderId! } else { false }
         })
     }
 
@@ -66,9 +60,9 @@ struct ChatMessageRow<T: XXDKP>: View {
                 MessageItem<T>(
                     text: result.message,
                     isIncoming: result.isIncoming,
-                    repliedTo: repliedTo.first?.message,
+                    repliedTo: repliedToMessage,
                     repliedToId: result.replyTo,
-                    sender: messageSender.first,
+                    sender: sender,
                     isFirstInGroup: isFirstInGroup,
                     isLastInGroup: isLastInGroup,
                     showTimestamp: showTimestamp,
@@ -81,7 +75,7 @@ struct ChatMessageRow<T: XXDKP>: View {
                     },
                     onMute: onMute,
                     onUnmute: onUnmute,
-                    isSenderMuted: messageSender.first.map { mutedUsers.contains($0.pubkey) } ?? false,
+                    isSenderMuted: sender.map { mutedUsers.contains($0.pubkey) } ?? false,
                     timestamp: result.timestamp,
                     isAdmin: isAdmin,
                     onScrollToReply: onScrollToReply,

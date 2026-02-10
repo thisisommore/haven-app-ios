@@ -27,11 +27,13 @@ struct ChatView<T: XXDKP>: View {
         let isFirstInGroup: Bool
         let isLastInGroup: Bool
         let showTimestamp: Bool
+        let repliedToMessage: String?
     }
 
     private var displayMessages: [MessageDisplayInfo] {
         let calendar = Calendar.current
         let count = messages.count
+        let messageById = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0) })
         return messages.enumerated().map { index, msg in
             let prevMsg = index > 0 ? messages[index - 1] : nil
             let nextMsg = index < count - 1 ? messages[index + 1] : nil
@@ -59,6 +61,8 @@ struct ChatView<T: XXDKP>: View {
                 return currentTime != nextTime
             }()
 
+            let repliedToMessage = msg.replyTo.flatMap { messageById[$0]?.message }
+
             return MessageDisplayInfo(
                 id: msg.id,
                 message: msg,
@@ -66,7 +70,8 @@ struct ChatView<T: XXDKP>: View {
                 isFirst: index == 0,
                 isFirstInGroup: isFirstInGroup,
                 isLastInGroup: isLastInGroup,
-                showTimestamp: showTimestamp
+                showTimestamp: showTimestamp,
+                repliedToMessage: repliedToMessage
             )
         }
     }
@@ -155,6 +160,7 @@ struct ChatView<T: XXDKP>: View {
                                     isFirstInGroup: info.isFirstInGroup,
                                     isLastInGroup: info.isLastInGroup,
                                     showTimestamp: info.showTimestamp,
+                                    repliedToMessage: info.repliedToMessage,
                                     onReply: { message in
                                         replyingTo = message
                                     },
