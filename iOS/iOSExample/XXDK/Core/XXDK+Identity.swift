@@ -291,7 +291,9 @@ extension XXDK {
             AppLogger.home.error("Failed to ensure initial channel xxGeneralChat: \(error.localizedDescription, privacy: .public)")
         }
 
-        sm!.isSetupComplete = true
+        await MainActor.run {
+            sm!.isSetupComplete = true
+        }
 
         await progress(.ready)
     }
