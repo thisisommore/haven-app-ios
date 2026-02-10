@@ -72,22 +72,6 @@ struct MessageBubble<T: XXDKP>: View {
         // Initialize @Binding properties
         _selectedEmoji = selectedEmoji
         _shouldTriggerReply = shouldTriggerReply
-
-        // Compute markdown from HTML and initialize @State
-        var document = BasicHTML(rawHTML: text)
-        // Parse and convert to markdown safely; fall back to raw text on failure
-        do {
-            try document.parse()
-            let md = try document.asMarkdown()
-            _markdown = State(initialValue: md)
-        } catch {
-            _markdown = State(initialValue: text)
-        }
-
-        // Parse channel link if present
-        _parsedChannelLink = State(initialValue: ParsedChannelLink.parse(from: text))
-        // Parse DM link if present
-        _parsedDMLink = State(initialValue: ParsedDMLink.parse(from: text))
     }
 
     private var underlinedMarkdown: AttributedString {
@@ -308,6 +292,23 @@ struct MessageBubble<T: XXDKP>: View {
         .shadow(color: Color.haven.opacity(isHighlighted ? 0.5 : 0), radius: 8)
         .animation(.easeInOut(duration: 0.25), value: isHighlighted)
         .padding(.top, isFirstInGroup ? 6 : 2)
+        .task(id: text) {
+            let raw = text
+            let (md, chLink, dmLink) = await Task.detached(priority: .userInitiated) {
+                var md: String = raw
+                var document = BasicHTML(rawHTML: raw)
+                do {
+                    try document.parse()
+                    md = try document.asMarkdown()
+                } catch {}
+                let chLink = ParsedChannelLink.parse(from: raw)
+                let dmLink = ParsedDMLink.parse(from: raw)
+                return (md, chLink, dmLink)
+            }.value
+            markdown = md
+            parsedChannelLink = chLink
+            parsedDMLink = dmLink
+        }
     }
 }
 
