@@ -15,14 +15,9 @@ struct ChatView<T: XXDKP>: View {
     @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @Query private var chatResults: [ChatModel]
-    @Query private var allMessages: [ChatMessageModel]
+    @Query(sort: \ChatMessageModel.timestamp) private var messages: [ChatMessageModel]
 
     private var chat: ChatModel? { chatResults.first }
-    private var messages: [ChatMessageModel] {
-        // Filter messages for this chat - using @Query ensures updates trigger refresh
-        let chatMessages = allMessages.filter { $0.chat.id == chatId }
-        return chatMessages.sorted { $0.timestamp < $1.timestamp }
-    }
 
     private var isChannel: Bool {
         guard let chat else { return false }
@@ -80,8 +75,12 @@ struct ChatView<T: XXDKP>: View {
                 chat.id == chatId
             }
         )
-        // Query all messages - ensures fileData updates trigger view refresh
-        _allMessages = Query()
+        _messages = Query(
+            filter: #Predicate<ChatMessageModel> { message in
+                message.chat.id == chatId
+            },
+            sort: \ChatMessageModel.timestamp
+        )
     }
 
     var body: some View {
