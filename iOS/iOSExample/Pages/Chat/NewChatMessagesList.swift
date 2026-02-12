@@ -4,6 +4,7 @@ struct NewChatMessagesList: View {
     let messages: [ChatMessageModel]
     let isLoadingOlderMessages: Bool
     var onReachedTop: (() -> Void)?
+    var onReplyMessage: ((ChatMessageModel) -> Void)?
     @State private var topVisibleMessageId: String?
     @State private var lastTopTriggerMessageId: String?
     private let bottomAnchorId = "new-chat-bottom-anchor"
@@ -59,7 +60,8 @@ struct NewChatMessagesList: View {
                     ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
                         NewChatMessageTextRow(
                             message: message,
-                            showSender: shouldShowSender(for: index)
+                            showSender: shouldShowSender(for: index),
+                            onReply: onReplyMessage
                         )
                             .id(message.id)
                     }

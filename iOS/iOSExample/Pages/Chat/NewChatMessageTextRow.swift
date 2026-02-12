@@ -4,6 +4,7 @@ import UIKit
 struct NewChatMessageTextRow: View {
     let message: ChatMessageModel
     let showSender: Bool
+    var onReply: ((ChatMessageModel) -> Void)?
 
     private var senderDisplayName: String {
         guard let sender = message.sender else { return "" }
@@ -39,6 +40,10 @@ struct NewChatMessageTextRow: View {
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 12)
         .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .swipeToReply {
+            onReply?(message)
+        }
     }
 }
 

@@ -414,6 +414,9 @@ struct ChatView<T: XXDKP>: View {
                     isLoadingOlderMessages: isLoadingOlderMessages,
                     onReachedTop: {
                         loadOlderMessagesIfNeeded()
+                    },
+                    onReplyMessage: { message in
+                        replyingTo = message
                     }
                 )
             }
@@ -537,6 +540,10 @@ struct ChatView<T: XXDKP>: View {
             }
         }
         .background(ChatBackgroundView())
+        .background(
+            NewChatBackSwipeControl(isDisabled: true)
+                .allowsHitTesting(false)
+        )
         .overlay {
             if let message = toastMessage {
                 VStack {
