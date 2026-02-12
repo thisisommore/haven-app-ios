@@ -5,6 +5,20 @@ struct NewChatMessagesList: View {
     @State private var topVisibleMessageId: String?
     private let bottomAnchorId = "new-chat-bottom-anchor"
 
+    private func shouldShowSender(for index: Int) -> Bool {
+        guard index < messages.count else { return false }
+        let message = messages[index]
+        guard message.isIncoming, let senderId = message.sender?.id else {
+            return false
+        }
+        guard index > 0 else { return true }
+        let previous = messages[index - 1]
+        if !previous.isIncoming {
+            return true
+        }
+        return previous.sender?.id != senderId
+    }
+
     private var messageIds: [String] {
         messages.map(\.id)
     }
@@ -25,8 +39,11 @@ struct NewChatMessagesList: View {
         ScrollViewReader { scrollProxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(messages, id: \.id) { message in
-                        NewChatMessageTextRow(message: message)
+                    ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+                        NewChatMessageTextRow(
+                            message: message,
+                            showSender: shouldShowSender(for: index)
+                        )
                             .id(message.id)
                     }
                     Color.clear
