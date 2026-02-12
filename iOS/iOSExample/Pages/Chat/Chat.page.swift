@@ -120,6 +120,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var isLoadingInitialMessages: Bool = false
     @State private var isLoadingOlderMessages: Bool = false
     @State private var isRefreshingNewerMessages: Bool = false
+    @State private var isRefreshingBackfilledOlderMessages: Bool = false
     @State private var hasMoreOlderMessages: Bool = true
     @State private var cachedDisplayMessages: [MessageDisplayInfo] = []
     @State private var messageDateLookup: [String: Date] = [:]
@@ -428,6 +429,33 @@ struct ChatView<T: XXDKP>: View {
         }
     }
 
+    private func refreshBackfilledOlderMessagesIfNeeded() {
+        guard !isRefreshingBackfilledOlderMessages,
+              !isLoadingInitialMessages,
+              !isLoadingOlderMessages,
+              !pagedMessageIds.isEmpty,
+              !hasMoreOlderMessages,
+              let cursor = oldestCursor
+        else { return }
+
+        isRefreshingBackfilledOlderMessages = true
+
+        Task(priority: .utility) { @MainActor in
+            let olderBatch = fetchOlderMessages(before: cursor, limit: messagesPageSize)
+            let olderIds = olderBatch.map(\.id)
+            let existingIds = Set(pagedMessageIds)
+            let uniqueOlderIds = olderIds.filter { !existingIds.contains($0) }
+
+            if !uniqueOlderIds.isEmpty {
+                pagedMessageIds.insert(contentsOf: uniqueOlderIds, at: 0)
+                reloadMessagesFromPageIds()
+            }
+
+            hasMoreOlderMessages = olderBatch.count == messagesPageSize
+            isRefreshingBackfilledOlderMessages = false
+        }
+    }
+
     var body: some View {
         Group {
             if isLoadingInitialMessages && messages.isEmpty {
@@ -572,6 +600,7 @@ struct ChatView<T: XXDKP>: View {
                   updatedChatId == chatId
             else { return }
             refreshNewerMessages()
+            refreshBackfilledOlderMessagesIfNeeded()
         }
         .id("chat-\(chatId)")
         .onChange(of: showChannelOptions) { _, newValue in
