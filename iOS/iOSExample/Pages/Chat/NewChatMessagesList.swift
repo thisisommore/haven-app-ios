@@ -2,7 +2,10 @@ import SwiftUI
 
 struct NewChatMessagesList: View {
     let messages: [ChatMessageModel]
+    let isLoadingOlderMessages: Bool
+    var onReachedTop: (() -> Void)?
     @State private var topVisibleMessageId: String?
+    @State private var lastTopTriggerMessageId: String?
     private let bottomAnchorId = "new-chat-bottom-anchor"
 
     private func shouldShowSender(for index: Int) -> Bool {
@@ -27,6 +30,10 @@ struct NewChatMessagesList: View {
         messages.last?.id
     }
 
+    private var firstMessageId: String? {
+        messages.first?.id
+    }
+
     private func scrollToBottom(_ scrollProxy: ScrollViewProxy) {
         var transaction = Transaction()
         transaction.disablesAnimations = true
@@ -39,6 +46,16 @@ struct NewChatMessagesList: View {
         ScrollViewReader { scrollProxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
+                    if isLoadingOlderMessages {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .scaleEffect(0.85)
+                            Spacer()
+                        }
+                        .padding(.vertical, 6)
+                    }
+
                     ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
                         NewChatMessageTextRow(
                             message: message,
@@ -54,6 +71,12 @@ struct NewChatMessagesList: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .scrollPosition(id: $topVisibleMessageId, anchor: .top)
+            .onChange(of: topVisibleMessageId) { _, newTopVisibleId in
+                guard let firstMessageId, firstMessageId == newTopVisibleId else { return }
+                guard lastTopTriggerMessageId != newTopVisibleId else { return }
+                lastTopTriggerMessageId = newTopVisibleId
+                onReachedTop?()
+            }
             .task(id: lastMessageId) {
                 guard lastMessageId != nil else { return }
                 Task { @MainActor in

@@ -20,8 +20,15 @@ struct ChatView<T: XXDKP>: View {
 
     @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
+    @Environment(\.modelContext) private var modelContext
     @Query private var chatResults: [ChatModel]
-    @Query(sort: \ChatMessageModel.timestamp) private var messages: [ChatMessageModel]
+
+    private let messagesPageSize = 120
+
+    private struct MessageCursor {
+        let timestamp: Date
+        let internalId: Int64
+    }
 
     private var chat: ChatModel? { chatResults.first }
 
@@ -103,20 +110,38 @@ struct ChatView<T: XXDKP>: View {
     @State private var isMuted: Bool = false
     @State private var mutedUsers: [Data] = []
     @State private var highlightedMessageId: String? = nil
+    @State private var messages: [ChatMessageModel] = []
+    @State private var isLoadingInitialMessages: Bool = false
+    @State private var isLoadingOlderMessages: Bool = false
+    @State private var isRefreshingNewerMessages: Bool = false
+    @State private var hasMoreOlderMessages: Bool = true
     @State private var cachedDisplayMessages: [MessageDisplayInfo] = []
     @State private var messageDateLookup: [String: Date] = [:]
     @EnvironmentObject var xxdk: T
 
     private func markMessagesAsRead() {
         guard let chat else { return }
-        let unreadMessages = chat.messages.filter { $0.isIncoming && !$0.isRead && $0.timestamp > chat.joinedAt }
-        guard !unreadMessages.isEmpty else { return }
+        let joinedAt = chat.joinedAt
+        let chatId = chat.id
+
+        let descriptor = FetchDescriptor<ChatMessageModel>(
+            predicate: #Predicate { message in
+                message.chat.id == chatId &&
+                    message.isIncoming &&
+                    !message.isRead &&
+                    message.timestamp > joinedAt
+            }
+        )
+
+        guard let unreadMessages = try? modelContext.fetch(descriptor),
+              !unreadMessages.isEmpty
+        else { return }
 
         for message in unreadMessages {
             message.isRead = true
         }
         chat.unreadCount = 0
-        try? swiftDataActor.save()
+        try? modelContext.save()
     }
 
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int) {
@@ -141,12 +166,6 @@ struct ChatView<T: XXDKP>: View {
             filter: #Predicate<ChatModel> { chat in
                 chat.id == chatId
             }
-        )
-        _messages = Query(
-            filter: #Predicate<ChatMessageModel> { message in
-                message.chat.id == chatId
-            },
-            sort: \ChatMessageModel.timestamp
         )
     }
 
@@ -188,12 +207,151 @@ struct ChatView<T: XXDKP>: View {
         }
     }
 
+    private var oldestCursor: MessageCursor? {
+        guard let first = messages.first else { return nil }
+        return MessageCursor(timestamp: first.timestamp, internalId: first.internalId)
+    }
+
+    private var newestCursor: MessageCursor? {
+        guard let last = messages.last else { return nil }
+        return MessageCursor(timestamp: last.timestamp, internalId: last.internalId)
+    }
+
+    private func fetchLatestMessages(limit: Int) -> [ChatMessageModel] {
+        let currentChatId = chatId
+        var descriptor = FetchDescriptor<ChatMessageModel>(
+            predicate: #Predicate { message in
+                message.chat.id == currentChatId
+            },
+            sortBy: [
+                SortDescriptor(\ChatMessageModel.timestamp, order: .reverse),
+                SortDescriptor(\ChatMessageModel.internalId, order: .reverse),
+            ]
+        )
+        descriptor.fetchLimit = limit
+
+        let newestFirst = (try? modelContext.fetch(descriptor)) ?? []
+        return Array(newestFirst.reversed())
+    }
+
+    private func fetchOlderMessages(before cursor: MessageCursor, limit: Int) -> [ChatMessageModel] {
+        let currentChatId = chatId
+        let cursorTimestamp = cursor.timestamp
+        let cursorInternalId = cursor.internalId
+        var descriptor = FetchDescriptor<ChatMessageModel>(
+            predicate: #Predicate { message in
+                message.chat.id == currentChatId &&
+                    (message.timestamp < cursorTimestamp ||
+                        (message.timestamp == cursorTimestamp && message.internalId < cursorInternalId))
+            },
+            sortBy: [
+                SortDescriptor(\ChatMessageModel.timestamp, order: .reverse),
+                SortDescriptor(\ChatMessageModel.internalId, order: .reverse),
+            ]
+        )
+        descriptor.fetchLimit = limit
+
+        let olderDescending = (try? modelContext.fetch(descriptor)) ?? []
+        return Array(olderDescending.reversed())
+    }
+
+    private func fetchNewerMessages(after cursor: MessageCursor, limit: Int) -> [ChatMessageModel] {
+        let currentChatId = chatId
+        let cursorTimestamp = cursor.timestamp
+        let cursorInternalId = cursor.internalId
+        var descriptor = FetchDescriptor<ChatMessageModel>(
+            predicate: #Predicate { message in
+                message.chat.id == currentChatId &&
+                    (message.timestamp > cursorTimestamp ||
+                        (message.timestamp == cursorTimestamp && message.internalId > cursorInternalId))
+            },
+            sortBy: [
+                SortDescriptor(\ChatMessageModel.timestamp),
+                SortDescriptor(\ChatMessageModel.internalId),
+            ]
+        )
+        descriptor.fetchLimit = limit
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private func loadInitialMessagesIfNeeded() {
+        guard !isLoadingInitialMessages, messages.isEmpty else { return }
+        isLoadingInitialMessages = true
+
+        Task { @MainActor in
+            let initialMessages = fetchLatestMessages(limit: messagesPageSize)
+            messages = initialMessages
+            hasMoreOlderMessages = initialMessages.count == messagesPageSize
+            isLoadingInitialMessages = false
+        }
+    }
+
+    private func loadOlderMessagesIfNeeded() {
+        guard !isLoadingOlderMessages, hasMoreOlderMessages else { return }
+        guard let cursor = oldestCursor else { return }
+        isLoadingOlderMessages = true
+
+        Task { @MainActor in
+            let olderBatch = fetchOlderMessages(before: cursor, limit: messagesPageSize)
+            let existingIds = Set(messages.map(\.id))
+            let uniqueOlder = olderBatch.filter { !existingIds.contains($0.id) }
+
+            if !uniqueOlder.isEmpty {
+                messages.insert(contentsOf: uniqueOlder, at: 0)
+            }
+
+            if olderBatch.count < messagesPageSize || uniqueOlder.isEmpty {
+                hasMoreOlderMessages = false
+            }
+            isLoadingOlderMessages = false
+        }
+    }
+
+    private func refreshNewerMessages() {
+        guard !isRefreshingNewerMessages, !isLoadingInitialMessages else { return }
+        guard var cursor = newestCursor else {
+            loadInitialMessagesIfNeeded()
+            return
+        }
+
+        isRefreshingNewerMessages = true
+
+        Task { @MainActor in
+            var appended: [ChatMessageModel] = []
+
+            while true {
+                let batch = fetchNewerMessages(after: cursor, limit: messagesPageSize)
+                guard !batch.isEmpty else { break }
+
+                appended.append(contentsOf: batch)
+
+                guard batch.count == messagesPageSize, let newest = batch.last else { break }
+                cursor = MessageCursor(timestamp: newest.timestamp, internalId: newest.internalId)
+            }
+
+            let existingIds = Set(messages.map(\.id))
+            let uniqueAppended = appended.filter { !existingIds.contains($0.id) }
+            if !uniqueAppended.isEmpty {
+                messages.append(contentsOf: uniqueAppended)
+            }
+            isRefreshingNewerMessages = false
+        }
+    }
+
     var body: some View {
         Group {
-            if messages.isEmpty {
+            if isLoadingInitialMessages && messages.isEmpty {
+                ProgressView()
+            } else if messages.isEmpty {
                 EmptyChatView()
             } else {
-                NewChatMessagesList(messages: messages)
+                NewChatMessagesList(
+                    messages: messages,
+                    isLoadingOlderMessages: isLoadingOlderMessages,
+                    onReachedTop: {
+                        loadOlderMessagesIfNeeded()
+                    }
+                )
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -280,6 +438,7 @@ struct ChatView<T: XXDKP>: View {
             .environmentObject(xxdk)
         }
         .onAppear {
+            loadInitialMessagesIfNeeded()
             isAdmin = chat?.isAdmin ?? false
             isMuted = xxdk.isMuted(channelId: chatId)
             do {
@@ -301,6 +460,12 @@ struct ChatView<T: XXDKP>: View {
                     AppLogger.channels.error("Failed to refresh muted users: \(error.localizedDescription, privacy: .public)")
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .chatMessagesUpdated)) { notification in
+            guard let updatedChatId = notification.userInfo?["chatId"] as? String,
+                  updatedChatId == chatId
+            else { return }
+            refreshNewerMessages()
         }
         .id("chat-\(chatId)")
         .onChange(of: showChannelOptions) { _, newValue in

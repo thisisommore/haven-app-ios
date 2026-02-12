@@ -6,9 +6,20 @@
 //
 
 import Bindings
+import Foundation
 import SwiftData
 
 enum ReceiverHelpers {
+    private static func postChatMessageUpdate(chatId: String) {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .chatMessagesUpdated,
+                object: nil,
+                userInfo: ["chatId": chatId]
+            )
+        }
+    }
+
     /// Parse identity from pubKey and codeset, returning codename and color
     static func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
         var err: NSError?
@@ -116,6 +127,7 @@ enum ReceiverHelpers {
         }
 
         try ctx.save()
+        postChatMessageUpdate(chatId: chat.id)
         return msg
     }
 

@@ -684,6 +684,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
             try actor.save()
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .chatMessagesUpdated,
+                    object: nil,
+                    userInfo: ["chatId": channelIdB64]
+                )
+            }
 
             // Trigger download for incoming files without cached data
             if isIncoming && cachedFileData == nil {
