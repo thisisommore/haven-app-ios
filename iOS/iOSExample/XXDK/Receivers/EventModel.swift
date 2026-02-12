@@ -673,6 +673,8 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 internalId: internalId,
                 timestamp: timestamp
             )
+            let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: fileMessage.message)
+            NewMessageRenderPersistence.apply(precomputedRender, to: fileMessage)
 
             actor.insert(fileMessage)
             chat.messages.append(fileMessage)

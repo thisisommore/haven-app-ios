@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct NewChatMessageTextRow: View {
     let message: ChatMessageModel
@@ -17,7 +18,7 @@ struct NewChatMessageTextRow: View {
         HStack(spacing: 0) {
             if message.isIncoming {
                 NewChatMessageBubbleText(
-                    text: message.message,
+                    message: message,
                     isIncoming: true,
                     showSender: showSender,
                     senderDisplayName: senderDisplayName,
@@ -27,7 +28,7 @@ struct NewChatMessageTextRow: View {
             } else {
                 Spacer(minLength: 44)
                 NewChatMessageBubbleText(
-                    text: message.message,
+                    message: message,
                     isIncoming: false,
                     showSender: false,
                     senderDisplayName: "",
@@ -42,7 +43,7 @@ struct NewChatMessageTextRow: View {
 }
 
 private struct NewChatMessageBubbleText: View {
-    let text: String
+    let message: ChatMessageModel
     let isIncoming: Bool
     let showSender: Bool
     let senderDisplayName: String
@@ -76,13 +77,56 @@ private struct NewChatMessageBubbleText: View {
                         Color(hexNumber: senderColorHex).adaptive(for: colorScheme)
                     )
             }
-            Text(verbatim: text)
-                .font(.system(size: 16))
-                .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+            NewChatRenderableMessageText(
+                message: message,
+                isIncoming: isIncoming
+            )
         }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .background(isIncoming ? Color.messageBubble : Color.haven)
             .clipShape(bubbleShape)
+    }
+}
+
+private struct NewChatRenderableMessageText: View {
+    let message: ChatMessageModel
+    let isIncoming: Bool
+
+    @State private var pendingURL: URL?
+    @State private var showOpenLinkWarning = false
+
+    private var linkWarningMessage: String {
+        "Opening links may expose metadata and reduce privacy/safety."
+    }
+
+    var body: some View {
+        Group {
+            switch NewMessageRenderCache.shared.renderedText(for: message) {
+            case let .plain(text):
+                Text(verbatim: text)
+            case let .rich(attributed):
+                Text(attributed)
+            }
+        }
+        .font(.system(size: 16))
+        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+        .tint(isIncoming ? Color.haven : Color.white)
+        .environment(\.openURL, OpenURLAction { url in
+            pendingURL = url
+            showOpenLinkWarning = true
+            return .handled
+        })
+        .alert("Open External Link?", isPresented: $showOpenLinkWarning, presenting: pendingURL) { url in
+            Button("Cancel", role: .cancel) {
+                pendingURL = nil
+            }
+            Button("Open") {
+                UIApplication.shared.open(url)
+                pendingURL = nil
+            }
+        } message: { _ in
+            Text(linkWarningMessage)
+        }
     }
 }

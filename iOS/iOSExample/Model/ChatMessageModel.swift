@@ -26,6 +26,11 @@ class ChatMessageModel: Identifiable {
     var sender: MessageSenderModel?
     var chat: ChatModel
     var replyTo: String?
+    var newContainsMarkup: Bool = false
+    var newRenderKindRaw: Int16 = 0
+    var newRenderVersion: Int16 = 0
+    var newRenderPlainText: String?
+    var newRenderPayload: Data?
 
     // File attachment properties
     var fileName: String?
@@ -57,6 +62,7 @@ class ChatMessageModel: Identifiable {
         }
         self.chat = chat
         self.replyTo = replyTo
+        newRenderPlainText = message
     }
 
     /// Create a file message
