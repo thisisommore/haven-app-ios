@@ -95,7 +95,7 @@ struct ChatRowView<T: XXDKP>: View {
                     }
                 }
 
-                if let lastMessage = chat.messages.sorted(by: { $0.timestamp < $1.timestamp }).last {
+                if let lastMessage = chat.messages.max(by: { $0.timestamp < $1.timestamp }) {
                     let senderName: String = {
                         if !lastMessage.isIncoming {
                             return "you"

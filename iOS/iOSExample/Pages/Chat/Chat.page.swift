@@ -12,6 +12,12 @@ struct ChatView<T: XXDKP>: View {
     let chatId: String
     let chatTitle: String
 
+    private final class ScrollTracker {
+        var topVisibleMessageId: String?
+        var pendingDateUpdateTask: Task<Void, Never>?
+        var hideHeaderTask: Task<Void, Never>?
+    }
+
     @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @Query private var chatResults: [ChatModel]
@@ -28,9 +34,11 @@ struct ChatView<T: XXDKP>: View {
         let isLastInGroup: Bool
         let showTimestamp: Bool
         let repliedToMessage: String?
+        let reactions: [MessageReactionModel]
     }
 
-    private var displayMessages: [MessageDisplayInfo] {
+    private static func buildDisplayMessages(from messages: [ChatMessageModel], reactions: [MessageReactionModel] = []) -> [MessageDisplayInfo] {
+        let reactionsByMessage = Dictionary(grouping: reactions, by: { $0.targetMessageId })
         let calendar = Calendar.current
         let count = messages.count
         let messageById = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0) })
@@ -71,7 +79,8 @@ struct ChatView<T: XXDKP>: View {
                 isFirstInGroup: isFirstInGroup,
                 isLastInGroup: isLastInGroup,
                 showTimestamp: showTimestamp,
-                repliedToMessage: repliedToMessage
+                repliedToMessage: repliedToMessage,
+                reactions: reactionsByMessage[msg.id] ?? []
             )
         }
     }
@@ -87,14 +96,15 @@ struct ChatView<T: XXDKP>: View {
     @State private var showChannelOptions: Bool = false
     @State private var visibleDate: Date? = nil
     @State private var showDateHeader: Bool = false
-    @State private var hideTask: Task<Void, Never>? = nil
     @State private var scrollingToOlder: Bool = true
-    @State private var topVisibleMessageId: String?
+    @State private var scrollTracker = ScrollTracker()
     @State private var isAdmin: Bool = false
     @State private var toastMessage: String? = nil
     @State private var isMuted: Bool = false
     @State private var mutedUsers: [Data] = []
     @State private var highlightedMessageId: String? = nil
+    @State private var cachedDisplayMessages: [MessageDisplayInfo] = []
+    @State private var messageDateLookup: [String: Date] = [:]
     @EnvironmentObject var xxdk: T
 
     private func markMessagesAsRead() {
@@ -140,122 +150,50 @@ struct ChatView<T: XXDKP>: View {
         )
     }
 
+    private func onTopVisibleMessageChanged(_ messageId: String?) {
+        if scrollTracker.topVisibleMessageId == messageId {
+            return
+        }
+        scrollTracker.topVisibleMessageId = messageId
+        guard let messageId else {
+            scrollTracker.pendingDateUpdateTask?.cancel()
+            return
+        }
+        scrollTracker.pendingDateUpdateTask?.cancel()
+
+        scrollTracker.pendingDateUpdateTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
+            guard !Task.isCancelled,
+                  let date = messageDateLookup[messageId]
+            else { return }
+
+            let calendar = Calendar.current
+            let dayDate = calendar.startOfDay(for: date)
+            if let oldDate = visibleDate {
+                scrollingToOlder = dayDate < oldDate
+            }
+            if visibleDate != dayDate {
+                visibleDate = dayDate
+            }
+            if !showDateHeader {
+                showDateHeader = true
+            }
+
+            scrollTracker.hideHeaderTask?.cancel()
+            scrollTracker.hideHeaderTask = Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1.2))
+                guard !Task.isCancelled else { return }
+                showDateHeader = false
+            }
+        }
+    }
+
     var body: some View {
-        ZStack(alignment: .top) {
+        Group {
             if messages.isEmpty {
                 EmptyChatView()
             } else {
-                ScrollViewReader { scrollProxy in
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(displayMessages) { info in
-                                if info.showDateSeparator {
-                                    DateSeparatorBadge(date: info.message.timestamp, isFirst: info.isFirst)
-                                }
-
-                                ChatMessageRow<T>(
-                                    result: info.message,
-                                    isAdmin: isAdmin,
-                                    isFirstInGroup: info.isFirstInGroup,
-                                    isLastInGroup: info.isLastInGroup,
-                                    showTimestamp: info.showTimestamp,
-                                    repliedToMessage: info.repliedToMessage,
-                                    onReply: { message in
-                                        replyingTo = message
-                                    },
-                                    onDM: { codename, dmToken, pubKey, color in
-                                        createDMChatAndNavigate(
-                                            codename: codename,
-                                            dmToken: dmToken,
-                                            pubKey: pubKey, color: color
-                                        )
-                                    },
-                                    onDelete: { message in
-                                        xxdk.deleteMessage(channelId: chatId, messageId: message.id)
-                                    },
-                                    onMute: { pubKey in
-                                        do {
-                                            try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: true)
-                                            withAnimation(.spring(response: 0.3)) {
-                                                toastMessage = "User muted"
-                                            }
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                                withAnimation {
-                                                    toastMessage = nil
-                                                }
-                                            }
-                                        } catch {
-                                            AppLogger.channels.error("Failed to mute user: \(error.localizedDescription, privacy: .public)")
-                                        }
-                                    },
-                                    onUnmute: { pubKey in
-                                        do {
-                                            try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: false)
-                                            withAnimation(.spring(response: 0.3)) {
-                                                toastMessage = "User unmuted"
-                                            }
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                                withAnimation {
-                                                    toastMessage = nil
-                                                }
-                                            }
-                                        } catch {
-                                            AppLogger.channels.error("Failed to unmute user: \(error.localizedDescription, privacy: .public)")
-                                        }
-                                    },
-                                    mutedUsers: mutedUsers,
-                                    highlightedMessageId: highlightedMessageId,
-                                    onScrollToReply: { messageId in
-                                        highlightedMessageId = messageId
-                                        withAnimation(.easeInOut(duration: 0.3)) {
-                                            scrollProxy.scrollTo(messageId, anchor: .center)
-                                        }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                            withAnimation(.easeOut(duration: 0.3)) {
-                                                highlightedMessageId = nil
-                                            }
-                                        }
-                                    }
-                                )
-                            }
-                            Spacer()
-                        }.padding().scrollTargetLayout()
-                    }
-                    .scrollPosition(id: $topVisibleMessageId, anchor: .top)
-                }
-                .onChange(of: topVisibleMessageId) { _, newId in
-                    guard let newId,
-                          let message = messages.first(where: { $0.id == newId })
-                    else { return }
-
-                    let date = message.timestamp
-                    if let oldDate = visibleDate {
-                        scrollingToOlder = date < oldDate
-                    }
-                    withAnimation(.spring(duration: 0.35)) {
-                        visibleDate = date
-                    }
-                    showDateHeader = true
-
-                    // Cancel previous hide task and schedule new one
-                    hideTask?.cancel()
-                    hideTask = Task {
-                        try? await Task.sleep(for: .seconds(4))
-                        if !Task.isCancelled {
-                            await MainActor.run {
-                                showDateHeader = false
-                            }
-                        }
-                    }
-                }
-                .defaultScrollAnchor(.bottom)
-
-                // Floating date header
-                FloatingDateHeader(date: visibleDate, scrollingToOlder: scrollingToOlder)
-                    .padding(.top, 14)
-                    .opacity(showDateHeader ? 1 : 0)
-                    .animation(.easeOut(duration: 0.3), value: showDateHeader)
-                    .animation(.spring(duration: 0.35), value: visibleDate?.formatted(date: .complete, time: .omitted))
+                NewChatMessagesList(messages: messages)
             }
         }
         .safeAreaInset(edge: .bottom) {

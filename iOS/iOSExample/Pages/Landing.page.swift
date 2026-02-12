@@ -5,16 +5,13 @@
 //  Created by Om More on 17/12/25.
 //
 
-import SwiftData
 import SwiftUI
 
 struct LandingPage<T>: View where T: XXDKP {
     @State private var moveUp: Bool = false
     @State private var showProgress: Bool = false
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject private var swiftDataActor: SwiftDataActor
     @EnvironmentObject private var sm: SecretManager
-    @EnvironmentObject var navigation: AppNavigationPath
     @State private var isLoadingDone = false
     var body: some View {
         VStack(spacing: 12) {
@@ -32,10 +29,8 @@ struct LandingPage<T>: View where T: XXDKP {
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .onChange(of: xxdk.statusPercentage) { _, newValue in
-                        if newValue == 100 && !isLoadingDone {
+                        if newValue == 100 && sm.isSetupComplete && !isLoadingDone {
                             isLoadingDone = true
-                            // Clear path to reset stack for main app view (handled by isSetupComplete)
-                            navigation.path = NavigationPath()
                         }
                     }
                 }.frame(width: 120)
@@ -65,10 +60,13 @@ struct LandingPage<T>: View where T: XXDKP {
             }
         }
         .onChange(of: showProgress) { _, newValue in
-            if newValue && xxdk.statusPercentage == 100 && !isLoadingDone {
+            if newValue && xxdk.statusPercentage == 100 && sm.isSetupComplete && !isLoadingDone {
                 isLoadingDone = true
-                // Clear path to reset stack for main app view
-                navigation.path = NavigationPath()
+            }
+        }
+        .onChange(of: sm.isSetupComplete) { _, newValue in
+            if newValue {
+                isLoadingDone = true
             }
         }
     }

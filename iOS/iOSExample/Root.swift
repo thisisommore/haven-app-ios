@@ -17,6 +17,7 @@ struct Root: View {
     @EnvironmentObject var modelDataActor: SwiftDataActor
     @EnvironmentObject var navigation: AppNavigationPath
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var didRunOnboardingReset = false
 
     var body: some View {
         Group {
@@ -54,6 +55,10 @@ struct Root: View {
                             destination.destinationView()
                         }
                         .onAppear {
+                            if didRunOnboardingReset {
+                                return
+                            }
+                            didRunOnboardingReset = true
                             xxdk.setModelContainer(
                                 mActor: modelDataActor,
                                 sm: secretManager

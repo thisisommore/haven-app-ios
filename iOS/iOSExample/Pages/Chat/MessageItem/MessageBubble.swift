@@ -5,9 +5,7 @@
 //  Created by Om More on 19/10/25.
 //
 
-import SwiftHTMLtoMarkdown
 import SwiftUI
-import UniformTypeIdentifiers
 
 /// The main message bubble containing text and context menu
 struct MessageBubble<T: XXDKP>: View {
@@ -21,17 +19,15 @@ struct MessageBubble<T: XXDKP>: View {
     let isAdmin: Bool
     @Binding var selectedEmoji: MessageEmoji
     @Binding var shouldTriggerReply: Bool
-    @State private var markdown: String = ""
-    @State private var parsedChannelLink: ParsedChannelLink?
-    @State private var parsedDMLink: ParsedDMLink?
-    @State private var isLinkExpanded: Bool = false
-    @State private var showTextSelection: Bool = false
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: (() -> Void)?
     var onMute: ((Data) -> Void)?
     var onUnmute: ((Data) -> Void)?
     let isSenderMuted: Bool
     let isHighlighted: Bool
+
+    @State private var showTextSelection: Bool = false
+
     // Corner radius values
     private let fullRadius: CGFloat = 16
     private let smallRadius: CGFloat = 4
@@ -74,16 +70,6 @@ struct MessageBubble<T: XXDKP>: View {
         _shouldTriggerReply = shouldTriggerReply
     }
 
-    private var underlinedMarkdown: AttributedString {
-        var attributed = (try? AttributedString(markdown: markdown)) ?? AttributedString(markdown)
-        for run in attributed.runs {
-            if run.link != nil {
-                attributed[run.range].underlineStyle = .single
-            }
-        }
-        return attributed
-    }
-
     /// Dynamic corner radii based on group position
     private var bubbleShape: UnevenRoundedRectangle {
         if isIncoming {
@@ -106,108 +92,6 @@ struct MessageBubble<T: XXDKP>: View {
     }
 
     @ViewBuilder
-    private func channelLinkContent(link: ParsedChannelLink) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Orange/colored section with message
-            VStack(alignment: .leading, spacing: 4) {
-                if isIncoming && isFirstInGroup {
-                    MessageSender(
-                        isIncoming: isIncoming,
-                        sender: sender
-                    )
-                }
-
-                HStack(alignment: .top, spacing: 4) {
-                    Text(underlinedMarkdown)
-                        .font(.system(size: 16))
-                        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-                        .tint(isIncoming ? .blue : .white)
-                        .lineLimit(isLinkExpanded ? nil : 1)
-
-                    if !isLinkExpanded {
-                        Button {
-                            withAnimation { isLinkExpanded = true }
-                        } label: {
-                            Text("expand")
-                                .font(.system(size: 14))
-                                .foregroundStyle(isIncoming ? Color.messageText.opacity(0.7) : Color.white.opacity(0.7))
-                                .underline()
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation { isLinkExpanded.toggle() }
-                }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
-            .background(isIncoming ? Color.messageBubble : Color.haven)
-
-            // White section with channel preview (includes timestamp)
-            ChannelInviteLinkPreview<T>(
-                link: link,
-                isIncoming: isIncoming,
-                timestamp: showTimestamp ? timestamp : ""
-            )
-        }
-        .clipShape(bubbleShape)
-    }
-
-    @ViewBuilder
-    private func dmLinkContent(link: ParsedDMLink) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Colored section with message
-            VStack(alignment: .leading, spacing: 4) {
-                if isIncoming && isFirstInGroup {
-                    MessageSender(
-                        isIncoming: isIncoming,
-                        sender: sender
-                    )
-                }
-
-                HStack(alignment: .top, spacing: 4) {
-                    Text(underlinedMarkdown)
-                        .font(.system(size: 16))
-                        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-                        .tint(isIncoming ? .blue : .white)
-                        .lineLimit(isLinkExpanded ? nil : 1)
-
-                    if !isLinkExpanded {
-                        Button {
-                            withAnimation { isLinkExpanded = true }
-                        } label: {
-                            Text("expand")
-                                .font(.system(size: 14))
-                                .foregroundStyle(isIncoming ? Color.messageText.opacity(0.7) : Color.white.opacity(0.7))
-                                .underline()
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation { isLinkExpanded.toggle() }
-                }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
-            .background(isIncoming ? Color.messageBubble : Color.haven)
-
-            // White section with DM preview (includes timestamp)
-            DMInviteLinkPreview<T>(
-                link: link,
-                isIncoming: isIncoming,
-                timestamp: showTimestamp ? timestamp : ""
-            )
-        }
-        .clipShape(bubbleShape)
-    }
-
-    @ViewBuilder
     private var regularMessageContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             if isIncoming && isFirstInGroup {
@@ -219,19 +103,17 @@ struct MessageBubble<T: XXDKP>: View {
 
             if showTimestamp {
                 (
-                    Text(underlinedMarkdown)
+                    Text(verbatim: text)
                         .font(.system(size: 16))
                         .foregroundColor(isIncoming ? Color.messageText : Color.white)
-                        + Text("    \(timestamp)")
+                    + Text("    \(timestamp)")
                         .font(.system(size: 10))
                         .foregroundColor(.clear)
                 )
-                .tint(isIncoming ? .blue : .white)
             } else {
-                Text(underlinedMarkdown)
+                Text(verbatim: text)
                     .font(.system(size: 16))
                     .foregroundColor(isIncoming ? Color.messageText : Color.white)
-                    .tint(isIncoming ? .blue : .white)
             }
         }
         .padding(.horizontal, 8)
@@ -250,65 +132,36 @@ struct MessageBubble<T: XXDKP>: View {
     }
 
     var body: some View {
-        Group {
-            if let link = parsedChannelLink {
-                channelLinkContent(link: link)
-            } else if let dmLink = parsedDMLink {
-                dmLinkContent(link: dmLink)
-            } else {
-                regularMessageContent
+        regularMessageContent
+            .contextMenu {
+                MessageContextMenu(
+                    text: text,
+                    isIncoming: isIncoming,
+                    sender: sender,
+                    isAdmin: isAdmin,
+                    selectedEmoji: $selectedEmoji,
+                    shouldTriggerReply: $shouldTriggerReply,
+                    onDM: onDM,
+                    onSelectText: {
+                        showTextSelection = true
+                    },
+                    onDelete: onDelete,
+                    onMute: onMute,
+                    onUnmute: onUnmute,
+                    isSenderMuted: isSenderMuted
+                )
             }
-        }
-        .contextMenu {
-            MessageContextMenu(
-                text: text,
-                isIncoming: isIncoming,
-                sender: sender,
-                isAdmin: isAdmin,
-                selectedEmoji: $selectedEmoji,
-                shouldTriggerReply: $shouldTriggerReply,
-                onDM: onDM,
-                onSelectText: {
-                    showTextSelection = true
-                },
-                onDelete: onDelete,
-                onMute: onMute,
-                onUnmute: onUnmute,
-                isSenderMuted: isSenderMuted
-            )
-        }
-        .id(sender)
-        .sheet(isPresented: $showTextSelection) {
-            if let attributed = try? AttributedString(markdown: markdown) {
-                TextSelectionView(text: String(attributed.characters))
-            } else {
+            .id(sender)
+            .sheet(isPresented: $showTextSelection) {
                 TextSelectionView(text: text)
             }
-        }
-        .overlay(
-            bubbleShape
-                .stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
-        )
-        .shadow(color: Color.haven.opacity(isHighlighted ? 0.5 : 0), radius: 8)
-        .animation(.easeInOut(duration: 0.25), value: isHighlighted)
-        .padding(.top, isFirstInGroup ? 6 : 2)
-        .task(id: text) {
-            let raw = text
-            let (md, chLink, dmLink) = await Task.detached(priority: .userInitiated) {
-                var md: String = raw
-                var document = BasicHTML(rawHTML: raw)
-                do {
-                    try document.parse()
-                    md = try document.asMarkdown()
-                } catch {}
-                let chLink = ParsedChannelLink.parse(from: raw)
-                let dmLink = ParsedDMLink.parse(from: raw)
-                return (md, chLink, dmLink)
-            }.value
-            markdown = md
-            parsedChannelLink = chLink
-            parsedDMLink = dmLink
-        }
+            .overlay(
+                bubbleShape
+                    .stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
+            )
+            .shadow(color: Color.haven.opacity(isHighlighted ? 0.5 : 0), radius: 8)
+            .animation(.easeInOut(duration: 0.25), value: isHighlighted)
+            .padding(.top, isFirstInGroup ? 6 : 2)
     }
 }
 

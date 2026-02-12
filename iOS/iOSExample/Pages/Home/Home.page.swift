@@ -30,6 +30,7 @@ struct HomeView<T: XXDKP>: View {
     @State private var currentNickname: String?
     @State private var searchText: String = ""
     @State private var isLoggingOut = false
+    @State private var didNormalizeNavigation = false
     @Query private var chats: [ChatModel]
 
     @EnvironmentObject var xxdk: T
@@ -248,6 +249,12 @@ struct HomeView<T: XXDKP>: View {
             }
             .background(Color.appBackground)
             .onAppear {
+                if !didNormalizeNavigation {
+                    didNormalizeNavigation = true
+                    if !navigation.path.isEmpty {
+                        navigation.path = NavigationPath()
+                    }
+                }
                 if xxdk.statusPercentage == 0 {
                     Task.detached {
                         await xxdk.setUpCmix()

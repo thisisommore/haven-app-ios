@@ -11,6 +11,12 @@ import SwiftUI
 struct SwipeToReplyModifier: ViewModifier {
     let onReply: () -> Void
 
+    private enum DragAxis {
+        case undecided
+        case horizontal
+        case vertical
+    }
+
     // How far (pt) the user must drag before the action triggers
     private let triggerThreshold: CGFloat = 60
     // Maximum allowed drag distance (prevents over-swiping)
@@ -18,6 +24,7 @@ struct SwipeToReplyModifier: ViewModifier {
 
     @State private var dragOffset: CGFloat = 0
     @State private var hasTriggeredHaptic = false
+    @State private var dragAxis: DragAxis = .undecided
 
     /// 0…1 progress toward trigger
     private var progress: CGFloat {
@@ -35,9 +42,18 @@ struct SwipeToReplyModifier: ViewModifier {
             content
                 .offset(x: dragOffset)
         }
-        .gesture(
+        .simultaneousGesture(
             DragGesture(minimumDistance: 12, coordinateSpace: .local)
                 .onChanged { value in
+                    if dragAxis == .undecided {
+                        let absX = abs(value.translation.width)
+                        let absY = abs(value.translation.height)
+                        if absX > 4 || absY > 4 {
+                            dragAxis = absX > absY ? .horizontal : .vertical
+                        }
+                    }
+
+                    guard dragAxis == .horizontal else { return }
                     let horizontal = value.translation.width
                     // Only allow rightward swipe
                     guard horizontal > 0 else { return }
@@ -55,13 +71,14 @@ struct SwipeToReplyModifier: ViewModifier {
                     }
                 }
                 .onEnded { _ in
-                    if dragOffset >= triggerThreshold {
+                    if dragAxis == .horizontal, dragOffset >= triggerThreshold {
                         onReply()
                     }
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         dragOffset = 0
                     }
                     hasTriggeredHaptic = false
+                    dragAxis = .undecided
                 }
         )
     }

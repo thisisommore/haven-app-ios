@@ -14,6 +14,7 @@ struct ChatMessageRow<T: XXDKP>: View {
     let isLastInGroup: Bool
     let showTimestamp: Bool
     let repliedToMessage: String?
+    let reactions: [MessageReactionModel]
     var onReply: ((ChatMessageModel) -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: ((ChatMessageModel) -> Void)?
@@ -22,33 +23,11 @@ struct ChatMessageRow<T: XXDKP>: View {
     let mutedUsers: [Data]
     let highlightedMessageId: String?
     var onScrollToReply: ((String) -> Void)?
-    @Query private var chatReactions: [MessageReactionModel]
 
     private var sender: MessageSenderModel? { result.sender }
 
     private var isHighlighted: Bool {
         highlightedMessageId == result.id
-    }
-
-    init(result: ChatMessageModel, isAdmin: Bool = false, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, repliedToMessage: String? = nil, onReply: ((ChatMessageModel) -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)?, onDelete: ((ChatMessageModel) -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, mutedUsers: [Data] = [], highlightedMessageId: String? = nil, onScrollToReply: ((String) -> Void)? = nil) {
-        self.result = result
-        self.isAdmin = isAdmin
-        self.isFirstInGroup = isFirstInGroup
-        self.isLastInGroup = isLastInGroup
-        self.showTimestamp = showTimestamp
-        self.repliedToMessage = repliedToMessage
-        self.onReply = onReply
-        self.onDelete = onDelete
-        self.onMute = onMute
-        self.onUnmute = onUnmute
-        self.mutedUsers = mutedUsers
-        self.highlightedMessageId = highlightedMessageId
-        self.onScrollToReply = onScrollToReply
-        self.onDM = onDM
-        let messageId = result.id
-        _chatReactions = Query(filter: #Predicate<MessageReactionModel> { r in
-            r.targetMessageId == messageId
-        })
     }
 
     var body: some View {
@@ -82,7 +61,7 @@ struct ChatMessageRow<T: XXDKP>: View {
                     isHighlighted: isHighlighted,
                     chatMessage: result
                 )
-                Reactions(reactions: chatReactions)
+                Reactions(reactions: reactions)
             }
             if result.isIncoming { // incoming aligns left
                 Spacer()
