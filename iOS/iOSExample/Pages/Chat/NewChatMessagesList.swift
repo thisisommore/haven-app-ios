@@ -1,10 +1,17 @@
+import Foundation
 import SwiftUI
 
 struct NewChatMessagesList: View {
     let messages: [ChatMessageModel]
     let isLoadingOlderMessages: Bool
+    let isAdmin: Bool
+    let mutedUsers: Set<Data>
     var onReachedTop: (() -> Void)?
     var onReplyMessage: ((ChatMessageModel) -> Void)?
+    var onDMMessage: ((String, Int32, Data, Int) -> Void)?
+    var onDeleteMessage: ((ChatMessageModel) -> Void)?
+    var onMuteUser: ((Data) -> Void)?
+    var onUnmuteUser: ((Data) -> Void)?
     @State private var topVisibleMessageId: String?
     @State private var lastTopTriggerMessageId: String?
     private let bottomAnchorId = "new-chat-bottom-anchor"
@@ -61,7 +68,13 @@ struct NewChatMessagesList: View {
                         NewChatMessageTextRow(
                             message: message,
                             showSender: shouldShowSender(for: index),
-                            onReply: onReplyMessage
+                            isAdmin: isAdmin,
+                            isSenderMuted: message.sender.map { mutedUsers.contains($0.pubkey) } ?? false,
+                            onReply: onReplyMessage,
+                            onDM: onDMMessage,
+                            onDelete: onDeleteMessage,
+                            onMute: onMuteUser,
+                            onUnmute: onUnmuteUser
                         )
                             .id(message.id)
                     }

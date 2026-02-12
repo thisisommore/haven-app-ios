@@ -4,7 +4,23 @@ import UIKit
 struct NewChatMessageTextRow: View {
     let message: ChatMessageModel
     let showSender: Bool
-    var onReply: ((ChatMessageModel) -> Void)?
+    var isAdmin: Bool = false
+    var isSenderMuted: Bool = false
+    var onReply: ((ChatMessageModel) -> Void)? = nil
+    var onDM: ((String, Int32, Data, Int) -> Void)? = nil
+    var onDelete: ((ChatMessageModel) -> Void)? = nil
+    var onMute: ((Data) -> Void)? = nil
+    var onUnmute: ((Data) -> Void)? = nil
+
+    @State private var showTextSelection = false
+
+    private var displayText: String {
+        message.newRenderPlainText ?? stripParagraphTags(message.message)
+    }
+
+    private var canDelete: Bool {
+        (isAdmin || !message.isIncoming) && onDelete != nil
+    }
 
     private var senderDisplayName: String {
         guard let sender = message.sender else { return "" }
@@ -43,6 +59,63 @@ struct NewChatMessageTextRow: View {
         .contentShape(Rectangle())
         .swipeToReply {
             onReply?(message)
+        }
+        .contextMenu {
+            Button {
+                onReply?(message)
+            } label: {
+                Label("Reply", systemImage: "arrowshape.turn.up.left")
+            }
+
+            if message.isIncoming,
+               let sender = message.sender,
+               sender.dmToken != 0
+            {
+                Button {
+                    onDM?(sender.codename, sender.dmToken, sender.pubkey, sender.color)
+                } label: {
+                    Label("Send DM", systemImage: "message")
+                }
+            }
+
+            Button {
+                UIPasteboard.general.string = displayText
+            } label: {
+                Label("Copy", systemImage: "doc.on.doc")
+            }
+
+            Button {
+                showTextSelection = true
+            } label: {
+                Label("Select Text", systemImage: "crop")
+            }
+
+            if canDelete {
+                Button(role: .destructive) {
+                    onDelete?(message)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+
+            if isAdmin, message.isIncoming, let sender = message.sender {
+                if isSenderMuted {
+                    Button {
+                        onUnmute?(sender.pubkey)
+                    } label: {
+                        Label("Unmute User", systemImage: "speaker.wave.2")
+                    }
+                } else {
+                    Button(role: .destructive) {
+                        onMute?(sender.pubkey)
+                    } label: {
+                        Label("Mute User", systemImage: "speaker.slash")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showTextSelection) {
+            TextSelectionView(text: displayText)
         }
     }
 }

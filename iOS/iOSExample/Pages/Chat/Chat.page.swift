@@ -125,6 +125,17 @@ struct ChatView<T: XXDKP>: View {
     @State private var messageDateLookup: [String: Date] = [:]
     @EnvironmentObject var xxdk: T
 
+    private func showToast(_ message: String) {
+        withAnimation(.spring(response: 0.3)) {
+            toastMessage = message
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation {
+                toastMessage = nil
+            }
+        }
+    }
+
     private func markMessagesAsRead() {
         guard let chat else { return }
         let joinedAt = chat.joinedAt
@@ -163,6 +174,21 @@ struct ChatView<T: XXDKP>: View {
             selectedChat.select(id: dmChat.id, title: dmChat.name)
         } catch {
             AppLogger.chat.error("Failed to create DM chat: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func deleteMessage(_ message: ChatMessageModel) {
+        xxdk.deleteMessage(channelId: chatId, messageId: message.id)
+        showToast("Delete requested")
+    }
+
+    private func setMuteState(for pubKey: Data, muted: Bool) {
+        do {
+            try xxdk.muteUser(channelId: chatId, pubKey: pubKey, mute: muted)
+            mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
+            showToast(muted ? "User muted" : "User unmuted")
+        } catch {
+            AppLogger.channels.error("Failed to update mute state: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -412,11 +438,25 @@ struct ChatView<T: XXDKP>: View {
                 NewChatMessagesList(
                     messages: messages,
                     isLoadingOlderMessages: isLoadingOlderMessages,
+                    isAdmin: isAdmin,
+                    mutedUsers: Set(mutedUsers),
                     onReachedTop: {
                         loadOlderMessagesIfNeeded()
                     },
                     onReplyMessage: { message in
                         replyingTo = message
+                    },
+                    onDMMessage: { codename, dmToken, pubKey, color in
+                        createDMChatAndNavigate(codename: codename, dmToken: dmToken, pubKey: pubKey, color: color)
+                    },
+                    onDeleteMessage: isChannel ? { message in
+                        deleteMessage(message)
+                    } : nil,
+                    onMuteUser: { pubKey in
+                        setMuteState(for: pubKey, muted: true)
+                    },
+                    onUnmuteUser: { pubKey in
+                        setMuteState(for: pubKey, muted: false)
                     }
                 )
             }
