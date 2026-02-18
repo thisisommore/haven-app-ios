@@ -1,7 +1,8 @@
 import Foundation
 import SwiftUI
+import UIKit
 
-struct NewChatMessagesList: View {
+struct NewChatMessagesList: UIViewControllerRepresentable {
     let messages: [ChatMessageModel]
     let isLoadingOlderMessages: Bool
     let isAdmin: Bool
@@ -12,116 +13,281 @@ struct NewChatMessagesList: View {
     var onDeleteMessage: ((ChatMessageModel) -> Void)?
     var onMuteUser: ((Data) -> Void)?
     var onUnmuteUser: ((Data) -> Void)?
-    @State private var topVisibleMessageId: String?
-    @State private var lastTopTriggerMessageId: String?
-    private let bottomAnchorId = "new-chat-bottom-anchor"
+    var onScrollActivityChanged: ((Bool) -> Void)?
 
-    private func shouldShowSender(for index: Int) -> Bool {
-        guard index < messages.count else { return false }
-        let message = messages[index]
-        guard message.isIncoming, let senderId = message.sender?.id else {
-            return false
+    func makeUIViewController(context: Context) -> Controller {
+        Controller()
+    }
+
+    func updateUIViewController(_ uiViewController: Controller, context: Context) {
+        uiViewController.update(from: self)
+    }
+
+    final class Controller: UIViewController, UITableViewDataSource, UITableViewDelegate {
+        private struct AnchorSnapshot {
+            let messageId: String
+            let offsetFromRowTop: CGFloat
         }
-        guard index > 0 else { return true }
-        let previous = messages[index - 1]
-        if !previous.isIncoming {
-            return true
+
+        private let tableView = UITableView(frame: .zero, style: .plain)
+        private let loadingIndicator = UIActivityIndicatorView(style: .medium)
+        private let cellReuseId = "chat-message-cell"
+        private let nearBottomThreshold: CGFloat = 24
+        private let topTriggerThreshold: CGFloat = 8
+
+        private var hasInitialScroll = false
+        private var isUserScrolling = false
+        private var pendingMessages: [ChatMessageModel]?
+        private var messages: [ChatMessageModel] = []
+        private var lastTopTriggerMessageId: String?
+
+        private var isLoadingOlderMessages = false
+        private var isAdmin = false
+        private var mutedUsers: Set<Data> = []
+        private var onReachedTop: (() -> Void)?
+        private var onReplyMessage: ((ChatMessageModel) -> Void)?
+        private var onDMMessage: ((String, Int32, Data, Int) -> Void)?
+        private var onDeleteMessage: ((ChatMessageModel) -> Void)?
+        private var onMuteUser: ((Data) -> Void)?
+        private var onUnmuteUser: ((Data) -> Void)?
+        private var onScrollActivityChanged: ((Bool) -> Void)?
+
+        override func viewDidLoad() {
+            super.viewDidLoad()
+
+            tableView.translatesAutoresizingMaskIntoConstraints = false
+            tableView.dataSource = self
+            tableView.delegate = self
+            tableView.separatorStyle = .none
+            tableView.showsVerticalScrollIndicator = true
+            tableView.backgroundColor = .clear
+            tableView.rowHeight = UITableView.automaticDimension
+            tableView.estimatedRowHeight = 56
+            tableView.keyboardDismissMode = .interactive
+            tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellReuseId)
+
+            view.addSubview(tableView)
+
+            loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+            loadingIndicator.hidesWhenStopped = true
+            view.addSubview(loadingIndicator)
+
+            NSLayoutConstraint.activate([
+                tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                tableView.topAnchor.constraint(equalTo: view.topAnchor),
+                tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                loadingIndicator.topAnchor.constraint(equalTo: view.topAnchor, constant: 6),
+                loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            ])
         }
-        return previous.sender?.id != senderId
-    }
 
-    private var messageIds: [String] {
-        messages.map(\.id)
-    }
-
-    private var lastMessageId: String? {
-        messages.last?.id
-    }
-
-    private var firstMessageId: String? {
-        messages.first?.id
-    }
-
-    private func scrollToBottom(_ scrollProxy: ScrollViewProxy) {
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
-            scrollProxy.scrollTo(bottomAnchorId, anchor: .bottom)
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            setUserScrolling(false)
         }
-    }
 
-    var body: some View {
-        ScrollViewReader { scrollProxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    if isLoadingOlderMessages {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .scaleEffect(0.85)
-                            Spacer()
-                        }
-                        .padding(.vertical, 6)
-                    }
+        func update(from config: NewChatMessagesList) {
+            let oldIds = messages.map(\.id)
+            let newIds = config.messages.map(\.id)
+            let configChanged = isAdmin != config.isAdmin || mutedUsers != config.mutedUsers
 
-                    ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
-                        NewChatMessageTextRow(
-                            message: message,
-                            showSender: shouldShowSender(for: index),
-                            isAdmin: isAdmin,
-                            isSenderMuted: message.sender.map { mutedUsers.contains($0.pubkey) } ?? false,
-                            onReply: onReplyMessage,
-                            onDM: onDMMessage,
-                            onDelete: onDeleteMessage,
-                            onMute: onMuteUser,
-                            onUnmute: onUnmuteUser
-                        )
-                            .id(message.id)
-                    }
-                    Color.clear
-                        .frame(height: 1)
-                        .id(bottomAnchorId)
+            isLoadingOlderMessages = config.isLoadingOlderMessages
+            isAdmin = config.isAdmin
+            mutedUsers = config.mutedUsers
+            onReachedTop = config.onReachedTop
+            onReplyMessage = config.onReplyMessage
+            onDMMessage = config.onDMMessage
+            onDeleteMessage = config.onDeleteMessage
+            onMuteUser = config.onMuteUser
+            onUnmuteUser = config.onUnmuteUser
+            onScrollActivityChanged = config.onScrollActivityChanged
+            updateLoadingIndicator()
+
+            if isUserScrolling {
+                pendingMessages = config.messages
+                return
+            }
+
+            if oldIds == newIds {
+                if configChanged {
+                    reloadDataWithoutAnimation()
                 }
-                .scrollTargetLayout()
-                .frame(maxWidth: .infinity, alignment: .leading)
+                return
             }
-            .scrollPosition(id: $topVisibleMessageId, anchor: .top)
-            .onChange(of: topVisibleMessageId) { _, newTopVisibleId in
-                guard let firstMessageId, firstMessageId == newTopVisibleId else { return }
-                guard lastTopTriggerMessageId != newTopVisibleId else { return }
-                lastTopTriggerMessageId = newTopVisibleId
-                onReachedTop?()
-            }
-            .task(id: lastMessageId) {
-                guard lastMessageId != nil else { return }
-                Task { @MainActor in
-                    await Task.yield()
-                    scrollToBottom(scrollProxy)
-                    try? await Task.sleep(for: .milliseconds(80))
-                    scrollToBottom(scrollProxy)
-                }
-            }
-            .onChange(of: messageIds) { oldIds, newIds in
-                guard let lastMessageId = newIds.last else { return }
-                let didPrependAtTop =
-                    newIds.count >= oldIds.count &&
-                    oldIds.last == newIds.last &&
-                    oldIds.first != newIds.first
 
-                guard didPrependAtTop,
-                      let anchorId = topVisibleMessageId,
-                      oldIds.contains(anchorId),
-                      newIds.contains(anchorId)
-                else { return }
+            applyMessages(config.messages)
+        }
 
-                DispatchQueue.main.async {
-                    var transaction = Transaction()
-                    transaction.disablesAnimations = true
-                    withTransaction(transaction) {
-                        scrollProxy.scrollTo(anchorId, anchor: .top)
-                    }
-                }
+        private func applyMessages(_ newMessages: [ChatMessageModel]) {
+            let oldIds = messages.map(\.id)
+            let newIds = newMessages.map(\.id)
+            let wasNearBottom = isNearBottom()
+            let anchor = captureAnchorSnapshot()
+            let didAppendAtBottom =
+                newIds.count >= oldIds.count &&
+                oldIds.first == newIds.first &&
+                oldIds.last != newIds.last
+
+            messages = newMessages
+            reloadDataWithoutAnimation()
+
+            guard !messages.isEmpty else { return }
+            if !hasInitialScroll {
+                hasInitialScroll = true
+                scrollToBottom()
+                return
             }
+            if didAppendAtBottom, wasNearBottom {
+                scrollToBottom()
+                return
+            }
+            restoreAnchorSnapshot(anchor)
+            maybeTriggerReachedTopIfNeeded()
+        }
+
+        private func reloadDataWithoutAnimation() {
+            UIView.performWithoutAnimation {
+                tableView.reloadData()
+                tableView.layoutIfNeeded()
+            }
+        }
+
+        private func scrollToBottom() {
+            let minOffset = -tableView.adjustedContentInset.top
+            let maxOffset = max(
+                minOffset,
+                tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom
+            )
+            tableView.setContentOffset(CGPoint(x: 0, y: maxOffset), animated: false)
+        }
+
+        private func isNearBottom() -> Bool {
+            let visibleBottom = tableView.contentOffset.y + tableView.bounds.height - tableView.adjustedContentInset.bottom
+            return tableView.contentSize.height - visibleBottom <= nearBottomThreshold
+        }
+
+        private func captureAnchorSnapshot() -> AnchorSnapshot? {
+            guard let firstVisible = tableView.indexPathsForVisibleRows?.sorted().first,
+                  firstVisible.row < messages.count
+            else { return nil }
+
+            let rowRect = tableView.rectForRow(at: firstVisible)
+            let offsetFromRowTop = tableView.contentOffset.y - rowRect.minY
+            return AnchorSnapshot(messageId: messages[firstVisible.row].id, offsetFromRowTop: offsetFromRowTop)
+        }
+
+        private func restoreAnchorSnapshot(_ snapshot: AnchorSnapshot?) {
+            guard let snapshot,
+                  let index = messages.firstIndex(where: { $0.id == snapshot.messageId })
+            else { return }
+
+            let rowRect = tableView.rectForRow(at: IndexPath(row: index, section: 0))
+            let target = rowRect.minY + snapshot.offsetFromRowTop
+            let minOffset = -tableView.adjustedContentInset.top
+            let maxOffset = max(
+                minOffset,
+                tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom
+            )
+            let clampedTarget = min(max(target, minOffset), maxOffset)
+            tableView.setContentOffset(CGPoint(x: 0, y: clampedTarget), animated: false)
+        }
+
+        private func setUserScrolling(_ isScrolling: Bool) {
+            guard isUserScrolling != isScrolling else { return }
+            isUserScrolling = isScrolling
+            onScrollActivityChanged?(isScrolling)
+            if !isScrolling {
+                applyPendingMessagesIfNeeded()
+            }
+        }
+
+        private func applyPendingMessagesIfNeeded() {
+            guard let pendingMessages else { return }
+            self.pendingMessages = nil
+            applyMessages(pendingMessages)
+        }
+
+        private func maybeTriggerReachedTopIfNeeded() {
+            guard !isLoadingOlderMessages, !messages.isEmpty else { return }
+            let minOffset = -tableView.adjustedContentInset.top
+            let isAtTop = tableView.contentOffset.y <= minOffset + topTriggerThreshold
+            guard isAtTop, let firstId = messages.first?.id else { return }
+            guard lastTopTriggerMessageId != firstId else { return }
+            lastTopTriggerMessageId = firstId
+            onReachedTop?()
+        }
+
+        private func shouldShowSender(for index: Int) -> Bool {
+            guard index < messages.count else { return false }
+            let message = messages[index]
+            guard message.isIncoming, let senderId = message.sender?.id else {
+                return false
+            }
+            guard index > 0 else { return true }
+            let previous = messages[index - 1]
+            if !previous.isIncoming {
+                return true
+            }
+            return previous.sender?.id != senderId
+        }
+
+        private func updateLoadingIndicator() {
+            if isLoadingOlderMessages {
+                loadingIndicator.startAnimating()
+            } else {
+                loadingIndicator.stopAnimating()
+            }
+        }
+
+        // MARK: UITableViewDataSource
+
+        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+            messages.count
+        }
+
+        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+            let cell = tableView.dequeueReusableCell(withIdentifier: cellReuseId, for: indexPath)
+            let message = messages[indexPath.row]
+            let isSenderMuted = message.sender.map { mutedUsers.contains($0.pubkey) } ?? false
+
+            cell.selectionStyle = .none
+            cell.backgroundColor = .clear
+            cell.contentConfiguration = UIHostingConfiguration {
+                NewChatMessageTextRow(
+                    message: message,
+                    showSender: shouldShowSender(for: indexPath.row),
+                    isAdmin: isAdmin,
+                    isSenderMuted: isSenderMuted,
+                    onReply: onReplyMessage,
+                    onDM: onDMMessage,
+                    onDelete: onDeleteMessage,
+                    onMute: onMuteUser,
+                    onUnmute: onUnmuteUser
+                )
+            }
+            .margins(.all, 0)
+            return cell
+        }
+
+        // MARK: UIScrollViewDelegate
+
+        func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+            setUserScrolling(true)
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            maybeTriggerReachedTopIfNeeded()
+        }
+
+        func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+            if !decelerate {
+                setUserScrolling(false)
+            }
+        }
+
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+            setUserScrolling(false)
         }
     }
 }

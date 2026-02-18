@@ -50,7 +50,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         return "[]".data
     }
 
-    func receive(_ messageID: Data?, nickname _: String?, text: Data?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, mType _: Int64, status _: Int64) -> Int64 {
+    func receive(_ messageID: Data?, nickname _: String?, text: Data?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, mType _: Int64, status _: Int64) -> Int64 {
         // Ensure UI updates happen on main thread
 
         guard let messageID else { fatalError("no msg id") }
@@ -66,7 +66,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         }
 
         let internalId = InternalIdGenerator.shared.next()
-        persistIncoming(message: decodedMessage, codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId)
+        persistIncoming(message: decodedMessage, codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId, timestamp: timestamp)
         // Note: this should be a UUID in your database so
         // you can uniquely identify the message.
         return internalId
@@ -78,7 +78,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         return InternalIdGenerator.shared.next()
     }
 
-    func receiveReply(_ messageID: Data?, reactionTo _: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
+    func receiveReply(_ messageID: Data?, reactionTo _: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         guard let messageID else { fatalError("no msg id") }
 
         let codename: String
@@ -90,11 +90,11 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         }
 
         let internalId = InternalIdGenerator.shared.next()
-        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId)
+        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId, timestamp: timestamp)
         return internalId
     }
 
-    func receiveText(_ messageID: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp _: Int64, roundId _: Int64, status _: Int64) -> Int64 {
+    func receiveText(_ messageID: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, status _: Int64) -> Int64 {
         guard let messageID else { fatalError("no msg id") }
 
         let codename: String
@@ -106,13 +106,13 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
         }
 
         let internalId = InternalIdGenerator.shared.next()
-        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId)
+        persistIncoming(message: text ?? "empty text", codename: codename, partnerKey: partnerKey, senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color, internalId: internalId, timestamp: timestamp)
         return internalId
     }
 
     func updateSentStatus(_: Int64, messageID _: Data?, timestamp _: Int64, roundID _: Int64, status _: Int64) {}
 
-    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int, internalId _: Int64) {
+    private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int, internalId _: Int64, timestamp: Int64) {
         guard let backgroundContext = modelActor else { return }
         guard let partnerKey else { fatalError("partner key is not available") }
         let name = (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown"
@@ -129,7 +129,8 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
                     senderPubKey: senderKey,
                     senderCodename: name,
                     dmToken: dmToken,
-                    color: color
+                    color: color,
+                    timestamp: timestamp
                 )
             } catch {}
         }

@@ -121,6 +121,9 @@ struct ChatView<T: XXDKP>: View {
     @State private var isLoadingOlderMessages: Bool = false
     @State private var isRefreshingNewerMessages: Bool = false
     @State private var isRefreshingBackfilledOlderMessages: Bool = false
+    @State private var isRefreshingInRangeMessages: Bool = false
+    @State private var isMessagesListScrolling: Bool = false
+    @State private var hasDeferredChatRefresh: Bool = false
     @State private var hasMoreOlderMessages: Bool = true
     @State private var cachedDisplayMessages: [MessageDisplayInfo] = []
     @State private var messageDateLookup: [String: Date] = [:]
@@ -333,6 +336,58 @@ struct ChatView<T: XXDKP>: View {
     }
 
     @MainActor
+    private func fetchMessagesInLoadedWindow(oldest: MessageCursor, newest: MessageCursor) -> [MessageIdentity] {
+        let currentChatId = chatId
+        let oldestTimestamp = oldest.timestamp
+        let oldestInternalId = oldest.internalId
+        let newestTimestamp = newest.timestamp
+        let newestInternalId = newest.internalId
+        let descriptor = FetchDescriptor<ChatMessageModel>(
+            predicate: #Predicate { message in
+                message.chat.id == currentChatId &&
+                    (message.timestamp > oldestTimestamp ||
+                        (message.timestamp == oldestTimestamp && message.internalId >= oldestInternalId)) &&
+                    (message.timestamp < newestTimestamp ||
+                        (message.timestamp == newestTimestamp && message.internalId <= newestInternalId))
+            },
+            sortBy: [
+                SortDescriptor(\ChatMessageModel.timestamp),
+                SortDescriptor(\ChatMessageModel.internalId),
+            ]
+        )
+
+        let inRangeMessages = (try? modelContext.fetch(descriptor)) ?? []
+        return inRangeMessages.map { message in
+            MessageIdentity(
+                id: message.id,
+                timestamp: message.timestamp,
+                internalId: message.internalId
+            )
+        }
+    }
+
+    @MainActor
+    private func mergePagedMessageIdsChronologically(with additionalIds: [String]) {
+        guard !additionalIds.isEmpty else { return }
+
+        let mergedIds = Array(Set(pagedMessageIds).union(additionalIds))
+        var descriptor = FetchDescriptor<ChatMessageModel>(
+            predicate: #Predicate { message in
+                mergedIds.contains(message.id)
+            },
+            sortBy: [
+                SortDescriptor(\ChatMessageModel.timestamp),
+                SortDescriptor(\ChatMessageModel.internalId),
+            ]
+        )
+        descriptor.fetchLimit = mergedIds.count
+
+        guard let orderedMessages = try? modelContext.fetch(descriptor) else { return }
+        pagedMessageIds = orderedMessages.map(\.id)
+        messages = orderedMessages
+    }
+
+    @MainActor
     private func reloadMessagesFromPageIds() {
         guard !pagedMessageIds.isEmpty else {
             messages = []
@@ -384,8 +439,7 @@ struct ChatView<T: XXDKP>: View {
             let uniqueOlderIds = olderIds.filter { !existingIds.contains($0) }
 
             if !uniqueOlderIds.isEmpty {
-                pagedMessageIds.insert(contentsOf: uniqueOlderIds, at: 0)
-                reloadMessagesFromPageIds()
+                mergePagedMessageIdsChronologically(with: uniqueOlderIds)
             }
 
             if olderBatch.count < messagesPageSize || uniqueOlderIds.isEmpty {
@@ -422,10 +476,10 @@ struct ChatView<T: XXDKP>: View {
             let existingIds = Set(pagedMessageIds)
             let uniqueAppendedIds = appendedIds.filter { !existingIds.contains($0) }
             if !uniqueAppendedIds.isEmpty {
-                pagedMessageIds.append(contentsOf: uniqueAppendedIds)
-                reloadMessagesFromPageIds()
+                mergePagedMessageIdsChronologically(with: uniqueAppendedIds)
             }
             isRefreshingNewerMessages = false
+            refreshInRangeMessagesIfNeeded()
         }
     }
 
@@ -447,13 +501,46 @@ struct ChatView<T: XXDKP>: View {
             let uniqueOlderIds = olderIds.filter { !existingIds.contains($0) }
 
             if !uniqueOlderIds.isEmpty {
-                pagedMessageIds.insert(contentsOf: uniqueOlderIds, at: 0)
-                reloadMessagesFromPageIds()
+                mergePagedMessageIdsChronologically(with: uniqueOlderIds)
             }
 
             hasMoreOlderMessages = olderBatch.count == messagesPageSize
             isRefreshingBackfilledOlderMessages = false
+            refreshInRangeMessagesIfNeeded()
         }
+    }
+
+    private func refreshInRangeMessagesIfNeeded() {
+        guard !isRefreshingInRangeMessages,
+              !isLoadingInitialMessages,
+              !isLoadingOlderMessages,
+              !isRefreshingNewerMessages,
+              !isRefreshingBackfilledOlderMessages,
+              !pagedMessageIds.isEmpty,
+              let oldest = oldestCursor,
+              let newest = newestCursor
+        else { return }
+
+        isRefreshingInRangeMessages = true
+
+        Task(priority: .utility) { @MainActor in
+            let inRangeBatch = fetchMessagesInLoadedWindow(oldest: oldest, newest: newest)
+            let inRangeIds = inRangeBatch.map(\.id)
+            let existingIds = Set(pagedMessageIds)
+            let missingIds = inRangeIds.filter { !existingIds.contains($0) }
+
+            if !missingIds.isEmpty {
+                mergePagedMessageIdsChronologically(with: missingIds)
+            }
+
+            isRefreshingInRangeMessages = false
+        }
+    }
+
+    private func refreshChatMessagesNow() {
+        refreshNewerMessages()
+        refreshBackfilledOlderMessagesIfNeeded()
+        refreshInRangeMessagesIfNeeded()
     }
 
     var body: some View {
@@ -485,6 +572,15 @@ struct ChatView<T: XXDKP>: View {
                     },
                     onUnmuteUser: { pubKey in
                         setMuteState(for: pubKey, muted: false)
+                    },
+                    onScrollActivityChanged: { isScrolling in
+                        if isMessagesListScrolling == isScrolling {
+                            return
+                        }
+                        isMessagesListScrolling = isScrolling
+                        guard !isScrolling, hasDeferredChatRefresh else { return }
+                        hasDeferredChatRefresh = false
+                        refreshChatMessagesNow()
                     }
                 )
             }
@@ -599,8 +695,11 @@ struct ChatView<T: XXDKP>: View {
             guard let updatedChatId = notification.userInfo?["chatId"] as? String,
                   updatedChatId == chatId
             else { return }
-            refreshNewerMessages()
-            refreshBackfilledOlderMessagesIfNeeded()
+            guard !isMessagesListScrolling else {
+                hasDeferredChatRefresh = true
+                return
+            }
+            refreshChatMessagesNow()
         }
         .id("chat-\(chatId)")
         .onChange(of: showChannelOptions) { _, newValue in
