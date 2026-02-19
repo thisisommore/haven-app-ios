@@ -40,6 +40,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var pendingMessages: [ChatMessageModel]?
         private var messages: [ChatMessageModel] = []
         private var lastTopTriggerMessageId: String?
+        private var shouldLockBottomOnNextLayoutPass = false
 
         private var isLoadingOlderMessages = false
         private var isAdmin = false
@@ -85,6 +86,13 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         override func viewWillDisappear(_ animated: Bool) {
             super.viewWillDisappear(animated)
             setUserScrolling(false)
+        }
+
+        override func viewDidLayoutSubviews() {
+            super.viewDidLayoutSubviews()
+            guard shouldLockBottomOnNextLayoutPass, !isUserScrolling else { return }
+            shouldLockBottomOnNextLayoutPass = false
+            scrollToBottom()
         }
 
         func update(from config: NewChatMessagesList) {
@@ -135,11 +143,11 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             guard !messages.isEmpty else { return }
             if !hasInitialScroll {
                 hasInitialScroll = true
-                scrollToBottom()
+                scrollToBottomStabilized()
                 return
             }
             if didAppendAtBottom, wasNearBottom {
-                scrollToBottom()
+                scrollToBottomStabilized()
                 return
             }
             restoreAnchorSnapshot(anchor)
@@ -154,12 +162,33 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         }
 
         private func scrollToBottom() {
+            if !messages.isEmpty {
+                let lastRow = messages.count - 1
+                if tableView.numberOfSections > 0,
+                   tableView.numberOfRows(inSection: 0) > lastRow
+                {
+                    tableView.scrollToRow(at: IndexPath(row: lastRow, section: 0), at: .bottom, animated: false)
+                }
+            }
             let minOffset = -tableView.adjustedContentInset.top
             let maxOffset = max(
                 minOffset,
                 tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom
             )
             tableView.setContentOffset(CGPoint(x: 0, y: maxOffset), animated: false)
+        }
+
+        private func scrollToBottomStabilized() {
+            scrollToBottom()
+            shouldLockBottomOnNextLayoutPass = true
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !self.isUserScrolling else { return }
+                self.scrollToBottom()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+                guard let self, !self.isUserScrolling else { return }
+                self.scrollToBottom()
+            }
         }
 
         private func isNearBottom() -> Bool {

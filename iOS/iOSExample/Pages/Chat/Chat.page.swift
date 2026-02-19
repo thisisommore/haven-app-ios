@@ -543,8 +543,24 @@ struct ChatView<T: XXDKP>: View {
         refreshInRangeMessagesIfNeeded()
     }
 
+    @MainActor
+    private func seedInitialMessagesFromChatIfNeeded() {
+        guard messages.isEmpty, pagedMessageIds.isEmpty, let chat else { return }
+        let sorted = chat.messages.sorted { lhs, rhs in
+            if lhs.timestamp == rhs.timestamp {
+                return lhs.internalId < rhs.internalId
+            }
+            return lhs.timestamp < rhs.timestamp
+        }
+        guard !sorted.isEmpty else { return }
+        let seeded = Array(sorted.suffix(messagesPageSize))
+        messages = seeded
+        pagedMessageIds = seeded.map(\.id)
+        hasMoreOlderMessages = sorted.count > seeded.count
+    }
+
     var body: some View {
-        Group {
+        ZStack {
             if isLoadingInitialMessages && messages.isEmpty {
                 ProgressView()
             } else if messages.isEmpty {
@@ -585,6 +601,7 @@ struct ChatView<T: XXDKP>: View {
                 )
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom) {
             if isMuted {
                 HStack {
@@ -668,6 +685,7 @@ struct ChatView<T: XXDKP>: View {
             .environmentObject(xxdk)
         }
         .onAppear {
+            seedInitialMessagesFromChatIfNeeded()
             loadInitialMessagesIfNeeded()
             isAdmin = chat?.isAdmin ?? false
             isMuted = xxdk.isMuted(channelId: chatId)
