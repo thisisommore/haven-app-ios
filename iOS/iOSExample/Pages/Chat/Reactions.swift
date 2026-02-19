@@ -10,6 +10,7 @@ import SwiftUI
 
 struct Reactions: View {
     let reactions: [MessageReactionModel]
+    var onRequestShowAll: (() -> Void)? = nil
     @State private var showReactors = false
     @State private var selectedEmoji: String?
 
@@ -24,34 +25,47 @@ struct Reactions: View {
         if !reactions.isEmpty {
             HStack(spacing: 4) {
                 ForEach(Array(groupedReactions.prefix(3)), id: \.emoji) { group in
-                    HStack(spacing: 2) {
-                        Text(group.emoji)
-                        if group.reactions.count > 1 {
-                            Text("\(group.reactions.count)")
-                                .font(.system(size: 10))
+                    Button {
+                        if let onRequestShowAll {
+                            onRequestShowAll()
+                        } else {
+                            // Match old behavior: tapping any chip opens all reactors for this message.
+                            selectedEmoji = nil
+                            showReactors = true
                         }
-                    }
-                    .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .onTapGesture {
-                        selectedEmoji = group.emoji
-                        showReactors = true
-                    }
-                }
-                if groupedReactions.count > 3 {
-                    Text("+\(groupedReactions.count - 3)")
+                    } label: {
+                        HStack(spacing: 2) {
+                            Text(group.emoji)
+                            if group.reactions.count > 1 {
+                                Text("\(group.reactions.count)")
+                                    .font(.system(size: 10))
+                            }
+                        }
                         .font(.caption2)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(.ultraThinMaterial)
                         .clipShape(Capsule())
-                        .onTapGesture {
+                    }
+                    .buttonStyle(.plain)
+                }
+                if groupedReactions.count > 3 {
+                    Button {
+                        if let onRequestShowAll {
+                            onRequestShowAll()
+                        } else {
                             selectedEmoji = nil
                             showReactors = true
                         }
+                    } label: {
+                        Text("+\(groupedReactions.count - 3)")
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .sheet(isPresented: $showReactors) {

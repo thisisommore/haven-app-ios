@@ -127,6 +127,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var hasMoreOlderMessages: Bool = true
     @State private var cachedDisplayMessages: [MessageDisplayInfo] = []
     @State private var messageDateLookup: [String: Date] = [:]
+    @State private var reactionsByMessageId: [String: [MessageReactionModel]] = [:]
     @EnvironmentObject var xxdk: T
 
     private func showToast(_ message: String) {
@@ -247,6 +248,26 @@ struct ChatView<T: XXDKP>: View {
     @MainActor
     private func refreshMessageDateLookup() {
         messageDateLookup = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0.timestamp) })
+    }
+
+    @MainActor
+    private func refreshVisibleReactions() {
+        guard !pagedMessageIds.isEmpty else {
+            reactionsByMessageId = [:]
+            return
+        }
+
+        let visibleMessageIds = pagedMessageIds
+        let descriptor = FetchDescriptor<MessageReactionModel>(
+            predicate: #Predicate { reaction in
+                visibleMessageIds.contains(reaction.targetMessageId)
+            },
+            sortBy: [
+                SortDescriptor(\MessageReactionModel.internalId)
+            ]
+        )
+        let fetchedReactions = (try? modelContext.fetch(descriptor)) ?? []
+        reactionsByMessageId = Dictionary(grouping: fetchedReactions, by: { $0.targetMessageId })
     }
 
     private var oldestCursor: MessageCursor? {
@@ -391,6 +412,7 @@ struct ChatView<T: XXDKP>: View {
         pagedMessageIds = orderedMessages.map(\.id)
         messages = orderedMessages
         refreshMessageDateLookup()
+        refreshVisibleReactions()
     }
 
     @MainActor
@@ -398,6 +420,7 @@ struct ChatView<T: XXDKP>: View {
         guard !pagedMessageIds.isEmpty else {
             messages = []
             refreshMessageDateLookup()
+            refreshVisibleReactions()
             return
         }
 
@@ -417,6 +440,7 @@ struct ChatView<T: XXDKP>: View {
         let byId = Dictionary(uniqueKeysWithValues: fetched.map { ($0.id, $0) })
         messages = pagedMessageIds.compactMap { byId[$0] }
         refreshMessageDateLookup()
+        refreshVisibleReactions()
     }
 
     private func loadInitialMessagesIfNeeded() {
@@ -545,10 +569,12 @@ struct ChatView<T: XXDKP>: View {
         }
     }
 
+    @MainActor
     private func refreshChatMessagesNow() {
         refreshNewerMessages()
         refreshBackfilledOlderMessagesIfNeeded()
         refreshInRangeMessagesIfNeeded()
+        refreshVisibleReactions()
     }
 
     @MainActor
@@ -566,6 +592,7 @@ struct ChatView<T: XXDKP>: View {
         pagedMessageIds = seeded.map(\.id)
         hasMoreOlderMessages = sorted.count > seeded.count
         refreshMessageDateLookup()
+        refreshVisibleReactions()
     }
 
     var body: some View {
@@ -577,6 +604,7 @@ struct ChatView<T: XXDKP>: View {
             } else {
                 NewChatMessagesList(
                     messages: messages,
+                    reactionsByMessageId: reactionsByMessageId,
                     isLoadingOlderMessages: isLoadingOlderMessages,
                     isAdmin: isAdmin,
                     mutedUsers: Set(mutedUsers),

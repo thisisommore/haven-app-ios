@@ -3,6 +3,7 @@ import UIKit
 
 struct NewChatMessageTextRow: View {
     let message: ChatMessageModel
+    let reactions: [MessageReactionModel]
     let showSender: Bool
     let showTimestamp: Bool
     var isAdmin: Bool = false
@@ -12,6 +13,7 @@ struct NewChatMessageTextRow: View {
     var onDelete: ((ChatMessageModel) -> Void)? = nil
     var onMute: ((Data) -> Void)? = nil
     var onUnmute: ((Data) -> Void)? = nil
+    var onShowReactions: ((String) -> Void)? = nil
 
     @State private var showTextSelection = false
 
@@ -42,35 +44,22 @@ struct NewChatMessageTextRow: View {
         Self.shortTimeFormatter.string(from: message.timestamp)
     }
 
-    var body: some View {
-        HStack(spacing: 0) {
-            if message.isIncoming {
-                NewChatMessageBubbleText(
-                    message: message,
-                    isIncoming: true,
-                    showSender: showSender,
-                    senderDisplayName: senderDisplayName,
-                    senderColorHex: message.sender?.color,
-                    showTimestamp: showTimestamp,
-                    timestampText: timestampText
-                )
-                Spacer(minLength: 44)
-            } else {
-                Spacer(minLength: 44)
-                NewChatMessageBubbleText(
-                    message: message,
-                    isIncoming: false,
-                    showSender: false,
-                    senderDisplayName: "",
-                    senderColorHex: nil,
-                    showTimestamp: showTimestamp,
-                    timestampText: timestampText
-                )
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 2)
+    @ViewBuilder
+    private func messageBubble(
+        isIncoming: Bool,
+        showSender: Bool,
+        senderDisplayName: String,
+        senderColorHex: Int?
+    ) -> some View {
+        NewChatMessageBubbleText(
+            message: message,
+            isIncoming: isIncoming,
+            showSender: showSender,
+            senderDisplayName: senderDisplayName,
+            senderColorHex: senderColorHex,
+            showTimestamp: showTimestamp,
+            timestampText: timestampText
+        )
         .contentShape(Rectangle())
         .swipeToReply {
             onReply?(message)
@@ -129,6 +118,47 @@ struct NewChatMessageTextRow: View {
                 }
             }
         }
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if message.isIncoming {
+                VStack(alignment: .leading, spacing: 2) {
+                    messageBubble(
+                        isIncoming: true,
+                        showSender: showSender,
+                        senderDisplayName: senderDisplayName,
+                        senderColorHex: message.sender?.color
+                    )
+                    Reactions(
+                        reactions: reactions,
+                        onRequestShowAll: {
+                            onShowReactions?(message.id)
+                        }
+                    )
+                }
+                Spacer(minLength: 44)
+            } else {
+                Spacer(minLength: 44)
+                VStack(alignment: .trailing, spacing: 2) {
+                    messageBubble(
+                        isIncoming: false,
+                        showSender: false,
+                        senderDisplayName: "",
+                        senderColorHex: nil
+                    )
+                    Reactions(
+                        reactions: reactions,
+                        onRequestShowAll: {
+                            onShowReactions?(message.id)
+                        }
+                    )
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 2)
         .sheet(isPresented: $showTextSelection) {
             TextSelectionView(text: displayText)
         }

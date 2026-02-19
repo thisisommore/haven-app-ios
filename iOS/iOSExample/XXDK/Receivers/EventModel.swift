@@ -233,7 +233,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
 
     func receiveReaction(
-        _: Data?,
+        _ channelID: Data?,
         messageID: Data?,
         reactionTo: Data?,
         nickname: String?,
@@ -287,6 +287,15 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
             actor.insert(record)
             try actor.save()
+            if let channelID {
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: .chatMessagesUpdated,
+                        object: nil,
+                        userInfo: ["chatId": channelID.base64EncodedString()]
+                    )
+                }
+            }
             return record.internalId
         } catch {
             fatalError(
