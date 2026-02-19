@@ -8,6 +8,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
     let isAdmin: Bool
     let mutedUsers: Set<Data>
     var onReachedTop: (() -> Void)?
+    var onTopVisibleMessageChanged: ((String?) -> Void)?
     var onReplyMessage: ((ChatMessageModel) -> Void)?
     var onDMMessage: ((String, Int32, Data, Int) -> Void)?
     var onDeleteMessage: ((ChatMessageModel) -> Void)?
@@ -25,13 +26,33 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
     final class Controller: UIViewController, UITableViewDataSource, UITableViewDelegate {
         private struct AnchorSnapshot {
-            let messageId: String
+            let rowId: String
             let offsetFromRowTop: CGFloat
+        }
+
+        private struct MessageRowMeta {
+            let showSender: Bool
+            let showTimestamp: Bool
+        }
+
+        private enum DisplayRow {
+            case dateSeparator(id: String, date: Date, isFirst: Bool)
+            case message(id: String, messageIndex: Int)
+
+            var id: String {
+                switch self {
+                case let .dateSeparator(id, _, _):
+                    return id
+                case let .message(id, _):
+                    return id
+                }
+            }
         }
 
         private let tableView = UITableView(frame: .zero, style: .plain)
         private let loadingIndicator = UIActivityIndicatorView(style: .medium)
-        private let cellReuseId = "chat-message-cell"
+        private let messageCellReuseId = "chat-message-cell"
+        private let dateSeparatorCellReuseId = "chat-date-separator-cell"
         private let nearBottomThreshold: CGFloat = 24
         private let topTriggerThreshold: CGFloat = 8
 
@@ -39,13 +60,17 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var isUserScrolling = false
         private var pendingMessages: [ChatMessageModel]?
         private var messages: [ChatMessageModel] = []
+        private var displayRows: [DisplayRow] = []
+        private var messageRowMeta: [MessageRowMeta] = []
         private var lastTopTriggerMessageId: String?
         private var shouldLockBottomOnNextLayoutPass = false
+        private var lastReportedTopVisibleMessageId: String?
 
         private var isLoadingOlderMessages = false
         private var isAdmin = false
         private var mutedUsers: Set<Data> = []
         private var onReachedTop: (() -> Void)?
+        private var onTopVisibleMessageChanged: ((String?) -> Void)?
         private var onReplyMessage: ((ChatMessageModel) -> Void)?
         private var onDMMessage: ((String, Int32, Data, Int) -> Void)?
         private var onDeleteMessage: ((ChatMessageModel) -> Void)?
@@ -65,7 +90,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             tableView.rowHeight = UITableView.automaticDimension
             tableView.estimatedRowHeight = 56
             tableView.keyboardDismissMode = .interactive
-            tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellReuseId)
+            tableView.register(UITableViewCell.self, forCellReuseIdentifier: messageCellReuseId)
+            tableView.register(UITableViewCell.self, forCellReuseIdentifier: dateSeparatorCellReuseId)
 
             view.addSubview(tableView)
 
@@ -104,6 +130,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             isAdmin = config.isAdmin
             mutedUsers = config.mutedUsers
             onReachedTop = config.onReachedTop
+            onTopVisibleMessageChanged = config.onTopVisibleMessageChanged
             onReplyMessage = config.onReplyMessage
             onDMMessage = config.onDMMessage
             onDeleteMessage = config.onDeleteMessage
@@ -138,6 +165,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 oldIds.last != newIds.last
 
             messages = newMessages
+            displayRows = buildDisplayRows(from: newMessages)
+            messageRowMeta = buildMessageRowMeta(from: newMessages)
             reloadDataWithoutAnimation()
 
             guard !messages.isEmpty else { return }
@@ -162,8 +191,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         }
 
         private func scrollToBottom() {
-            if !messages.isEmpty {
-                let lastRow = messages.count - 1
+            if !displayRows.isEmpty {
+                let lastRow = displayRows.count - 1
                 if tableView.numberOfSections > 0,
                    tableView.numberOfRows(inSection: 0) > lastRow
                 {
@@ -198,17 +227,17 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
         private func captureAnchorSnapshot() -> AnchorSnapshot? {
             guard let firstVisible = tableView.indexPathsForVisibleRows?.sorted().first,
-                  firstVisible.row < messages.count
+                  firstVisible.row < displayRows.count
             else { return nil }
 
             let rowRect = tableView.rectForRow(at: firstVisible)
             let offsetFromRowTop = tableView.contentOffset.y - rowRect.minY
-            return AnchorSnapshot(messageId: messages[firstVisible.row].id, offsetFromRowTop: offsetFromRowTop)
+            return AnchorSnapshot(rowId: displayRows[firstVisible.row].id, offsetFromRowTop: offsetFromRowTop)
         }
 
         private func restoreAnchorSnapshot(_ snapshot: AnchorSnapshot?) {
             guard let snapshot,
-                  let index = messages.firstIndex(where: { $0.id == snapshot.messageId })
+                  let index = displayRows.firstIndex(where: { $0.id == snapshot.rowId })
             else { return }
 
             let rowRect = tableView.rectForRow(at: IndexPath(row: index, section: 0))
@@ -247,38 +276,96 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             onReachedTop?()
         }
 
+        private func reportTopVisibleMessageIfNeeded() {
+            guard let topMessageId = topVisibleMessageId() else { return }
+            guard lastReportedTopVisibleMessageId != topMessageId else { return }
+            lastReportedTopVisibleMessageId = topMessageId
+            onTopVisibleMessageChanged?(topMessageId)
+        }
+
+        private func topVisibleMessageId() -> String? {
+            guard let visibleRows = tableView.indexPathsForVisibleRows?.sorted() else { return nil }
+            for indexPath in visibleRows {
+                guard indexPath.row < displayRows.count else { continue }
+                if case let .message(id, _) = displayRows[indexPath.row] {
+                    return id
+                }
+            }
+            return nil
+        }
+
         private func shouldShowSender(for index: Int) -> Bool {
-            guard index < messages.count else { return false }
-            let message = messages[index]
-            guard message.isIncoming, let senderId = message.sender?.id else {
-                return false
-            }
-            guard index > 0 else { return true }
-            let previous = messages[index - 1]
-            if !previous.isIncoming {
-                return true
-            }
-            return previous.sender?.id != senderId
+            guard index >= 0, index < messageRowMeta.count else { return false }
+            return messageRowMeta[index].showSender
         }
 
         private func shouldShowTimestamp(for index: Int) -> Bool {
+            guard index >= 0, index < messageRowMeta.count else { return false }
+            return messageRowMeta[index].showTimestamp
+        }
+
+        private func shouldShowDateSeparator(for index: Int) -> Bool {
             guard index < messages.count else { return false }
-            guard index < messages.count - 1 else { return true }
-
-            let message = messages[index]
-            let next = messages[index + 1]
+            guard index > 0 else { return true }
             let calendar = Calendar.current
+            return !calendar.isDate(messages[index].timestamp, inSameDayAs: messages[index - 1].timestamp)
+        }
 
-            if !calendar.isDate(message.timestamp, inSameDayAs: next.timestamp) {
-                return true
+        private func buildDisplayRows(from messages: [ChatMessageModel]) -> [DisplayRow] {
+            guard !messages.isEmpty else { return [] }
+            let calendar = Calendar.current
+            var rows: [DisplayRow] = []
+            for (index, message) in messages.enumerated() {
+                if shouldShowDateSeparator(for: index) {
+                    let dayDate = calendar.startOfDay(for: message.timestamp)
+                    let separatorId = "date-\(Int(dayDate.timeIntervalSince1970))-\(index)"
+                    rows.append(.dateSeparator(id: separatorId, date: dayDate, isFirst: index == 0))
+                }
+                rows.append(.message(id: message.id, messageIndex: index))
             }
-            if message.isIncoming != next.isIncoming {
-                return true
+            return rows
+        }
+
+        private func buildMessageRowMeta(from messages: [ChatMessageModel]) -> [MessageRowMeta] {
+            guard !messages.isEmpty else { return [] }
+            let calendar = Calendar.current
+            let count = messages.count
+
+            return messages.enumerated().map { index, message in
+                let showSender: Bool = {
+                    guard message.isIncoming, let senderId = message.sender?.id else {
+                        return false
+                    }
+                    guard index > 0 else { return true }
+                    let previous = messages[index - 1]
+                    if !previous.isIncoming {
+                        return true
+                    }
+                    return previous.sender?.id != senderId
+                }()
+
+                let showTimestamp: Bool = {
+                    guard index < count - 1 else { return true }
+                    let next = messages[index + 1]
+
+                    if !calendar.isDate(message.timestamp, inSameDayAs: next.timestamp) {
+                        return true
+                    }
+                    if message.isIncoming != next.isIncoming {
+                        return true
+                    }
+                    if message.sender?.id != next.sender?.id {
+                        return true
+                    }
+                    return !calendar.isDate(
+                        message.timestamp,
+                        equalTo: next.timestamp,
+                        toGranularity: .minute
+                    )
+                }()
+
+                return MessageRowMeta(showSender: showSender, showTimestamp: showTimestamp)
             }
-            if message.sender?.id != next.sender?.id {
-                return true
-            }
-            return !calendar.isDate(message.timestamp, equalTo: next.timestamp, toGranularity: .minute)
         }
 
         private func updateLoadingIndicator() {
@@ -292,31 +379,52 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         // MARK: UITableViewDataSource
 
         func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-            messages.count
+            displayRows.count
         }
 
         func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-            let cell = tableView.dequeueReusableCell(withIdentifier: cellReuseId, for: indexPath)
-            let message = messages[indexPath.row]
-            let isSenderMuted = message.sender.map { mutedUsers.contains($0.pubkey) } ?? false
+            let row = displayRows[indexPath.row]
+            let reuseIdentifier: String = {
+                switch row {
+                case .dateSeparator:
+                    return dateSeparatorCellReuseId
+                case .message:
+                    return messageCellReuseId
+                }
+            }()
+            let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath)
 
             cell.selectionStyle = .none
             cell.backgroundColor = .clear
-            cell.contentConfiguration = UIHostingConfiguration {
-                NewChatMessageTextRow(
-                    message: message,
-                    showSender: shouldShowSender(for: indexPath.row),
-                    showTimestamp: shouldShowTimestamp(for: indexPath.row),
-                    isAdmin: isAdmin,
-                    isSenderMuted: isSenderMuted,
-                    onReply: onReplyMessage,
-                    onDM: onDMMessage,
-                    onDelete: onDeleteMessage,
-                    onMute: onMuteUser,
-                    onUnmute: onUnmuteUser
-                )
+            switch row {
+            case let .dateSeparator(_, date, isFirst):
+                cell.contentConfiguration = UIHostingConfiguration {
+                    DateSeparatorBadge(
+                        date: date,
+                        isFirst: isFirst
+                    )
+                }
+                .margins(.all, 0)
+
+            case let .message(_, messageIndex):
+                let message = messages[messageIndex]
+                let isSenderMuted = message.sender.map { mutedUsers.contains($0.pubkey) } ?? false
+                cell.contentConfiguration = UIHostingConfiguration {
+                    NewChatMessageTextRow(
+                        message: message,
+                        showSender: shouldShowSender(for: messageIndex),
+                        showTimestamp: shouldShowTimestamp(for: messageIndex),
+                        isAdmin: isAdmin,
+                        isSenderMuted: isSenderMuted,
+                        onReply: onReplyMessage,
+                        onDM: onDMMessage,
+                        onDelete: onDeleteMessage,
+                        onMute: onMuteUser,
+                        onUnmute: onUnmuteUser
+                    )
+                }
+                .margins(.all, 0)
             }
-            .margins(.all, 0)
             return cell
         }
 
@@ -328,6 +436,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
             maybeTriggerReachedTopIfNeeded()
+            reportTopVisibleMessageIfNeeded()
         }
 
         func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {

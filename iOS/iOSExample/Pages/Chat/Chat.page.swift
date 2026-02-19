@@ -244,6 +244,11 @@ struct ChatView<T: XXDKP>: View {
         }
     }
 
+    @MainActor
+    private func refreshMessageDateLookup() {
+        messageDateLookup = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0.timestamp) })
+    }
+
     private var oldestCursor: MessageCursor? {
         guard let first = messages.first else { return nil }
         return MessageCursor(timestamp: first.timestamp, internalId: first.internalId)
@@ -385,12 +390,14 @@ struct ChatView<T: XXDKP>: View {
         guard let orderedMessages = try? modelContext.fetch(descriptor) else { return }
         pagedMessageIds = orderedMessages.map(\.id)
         messages = orderedMessages
+        refreshMessageDateLookup()
     }
 
     @MainActor
     private func reloadMessagesFromPageIds() {
         guard !pagedMessageIds.isEmpty else {
             messages = []
+            refreshMessageDateLookup()
             return
         }
 
@@ -409,6 +416,7 @@ struct ChatView<T: XXDKP>: View {
         let fetched = (try? modelContext.fetch(descriptor)) ?? []
         let byId = Dictionary(uniqueKeysWithValues: fetched.map { ($0.id, $0) })
         messages = pagedMessageIds.compactMap { byId[$0] }
+        refreshMessageDateLookup()
     }
 
     private func loadInitialMessagesIfNeeded() {
@@ -557,6 +565,7 @@ struct ChatView<T: XXDKP>: View {
         messages = seeded
         pagedMessageIds = seeded.map(\.id)
         hasMoreOlderMessages = sorted.count > seeded.count
+        refreshMessageDateLookup()
     }
 
     var body: some View {
@@ -573,6 +582,9 @@ struct ChatView<T: XXDKP>: View {
                     mutedUsers: Set(mutedUsers),
                     onReachedTop: {
                         loadOlderMessagesIfNeeded()
+                    },
+                    onTopVisibleMessageChanged: { messageId in
+                        onTopVisibleMessageChanged(messageId)
                     },
                     onReplyMessage: { message in
                         replyingTo = message
@@ -602,6 +614,16 @@ struct ChatView<T: XXDKP>: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .top) {
+            if showDateHeader {
+                FloatingDateHeader(
+                    date: visibleDate,
+                    scrollingToOlder: scrollingToOlder
+                )
+                .padding(.top, 8)
+                .allowsHitTesting(false)
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             if isMuted {
                 HStack {
