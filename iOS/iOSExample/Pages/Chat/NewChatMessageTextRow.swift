@@ -4,6 +4,7 @@ import UIKit
 struct NewChatMessageTextRow: View {
     let message: ChatMessageModel
     let showSender: Bool
+    let showTimestamp: Bool
     var isAdmin: Bool = false
     var isSenderMuted: Bool = false
     var onReply: ((ChatMessageModel) -> Void)? = nil
@@ -31,6 +32,16 @@ struct NewChatMessageTextRow: View {
         return "\(truncatedNick) aka \(sender.codename)"
     }
 
+    private static let shortTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    private var timestampText: String {
+        Self.shortTimeFormatter.string(from: message.timestamp)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             if message.isIncoming {
@@ -39,7 +50,9 @@ struct NewChatMessageTextRow: View {
                     isIncoming: true,
                     showSender: showSender,
                     senderDisplayName: senderDisplayName,
-                    senderColorHex: message.sender?.color
+                    senderColorHex: message.sender?.color,
+                    showTimestamp: showTimestamp,
+                    timestampText: timestampText
                 )
                 Spacer(minLength: 44)
             } else {
@@ -49,7 +62,9 @@ struct NewChatMessageTextRow: View {
                     isIncoming: false,
                     showSender: false,
                     senderDisplayName: "",
-                    senderColorHex: nil
+                    senderColorHex: nil,
+                    showTimestamp: showTimestamp,
+                    timestampText: timestampText
                 )
             }
         }
@@ -126,6 +141,8 @@ private struct NewChatMessageBubbleText: View {
     let showSender: Bool
     let senderDisplayName: String
     let senderColorHex: Int?
+    let showTimestamp: Bool
+    let timestampText: String
     @Environment(\.colorScheme) private var colorScheme
 
     private var bubbleShape: UnevenRoundedRectangle {
@@ -157,19 +174,30 @@ private struct NewChatMessageBubbleText: View {
             }
             NewChatRenderableMessageText(
                 message: message,
-                isIncoming: isIncoming
+                isIncoming: isIncoming,
+                timestampPlaceholder: showTimestamp ? timestampText : nil
             )
         }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .background(isIncoming ? Color.messageBubble : Color.haven)
             .clipShape(bubbleShape)
+            .overlay(alignment: .bottomTrailing) {
+                if showTimestamp {
+                    Text(timestampText)
+                        .font(.system(size: 10))
+                        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 8)
+                }
+            }
     }
 }
 
 private struct NewChatRenderableMessageText: View {
     let message: ChatMessageModel
     let isIncoming: Bool
+    let timestampPlaceholder: String?
 
     @State private var pendingURL: URL?
     @State private var showOpenLinkWarning = false
@@ -178,15 +206,26 @@ private struct NewChatRenderableMessageText: View {
         "Opening links may expose metadata and reduce privacy/safety."
     }
 
-    var body: some View {
-        Group {
+    private var renderedText: Text {
+        let baseText: Text = {
             switch NewMessageRenderCache.shared.renderedText(for: message) {
             case let .plain(text):
-                Text(verbatim: text)
+                return Text(verbatim: text)
             case let .rich(attributed):
-                Text(attributed)
+                return Text(attributed)
             }
+        }()
+        guard let timestampPlaceholder else {
+            return baseText
         }
+        return baseText
+            + Text("    \(timestampPlaceholder)")
+            .font(.system(size: 10))
+            .foregroundStyle(.clear)
+    }
+
+    var body: some View {
+        renderedText
         .font(.system(size: 16))
         .foregroundStyle(isIncoming ? Color.messageText : Color.white)
         .tint(isIncoming ? Color.haven : Color.white)

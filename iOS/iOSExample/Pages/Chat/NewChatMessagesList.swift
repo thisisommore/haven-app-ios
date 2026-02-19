@@ -261,6 +261,26 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             return previous.sender?.id != senderId
         }
 
+        private func shouldShowTimestamp(for index: Int) -> Bool {
+            guard index < messages.count else { return false }
+            guard index < messages.count - 1 else { return true }
+
+            let message = messages[index]
+            let next = messages[index + 1]
+            let calendar = Calendar.current
+
+            if !calendar.isDate(message.timestamp, inSameDayAs: next.timestamp) {
+                return true
+            }
+            if message.isIncoming != next.isIncoming {
+                return true
+            }
+            if message.sender?.id != next.sender?.id {
+                return true
+            }
+            return !calendar.isDate(message.timestamp, equalTo: next.timestamp, toGranularity: .minute)
+        }
+
         private func updateLoadingIndicator() {
             if isLoadingOlderMessages {
                 loadingIndicator.startAnimating()
@@ -286,6 +306,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 NewChatMessageTextRow(
                     message: message,
                     showSender: shouldShowSender(for: indexPath.row),
+                    showTimestamp: shouldShowTimestamp(for: indexPath.row),
                     isAdmin: isAdmin,
                     isSenderMuted: isSenderMuted,
                     onReply: onReplyMessage,
