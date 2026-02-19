@@ -128,6 +128,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var cachedDisplayMessages: [MessageDisplayInfo] = []
     @State private var messageDateLookup: [String: Date] = [:]
     @State private var reactionsByMessageId: [String: [MessageReactionModel]] = [:]
+    @State private var selectedReactionsMessageId: String? = nil
     @EnvironmentObject var xxdk: T
 
     private func showToast(_ message: String) {
@@ -268,6 +269,18 @@ struct ChatView<T: XXDKP>: View {
         )
         let fetchedReactions = (try? modelContext.fetch(descriptor)) ?? []
         reactionsByMessageId = Dictionary(grouping: fetchedReactions, by: { $0.targetMessageId })
+    }
+
+    private func groupedReactionsForSheet(messageId: String) -> [(emoji: String, reactions: [MessageReactionModel])] {
+        let reactions = reactionsByMessageId[messageId] ?? []
+        return Dictionary(grouping: reactions, by: { $0.emoji })
+            .map { (emoji: $0.key, reactions: $0.value) }
+            .sorted {
+                if $0.reactions.count == $1.reactions.count {
+                    return $0.emoji < $1.emoji
+                }
+                return $0.reactions.count > $1.reactions.count
+            }
     }
 
     private var oldestCursor: MessageCursor? {
@@ -629,6 +642,9 @@ struct ChatView<T: XXDKP>: View {
                     onUnmuteUser: { pubKey in
                         setMuteState(for: pubKey, muted: false)
                     },
+                    onShowReactions: { messageId in
+                        selectedReactionsMessageId = messageId
+                    },
                     onScrollActivityChanged: { isScrolling in
                         if isMessagesListScrolling == isScrolling {
                             return
@@ -710,6 +726,24 @@ struct ChatView<T: XXDKP>: View {
                 }
             }
         }
+        .sheet(
+            isPresented: Binding(
+                get: { selectedReactionsMessageId != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        selectedReactionsMessageId = nil
+                    }
+                }
+            )
+        ) {
+            if let messageId = selectedReactionsMessageId {
+                ReactorsSheet(
+                    groupedReactions: groupedReactionsForSheet(messageId: messageId),
+                    selectedEmoji: nil
+                )
+                .presentationDetents([.medium, .large])
+            }
+        }
         .sheet(isPresented: $showChannelOptions) {
             ChannelOptionsView<T>(chat: chat) {
                 Task {
@@ -738,11 +772,16 @@ struct ChatView<T: XXDKP>: View {
             seedInitialMessagesFromChatIfNeeded()
             loadInitialMessagesIfNeeded()
             isAdmin = chat?.isAdmin ?? false
-            isMuted = xxdk.isMuted(channelId: chatId)
-            do {
-                mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
-            } catch {
-                AppLogger.channels.error("Failed to fetch muted users: \(error.localizedDescription, privacy: .public)")
+            if isChannel {
+                isMuted = xxdk.isMuted(channelId: chatId)
+                do {
+                    mutedUsers = try xxdk.getMutedUsers(channelId: chatId)
+                } catch {
+                    AppLogger.channels.error("Failed to fetch muted users: \(error.localizedDescription, privacy: .public)")
+                }
+            } else {
+                isMuted = false
+                mutedUsers = []
             }
             // Mark all incoming messages as read
             markMessagesAsRead()
@@ -751,6 +790,7 @@ struct ChatView<T: XXDKP>: View {
             if let channelID = notification.userInfo?["channelID"] as? String,
                channelID == chatId
             {
+                guard isChannel else { return }
                 isMuted = xxdk.isMuted(channelId: chatId)
                 do {
                     mutedUsers = try xxdk.getMutedUsers(channelId: chatId)

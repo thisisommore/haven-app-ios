@@ -257,6 +257,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         guard !reactionText.isEmpty else {
             fatalError("no reaction")
         }
+        guard let reactionMessageId = messageID?.base64EncodedString(), !reactionMessageId.isEmpty else {
+            fatalError("no reaction message id")
+        }
 
         do {
             guard let actor = modelActor else {
@@ -277,15 +280,45 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 )
             }
 
-            let internalId = InternalIdGenerator.shared.next()
-            let record = MessageReactionModel(
-                id: messageID!.base64EncodedString(),
-                internalId: internalId,
-                targetMessageId: targetId,
-                emoji: reactionText,
-                sender: sender
+            // De-duplicate by message target + emoji + sender.
+            // If a duplicate exists, update its id instead of creating another row.
+            let duplicateDescriptor = FetchDescriptor<MessageReactionModel>(
+                predicate: #Predicate { reaction in
+                    reaction.targetMessageId == targetId && reaction.emoji == reactionText
+                }
             )
-            actor.insert(record)
+            let duplicateCandidates = try actor.fetch(duplicateDescriptor)
+            let senderId = sender?.id
+            let sameSenderReactions = duplicateCandidates.filter { reaction in
+                reaction.sender?.id == senderId
+            }
+
+            let record: MessageReactionModel
+            if let canonical = sameSenderReactions.first(where: { $0.id == reactionMessageId }) ?? sameSenderReactions.first {
+                if canonical.id != reactionMessageId {
+                    canonical.id = reactionMessageId
+                }
+                if canonical.sender == nil, let sender {
+                    canonical.sender = sender
+                }
+                // If duplicates already exist, keep one canonical row.
+                for duplicate in sameSenderReactions where duplicate !== canonical {
+                    actor.delete(duplicate)
+                }
+                record = canonical
+            } else {
+                let internalId = InternalIdGenerator.shared.next()
+                let newRecord = MessageReactionModel(
+                    id: reactionMessageId,
+                    internalId: internalId,
+                    targetMessageId: targetId,
+                    emoji: reactionText,
+                    sender: sender
+                )
+                actor.insert(newRecord)
+                record = newRecord
+            }
+
             try actor.save()
             if let channelID {
                 DispatchQueue.main.async {

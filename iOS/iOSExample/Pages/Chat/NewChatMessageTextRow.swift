@@ -130,12 +130,14 @@ struct NewChatMessageTextRow: View {
                         senderDisplayName: senderDisplayName,
                         senderColorHex: message.sender?.color
                     )
-                    Reactions(
-                        reactions: reactions,
-                        onRequestShowAll: {
-                            onShowReactions?(message.id)
-                        }
-                    )
+                    if !reactions.isEmpty {
+                        Reactions(
+                            reactions: reactions,
+                            onRequestShowAll: {
+                                onShowReactions?(message.id)
+                            }
+                        )
+                    }
                 }
                 Spacer(minLength: 44)
             } else {
@@ -147,12 +149,14 @@ struct NewChatMessageTextRow: View {
                         senderDisplayName: "",
                         senderColorHex: nil
                     )
-                    Reactions(
-                        reactions: reactions,
-                        onRequestShowAll: {
-                            onShowReactions?(message.id)
-                        }
-                    )
+                    if !reactions.isEmpty {
+                        Reactions(
+                            reactions: reactions,
+                            onRequestShowAll: {
+                                onShowReactions?(message.id)
+                            }
+                        )
+                    }
                 }
             }
         }

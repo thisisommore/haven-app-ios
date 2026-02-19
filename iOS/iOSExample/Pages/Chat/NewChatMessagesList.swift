@@ -15,6 +15,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
     var onDeleteMessage: ((ChatMessageModel) -> Void)?
     var onMuteUser: ((Data) -> Void)?
     var onUnmuteUser: ((Data) -> Void)?
+    var onShowReactions: ((String) -> Void)?
     var onScrollActivityChanged: ((Bool) -> Void)?
 
     func makeUIViewController(context: Context) -> Controller {
@@ -79,6 +80,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var onDeleteMessage: ((ChatMessageModel) -> Void)?
         private var onMuteUser: ((Data) -> Void)?
         private var onUnmuteUser: ((Data) -> Void)?
+        private var onShowReactions: ((String) -> Void)?
         private var onScrollActivityChanged: ((Bool) -> Void)?
 
         override func viewDidLoad() {
@@ -117,6 +119,11 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             setUserScrolling(false)
         }
 
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            applyPendingMessagesIfNeeded()
+        }
+
         override func viewDidLayoutSubviews() {
             super.viewDidLayoutSubviews()
             guard shouldLockBottomOnNextLayoutPass, !isUserScrolling else { return }
@@ -145,6 +152,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             onDeleteMessage = config.onDeleteMessage
             onMuteUser = config.onMuteUser
             onUnmuteUser = config.onUnmuteUser
+            onShowReactions = config.onShowReactions
             onScrollActivityChanged = config.onScrollActivityChanged
             updateLoadingIndicator()
 
@@ -153,20 +161,20 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 return
             }
 
+            // Avoid forcing table layout before it is attached to a window.
+            if tableView.window == nil {
+                pendingMessages = config.messages
+                return
+            }
+
             if oldIds == newIds {
-                if configChanged {
-                    reloadVisibleMessageRows()
-                    return
+                if configChanged || messagesHaveRenderableChanges(oldMessages: messages, newMessages: config.messages) {
+                    reloadDataWithoutAnimation()
                 }
-                if !messagesHaveRenderableChanges(oldMessages: messages, newMessages: config.messages) {
-                    return
-                }
+                return
             }
 
             applyMessages(config.messages)
-            if configChanged {
-                reloadVisibleMessageRows()
-            }
         }
 
         private func applyMessages(_ newMessages: [ChatMessageModel]) {
@@ -174,9 +182,6 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             let newIds = newMessages.map(\.id)
             let wasNearBottom = isNearBottom()
             let anchor = captureAnchorSnapshot()
-            let oldDisplayRows = displayRows
-            let oldMessageRowMeta = messageRowMeta
-            let oldMessages = messages
             let didAppendAtBottom =
                 newIds.count >= oldIds.count &&
                 oldIds.first == newIds.first &&
@@ -185,14 +190,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             messages = newMessages
             displayRows = buildDisplayRows(from: newMessages)
             messageRowMeta = buildMessageRowMeta(from: newMessages)
-            applyRowsWithDiff(
-                oldRows: oldDisplayRows,
-                newRows: displayRows,
-                oldMessages: oldMessages,
-                newMessages: newMessages,
-                oldMeta: oldMessageRowMeta,
-                newMeta: messageRowMeta
-            )
+            reloadDataWithoutAnimation()
 
             guard !messages.isEmpty else { return }
             if !hasInitialScroll {
@@ -209,25 +207,13 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         }
 
         private func reloadDataWithoutAnimation() {
+            guard tableView.window != nil else {
+                tableView.reloadData()
+                return
+            }
             UIView.performWithoutAnimation {
                 tableView.reloadData()
                 tableView.layoutIfNeeded()
-            }
-        }
-
-        private func reloadVisibleMessageRows() {
-            guard let visibleRows = tableView.indexPathsForVisibleRows else { return }
-            let messageRows = visibleRows.filter { indexPath in
-                guard indexPath.row < displayRows.count else { return false }
-                if case .message = displayRows[indexPath.row] {
-                    return true
-                }
-                return false
-            }
-
-            guard !messageRows.isEmpty else { return }
-            UIView.performWithoutAnimation {
-                tableView.reloadRows(at: messageRows, with: .none)
             }
         }
 
@@ -244,10 +230,12 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             oldMessages: [ChatMessageModel],
             newMessages: [ChatMessageModel],
             oldMeta: [MessageRowMeta],
-            newMeta: [MessageRowMeta]
+            newMeta: [MessageRowMeta],
+            completion: @escaping () -> Void
         ) {
             guard !oldRows.isEmpty else {
                 reloadDataWithoutAnimation()
+                completion()
                 return
             }
 
@@ -262,22 +250,27 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
             guard diff.canApplyIncrementally else {
                 reloadDataWithoutAnimation()
+                completion()
                 return
             }
 
             let hasStructuralChanges = !diff.inserts.isEmpty || !diff.deletes.isEmpty
             if hasStructuralChanges {
-                tableView.performBatchUpdates {
-                    if !diff.deletes.isEmpty {
-                        tableView.deleteRows(at: diff.deletes, with: .none)
-                    }
-                    if !diff.inserts.isEmpty {
-                        tableView.insertRows(at: diff.inserts, with: .none)
-                    }
-                } completion: { [weak self] _ in
-                    guard let self, !diff.reloads.isEmpty else { return }
-                    UIView.performWithoutAnimation {
-                        self.tableView.reloadRows(at: diff.reloads, with: .none)
+                UIView.performWithoutAnimation {
+                    tableView.performBatchUpdates {
+                        if !diff.deletes.isEmpty {
+                            tableView.deleteRows(at: diff.deletes, with: .none)
+                        }
+                        if !diff.inserts.isEmpty {
+                            tableView.insertRows(at: diff.inserts, with: .none)
+                        }
+                    } completion: { [weak self] _ in
+                        if let self, !diff.reloads.isEmpty {
+                            UIView.performWithoutAnimation {
+                                self.tableView.reloadRows(at: diff.reloads, with: .none)
+                            }
+                        }
+                        completion()
                     }
                 }
                 return
@@ -288,6 +281,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     tableView.reloadRows(at: diff.reloads, with: .none)
                 }
             }
+            completion()
         }
 
         private func makeRowDiff(
@@ -365,49 +359,6 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 }
             }
             return hasher.finalize()
-        }
-
-        private func groupedReactions(for messageId: String) -> [(emoji: String, reactions: [MessageReactionModel])] {
-            let reactions = reactionsByMessageId[messageId] ?? []
-            return Dictionary(grouping: reactions, by: { $0.emoji })
-                .map { (emoji: $0.key, reactions: $0.value) }
-                .sorted {
-                    if $0.reactions.count == $1.reactions.count {
-                        return $0.emoji < $1.emoji
-                    }
-                    return $0.reactions.count > $1.reactions.count
-                }
-        }
-
-        private func topMostPresenter() -> UIViewController? {
-            var presenter: UIViewController? = view.window?.rootViewController ?? self
-            while let presented = presenter?.presentedViewController {
-                presenter = presented
-            }
-            return presenter
-        }
-
-        private func presentReactorsSheet(for messageId: String) {
-            if !Thread.isMainThread {
-                DispatchQueue.main.async { [weak self] in
-                    self?.presentReactorsSheet(for: messageId)
-                }
-                return
-            }
-
-            let grouped = groupedReactions(for: messageId)
-            guard !grouped.isEmpty else { return }
-
-            let host = UIHostingController(
-                rootView: ReactorsSheet(
-                    groupedReactions: grouped,
-                    selectedEmoji: nil
-                )
-            )
-            if let sheet = host.sheetPresentationController {
-                sheet.detents = [.medium(), .large()]
-            }
-            (topMostPresenter() ?? self).present(host, animated: true)
         }
 
         private func rowNeedsReload(
@@ -601,7 +552,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             for (index, message) in messages.enumerated() {
                 if shouldShowDateSeparator(for: index) {
                     let dayDate = calendar.startOfDay(for: message.timestamp)
-                    let separatorId = "date-\(Int(dayDate.timeIntervalSince1970))"
+                    let separatorId = "date-\(Int(dayDate.timeIntervalSince1970))-\(index)"
                     rows.append(.dateSeparator(id: separatorId, date: dayDate, isFirst: index == 0))
                 }
                 rows.append(.message(id: message.id, messageIndex: index))
@@ -647,7 +598,10 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     )
                 }()
 
-                return MessageRowMeta(showSender: showSender, showTimestamp: showTimestamp)
+                return MessageRowMeta(
+                    showSender: showSender,
+                    showTimestamp: showTimestamp
+                )
             }
         }
 
@@ -707,7 +661,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                         onMute: onMuteUser,
                         onUnmute: onUnmuteUser,
                         onShowReactions: { [weak self] messageId in
-                            self?.presentReactorsSheet(for: messageId)
+                            self?.onShowReactions?(messageId)
                         }
                     )
                 }
