@@ -51,6 +51,12 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             }
         }
 
+        private final class MessageTableViewCell: UITableViewCell {
+            var representedMessageId: String?
+            var representedDisplayText: String = ""
+            var representedMessage: ChatMessageModel?
+        }
+
         private let tableView = UITableView(frame: .zero, style: .plain)
         private let loadingIndicator = UIActivityIndicatorView(style: .medium)
         private let messageCellReuseId = "chat-message-cell"
@@ -60,6 +66,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
         private var hasInitialScroll = false
         private var isUserScrolling = false
+        private var isContextMenuActive = false
         private var pendingMessages: [ChatMessageModel]?
         private var messages: [ChatMessageModel] = []
         private var displayRows: [DisplayRow] = []
@@ -95,7 +102,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             tableView.rowHeight = UITableView.automaticDimension
             tableView.estimatedRowHeight = 56
             tableView.keyboardDismissMode = .interactive
-            tableView.register(UITableViewCell.self, forCellReuseIdentifier: messageCellReuseId)
+            tableView.register(MessageTableViewCell.self, forCellReuseIdentifier: messageCellReuseId)
             tableView.register(UITableViewCell.self, forCellReuseIdentifier: dateSeparatorCellReuseId)
 
             view.addSubview(tableView)
@@ -156,7 +163,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             onScrollActivityChanged = config.onScrollActivityChanged
             updateLoadingIndicator()
 
-            if isUserScrolling {
+            if isUserScrolling || isContextMenuActive {
                 pendingMessages = config.messages
                 return
             }
@@ -500,6 +507,31 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             applyMessages(pendingMessages)
         }
 
+        private func applyPendingMessagesPreservingAnchorIfNeeded() {
+            guard let pendingMessages else { return }
+            self.pendingMessages = nil
+
+            let oldIds = messages.map(\.id)
+            let newIds = pendingMessages.map(\.id)
+            let insertedAtTop =
+                !oldIds.isEmpty &&
+                    !newIds.isEmpty &&
+                    oldIds.first != newIds.first
+
+            guard insertedAtTop else {
+                applyMessages(pendingMessages)
+                return
+            }
+
+            let anchor = captureAnchorSnapshot()
+            messages = pendingMessages
+            displayRows = buildDisplayRows(from: pendingMessages)
+            messageRowMeta = buildMessageRowMeta(from: pendingMessages)
+            reloadDataWithoutAnimation()
+            restoreAnchorSnapshot(anchor)
+            maybeTriggerReachedTopIfNeeded()
+        }
+
         private func maybeTriggerReachedTopIfNeeded() {
             guard !isLoadingOlderMessages, !messages.isEmpty else { return }
             let minOffset = -tableView.adjustedContentInset.top
@@ -621,20 +653,11 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
         func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
             let row = displayRows[indexPath.row]
-            let reuseIdentifier: String = {
-                switch row {
-                case .dateSeparator:
-                    return dateSeparatorCellReuseId
-                case .message:
-                    return messageCellReuseId
-                }
-            }()
-            let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath)
-
-            cell.selectionStyle = .none
-            cell.backgroundColor = .clear
             switch row {
             case let .dateSeparator(_, date, isFirst):
+                let cell = tableView.dequeueReusableCell(withIdentifier: dateSeparatorCellReuseId, for: indexPath)
+                cell.selectionStyle = .none
+                cell.backgroundColor = .clear
                 cell.contentConfiguration = UIHostingConfiguration {
                     DateSeparatorBadge(
                         date: date,
@@ -642,11 +665,27 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     )
                 }
                 .margins(.all, 0)
+                return cell
 
             case let .message(_, messageIndex):
+                guard let cell = tableView.dequeueReusableCell(
+                    withIdentifier: messageCellReuseId,
+                    for: indexPath
+                ) as? MessageTableViewCell else {
+                    assertionFailure("Expected MessageTableViewCell for message row")
+                    return UITableViewCell()
+                }
+                cell.selectionStyle = .none
+                cell.backgroundColor = .clear
                 let message = messages[messageIndex]
                 let isSenderMuted = message.sender.map { mutedUsers.contains($0.pubkey) } ?? false
                 let reactions = reactionsByMessageId[message.id] ?? []
+                let displayText = message.newRenderPlainText ?? stripParagraphTags(message.message)
+
+                cell.representedMessageId = message.id
+                cell.representedDisplayText = displayText
+                cell.representedMessage = message
+
                 cell.contentConfiguration = UIHostingConfiguration {
                     NewChatMessageTextRow(
                         message: message,
@@ -666,8 +705,190 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     )
                 }
                 .margins(.all, 0)
+                return cell
             }
-            return cell
+        }
+
+        // MARK: UITableViewDelegate (Context Menu)
+
+        func tableView(
+            _ tableView: UITableView,
+            contextMenuConfigurationForRowAt indexPath: IndexPath,
+            point: CGPoint
+        ) -> UIContextMenuConfiguration? {
+            guard indexPath.row < displayRows.count else { return nil }
+            guard case let .message(_, messageIndex) = displayRows[indexPath.row],
+                  messageIndex < messages.count
+            else { return nil }
+
+            let fallbackMessage = messages[messageIndex]
+            let messageCell = tableView.cellForRow(at: indexPath) as? MessageTableViewCell
+            let snapshotMessage = messageCell?.representedMessage ?? fallbackMessage
+            let messageId = messageCell?.representedMessageId ?? snapshotMessage.id
+            let displayText =
+                messageCell?.representedDisplayText ??
+                    (snapshotMessage.newRenderPlainText ?? stripParagraphTags(snapshotMessage.message))
+
+            // Freeze updates as soon as context menu interaction starts.
+            isContextMenuActive = true
+
+            return UIContextMenuConfiguration(identifier: messageId as NSString, previewProvider: nil) { [weak self] _ in
+                guard let self else { return nil }
+                return self.makeContextMenu(
+                    for: messageId,
+                    snapshotMessage: snapshotMessage,
+                    displayText: displayText
+                )
+            }
+        }
+
+        func tableView(
+            _ tableView: UITableView,
+            previewForHighlightingContextMenuWithConfiguration configuration: UIContextMenuConfiguration
+        ) -> UITargetedPreview? {
+            contextMenuTargetedPreview(in: tableView, configuration: configuration)
+        }
+
+        func tableView(
+            _ tableView: UITableView,
+            previewForDismissingContextMenuWithConfiguration configuration: UIContextMenuConfiguration
+        ) -> UITargetedPreview? {
+            contextMenuTargetedPreview(in: tableView, configuration: configuration)
+        }
+
+        private func contextMenuTargetedPreview(
+            in tableView: UITableView,
+            configuration: UIContextMenuConfiguration
+        ) -> UITargetedPreview? {
+            guard let messageId = configuration.identifier as? String else { return nil }
+            let cell = tableView.visibleCells
+                .compactMap { $0 as? MessageTableViewCell }
+                .first { $0.representedMessageId == messageId }
+
+            guard let cell else { return nil }
+            let previewParameters = UIPreviewParameters()
+            previewParameters.backgroundColor = .clear
+            return UITargetedPreview(view: cell, parameters: previewParameters)
+        }
+
+        private func makeContextMenu(
+            for messageId: String,
+            snapshotMessage: ChatMessageModel,
+            displayText: String
+        ) -> UIMenu {
+            let message = messageById(messageId) ?? snapshotMessage
+            let isSenderMuted = message.sender.map { mutedUsers.contains($0.pubkey) } ?? false
+            var actions: [UIAction] = []
+
+            actions.append(
+                UIAction(title: "Reply", image: UIImage(systemName: "arrowshape.turn.up.left")) { [weak self] _ in
+                    guard let self else { return }
+                    let message = self.messageById(messageId) ?? snapshotMessage
+                    self.onReplyMessage?(message)
+                }
+            )
+
+            if message.isIncoming,
+               let sender = message.sender,
+               sender.dmToken != 0
+            {
+                actions.append(
+                    UIAction(title: "Send DM", image: UIImage(systemName: "message")) { [weak self] _ in
+                        guard let self else { return }
+                        let message = self.messageById(messageId) ?? snapshotMessage
+                        guard message.isIncoming,
+                              let sender = message.sender,
+                              sender.dmToken != 0
+                        else { return }
+                        self.onDMMessage?(sender.codename, sender.dmToken, sender.pubkey, sender.color)
+                    }
+                )
+            }
+
+            actions.append(
+                UIAction(title: "Copy", image: UIImage(systemName: "doc.on.doc")) { _ in
+                    UIPasteboard.general.string = displayText
+                }
+            )
+
+            actions.append(
+                UIAction(title: "Select Text", image: UIImage(systemName: "crop")) { [weak self] _ in
+                    self?.presentTextSelectionSheet(text: displayText)
+                }
+            )
+
+            if (isAdmin || !message.isIncoming), onDeleteMessage != nil {
+                actions.append(
+                    UIAction(title: "Delete", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                        guard let self else { return }
+                        let message = self.messageById(messageId) ?? snapshotMessage
+                        self.onDeleteMessage?(message)
+                    }
+                )
+            }
+
+            if isAdmin, message.isIncoming, let sender = message.sender {
+                if isSenderMuted {
+                    actions.append(
+                        UIAction(title: "Unmute User", image: UIImage(systemName: "speaker.wave.2")) { [weak self] _ in
+                            self?.onUnmuteUser?(sender.pubkey)
+                        }
+                    )
+                } else {
+                    actions.append(
+                        UIAction(title: "Mute User", image: UIImage(systemName: "speaker.slash"), attributes: .destructive) { [weak self] _ in
+                            self?.onMuteUser?(sender.pubkey)
+                        }
+                    )
+                }
+            }
+
+            return UIMenu(children: actions)
+        }
+
+        private func messageById(_ messageId: String) -> ChatMessageModel? {
+            messages.first { $0.id == messageId }
+        }
+
+        private func presentTextSelectionSheet(text: String) {
+            let host = UIHostingController(rootView: TextSelectionView(text: text))
+            if let sheet = host.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+            }
+            topMostPresenter().present(host, animated: true)
+        }
+
+        private func topMostPresenter() -> UIViewController {
+            var presenter: UIViewController = self
+            while let presented = presenter.presentedViewController {
+                presenter = presented
+            }
+            return presenter
+        }
+
+        func tableView(
+            _ tableView: UITableView,
+            willDisplayContextMenu configuration: UIContextMenuConfiguration,
+            animator: UIContextMenuInteractionAnimating?
+        ) {
+            isContextMenuActive = true
+        }
+
+        func tableView(
+            _ tableView: UITableView,
+            willEndContextMenuInteraction configuration: UIContextMenuConfiguration,
+            animator: UIContextMenuInteractionAnimating?
+        ) {
+            let finish = { [weak self] in
+                guard let self else { return }
+                self.isContextMenuActive = false
+                self.applyPendingMessagesPreservingAnchorIfNeeded()
+            }
+            if let animator {
+                animator.addCompletion(finish)
+            } else {
+                finish()
+            }
         }
 
         // MARK: UIScrollViewDelegate
