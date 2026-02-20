@@ -109,7 +109,7 @@ struct MessageForm<T: XXDKP>: View {
                         sendMessage()
                     }
                     .padding(.vertical, 8)
-                    .padding(.horizontal, 18)
+                    .padding(.horizontal, 12)
                     .background(.formBG.opacity(0.1))
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 40))

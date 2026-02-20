@@ -6,6 +6,7 @@ struct NewChatMessageTextRow: View {
     let reactions: [MessageReactionModel]
     let showSender: Bool
     let showTimestamp: Bool
+    var isFirstInGroup: Bool = true
     var repliedToMessage: String? = nil
     var isAdmin: Bool = false
     var isSenderMuted: Bool = false
@@ -52,7 +53,8 @@ struct NewChatMessageTextRow: View {
             senderColorHex: senderColorHex,
             showTimestamp: showTimestamp,
             timestampText: timestampText,
-            isHighlighted: isHighlighted
+            isHighlighted: isHighlighted,
+            isFirstInGroup: isFirstInGroup
         )
         .contentShape(Rectangle())
         .swipeToReply {
@@ -151,12 +153,13 @@ private struct NewChatMessageBubbleText: View {
     let showTimestamp: Bool
     let timestampText: String
     let isHighlighted: Bool
+    let isFirstInGroup: Bool
     @Environment(\.colorScheme) private var colorScheme
 
     private var bubbleShape: UnevenRoundedRectangle {
         if isIncoming {
             return UnevenRoundedRectangle(
-                topLeadingRadius: 16,
+                topLeadingRadius: isFirstInGroup ? 16 : 4,
                 bottomLeadingRadius: 4,
                 bottomTrailingRadius: 16,
                 topTrailingRadius: 16
@@ -166,7 +169,7 @@ private struct NewChatMessageBubbleText: View {
                 topLeadingRadius: 16,
                 bottomLeadingRadius: 16,
                 bottomTrailingRadius: 4,
-                topTrailingRadius: 16
+                topTrailingRadius: isFirstInGroup ? 16 : 4
             )
         }
     }

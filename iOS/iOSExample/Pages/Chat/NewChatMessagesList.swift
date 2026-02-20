@@ -37,6 +37,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private struct MessageRowMeta: Equatable {
             let showSender: Bool
             let showTimestamp: Bool
+            let isFirstInGroup: Bool
         }
 
         private enum DisplayRow {
@@ -634,6 +635,14 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             let count = messages.count
 
             return messages.enumerated().map { index, message in
+                let isFirstInGroup: Bool = {
+                    guard index > 0 else { return true }
+                    let previous = messages[index - 1]
+                    if !calendar.isDate(message.timestamp, inSameDayAs: previous.timestamp) { return true }
+                    if message.isIncoming != previous.isIncoming { return true }
+                    return message.sender?.id != previous.sender?.id
+                }()
+
                 let showSender: Bool = {
                     guard message.isIncoming, let senderId = message.sender?.id else {
                         return false
@@ -668,7 +677,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
                 return MessageRowMeta(
                     showSender: showSender,
-                    showTimestamp: showTimestamp
+                    showTimestamp: showTimestamp,
+                    isFirstInGroup: isFirstInGroup
                 )
             }
         }
@@ -726,12 +736,15 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 cell.representedDisplayText = displayText
                 cell.representedMessage = message
 
+                let isFirstInGroup = messageIndex < messageRowMeta.count ? messageRowMeta[messageIndex].isFirstInGroup : true
+
                 cell.contentConfiguration = UIHostingConfiguration {
                     NewChatMessageTextRow(
                         message: message,
                         reactions: reactions,
                         showSender: shouldShowSender(for: messageIndex),
                         showTimestamp: shouldShowTimestamp(for: messageIndex),
+                        isFirstInGroup: isFirstInGroup,
                         repliedToMessage: repliedToMessage,
                         isAdmin: isAdmin,
                         isSenderMuted: isSenderMuted,
