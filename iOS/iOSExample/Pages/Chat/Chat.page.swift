@@ -124,6 +124,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var isRefreshingInRangeMessages: Bool = false
     @State private var isMessagesListScrolling: Bool = false
     @State private var hasDeferredChatRefresh: Bool = false
+    @State private var targetScrollMessageId: String? = nil
     @State private var hasMoreOlderMessages: Bool = true
     @State private var cachedDisplayMessages: [MessageDisplayInfo] = []
     @State private var messageDateLookup: [String: Date] = [:]
@@ -608,6 +609,19 @@ struct ChatView<T: XXDKP>: View {
         refreshVisibleReactions()
     }
 
+    @MainActor
+    private func scrollToMessage(_ messageId: String) {
+        if pagedMessageIds.contains(messageId) {
+            targetScrollMessageId = messageId
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                targetScrollMessageId = nil
+            }
+        } else {
+            // TODO: Fetch older messages if necessary to reach the target message
+            showToast("Message is not loaded")
+        }
+    }
+
     var body: some View {
         ZStack {
             if isLoadingInitialMessages && messages.isEmpty {
@@ -621,6 +635,7 @@ struct ChatView<T: XXDKP>: View {
                     isLoadingOlderMessages: isLoadingOlderMessages,
                     isAdmin: isAdmin,
                     mutedUsers: Set(mutedUsers),
+                    targetScrollMessageId: targetScrollMessageId,
                     onReachedTop: {
                         loadOlderMessagesIfNeeded()
                     },
@@ -644,6 +659,9 @@ struct ChatView<T: XXDKP>: View {
                     },
                     onShowReactions: { messageId in
                         selectedReactionsMessageId = messageId
+                    },
+                    onScrollToReply: { messageId in
+                        scrollToMessage(messageId)
                     },
                     onScrollActivityChanged: { isScrolling in
                         if isMessagesListScrolling == isScrolling {

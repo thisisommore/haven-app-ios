@@ -38,6 +38,7 @@ struct MessageReplyPreview: View {
                 }
             }
         }
+        .contentShape(Rectangle())
         .onTapGesture {
             onTap?()
         }

@@ -6,6 +6,7 @@ struct NewChatMessageTextRow: View {
     let reactions: [MessageReactionModel]
     let showSender: Bool
     let showTimestamp: Bool
+    var repliedToMessage: String? = nil
     var isAdmin: Bool = false
     var isSenderMuted: Bool = false
     var onReply: ((ChatMessageModel) -> Void)? = nil
@@ -14,6 +15,8 @@ struct NewChatMessageTextRow: View {
     var onMute: ((Data) -> Void)? = nil
     var onUnmute: ((Data) -> Void)? = nil
     var onShowReactions: ((String) -> Void)? = nil
+    var onScrollToReply: ((String) -> Void)? = nil
+    var isHighlighted: Bool = false
 
     private var senderDisplayName: String {
         guard let sender = message.sender else { return "" }
@@ -48,7 +51,8 @@ struct NewChatMessageTextRow: View {
             senderDisplayName: senderDisplayName,
             senderColorHex: senderColorHex,
             showTimestamp: showTimestamp,
-            timestampText: timestampText
+            timestampText: timestampText,
+            isHighlighted: isHighlighted
         )
         .contentShape(Rectangle())
         .swipeToReply {
@@ -60,6 +64,24 @@ struct NewChatMessageTextRow: View {
         HStack(spacing: 0) {
             if message.isIncoming {
                 VStack(alignment: .leading, spacing: 2) {
+                    if let repliedToMessage {
+                        MessageReplyPreview(
+                            text: repliedToMessage,
+                            isIncoming: true,
+                            onTap: {
+                                if let replyTo = message.replyTo {
+                                    onScrollToReply?(replyTo)
+                                }
+                            }
+                        )
+                        .padding(.leading, 8)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if let replyTo = message.replyTo {
+                                onScrollToReply?(replyTo)
+                            }
+                        }
+                    }
                     messageBubble(
                         isIncoming: true,
                         showSender: showSender,
@@ -79,6 +101,24 @@ struct NewChatMessageTextRow: View {
             } else {
                 Spacer(minLength: 44)
                 VStack(alignment: .trailing, spacing: 2) {
+                    if let repliedToMessage {
+                        MessageReplyPreview(
+                            text: repliedToMessage,
+                            isIncoming: false,
+                            onTap: {
+                                if let replyTo = message.replyTo {
+                                    onScrollToReply?(replyTo)
+                                }
+                            }
+                        )
+                        .padding(.trailing, 8)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if let replyTo = message.replyTo {
+                                onScrollToReply?(replyTo)
+                            }
+                        }
+                    }
                     messageBubble(
                         isIncoming: false,
                         showSender: false,
@@ -110,6 +150,7 @@ private struct NewChatMessageBubbleText: View {
     let senderColorHex: Int?
     let showTimestamp: Bool
     let timestampText: String
+    let isHighlighted: Bool
     @Environment(\.colorScheme) private var colorScheme
 
     private var bubbleShape: UnevenRoundedRectangle {
@@ -147,7 +188,7 @@ private struct NewChatMessageBubbleText: View {
         }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(isIncoming ? Color.messageBubble : Color.haven)
+            .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
             .clipShape(bubbleShape)
             .overlay(alignment: .bottomTrailing) {
                 if showTimestamp {

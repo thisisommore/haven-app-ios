@@ -8,6 +8,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
     let isLoadingOlderMessages: Bool
     let isAdmin: Bool
     let mutedUsers: Set<Data>
+    var targetScrollMessageId: String? = nil
     var onReachedTop: (() -> Void)?
     var onTopVisibleMessageChanged: ((String?) -> Void)?
     var onReplyMessage: ((ChatMessageModel) -> Void)?
@@ -16,6 +17,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
     var onMuteUser: ((Data) -> Void)?
     var onUnmuteUser: ((Data) -> Void)?
     var onShowReactions: ((String) -> Void)?
+    var onScrollToReply: ((String) -> Void)?
     var onScrollActivityChanged: ((Bool) -> Void)?
 
     func makeUIViewController(context: Context) -> Controller {
@@ -88,7 +90,9 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var onMuteUser: ((Data) -> Void)?
         private var onUnmuteUser: ((Data) -> Void)?
         private var onShowReactions: ((String) -> Void)?
+        private var onScrollToReply: ((String) -> Void)?
         private var onScrollActivityChanged: ((Bool) -> Void)?
+        private var targetScrollMessageId: String? = nil
 
         override func viewDidLoad() {
             super.viewDidLoad()
@@ -145,7 +149,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             let configChanged =
                 isAdmin != config.isAdmin ||
                     mutedUsers != config.mutedUsers ||
-                    reactionsByMessageHash != newReactionsHash
+                    reactionsByMessageHash != newReactionsHash ||
+                    targetScrollMessageId != config.targetScrollMessageId
 
             reactionsByMessageId = config.reactionsByMessageId
             reactionsByMessageHash = newReactionsHash
@@ -160,8 +165,16 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             onMuteUser = config.onMuteUser
             onUnmuteUser = config.onUnmuteUser
             onShowReactions = config.onShowReactions
+            onScrollToReply = config.onScrollToReply
             onScrollActivityChanged = config.onScrollActivityChanged
+            self.targetScrollMessageId = config.targetScrollMessageId
             updateLoadingIndicator()
+
+            if let targetId = config.targetScrollMessageId {
+                DispatchQueue.main.async { [weak self] in
+                    self?.scrollToMessage(id: targetId)
+                }
+            }
 
             if isUserScrolling || isContextMenuActive {
                 pendingMessages = config.messages
@@ -431,6 +444,29 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             return false
         }
 
+        private func scrollToMessage(id: String) {
+            guard let index = displayRows.firstIndex(where: {
+                if case let .message(msgId, _) = $0 {
+                    return msgId == id
+                }
+                return false
+            }) else { return }
+
+            tableView.scrollToRow(
+                at: IndexPath(row: index, section: 0),
+                at: .middle,
+                animated: true
+            )
+            
+            // Re-configure cell to ensure highlight is applied if it's already visible
+            if let cell = tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? MessageTableViewCell {
+                cell.backgroundColor = UIColor(named: "haven")?.withAlphaComponent(0.2) ?? .clear
+                UIView.animate(withDuration: 1.0, delay: 0.5, options: .curveEaseOut) {
+                    cell.backgroundColor = .clear
+                }
+            }
+        }
+
         private func scrollToBottom() {
             if !displayRows.isEmpty {
                 let lastRow = displayRows.count - 1
@@ -682,6 +718,10 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 let reactions = reactionsByMessageId[message.id] ?? []
                 let displayText = message.newRenderPlainText ?? stripParagraphTags(message.message)
 
+                let repliedToMessage = message.replyTo.flatMap { replyId in
+                    self.messageById(replyId)?.message
+                }
+
                 cell.representedMessageId = message.id
                 cell.representedDisplayText = displayText
                 cell.representedMessage = message
@@ -692,6 +732,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                         reactions: reactions,
                         showSender: shouldShowSender(for: messageIndex),
                         showTimestamp: shouldShowTimestamp(for: messageIndex),
+                        repliedToMessage: repliedToMessage,
                         isAdmin: isAdmin,
                         isSenderMuted: isSenderMuted,
                         onReply: onReplyMessage,
@@ -701,10 +742,22 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                         onUnmute: onUnmuteUser,
                         onShowReactions: { [weak self] messageId in
                             self?.onShowReactions?(messageId)
-                        }
+                        },
+                        onScrollToReply: { [weak self] messageId in
+                            self?.onScrollToReply?(messageId)
+                        },
+                        isHighlighted: self.targetScrollMessageId == message.id
                     )
                 }
                 .margins(.all, 0)
+                if let targetId = self.targetScrollMessageId, message.id == targetId {
+                    cell.backgroundColor = UIColor(named: "haven")?.withAlphaComponent(0.2) ?? .clear
+                    UIView.animate(withDuration: 1.0, delay: 0.5, options: .curveEaseOut) {
+                        cell.backgroundColor = .clear
+                    }
+                } else {
+                    cell.backgroundColor = .clear
+                }
                 return cell
             }
         }
