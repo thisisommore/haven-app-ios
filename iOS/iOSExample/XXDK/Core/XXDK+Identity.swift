@@ -270,8 +270,8 @@ extension XXDK {
             }
         }
         do {
-            let cd = try await joinChannel(XX_GENERAL_CHAT)
-            let channelId = cd.channelId ?? "xxGeneralChat"
+            let cd = try await joinChannelFromURL(XX_IOS_CHAT)
+            let channelId = cd.channelId ?? "xxIOS"
             try await MainActor.run {
                 guard let actor = self.modelActor else {
                     AppLogger.identity.error("modelActor not available")
@@ -288,7 +288,7 @@ extension XXDK {
                 }
             }
         } catch {
-            AppLogger.home.error("Failed to ensure initial channel xxGeneralChat: \(error.localizedDescription, privacy: .public)")
+            AppLogger.home.error("Failed to ensure initial channel xxIOS: \(error.localizedDescription, privacy: .public)")
         }
 
         await MainActor.run {
