@@ -671,6 +671,12 @@ struct ChatView<T: XXDKP>: View {
                         guard !isScrolling, hasDeferredChatRefresh else { return }
                         hasDeferredChatRefresh = false
                         refreshChatMessagesNow()
+                    },
+                    renderChannelPreview: { link, isIncoming, timestamp in
+                        AnyView(ChannelInviteLinkPreview<T>(link: link, isIncoming: isIncoming, timestamp: timestamp).environmentObject(xxdk))
+                    },
+                    renderDMPreview: { link, isIncoming, timestamp in
+                        AnyView(DMInviteLinkPreview<T>(link: link, isIncoming: isIncoming, timestamp: timestamp).environmentObject(xxdk))
                     }
                 )
             }

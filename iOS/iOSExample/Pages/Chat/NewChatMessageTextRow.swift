@@ -18,6 +18,8 @@ struct NewChatMessageTextRow: View {
     var onShowReactions: ((String) -> Void)? = nil
     var onScrollToReply: ((String) -> Void)? = nil
     var isHighlighted: Bool = false
+    var renderChannelPreview: ((ParsedChannelLink, Bool, String) -> AnyView)? = nil
+    var renderDMPreview: ((ParsedDMLink, Bool, String) -> AnyView)? = nil
 
     private var senderDisplayName: String {
         guard let sender = message.sender else { return "" }
@@ -54,7 +56,9 @@ struct NewChatMessageTextRow: View {
             showTimestamp: showTimestamp,
             timestampText: timestampText,
             isHighlighted: isHighlighted,
-            isFirstInGroup: isFirstInGroup
+            isFirstInGroup: isFirstInGroup,
+            renderChannelPreview: renderChannelPreview,
+            renderDMPreview: renderDMPreview
         )
         .contentShape(Rectangle())
         .swipeToReply {
@@ -154,7 +158,12 @@ private struct NewChatMessageBubbleText: View {
     let timestampText: String
     let isHighlighted: Bool
     let isFirstInGroup: Bool
+    let renderChannelPreview: ((ParsedChannelLink, Bool, String) -> AnyView)?
+    let renderDMPreview: ((ParsedDMLink, Bool, String) -> AnyView)?
     @Environment(\.colorScheme) private var colorScheme
+
+    @State private var parsedChannelLink: ParsedChannelLink?
+    @State private var parsedDMLink: ParsedDMLink?
 
     private var bubbleShape: UnevenRoundedRectangle {
         if isIncoming {
@@ -175,33 +184,113 @@ private struct NewChatMessageBubbleText: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            if showSender, let senderColorHex {
-                Text(senderDisplayName)
-                    .font(.caption.bold())
-                    .foregroundStyle(
-                        Color(hexNumber: senderColorHex).adaptive(for: colorScheme)
-                    )
-            }
-            NewChatRenderableMessageText(
-                message: message,
-                isIncoming: isIncoming,
-                timestampPlaceholder: showTimestamp ? timestampText : nil
-            )
-        }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
-            .clipShape(bubbleShape)
-            .overlay(alignment: .bottomTrailing) {
-                if showTimestamp {
-                    Text(timestampText)
-                        .font(.system(size: 10))
-                        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 8)
+        Group {
+            if let link = parsedChannelLink, let renderer = renderChannelPreview {
+                VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if showSender, let senderColorHex {
+                            Text(senderDisplayName)
+                                .font(.caption.bold())
+                                .foregroundStyle(
+                                    Color(hexNumber: senderColorHex).adaptive(for: colorScheme)
+                                )
+                        }
+                        NewChatRenderableMessageText(
+                            message: message,
+                            isIncoming: isIncoming,
+                            timestampPlaceholder: nil
+                        )
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
+                    .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
+                    
+                    renderer(link, isIncoming, showTimestamp ? timestampText : "")
                 }
+                .clipShape(bubbleShape)
+                .overlay(
+                    bubbleShape.stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
+                )
+            } else if let link = parsedDMLink, let renderer = renderDMPreview {
+                VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if showSender, let senderColorHex {
+                            Text(senderDisplayName)
+                                .font(.caption.bold())
+                                .foregroundStyle(
+                                    Color(hexNumber: senderColorHex).adaptive(for: colorScheme)
+                                )
+                        }
+                        NewChatRenderableMessageText(
+                            message: message,
+                            isIncoming: isIncoming,
+                            timestampPlaceholder: nil
+                        )
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
+                    .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
+                    
+                    renderer(link, isIncoming, showTimestamp ? timestampText : "")
+                }
+                .clipShape(bubbleShape)
+                .overlay(
+                    bubbleShape.stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
+                )
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    if showSender, let senderColorHex {
+                        Text(senderDisplayName)
+                            .font(.caption.bold())
+                            .foregroundStyle(
+                                Color(hexNumber: senderColorHex).adaptive(for: colorScheme)
+                            )
+                    }
+                    NewChatRenderableMessageText(
+                        message: message,
+                        isIncoming: isIncoming,
+                        timestampPlaceholder: showTimestamp ? timestampText : nil
+                    )
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
+                .clipShape(bubbleShape)
+                .overlay(alignment: .bottomTrailing) {
+                    if showTimestamp {
+                        Text(timestampText)
+                            .font(.system(size: 10))
+                            .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 8)
+                    }
+                }
+                .overlay(
+                    bubbleShape.stroke(Color.haven, lineWidth: isHighlighted ? 2 : 0)
+                )
             }
+        }
+        .onAppear {
+            parseLinks(from: message.message)
+        }
+        .onChange(of: message.message) { _, newValue in
+            parseLinks(from: newValue)
+        }
+    }
+
+    private func parseLinks(from text: String) {
+        if let channelLink = ParsedChannelLink.parse(from: text) {
+            self.parsedChannelLink = channelLink
+            self.parsedDMLink = nil
+        } else if let dmLink = ParsedDMLink.parse(from: text) {
+            self.parsedChannelLink = nil
+            self.parsedDMLink = dmLink
+        } else {
+            self.parsedChannelLink = nil
+            self.parsedDMLink = nil
+        }
     }
 }
 

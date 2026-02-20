@@ -19,6 +19,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
     var onShowReactions: ((String) -> Void)?
     var onScrollToReply: ((String) -> Void)?
     var onScrollActivityChanged: ((Bool) -> Void)?
+    var renderChannelPreview: ((ParsedChannelLink, Bool, String) -> AnyView)?
+    var renderDMPreview: ((ParsedDMLink, Bool, String) -> AnyView)?
 
     func makeUIViewController(context: Context) -> Controller {
         Controller()
@@ -94,6 +96,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var onScrollToReply: ((String) -> Void)?
         private var onScrollActivityChanged: ((Bool) -> Void)?
         private var targetScrollMessageId: String? = nil
+        var renderChannelPreview: ((ParsedChannelLink, Bool, String) -> AnyView)?
+        var renderDMPreview: ((ParsedDMLink, Bool, String) -> AnyView)?
 
         override func viewDidLoad() {
             super.viewDidLoad()
@@ -169,6 +173,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             onScrollToReply = config.onScrollToReply
             onScrollActivityChanged = config.onScrollActivityChanged
             self.targetScrollMessageId = config.targetScrollMessageId
+            renderChannelPreview = config.renderChannelPreview
+            renderDMPreview = config.renderDMPreview
             updateLoadingIndicator()
 
             if let targetId = config.targetScrollMessageId {
@@ -759,7 +765,9 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                         onScrollToReply: { [weak self] messageId in
                             self?.onScrollToReply?(messageId)
                         },
-                        isHighlighted: self.targetScrollMessageId == message.id
+                        isHighlighted: self.targetScrollMessageId == message.id,
+                        renderChannelPreview: self.renderChannelPreview,
+                        renderDMPreview: self.renderDMPreview
                     )
                 }
                 .margins(.all, 0)
