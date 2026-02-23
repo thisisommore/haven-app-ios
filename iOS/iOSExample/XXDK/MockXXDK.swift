@@ -18,7 +18,7 @@ public class XXDKMock: XXDKP {
 
     @Published var status: String = "Initiating"
     @Published var statusPercentage: Double = 0
-    public func setModelContainer(mActor: SwiftDataActor, sm _: SecretManager) {
+    public func setModelContainer(mActor: SwiftDataActor, sm _: AppStorage) {
         // Retain container and inject into receivers/callbacks
 
         dmReceiver.modelActor = mActor

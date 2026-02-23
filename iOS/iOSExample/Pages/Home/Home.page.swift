@@ -36,7 +36,7 @@ struct HomeView<T: XXDKP>: View {
     @EnvironmentObject var xxdk: T
     @State private var didStartLoad = false
     @EnvironmentObject private var swiftDataActor: SwiftDataActor
-    @EnvironmentObject private var secretManager: AppStorage
+    @EnvironmentObject private var appStorage: AppStorage
     @EnvironmentObject private var navigation: AppNavigationPath
     @Environment(\.isSplitView) private var isSplitView
     @EnvironmentObject private var selectedChat: SelectedChat
@@ -193,7 +193,7 @@ struct HomeView<T: XXDKP>: View {
                         try! swiftDataActor.deleteAll(ChatModel.self)
                         try! swiftDataActor.save()
 
-                        secretManager.clearAll()
+                        appStorage.clearAll()
                         await MainActor.run {
                             navigation.path = NavigationPath()
                             navigation.path.append(Destination.password)

@@ -12,7 +12,7 @@ import SwiftUI
 struct Root: View {
     @EnvironmentObject var logOutput: LogViewer
     @EnvironmentObject var xxdk: XXDK
-    @EnvironmentObject var secretManager: AppStorage
+    @EnvironmentObject var appStorage: AppStorage
     @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject var modelDataActor: SwiftDataActor
     @EnvironmentObject var navigation: AppNavigationPath
@@ -22,7 +22,7 @@ struct Root: View {
     var body: some View {
         Group {
             // we use split view when setup is completed
-            if secretManager.isSetupComplete {
+            if appStorage.isSetupComplete {
                 NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
                     NavigationStack(path: $navigation.path) {
                         HomeView<XXDK>()
@@ -61,7 +61,7 @@ struct Root: View {
                             didRunOnboardingReset = true
                             xxdk.setModelContainer(
                                 mActor: modelDataActor,
-                                sm: secretManager
+                                sm: appStorage
                             )
 
                             Task {
@@ -80,7 +80,7 @@ struct Root: View {
                                 )
                                 try! modelDataActor.deleteAll(ChatModel.self)
                                 try! modelDataActor.save()
-                                secretManager.clearAll()
+                                appStorage.clearAll()
                                 navigation.path.append(Destination.password)
                             }
                         }
@@ -88,9 +88,9 @@ struct Root: View {
             }
         }
         .onAppear {
-            xxdk.setModelContainer(mActor: modelDataActor, sm: secretManager)
+            xxdk.setModelContainer(mActor: modelDataActor, sm: appStorage)
         }
-        .onChange(of: secretManager.isSetupComplete) { _, newValue in
+        .onChange(of: appStorage.isSetupComplete) { _, newValue in
             if newValue {
                 navigation.path = NavigationPath()
             }
