@@ -12,14 +12,10 @@ import SwiftData
 import SwiftUI
 
 public class XXDK: XXDKP {
-    // MARK: - Published Properties
-
     @Published var status: String = "..."
     @Published var statusPercentage: Double = 0
     @Published var codename: String?
     @Published var codeset: Int = 0
-
-    // MARK: - Internal Properties (accessible by extensions)
 
     var downloadedNdf: Data?
     var nsLock = NSLock()
@@ -30,7 +26,9 @@ public class XXDK: XXDKP {
     var cmix: Bindings.BindingsCmix?
     var DM: BindingsDMClientWrapper?
     var dmReceiver = DMReceiver()
-    var eventModelBuilder: EventModelBuilder?
+    var eventModelBuilder: EventModelBuilder = .init(
+        model: EventModel()
+    )
     var channelsManager: BindingsChannelsManagerWrapper?
     var channelUICallbacks: ChannelUICallbacks
     var appStorage: AppStorage?
@@ -53,11 +51,11 @@ public class XXDK: XXDKP {
     /// Creates (or recreates) the xxAppState directory and returns its path.
     static func setupStateDirectories() throws -> URL {
         let baseDir = try FileManager.default.url(
-                for: .documentDirectory,
-                in: .userDomainMask,
-                appropriateFor: nil,
-                create: false
-            )
+            for: .documentDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: false
+        )
         do {
             let dir = baseDir.appendingPathComponent("xxAppState")
             if !FileManager.default.fileExists(atPath: dir.path) {
@@ -82,7 +80,7 @@ public class XXDK: XXDKP {
         modelActor = mActor
         dmReceiver.modelActor = mActor
         channelUICallbacks.configure(modelActor: mActor)
-        eventModelBuilder?.configure(modelActor: mActor)
+        eventModelBuilder.configure(modelActor: mActor)
     }
 
     // MARK: - Logout
@@ -113,7 +111,6 @@ public class XXDK: XXDKP {
         cmix = nil
         remoteKV = nil
         storageTagListener = nil
-        eventModelBuilder = nil
 
         // 5. Delete stateDir and recreate it
         guard FileManager.default.fileExists(atPath: stateDir.path) else {

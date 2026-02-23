@@ -11,6 +11,8 @@ extension XXDK {
     func load(privateIdentity _privateIdentity: Data?) async {
         lockTask()
         defer { unlockTask() }
+
+        // Cmix
         guard let cmix else {
             AppLogger.identity.critical("cmix is not available")
             fatalError("cmix is not available")
@@ -18,6 +20,12 @@ extension XXDK {
 
         await progress(.loadingIdentity)
 
+        // Notifications
+
+        // Identity
+
+        // Use provided private identity if available or use from ekv
+        // Identity is usually provided for new user
         let privateIdentity: Data
         if let _privateIdentity {
             do {
@@ -43,17 +51,13 @@ extension XXDK {
             AppLogger.identity.critical("could not derive public identity: \(error.localizedDescription, privacy: .public)")
             fatalError("could not derive public identity: " + error.localizedDescription)
         }
-        if let pubId = publicIdentity {
+        if let publicIdentity {
             do {
-                let identity = try Parser.decodeIdentity(from: pubId)
+                let identity = try Parser.decodeIdentity(from: publicIdentity)
 
                 await MainActor.run {
                     self.codeset = identity.codeset
                     self.codename = identity.codename
-                }
-
-                if let nameData = identity.codename.data(using: .utf8) {
-                    do { try cmix.ekvSet("MyCodename", value: nameData) } catch {}
                 }
             } catch {
                 AppLogger.identity.error("failed to decode public identity json: \(error.localizedDescription, privacy: .public)")
@@ -62,6 +66,9 @@ extension XXDK {
 
         await progress(.creatingIdentity)
 
+        //
+
+        // Notifications
         let notifications: Bindings.BindingsNotifications?
         do {
             notifications = try BindingsStatic.loadNotifications(cmix.getID())
@@ -76,14 +83,16 @@ extension XXDK {
 
         await progress(.syncingNotifications)
 
-        let receiverBuilder = DMReceiverBuilder(receiver: dmReceiver)
+        //
+
+        // Receivers
 
         do {
             guard let dmClient = try BindingsStatic.newDMClient(
                 cmixId: cmix.getID(),
                 notifications: notifications,
                 privateIdentity: privateIdentity,
-                receiverBuilder: receiverBuilder,
+                receiverBuilder: DMReceiverBuilder(receiver: dmReceiver),
                 dmReceiver: dmReceiver
             ) else {
                 AppLogger.identity.critical("could not load dm client: returned nil")
@@ -95,16 +104,14 @@ extension XXDK {
             fatalError("could not load dm client: " + error.localizedDescription)
         }
 
+        //
         await progress(.connectingToNodes)
-
-        remoteKV = cmix.getRemoteKV()
-
         await progress(.settingUpRemoteKV)
 
         do {
             storageTagListener = try RemoteKVKeyChangeListener(
                 key: "channels-storage-tag",
-                remoteKV: remoteKV!,
+                remoteKV: cmix.getRemoteKV()!,
                 version: 0,
                 localEvents: true
             )
@@ -116,13 +123,11 @@ extension XXDK {
         await progress(.waitingForNetwork)
 
         do {
-            let cmixId = cmix.getID()
-
             await progress(.preparingChannelsManager)
 
             let noti: Bindings.BindingsNotifications?
             do {
-                noti = try BindingsStatic.loadNotificationsDummy(cmixId)
+                noti = try BindingsStatic.loadNotificationsDummy(cmix.getID())
             } catch {
                 AppLogger.identity.critical("BindingsLoadNotificationsDummy failed: \(error.localizedDescription, privacy: .public)")
                 fatalError("BindingsLoadNotificationsDummy failed: \(error.localizedDescription)")
@@ -132,22 +137,11 @@ extension XXDK {
                 fatalError("BindingsLoadNotificationsDummy returned nil")
             }
 
-            await MainActor.run {
-                eventModelBuilder = EventModelBuilder(
-                    model: EventModel()
-                )
-            }
-
             if let modelActor {
-                eventModelBuilder?.configure(modelActor: modelActor)
+                eventModelBuilder.configure(modelActor: modelActor)
             }
 
             let extensionJSON = try JSONEncoder().encode([String]())
-
-            guard let eventModelBuilder else {
-                AppLogger.identity.critical("eventModelBuilder not available")
-                fatalError("eventModelBuilder not available")
-            }
 
             if !(appStorage?.isSetupComplete ?? false) {
                 let cm: Bindings.BindingsChannelsManager?
@@ -179,6 +173,7 @@ extension XXDK {
                 )
                 let entryData = try Parser.encodeRemoteKVEntry(entry)
                 try remoteKV!.set("channels-storage-tag", objectJSON: entryData)
+                // the data sometimes is not available in the listener immediately so we set it manually
                 storageTagListener!.data = channelsManager!.getStorageTag().data
             } else {
                 let storageTagString = storageTagListener!.data!.utf8
