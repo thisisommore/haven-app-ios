@@ -33,7 +33,7 @@ public class XXDK: XXDKP {
     var eventModelBuilder: EventModelBuilder?
     var channelsManager: Bindings.BindingsChannelsManager?
     var channelUICallbacks: ChannelUICallbacks
-    var sm: AppStorage?
+    var appStorage: AppStorage?
     var modelActor: SwiftDataActor?
 
     // MARK: - Init
@@ -79,7 +79,7 @@ public class XXDK: XXDKP {
     // MARK: - Model Container Setup
 
     public func setModelContainer(mActor: SwiftDataActor, sm: AppStorage) {
-        self.sm = sm
+        self.appStorage = sm
         modelActor = mActor
         dmReceiver.modelActor = mActor
         channelUICallbacks.configure(modelActor: mActor)

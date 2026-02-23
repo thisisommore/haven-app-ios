@@ -147,7 +147,7 @@ extension XXDK {
 
             let extensionJSON = try JSONEncoder().encode([String]())
 
-            if !(sm?.isSetupComplete ?? false) {
+            if !(appStorage?.isSetupComplete ?? false) {
                 guard
                     let cm = Bindings.BindingsNewChannelsManager(
                         cmix.getID(),
@@ -188,7 +188,7 @@ extension XXDK {
                 channelsManager = cm
             }
 
-            if sm?.isSetupComplete ?? false {
+            if appStorage?.isSetupComplete ?? false {
                 await progress(.readyExistingUser)
                 return
             }
@@ -271,7 +271,7 @@ extension XXDK {
         }
 
         await MainActor.run {
-            sm!.isSetupComplete = true
+            appStorage!.isSetupComplete = true
         }
 
         await progress(.ready)

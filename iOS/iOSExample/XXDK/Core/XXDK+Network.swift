@@ -22,16 +22,16 @@ extension XXDK {
         lockTask()
         defer { unlockTask() }
 
-        guard let sm else {
+        guard let appStorage else {
             fatalError("no secret manager")
         }
-        let secret = try! sm.getPassword().data
+        let secret = try! appStorage.getPassword().data
         let defaultParamsJSON = Bindings.BindingsGetDefaultCMixParams()
         var params = try! Parser.decodeCMixParams(from: defaultParamsJSON ?? Data())
 
         params.Network.EnableImmediateSending = true
         let cmixParamsJSON = try! Parser.encodeCMixParams(params)
-        if !(sm.isSetupComplete) {
+        if !(appStorage.isSetupComplete) {
             guard let downloadedNdf else {
                 fatalError("no ndf downloaded yet")
             }
