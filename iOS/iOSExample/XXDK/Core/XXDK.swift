@@ -88,11 +88,9 @@ public class XXDK: XXDKP {
     // MARK: - Logout
 
     public func logout() async throws {
-        await MainActor.run { self.status = "Stopping network follower..." }
         // 1. Stop network follower
         try! cmix?.stopNetworkFollower()
 
-        await MainActor.run { self.status = "Waiting for processes..." }
         // 2. Wait for all running processes to finish
         var retryCount = 0
         while cmix?.hasRunningProcessies() == true {
@@ -104,7 +102,6 @@ public class XXDK: XXDKP {
             retryCount += 1
         }
 
-        await MainActor.run { self.status = "Cleaning up..." }
         // 3. Remove cmix from Go-side tracker to release references
         if let cmixId = cmix?.getID() {
             try BindingsStatic.deleteCmixInstance(cmixId)
@@ -123,6 +120,7 @@ public class XXDK: XXDKP {
             throw XXDKError.appStateDirNotFound
         }
         try FileManager.default.removeItem(at: stateDir)
+        // this is created in init and therefore should be called here or else app will crash during setup
         stateDir = try XXDK.setupStateDirectories()
 
         await MainActor.run {
