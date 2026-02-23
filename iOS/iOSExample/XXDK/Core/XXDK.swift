@@ -23,7 +23,6 @@ public class XXDK: XXDKP {
 
     var downloadedNdf: Data?
     var nsLock = NSLock()
-    var baseDir: URL
     var stateDir: URL
 
     var storageTagListener: RemoteKVKeyChangeListener?
@@ -47,32 +46,24 @@ public class XXDK: XXDKP {
         Bindings.BindingsSetTimeSource(netTime)
 
         do {
-            baseDir = try FileManager.default.url(
+            let baseDir = try FileManager.default.url(
                 for: .documentDirectory,
                 in: .userDomainMask,
                 appropriateFor: nil,
                 create: false
             )
+            stateDir = XXDK.setupStateDirectories(baseDir: baseDir)
         } catch {
             fatalError("failed to get documents directory: " + error.localizedDescription)
         }
-        stateDir = XXDK.setupStateDirectories(baseDir: baseDir)
     }
 
-    /// Creates (or recreates) the xxAppState/ekv directory structure and returns the ekv path.
+    /// Creates (or recreates) the xxAppState directory and returns its path.
     static func setupStateDirectories(baseDir: URL) -> URL {
         do {
-            var dir = baseDir.appendingPathComponent("xxAppState")
+            let dir = baseDir.appendingPathComponent("xxAppState")
             if !FileManager.default.fileExists(atPath: dir.path) {
                 AppLogger.xxdk.info("Creating state directory: \(dir.path)")
-                try FileManager.default.createDirectory(
-                    at: dir,
-                    withIntermediateDirectories: true
-                )
-            }
-            dir = dir.appendingPathComponent("ekv")
-            if !FileManager.default.fileExists(atPath: dir.path) {
-                AppLogger.xxdk.info("Creating ekv directory: \(dir.path)")
                 try FileManager.default.createDirectory(
                     at: dir,
                     withIntermediateDirectories: true
@@ -133,12 +124,12 @@ public class XXDK: XXDKP {
         e2e = nil
 
         await MainActor.run { self.status = "Deleting data..." }
-        // 5. Delete xxAppState (which contains ekv) and recreate it
-        let appStateDir = baseDir.appendingPathComponent("xxAppState")
-        guard FileManager.default.fileExists(atPath: appStateDir.path) else {
+        // 5. Delete stateDir and recreate it
+        guard FileManager.default.fileExists(atPath: stateDir.path) else {
             throw MyError.appStateDirNotFound
         }
-        try FileManager.default.removeItem(at: appStateDir)
+        try FileManager.default.removeItem(at: stateDir)
+        let baseDir = stateDir.deletingLastPathComponent()
         stateDir = XXDK.setupStateDirectories(baseDir: baseDir)
         downloadedNdf = nil
 
