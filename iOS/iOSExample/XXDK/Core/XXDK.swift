@@ -41,24 +41,23 @@ public class XXDK: XXDKP {
     init() {
         channelUICallbacks = ChannelUICallbacks()
 
-        let netTime = NetTime()
-        Bindings.BindingsSetTimeSource(netTime)
+        Bindings.BindingsSetTimeSource(NetTime())
 
         do {
-            let baseDir = try FileManager.default.url(
-                for: .documentDirectory,
-                in: .userDomainMask,
-                appropriateFor: nil,
-                create: false
-            )
-            stateDir = XXDK.setupStateDirectories(baseDir: baseDir)
+            stateDir = try XXDK.setupStateDirectories()
         } catch {
             fatalError("failed to get documents directory: " + error.localizedDescription)
         }
     }
 
     /// Creates (or recreates) the xxAppState directory and returns its path.
-    static func setupStateDirectories(baseDir: URL) -> URL {
+    static func setupStateDirectories() throws -> URL {
+        let baseDir = try FileManager.default.url(
+                for: .documentDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: false
+            )
         do {
             let dir = baseDir.appendingPathComponent("xxAppState")
             if !FileManager.default.fileExists(atPath: dir.path) {
@@ -119,15 +118,12 @@ public class XXDK: XXDKP {
         storageTagListener = nil
         eventModelBuilder = nil
 
-        await MainActor.run { self.status = "Deleting data..." }
         // 5. Delete stateDir and recreate it
         guard FileManager.default.fileExists(atPath: stateDir.path) else {
             throw XXDKError.appStateDirNotFound
         }
         try FileManager.default.removeItem(at: stateDir)
-        let baseDir = stateDir.deletingLastPathComponent()
-        stateDir = XXDK.setupStateDirectories(baseDir: baseDir)
-        downloadedNdf = nil
+        stateDir = try XXDK.setupStateDirectories()
 
         await MainActor.run {
             self.codename = nil
