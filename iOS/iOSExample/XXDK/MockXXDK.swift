@@ -173,7 +173,7 @@ public class XXDKMock: XXDKP {
     }
 
     var cmix: Bindings.BindingsCmix?
-    var channelsManager: Bindings.BindingsChannelsManager?
+    var channelsManager: BindingsChannelsManagerWrapper?
     var eventModelBuilder: EventModelBuilder?
     var remoteKV: Bindings.BindingsRemoteKV?
     var storageTagListener: RemoteKVKeyChangeListener?
@@ -185,7 +185,7 @@ public class XXDKMock: XXDKP {
     }
 
     var ndf: Data?
-    var DM: Bindings.BindingsDMClient?
+    var DM: BindingsDMClientWrapper?
     var dmReceiver: DMReceiver = .init()
 
     /// Mock implementation of generateIdentities

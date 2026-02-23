@@ -36,36 +36,24 @@ extension XXDK {
                 fatalError("no ndf downloaded yet")
             }
             await progress(.settingUpCmix)
-            var err: NSError?
-            Bindings.BindingsNewCmix(
-                downloadedNdf.utf8,
-                stateDir.path,
-                secret,
-                "",
-                &err
-            )
-            if let err {
-                AppLogger.network.critical("could not create new Cmix: \(err.localizedDescription, privacy: .public)")
-                fatalError(
-                    "could not create new Cmix: " + err.localizedDescription
-                )
+            do {
+                try BindingsStatic.newCmix(ndf: downloadedNdf, stateDir: stateDir.path, secret: secret, backup: "")
+            } catch {
+                AppLogger.network.critical("could not create new Cmix: \(error.localizedDescription, privacy: .public)")
+                fatalError("could not create new Cmix: " + error.localizedDescription)
             }
         }
 
         await progress(.loadingCmix)
-        var err: NSError?
-        let loadedCmix = Bindings.BindingsLoadCmix(
-            stateDir.path,
-            secret,
-            cmixParamsJSON,
-            &err
-        )
+        let loadedCmix: Bindings.BindingsCmix?
+        do {
+            loadedCmix = try BindingsStatic.loadCmix(stateDir: stateDir.path, secret: secret, paramsJSON: cmixParamsJSON)
+        } catch {
+            AppLogger.network.critical("could not load Cmix: \(error.localizedDescription, privacy: .public)")
+            fatalError("could not load Cmix: " + error.localizedDescription)
+        }
         await MainActor.run {
             cmix = loadedCmix
-        }
-        if let err {
-            AppLogger.network.critical("could not load Cmix: \(err.localizedDescription, privacy: .public)")
-            fatalError("could not load Cmix: " + err.localizedDescription)
         }
     }
 
@@ -104,19 +92,15 @@ extension XXDK {
             )
         }
 
-        var err: NSError?
-        let ndf = Bindings.BindingsDownloadAndVerifySignedNdfWithUrl(
-            url,
-            certString,
-            &err
-        )
-        if let err {
-            AppLogger.network.critical("DownloadAndVerifySignedNdfWithUrl failed: \(err.localizedDescription, privacy: .public)")
-            fatalError(
-                "DownloadAndverifySignedNdfWithUrl(\(url), \(certString)) error: "
-                    + err.localizedDescription
-            )
+        do {
+            guard let ndf = try BindingsStatic.downloadAndVerifySignedNdf(url: url, cert: certString) else {
+                AppLogger.network.critical("DownloadAndVerifySignedNdfWithUrl returned nil")
+                fatalError("DownloadAndVerifySignedNdfWithUrl returned nil")
+            }
+            return ndf
+        } catch {
+            AppLogger.network.critical("DownloadAndVerifySignedNdfWithUrl failed: \(error.localizedDescription, privacy: .public)")
+            fatalError("DownloadAndVerifySignedNdfWithUrl failed: " + error.localizedDescription)
         }
-        return ndf!
     }
 }

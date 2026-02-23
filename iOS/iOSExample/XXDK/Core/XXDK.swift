@@ -28,10 +28,10 @@ public class XXDK: XXDKP {
     var storageTagListener: RemoteKVKeyChangeListener?
     var remoteKV: Bindings.BindingsRemoteKV?
     var cmix: Bindings.BindingsCmix?
-    var DM: Bindings.BindingsDMClient?
+    var DM: BindingsDMClientWrapper?
     var dmReceiver = DMReceiver()
     var eventModelBuilder: EventModelBuilder?
-    var channelsManager: Bindings.BindingsChannelsManager?
+    var channelsManager: BindingsChannelsManagerWrapper?
     var channelUICallbacks: ChannelUICallbacks
     var appStorage: AppStorage?
     var modelActor: SwiftDataActor?
@@ -108,9 +108,7 @@ public class XXDK: XXDKP {
         await MainActor.run { self.status = "Cleaning up..." }
         // 3. Remove cmix from Go-side tracker to release references
         if let cmixId = cmix?.getID() {
-            var err: NSError?
-            Bindings.BindingsDeleteCmixInstance(cmixId, &err)
-            if let err { throw err }
+            try BindingsStatic.deleteCmixInstance(cmixId)
         }
 
         // 4. Nil all binding objects
@@ -145,10 +143,7 @@ public class XXDK: XXDKP {
         guard let DM else {
             throw XXDKError.dmClientNotInitialized
         }
-        var err: NSError?
-        let nickname = DM.getNickname(&err)
-        if let err { throw err }
-        return nickname
+        return try DM.getNickname()
     }
 
     public func setDMNickname(_ nickname: String) throws {

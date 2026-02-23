@@ -11,7 +11,6 @@ extension XXDK {
     func load(privateIdentity _privateIdentity: Data?) async {
         lockTask()
         defer { unlockTask() }
-        var err: NSError?
         guard let cmix else {
             AppLogger.identity.critical("cmix is not available")
             fatalError("cmix is not available")
@@ -38,15 +37,11 @@ extension XXDK {
         }
 
         let publicIdentity: Data?
-        publicIdentity = Bindings.BindingsGetPublicChannelIdentityFromPrivate(
-            privateIdentity,
-            &err
-        )
-        if let err {
-            AppLogger.identity.critical("could not derive public identity: \(err.localizedDescription, privacy: .public)")
-            fatalError(
-                "could not derive public identity: " + err.localizedDescription
-            )
+        do {
+            publicIdentity = try BindingsStatic.getPublicChannelIdentityFromPrivate(privateIdentity)
+        } catch {
+            AppLogger.identity.critical("could not derive public identity: \(error.localizedDescription, privacy: .public)")
+            fatalError("could not derive public identity: " + error.localizedDescription)
         }
         if let pubId = publicIdentity {
             do {
@@ -67,33 +62,37 @@ extension XXDK {
 
         await progress(.creatingIdentity)
 
-        let notifications = Bindings.BindingsLoadNotifications(
-            cmix.getID(),
-            &err
-        )
-        if let err {
-            AppLogger.identity.critical("could not load notifications: \(err.localizedDescription, privacy: .public)")
-            fatalError(
-                "could not load notifications: " + err.localizedDescription
-            )
+        let notifications: Bindings.BindingsNotifications?
+        do {
+            notifications = try BindingsStatic.loadNotifications(cmix.getID())
+        } catch {
+            AppLogger.identity.critical("could not load notifications: \(error.localizedDescription, privacy: .public)")
+            fatalError("could not load notifications: " + error.localizedDescription)
+        }
+        guard let notifications else {
+            AppLogger.identity.critical("could not load notifications: returned nil")
+            fatalError("could not load notifications: returned nil")
         }
 
         await progress(.syncingNotifications)
 
         let receiverBuilder = DMReceiverBuilder(receiver: dmReceiver)
 
-        let dmClient = Bindings.BindingsNewDMClient(
-            cmix.getID(),
-            (notifications?.getID())!,
-            privateIdentity,
-            receiverBuilder,
-            dmReceiver,
-            &err
-        )
-        DM = dmClient
-        if let err {
-            AppLogger.identity.critical("could not load dm client: \(err.localizedDescription, privacy: .public)")
-            fatalError("could not load dm client: " + err.localizedDescription)
+        do {
+            guard let dmClient = try BindingsStatic.newDMClient(
+                cmixId: cmix.getID(),
+                notifications: notifications,
+                privateIdentity: privateIdentity,
+                receiverBuilder: receiverBuilder,
+                dmReceiver: dmReceiver
+            ) else {
+                AppLogger.identity.critical("could not load dm client: returned nil")
+                fatalError("could not load dm client: returned nil")
+            }
+            DM = BindingsDMClientWrapper(dmClient)
+        } catch {
+            AppLogger.identity.critical("could not load dm client: \(error.localizedDescription, privacy: .public)")
+            fatalError("could not load dm client: " + error.localizedDescription)
         }
 
         await progress(.connectingToNodes)
@@ -118,16 +117,17 @@ extension XXDK {
 
         do {
             let cmixId = cmix.getID()
-            var err: NSError?
 
             await progress(.preparingChannelsManager)
 
-            guard
-                let noti = Bindings.BindingsLoadNotificationsDummy(
-                    cmixId,
-                    &err
-                )
-            else {
+            let noti: Bindings.BindingsNotifications?
+            do {
+                noti = try BindingsStatic.loadNotificationsDummy(cmixId)
+            } catch {
+                AppLogger.identity.critical("BindingsLoadNotificationsDummy failed: \(error.localizedDescription, privacy: .public)")
+                fatalError("BindingsLoadNotificationsDummy failed: \(error.localizedDescription)")
+            }
+            guard let noti else {
                 AppLogger.identity.critical("BindingsLoadNotificationsDummy returned nil")
                 fatalError("BindingsLoadNotificationsDummy returned nil")
             }
@@ -144,24 +144,33 @@ extension XXDK {
 
             let extensionJSON = try JSONEncoder().encode([String]())
 
+            guard let eventModelBuilder else {
+                AppLogger.identity.critical("eventModelBuilder not available")
+                fatalError("eventModelBuilder not available")
+            }
+
             if !(appStorage?.isSetupComplete ?? false) {
-                guard
-                    let cm = Bindings.BindingsNewChannelsManager(
-                        cmix.getID(),
-                        privateIdentity,
-                        eventModelBuilder,
-                        extensionJSON,
-                        noti.getID(),
-                        channelUICallbacks,
-                        &err
+                let cm: Bindings.BindingsChannelsManager?
+                do {
+                    cm = try BindingsStatic.newChannelsManager(
+                        cmixId: cmix.getID(),
+                        privateIdentity: privateIdentity,
+                        eventModelBuilder: eventModelBuilder,
+                        extensionJSON: extensionJSON,
+                        notiId: noti.getID(),
+                        channelUICallbacks: channelUICallbacks
                     )
-                else {
-                    AppLogger.identity.critical("no cm")
-                    fatalError("no cm")
+                } catch {
+                    AppLogger.identity.critical("BindingsNewChannelsManager failed: \(error.localizedDescription, privacy: .public)")
+                    fatalError("BindingsNewChannelsManager failed: \(error.localizedDescription)")
                 }
-                channelsManager = cm
+                guard let cm else {
+                    AppLogger.identity.critical("BindingsNewChannelsManager returned nil")
+                    fatalError("BindingsNewChannelsManager returned nil")
+                }
+                channelsManager = BindingsChannelsManagerWrapper(cm)
                 let timestamp = ISO8601DateFormatter().string(from: Date())
-                let storageTagDataJson = try Parser.encodeString(cm.getStorageTag())
+                let storageTagDataJson = try Parser.encodeString(channelsManager!.getStorageTag())
                 let storageTagData = storageTagDataJson.base64EncodedString()
                 let entry = RemoteKVEntry(
                     version: 0,
@@ -170,19 +179,28 @@ extension XXDK {
                 )
                 let entryData = try Parser.encodeRemoteKVEntry(entry)
                 try remoteKV!.set("channels-storage-tag", objectJSON: entryData)
-                storageTagListener!.data = cm.getStorageTag().data
+                storageTagListener!.data = channelsManager!.getStorageTag().data
             } else {
                 let storageTagString = storageTagListener!.data!.utf8
-                let cm = Bindings.BindingsLoadChannelsManager(
-                    cmix.getID(),
-                    storageTagString,
-                    eventModelBuilder,
-                    extensionJSON,
-                    noti.getID(),
-                    channelUICallbacks,
-                    &err
-                )
-                channelsManager = cm
+                let cm: Bindings.BindingsChannelsManager?
+                do {
+                    cm = try BindingsStatic.loadChannelsManager(
+                        cmixId: cmix.getID(),
+                        storageTag: storageTagString,
+                        eventModelBuilder: eventModelBuilder,
+                        extensionJSON: extensionJSON,
+                        notiId: noti.getID(),
+                        channelUICallbacks: channelUICallbacks
+                    )
+                } catch {
+                    AppLogger.identity.critical("BindingsLoadChannelsManager failed: \(error.localizedDescription, privacy: .public)")
+                    fatalError("BindingsLoadChannelsManager failed: \(error.localizedDescription)")
+                }
+                guard let cm else {
+                    AppLogger.identity.critical("BindingsLoadChannelsManager returned nil")
+                    fatalError("BindingsLoadChannelsManager returned nil")
+                }
+                channelsManager = BindingsChannelsManagerWrapper(cm)
             }
 
             if appStorage?.isSetupComplete ?? false {
@@ -282,53 +300,39 @@ extension XXDK {
         }
 
         var identities: [GeneratedIdentity] = []
-        var err: NSError?
 
         for _ in 0 ..< amountOfIdentities {
-            let privateIdentity = Bindings.BindingsGenerateChannelIdentity(
-                cmix.getID(),
-                &err
-            )
-
-            guard privateIdentity != nil else {
-                AppLogger.identity.error("Failed to generate private identity")
-                if let err {
-                    AppLogger.identity.error("Error: \(err.localizedDescription, privacy: .public)")
-                }
+            let privateIdentity: Data?
+            do {
+                privateIdentity = try BindingsStatic.generateChannelIdentity(cmix.getID())
+            } catch {
+                AppLogger.identity.error("Failed to generate private identity: \(error.localizedDescription, privacy: .public)")
                 continue
             }
 
-            guard err == nil else {
-                fatalError(
-                    "ERROR: Failed to generate private identity: \(err!.localizedDescription)"
-                )
-            }
-
-            let publicIdentity =
-                Bindings.BindingsGetPublicChannelIdentityFromPrivate(
-                    privateIdentity!,
-                    &err
-                )
-
-            guard publicIdentity != nil else {
-                AppLogger.identity.error("Failed to derive public identity")
-                if let err {
-                    AppLogger.identity.error("Error: \(err.localizedDescription, privacy: .public)")
-                }
+            guard let privateIdentity else {
+                AppLogger.identity.error("Failed to generate private identity: returned nil")
                 continue
             }
 
-            guard err == nil else {
-                fatalError(
-                    "ERROR: Failed to derive public identity: \(err!.localizedDescription)"
-                )
+            let publicIdentity: Data?
+            do {
+                publicIdentity = try BindingsStatic.getPublicChannelIdentityFromPrivate(privateIdentity)
+            } catch {
+                AppLogger.identity.error("Failed to derive public identity: \(error.localizedDescription, privacy: .public)")
+                continue
+            }
+
+            guard let publicIdentity else {
+                AppLogger.identity.error("Failed to derive public identity: returned nil")
+                continue
             }
 
             do {
-                let identity = try Parser.decodeIdentity(from: publicIdentity!)
+                let identity = try Parser.decodeIdentity(from: publicIdentity)
 
                 let generatedIdentity = GeneratedIdentity(
-                    privateIdentity: privateIdentity!,
+                    privateIdentity: privateIdentity,
                     codename: identity.codename,
                     codeset: identity.codeset,
                     pubkey: identity.pubkey
@@ -354,17 +358,9 @@ extension XXDK {
 
     /// Import a private identity using a password
     public func importIdentity(password: String, data: Data) throws -> Data {
-        var err: NSError?
-        let imported = Bindings.BindingsImportPrivateIdentity(password, data, &err)
-
-        if let err {
-            throw err
-        }
-
-        guard let imported else {
+        guard let imported = try BindingsStatic.importPrivateIdentity(password: password, data: data) else {
             throw XXDKError.importReturnedNil
         }
-
         return imported
     }
 }

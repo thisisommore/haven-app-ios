@@ -9,14 +9,7 @@ import Foundation
 public extension XXDK {
     /// Join a channel using a URL (public share link)
     internal func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
-        var err: NSError?
-
-        let prettyPrint = Bindings.BindingsDecodePublicURL(url, &err)
-
-        if let err {
-            throw err
-        }
-
+        let prettyPrint = try BindingsStatic.decodePublicURL(url)
         return try await joinChannel(prettyPrint)
     }
 
@@ -24,7 +17,9 @@ public extension XXDK {
     internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
         // channelsManager can be nil
         if let channelsManager {
-            let raw = try channelsManager.joinChannel(prettyPrint)
+            guard let raw = try channelsManager.joinChannel(prettyPrint) else {
+                throw XXDKError.channelJsonNil
+            }
             let channel = try Parser.decodeChannel(from: raw)
             return channel
         } else {
@@ -43,18 +38,11 @@ public extension XXDK {
             throw XXDKError.channelManagerNotInitialized
         }
 
-        var err: NSError?
-
-        let prettyPrint = channelsManager.generateChannel(
-            name,
+        let prettyPrint = try channelsManager.generateChannel(
+            name: name,
             description: description,
-            privacyLevel: privacyLevel.rawValue,
-            error: &err
+            privacyLevel: privacyLevel.rawValue
         )
-
-        if let err {
-            throw err
-        }
 
         let channel = try await joinChannel(prettyPrint)
 
@@ -106,77 +94,31 @@ public extension XXDK {
 
     /// Get the privacy level for a given channel URL
     func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel {
-        var err: NSError?
-        var typeValue = 0
-        Bindings.BindingsGetShareUrlType(url, &typeValue, &err)
-
-        if let err {
-            throw err
-        }
-
+        let typeValue = try BindingsStatic.getShareUrlType(url)
         return typeValue == 2 ? .secret : .publicChannel
     }
 
     /// Get channel data from a channel URL
     func getChannelFromURL(url: String) throws -> ChannelJSON {
-        var err: NSError?
-
-        let prettyPrint = Bindings.BindingsDecodePublicURL(url, &err)
-
-        if let err {
-            throw err
+        let prettyPrint = try BindingsStatic.decodePublicURL(url)
+        guard let channelJSONData = try BindingsStatic.getChannelJSON(prettyPrint) else {
+            throw XXDKError.channelJsonNil
         }
-
-        guard
-            let channelJSONString = Bindings.BindingsGetChannelJSON(
-                prettyPrint,
-                &err
-            )
-        else {
-            throw err ?? XXDKError.channelJsonNil
-        }
-
-        if let err {
-            throw err
-        }
-
-        return try Parser.decodeChannel(from: channelJSONString)
+        return try Parser.decodeChannel(from: channelJSONData)
     }
 
     /// Decode a private channel URL with password
     func decodePrivateURL(url: String, password: String) throws -> String {
-        var err: NSError?
-        let prettyPrint = Bindings.BindingsDecodePrivateURL(url, password, &err)
-
-        if let err {
-            throw err
-        }
-
-        return prettyPrint
+        try BindingsStatic.decodePrivateURL(url: url, password: password)
     }
 
     /// Get channel data from a private channel URL with password
-    func getPrivateChannelFromURL(url: String, password: String) throws
-        -> ChannelJSON
-    {
-        var err: NSError?
-
+    func getPrivateChannelFromURL(url: String, password: String) throws -> ChannelJSON {
         let prettyPrint = try decodePrivateURL(url: url, password: password)
-
-        guard
-            let channelJSONString = Bindings.BindingsGetChannelJSON(
-                prettyPrint,
-                &err
-            )
-        else {
-            throw err ?? XXDKError.channelJsonNil
+        guard let channelJSONData = try BindingsStatic.getChannelJSON(prettyPrint) else {
+            throw XXDKError.channelJsonNil
         }
-
-        if let err {
-            throw err
-        }
-
-        return try Parser.decodeChannel(from: channelJSONString)
+        return try Parser.decodeChannel(from: channelJSONData)
     }
 
     /// Enable direct messages for a channel
@@ -223,11 +165,7 @@ public extension XXDK {
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
                 ?? Data()
 
-        var result = ObjCBool(false)
-
-        try channelsManager.areDMsEnabled(channelIdData, ret0_: &result)
-
-        return result.boolValue
+        return try channelsManager.areDMsEnabled(channelIdData)
     }
 
     /// Check if current user is admin of a channel
@@ -238,10 +176,8 @@ public extension XXDK {
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
-        var result = ObjCBool(false)
         do {
-            try channelsManager.isChannelAdmin(channelIdData, ret0_: &result)
-            return result.boolValue
+            return try channelsManager.isChannelAdmin(channelIdData)
         } catch {
             AppLogger.channels.error("isChannelAdmin failed: \(error.localizedDescription, privacy: .public)")
             return false
@@ -308,10 +244,8 @@ public extension XXDK {
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
-        var result = ObjCBool(false)
         do {
-            try channelsManager.muted(channelIdData, ret0_: &result)
-            return result.boolValue
+            return try channelsManager.muted(channelIdData)
         } catch {
             AppLogger.channels.error("isMuted failed: \(error.localizedDescription, privacy: .public)")
             return false
@@ -325,10 +259,7 @@ public extension XXDK {
         guard let channelIdBytes = Data(base64Encoded: channelId) else {
             throw XXDKError.invalidChannelId
         }
-        var err: NSError?
-        let nickname = channelsManager.getNickname(channelIdBytes, error: &err)
-        if let err { throw err }
-        return nickname
+        return try channelsManager.getNickname(channelIdBytes)
     }
 
     func setChannelNickname(channelId: String, nickname: String) throws {

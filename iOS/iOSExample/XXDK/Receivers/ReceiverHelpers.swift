@@ -22,9 +22,8 @@ enum ReceiverHelpers {
 
     /// Parse identity from pubKey and codeset, returning codename and color
     static func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
-        var err: NSError?
-        guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err) else {
-            throw err ?? EventModelError.identityConstructionFailed
+        guard let identityData = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset) else {
+            throw EventModelError.identityConstructionFailed
         }
         let identity = try Parser.decodeIdentity(from: identityData)
         var colorStr = identity.color

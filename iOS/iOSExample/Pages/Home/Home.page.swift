@@ -305,17 +305,23 @@ struct HomeView<T: XXDKP>: View {
         }
 
         // Derive codename and color using BindingsConstructIdentity
-        var err: NSError?
-        guard let identityData = Bindings.BindingsConstructIdentity(pubKey, codeset, &err),
-              err == nil
-        else {
-            AppLogger.home.error("BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown", privacy: .public)")
+        let identityData: Data?
+        do {
+            identityData = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
+        } catch {
+            AppLogger.home.error("BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)")
             withAnimation(.spring(response: 0.3)) {
                 toastMessage = "Failed to derive identity"
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 withAnimation { toastMessage = nil }
             }
+            return
+        }
+        guard let identityData else {
+            AppLogger.home.error("BindingsConstructIdentity returned nil")
+            withAnimation(.spring(response: 0.3)) { toastMessage = "Failed to derive identity" }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { withAnimation { toastMessage = nil } }
             return
         }
 

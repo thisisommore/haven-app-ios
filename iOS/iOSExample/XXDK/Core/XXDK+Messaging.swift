@@ -43,10 +43,14 @@ extension XXDK {
         let channelIdData =
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
                 ?? Data()
+        guard let encodedMsg = encodeMessage("<p>\(msg)</p>") else {
+            AppLogger.messaging.error("sendDM(channel): failed to encode message")
+            return
+        }
         do {
             let reportData = try channelsManager.sendMessage(
                 channelIdData,
-                message: encodeMessage("<p>\(msg)</p>"),
+                message: encodedMsg,
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
@@ -77,10 +81,14 @@ extension XXDK {
         else {
             return
         }
+        guard let encodedMsg = encodeMessage("<p>\(msg)</p>") else {
+            AppLogger.messaging.error("sendReply(channel): failed to encode message")
+            return
+        }
         do {
             let reportData = try channelsManager.sendReply(
                 channelIdData,
-                message: encodeMessage("<p>\(msg)</p>"),
+                message: encodedMsg,
                 messageToReactTo: replyToMessageId,
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
@@ -201,11 +209,15 @@ extension XXDK {
         else {
             return
         }
+        guard let encodedMsg = encodeMessage("<p>\(msg)</p>") else {
+            AppLogger.messaging.error("sendReply(DM): failed to encode message")
+            return
+        }
         do {
             let reportData = try DM.sendReply(
                 toPubKey,
                 partnerToken: partnerToken,
-                replyMessage: encodeMessage("<p>\(msg)</p>"),
+                replyMessage: encodedMsg,
                 replyToBytes: replyToMessageId,
                 leaseTimeMS: 0,
                 cmixParamsJSON: "".data

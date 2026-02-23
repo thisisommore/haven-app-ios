@@ -115,14 +115,13 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
     }
 
     private func deriveUserInfo() {
-        var err: NSError?
-        guard let identityData = Bindings.BindingsConstructIdentity(
-            link.pubKey,
-            link.codeset,
-            &err
-        ), err == nil else {
+        let identityData: Data?
+        do {
+            identityData = try BindingsStatic.constructIdentity(pubKey: link.pubKey, codeset: link.codeset)
+        } catch {
             return
         }
+        guard let identityData else { return }
 
         do {
             let identity = try Parser.decodeIdentity(from: identityData)

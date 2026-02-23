@@ -167,16 +167,16 @@ struct DeepLinkHandler: ViewModifier {
             return
         }
 
-        var err: NSError?
-        guard
-            let identityData = Bindings.BindingsConstructIdentity(
-                pubKey,
-                codeset,
-                &err
-            ),
-            err == nil
-        else {
-            AppLogger.app.error("DeepLink: BindingsConstructIdentity failed: \(err?.localizedDescription ?? "unknown", privacy: .public)")
+        let identityData: Data?
+        do {
+            identityData = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
+        } catch {
+            AppLogger.app.error("DeepLink: BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)")
+            deepLinkError = "Failed to derive identity"
+            return
+        }
+        guard let identityData else {
+            AppLogger.app.error("DeepLink: BindingsConstructIdentity returned nil")
             deepLinkError = "Failed to derive identity"
             return
         }
