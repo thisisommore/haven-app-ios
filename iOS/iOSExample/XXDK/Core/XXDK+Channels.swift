@@ -22,51 +22,15 @@ public extension XXDK {
 
     /// Join a channel using pretty print format
     internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
-        guard let cmix else { throw XXDKError.cmixNotInitialized }
-        guard let storageTagListener else {
-            AppLogger.channels.critical("no storageTagListener")
-            fatalError("no storageTagListener")
-        }
-        guard let storageTagEntry = storageTagListener.data else {
-            AppLogger.channels.critical("no storageTagListener data")
-            fatalError("no storageTagListener data")
-        }
-        var err: NSError?
-        let cmixId = cmix.getID()
-
-        let storageTag = storageTagEntry.utf8
-
-        guard let noti = Bindings.BindingsLoadNotificationsDummy(cmixId, &err)
-        else {
-            AppLogger.channels.critical("notifications dummy was nil")
-            fatalError("notifications dummy was nil")
-        }
-        if let e = err {
-            throw XXDKError.loadNotificationsDummyFailed(e.localizedDescription)
-        }
-
-        let cm: Bindings.BindingsChannelsManager
-        if let existingCm = channelsManager {
-            cm = existingCm
+        // channelsManager can be nil
+        if let channelsManager = channelsManager {
+            // _channelsManager will always be defined
+            let raw = try channelsManager.joinChannel(prettyPrint)
+            let channel = try Parser.decodeChannel(from: raw)
+            return channel
         } else {
-            guard let loadedCm = Bindings.BindingsLoadChannelsManager(
-                cmixId,
-                storageTag,
-                eventModelBuilder,
-                nil,
-                noti.getID(),
-                channelUICallbacks,
-                &err
-            ) else {
-                throw XXDKError.loadChannelsManagerFailed(err?.localizedDescription ?? "unknown error")
-            }
-            cm = loadedCm
-            channelsManager = cm
+           throw XXDKError.channelManagerNotInitialized
         }
-
-        let raw = try cm.joinChannel(prettyPrint)
-        let channel = try Parser.decodeChannel(from: raw)
-        return channel
     }
 
     /// Create a new channel
