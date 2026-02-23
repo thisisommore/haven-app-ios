@@ -79,7 +79,7 @@ public class XXDK: XXDKP {
     // MARK: - Model Container Setup
 
     public func setModelContainer(mActor: SwiftDataActor, sm: AppStorage) {
-        self.appStorage = sm
+        appStorage = sm
         modelActor = mActor
         dmReceiver.modelActor = mActor
         channelUICallbacks.configure(modelActor: mActor)

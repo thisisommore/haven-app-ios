@@ -265,7 +265,7 @@ struct ChatView<T: XXDKP>: View {
                 visibleMessageIds.contains(reaction.targetMessageId)
             },
             sortBy: [
-                SortDescriptor(\MessageReactionModel.internalId)
+                SortDescriptor(\MessageReactionModel.internalId),
             ]
         )
         let fetchedReactions = (try? modelContext.fetch(descriptor)) ?? []

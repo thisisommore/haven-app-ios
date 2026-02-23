@@ -166,7 +166,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         timestamp: Int64,
         lease _: Int64,
         roundID _: Int64,
-        messageType: Int64,
+        messageType _: Int64,
         status _: Int64,
         hidden _: Bool
     ) -> Int64 {
@@ -503,5 +503,4 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             )
         }
     }
-
 }

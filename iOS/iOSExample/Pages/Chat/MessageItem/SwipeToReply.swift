@@ -48,7 +48,7 @@ struct SwipeToReplyModifier: ViewModifier {
                         dragOffset = horizontal
                     }
 
-                    if dragOffset >= triggerThreshold && !hasTriggeredHaptic {
+                    if dragOffset >= triggerThreshold, !hasTriggeredHaptic {
                         hasTriggeredHaptic = true
                         let generator = UIImpactFeedbackGenerator(style: .medium)
                         generator.impactOccurred()
@@ -95,12 +95,12 @@ private struct SwipeToReplyPanOverlay: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: UIView, context: Context) {
+    func updateUIView(_: UIView, context: Context) {
         context.coordinator.onChanged = onChanged
         context.coordinator.onEnded = onEnded
     }
 
-    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
+    static func dismantleUIView(_: UIView, coordinator: Coordinator) {
         coordinator.detach()
     }
 
@@ -172,8 +172,8 @@ private struct SwipeToReplyPanOverlay: UIViewRepresentable {
         }
 
         func gestureRecognizer(
-            _ gestureRecognizer: UIGestureRecognizer,
-            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+            _: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith _: UIGestureRecognizer
         ) -> Bool {
             false
         }

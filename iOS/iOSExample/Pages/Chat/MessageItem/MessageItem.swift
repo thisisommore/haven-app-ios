@@ -80,23 +80,23 @@ struct MessageItem<T: XXDKP>: View {
                     ConditionalSpacer(!isIncoming)
 
                     MessageBubble<T>(
-                            text: text,
-                            isIncoming: isIncoming,
-                            sender: sender,
-                            isFirstInGroup: isFirstInGroup,
-                            isLastInGroup: isLastInGroup,
-                            timestamp: timeStamp,
-                            showTimestamp: showTimestamp,
-                            selectedEmoji: $selectedEmoji,
-                            shouldTriggerReply: $shouldTriggerReply,
-                            isAdmin: isAdmin,
-                            onDM: onDM,
-                            onDelete: onDelete,
-                            onMute: onMute,
-                            onUnmute: onUnmute,
-                            isSenderMuted: isSenderMuted,
-                            isHighlighted: isHighlighted
-                        )
+                        text: text,
+                        isIncoming: isIncoming,
+                        sender: sender,
+                        isFirstInGroup: isFirstInGroup,
+                        isLastInGroup: isLastInGroup,
+                        timestamp: timeStamp,
+                        showTimestamp: showTimestamp,
+                        selectedEmoji: $selectedEmoji,
+                        shouldTriggerReply: $shouldTriggerReply,
+                        isAdmin: isAdmin,
+                        onDM: onDM,
+                        onDelete: onDelete,
+                        onMute: onMute,
+                        onUnmute: onUnmute,
+                        isSenderMuted: isSenderMuted,
+                        isHighlighted: isHighlighted
+                    )
 
                     ConditionalSpacer(isIncoming)
                 }

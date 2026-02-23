@@ -392,7 +392,7 @@ private struct NewMessageHTMLParserState {
 
         if let lastIndex = spans.indices.last {
             var last = spans[lastIndex]
-            if last.endUTF16 == startUTF16 && last.styleBits == styleBits && last.href == activeHref {
+            if last.endUTF16 == startUTF16, last.styleBits == styleBits, last.href == activeHref {
                 last.endUTF16 = endUTF16
                 spans[lastIndex] = last
                 return
@@ -594,7 +594,7 @@ enum NewMessageHTMLEntityDecoder {
         "gt": ">",
         "quot": "\"",
         "apos": "'",
-        "nbsp": " "
+        "nbsp": " ",
     ]
 
     static func decode(_ raw: String) -> String {

@@ -103,7 +103,7 @@ extension XXDK {
         await progress(.settingUpRemoteKV)
 
         do {
-            self.storageTagListener = try RemoteKVKeyChangeListener(
+            storageTagListener = try RemoteKVKeyChangeListener(
                 key: "channels-storage-tag",
                 remoteKV: remoteKV!,
                 version: 0,
@@ -170,9 +170,9 @@ extension XXDK {
                 )
                 let entryData = try Parser.encodeRemoteKVEntry(entry)
                 try remoteKV!.set("channels-storage-tag", objectJSON: entryData)
-                self.storageTagListener!.data = cm.getStorageTag().data
+                storageTagListener!.data = cm.getStorageTag().data
             } else {
-                let storageTagString = self.storageTagListener!.data!.utf8
+                let storageTagString = storageTagListener!.data!.utf8
                 let cm = Bindings.BindingsLoadChannelsManager(
                     cmix.getID(),
                     storageTagString,

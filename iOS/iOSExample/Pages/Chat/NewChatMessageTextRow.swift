@@ -205,7 +205,7 @@ private struct NewChatMessageBubbleText: View {
                     .padding(.vertical, 8)
                     .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
                     .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
-                    
+
                     renderer(link, isIncoming, showTimestamp ? timestampText : "")
                 }
                 .clipShape(bubbleShape)
@@ -232,7 +232,7 @@ private struct NewChatMessageBubbleText: View {
                     .padding(.vertical, 8)
                     .frame(maxWidth: .infinity, alignment: isIncoming ? .leading : .trailing)
                     .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
-                    
+
                     renderer(link, isIncoming, showTimestamp ? timestampText : "")
                 }
                 .clipShape(bubbleShape)
@@ -282,14 +282,14 @@ private struct NewChatMessageBubbleText: View {
 
     private func parseLinks(from text: String) {
         if let channelLink = ParsedChannelLink.parse(from: text) {
-            self.parsedChannelLink = channelLink
-            self.parsedDMLink = nil
+            parsedChannelLink = channelLink
+            parsedDMLink = nil
         } else if let dmLink = ParsedDMLink.parse(from: text) {
-            self.parsedChannelLink = nil
-            self.parsedDMLink = dmLink
+            parsedChannelLink = nil
+            parsedDMLink = dmLink
         } else {
-            self.parsedChannelLink = nil
-            self.parsedDMLink = nil
+            parsedChannelLink = nil
+            parsedDMLink = nil
         }
     }
 }
@@ -326,24 +326,24 @@ private struct NewChatRenderableMessageText: View {
 
     var body: some View {
         renderedText
-        .font(.system(size: 16))
-        .foregroundStyle(isIncoming ? Color.messageText : Color.white)
-        .tint(isIncoming ? Color.haven : Color.white)
-        .environment(\.openURL, OpenURLAction { url in
-            pendingURL = url
-            showOpenLinkWarning = true
-            return .handled
-        })
-        .alert("Open External Link?", isPresented: $showOpenLinkWarning, presenting: pendingURL) { url in
-            Button("Cancel", role: .cancel) {
-                pendingURL = nil
+            .font(.system(size: 16))
+            .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+            .tint(isIncoming ? Color.haven : Color.white)
+            .environment(\.openURL, OpenURLAction { url in
+                pendingURL = url
+                showOpenLinkWarning = true
+                return .handled
+            })
+            .alert("Open External Link?", isPresented: $showOpenLinkWarning, presenting: pendingURL) { url in
+                Button("Cancel", role: .cancel) {
+                    pendingURL = nil
+                }
+                Button("Open") {
+                    UIApplication.shared.open(url)
+                    pendingURL = nil
+                }
+            } message: { _ in
+                Text(linkWarningMessage)
             }
-            Button("Open") {
-                UIApplication.shared.open(url)
-                pendingURL = nil
-            }
-        } message: { _ in
-            Text(linkWarningMessage)
-        }
     }
 }

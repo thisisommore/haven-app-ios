@@ -102,14 +102,13 @@ struct MessageBubble<T: XXDKP>: View {
             }
 
             if showTimestamp {
-                (
-                    Text(verbatim: text)
-                        .font(.system(size: 16))
-                        .foregroundColor(isIncoming ? Color.messageText : Color.white)
+                Text(verbatim: text)
+                    .font(.system(size: 16))
+                    .foregroundColor(isIncoming ? Color.messageText : Color.white)
                     + Text("    \(timestamp)")
-                        .font(.system(size: 10))
-                        .foregroundColor(.clear)
-                )
+                    .font(.system(size: 10))
+                    .foregroundColor(.clear)
+
             } else {
                 Text(verbatim: text)
                     .font(.system(size: 16))

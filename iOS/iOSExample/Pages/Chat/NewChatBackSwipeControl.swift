@@ -4,13 +4,13 @@ import UIKit
 struct NewChatBackSwipeControl: UIViewControllerRepresentable {
     let isDisabled: Bool
 
-    func makeUIViewController(context: Context) -> Controller {
+    func makeUIViewController(context _: Context) -> Controller {
         let controller = Controller()
         controller.isDisabled = isDisabled
         return controller
     }
 
-    func updateUIViewController(_ uiViewController: Controller, context: Context) {
+    func updateUIViewController(_ uiViewController: Controller, context _: Context) {
         uiViewController.isDisabled = isDisabled
         uiViewController.apply()
     }

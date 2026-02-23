@@ -182,9 +182,7 @@ struct HomeView<T: XXDKP>: View {
                 Button("Logout", role: .destructive) {
                     isLoggingOut = true
                     Task {
-        
                         try! await xxdk.logout()
-            
 
                         // Clear SwiftData
                         try! swiftDataActor.deleteAll(MessageReactionModel.self)
@@ -230,13 +228,13 @@ struct HomeView<T: XXDKP>: View {
                     ZStack {
                         Color.black.opacity(0.3)
                             .ignoresSafeArea()
-                            .onTapGesture { } // Block taps
-                        
+                            .onTapGesture {} // Block taps
+
                         VStack(spacing: 16) {
                             ProgressView()
                                 .controlSize(.large)
                                 .tint(.white)
-                            
+
                             Text(xxdk.status)
                                 .font(.headline)
                                 .foregroundStyle(.white)

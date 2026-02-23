@@ -22,11 +22,11 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
     var renderChannelPreview: ((ParsedChannelLink, Bool, String) -> AnyView)?
     var renderDMPreview: ((ParsedDMLink, Bool, String) -> AnyView)?
 
-    func makeUIViewController(context: Context) -> Controller {
+    func makeUIViewController(context _: Context) -> Controller {
         Controller()
     }
 
-    func updateUIViewController(_ uiViewController: Controller, context: Context) {
+    func updateUIViewController(_ uiViewController: Controller, context _: Context) {
         uiViewController.update(from: self)
     }
 
@@ -95,7 +95,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var onShowReactions: ((String) -> Void)?
         private var onScrollToReply: ((String) -> Void)?
         private var onScrollActivityChanged: ((Bool) -> Void)?
-        private var targetScrollMessageId: String? = nil
+        private var targetScrollMessageId: String?
         var renderChannelPreview: ((ParsedChannelLink, Bool, String) -> AnyView)?
         var renderDMPreview: ((ParsedDMLink, Bool, String) -> AnyView)?
 
@@ -153,9 +153,9 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             let newReactionsHash = reactionsMapHash(config.reactionsByMessageId)
             let configChanged =
                 isAdmin != config.isAdmin ||
-                    mutedUsers != config.mutedUsers ||
-                    reactionsByMessageHash != newReactionsHash ||
-                    targetScrollMessageId != config.targetScrollMessageId
+                mutedUsers != config.mutedUsers ||
+                reactionsByMessageHash != newReactionsHash ||
+                targetScrollMessageId != config.targetScrollMessageId
 
             reactionsByMessageId = config.reactionsByMessageId
             reactionsByMessageHash = newReactionsHash
@@ -172,7 +172,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             onShowReactions = config.onShowReactions
             onScrollToReply = config.onScrollToReply
             onScrollActivityChanged = config.onScrollActivityChanged
-            self.targetScrollMessageId = config.targetScrollMessageId
+            targetScrollMessageId = config.targetScrollMessageId
             renderChannelPreview = config.renderChannelPreview
             renderDMPreview = config.renderDMPreview
             updateLoadingIndicator()
@@ -460,7 +460,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 at: .middle,
                 animated: true
             )
-            
+
             // Re-configure cell to ensure highlight is applied if it's already visible
             if let cell = tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? MessageTableViewCell {
                 cell.backgroundColor = UIColor(named: "haven")?.withAlphaComponent(0.2) ?? .clear
@@ -554,8 +554,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             let newIds = pendingMessages.map(\.id)
             let insertedAtTop =
                 !oldIds.isEmpty &&
-                    !newIds.isEmpty &&
-                    oldIds.first != newIds.first
+                !newIds.isEmpty &&
+                oldIds.first != newIds.first
 
             guard insertedAtTop else {
                 applyMessages(pendingMessages)
@@ -695,7 +695,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
         // MARK: UITableViewDataSource
 
-        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
             displayRows.count
         }
 
@@ -767,7 +767,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     )
                 }
                 .margins(.all, 0)
-                if let targetId = self.targetScrollMessageId, message.id == targetId {
+                if let targetId = targetScrollMessageId, message.id == targetId {
                     cell.backgroundColor = UIColor(named: "haven")?.withAlphaComponent(0.2) ?? .clear
                     UIView.animate(withDuration: 1.0, delay: 0.5, options: .curveEaseOut) {
                         cell.backgroundColor = .clear
@@ -784,7 +784,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         func tableView(
             _ tableView: UITableView,
             contextMenuConfigurationForRowAt indexPath: IndexPath,
-            point: CGPoint
+            point _: CGPoint
         ) -> UIContextMenuConfiguration? {
             guard indexPath.row < displayRows.count else { return nil }
             guard case let .message(_, messageIndex) = displayRows[indexPath.row],
@@ -797,7 +797,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             let messageId = messageCell?.representedMessageId ?? snapshotMessage.id
             let displayText =
                 messageCell?.representedDisplayText ??
-                    (snapshotMessage.newRenderPlainText ?? stripParagraphTags(snapshotMessage.message))
+                (snapshotMessage.newRenderPlainText ?? stripParagraphTags(snapshotMessage.message))
 
             // Freeze updates as soon as context menu interaction starts.
             isContextMenuActive = true
@@ -887,7 +887,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 }
             )
 
-            if (isAdmin || !message.isIncoming), onDeleteMessage != nil {
+            if isAdmin || !message.isIncoming, onDeleteMessage != nil {
                 actions.append(
                     UIAction(title: "Delete", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                         guard let self else { return }
@@ -937,16 +937,16 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         }
 
         func tableView(
-            _ tableView: UITableView,
-            willDisplayContextMenu configuration: UIContextMenuConfiguration,
-            animator: UIContextMenuInteractionAnimating?
+            _: UITableView,
+            willDisplayContextMenu _: UIContextMenuConfiguration,
+            animator _: UIContextMenuInteractionAnimating?
         ) {
             isContextMenuActive = true
         }
 
         func tableView(
-            _ tableView: UITableView,
-            willEndContextMenuInteraction configuration: UIContextMenuConfiguration,
+            _: UITableView,
+            willEndContextMenuInteraction _: UIContextMenuConfiguration,
             animator: UIContextMenuInteractionAnimating?
         ) {
             let finish = { [weak self] in
@@ -963,22 +963,22 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
         // MARK: UIScrollViewDelegate
 
-        func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        func scrollViewWillBeginDragging(_: UIScrollView) {
             setUserScrolling(true)
         }
 
-        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        func scrollViewDidScroll(_: UIScrollView) {
             maybeTriggerReachedTopIfNeeded()
             reportTopVisibleMessageIfNeeded()
         }
 
-        func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        func scrollViewDidEndDragging(_: UIScrollView, willDecelerate decelerate: Bool) {
             if !decelerate {
                 setUserScrolling(false)
             }
         }
 
-        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        func scrollViewDidEndDecelerating(_: UIScrollView) {
             setUserScrolling(false)
         }
     }
