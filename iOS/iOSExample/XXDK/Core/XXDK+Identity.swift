@@ -145,21 +145,6 @@ extension XXDK {
                 eventModelBuilder?.configure(modelActor: actor)
             }
 
-            await progress(.creatingE2e)
-            let receptionIdentity = try cmix.makeReceptionIdentity()
-            var e2eErr: NSError?
-            guard let e2eObj = BindingsLogin(
-                cmix.getID(),
-                nil,
-                receptionIdentity,
-                nil,
-                &e2eErr
-            ) else {
-                AppLogger.identity.critical("Failed to create E2e: \(e2eErr?.localizedDescription ?? "unknown", privacy: .public)")
-                throw e2eErr ?? MyError.runtimeError("Failed to create E2e")
-            }
-            e2e = e2eObj
-
             let extensionJSON = try JSONEncoder().encode([String]())
 
             if !(sm?.isSetupComplete ?? false) {

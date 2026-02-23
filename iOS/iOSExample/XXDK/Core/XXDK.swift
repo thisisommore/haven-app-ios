@@ -35,7 +35,6 @@ public class XXDK: XXDKP {
     var channelUICallbacks: ChannelUICallbacks
     var sm: SecretManager?
     var modelActor: SwiftDataActor?
-    var e2e: BindingsE2e?
 
     // MARK: - Init
 
@@ -121,7 +120,6 @@ public class XXDK: XXDKP {
         remoteKV = nil
         storageTagListener = nil
         eventModelBuilder = nil
-        e2e = nil
 
         await MainActor.run { self.status = "Deleting data..." }
         // 5. Delete stateDir and recreate it
