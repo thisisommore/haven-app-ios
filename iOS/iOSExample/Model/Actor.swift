@@ -83,7 +83,7 @@ public actor SwiftDataActor: ObservableObject {
             throw error
         }
 
-        guard let result = result else {
+        guard let result else {
             fatalError("fetch_ completed but returned no result")
         }
 

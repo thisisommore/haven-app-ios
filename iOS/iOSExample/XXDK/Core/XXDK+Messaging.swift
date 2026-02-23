@@ -15,7 +15,7 @@ extension XXDK {
         targetMessageId: String,
         isMe: Bool = true
     ) {
-        guard let actor = modelActor else {
+        guard let modelActor else {
             return
         }
         Task {
@@ -27,8 +27,8 @@ extension XXDK {
                     emoji: emoji,
                     isMe: isMe
                 )
-                actor.insert(reaction)
-                try actor.save()
+                modelActor.insert(reaction)
+                try modelActor.save()
             } catch {
                 AppLogger.messaging.error("persistReaction failed: \(error.localizedDescription, privacy: .public)")
             }
@@ -37,14 +37,14 @@ extension XXDK {
 
     // Send a message to a channel by Channel ID (base64-encoded)
     func sendDM(msg: String, channelId: String) {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             fatalError("sendDM(channel): Channels Manager not initialized")
         }
         let channelIdData =
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
                 ?? Data()
         do {
-            let reportData = try cm.sendMessage(
+            let reportData = try channelsManager.sendMessage(
                 channelIdData,
                 message: encodeMessage("<p>\(msg)</p>"),
                 validUntilMS: 0,
@@ -67,7 +67,7 @@ extension XXDK {
 
     // Send a reply to a specific message in a channel
     func sendReply(msg: String, channelId: String, replyToMessageIdB64: String) {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             fatalError("sendReply(channel): Channels Manager not initialized")
         }
         let channelIdData =
@@ -78,7 +78,7 @@ extension XXDK {
             return
         }
         do {
-            let reportData = try cm.sendReply(
+            let reportData = try channelsManager.sendReply(
                 channelIdData,
                 message: encodeMessage("<p>\(msg)</p>"),
                 messageToReactTo: replyToMessageId,
@@ -106,7 +106,7 @@ extension XXDK {
         toMessageIdB64: String,
         inChannelId channelId: String
     ) {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             fatalError(
                 "sendReaction(channel): Channels Manager not initialized"
             )
@@ -118,7 +118,7 @@ extension XXDK {
             return
         }
         do {
-            let reportData = try cm.sendReaction(
+            let reportData = try channelsManager.sendReaction(
                 channelIdData,
                 reaction: emoji,
                 messageToReactTo: targetMessageId,
@@ -166,11 +166,11 @@ extension XXDK {
                 if let mid = report.messageID {
                     let chatId = toPubKey.base64EncodedString()
                     let _: String = {
-                        if let actor = self.modelActor {
+                        if let modelActor {
                             let descriptor = FetchDescriptor<ChatModel>(
                                 predicate: #Predicate { $0.id == chatId }
                             )
-                            if let found = try? actor.fetch(descriptor).first {
+                            if let found = try? modelActor.fetch(descriptor).first {
                                 return found.name
                             }
                         }
@@ -218,11 +218,11 @@ extension XXDK {
                     AppLogger.messaging.debug("DM sendReply messageID: \(mid.base64EncodedString(), privacy: .public)")
                     let chatId = toPubKey.base64EncodedString()
                     let _: String = {
-                        if let actor = self.modelActor {
+                        if let modelActor {
                             let descriptor = FetchDescriptor<ChatModel>(
                                 predicate: #Predicate { $0.id == chatId }
                             )
-                            if let found = try? actor.fetch(descriptor).first {
+                            if let found = try? modelActor.fetch(descriptor).first {
                                 return found.name
                             }
                         }
@@ -286,7 +286,7 @@ extension XXDK {
 
     /// Delete a message from a channel (admin or message owner only)
     public func deleteMessage(channelId: String, messageId: String) {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             return
         }
 
@@ -296,7 +296,7 @@ extension XXDK {
         }
 
         do {
-            try cm.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
+            try channelsManager.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
         } catch {
             AppLogger.messaging.error("deleteMessage failed: \(error.localizedDescription, privacy: .public)")
         }

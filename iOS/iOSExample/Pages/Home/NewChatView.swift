@@ -30,9 +30,9 @@ struct NewChatView<T: XXDKP>: View {
                             .font(.body)
                     }
 
-                    if let error = errorMessage {
+                    if let errorMessage {
                         Section {
-                            Text(error)
+                            Text(errorMessage)
                                 .foregroundColor(.red)
                                 .font(.caption)
                         }
@@ -144,8 +144,8 @@ struct NewChatView<T: XXDKP>: View {
         do {
             let joinedChannel: ChannelJSON
             // Use prettyPrint if available (private channel), otherwise decode from URL (public channel)
-            if let pp = prettyPrint {
-                joinedChannel = try await xxdk.joinChannel(pp)
+            if let prettyPrint {
+                joinedChannel = try await xxdk.joinChannel(prettyPrint)
             } else {
                 joinedChannel = try await xxdk.joinChannelFromURL(url)
             }

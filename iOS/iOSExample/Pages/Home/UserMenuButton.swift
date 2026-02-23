@@ -10,7 +10,7 @@ struct UserMenuButton: UIViewRepresentable {
     let onLogout: () -> Void
 
     private var displayName: String {
-        if let nickname = nickname, !nickname.isEmpty {
+        if let nickname, !nickname.isEmpty {
             return nickname
         }
         return codename ?? "Loading..."

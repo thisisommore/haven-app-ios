@@ -286,7 +286,7 @@ struct QRScannerView: View {
                     .background(Color.haven)
                     .cornerRadius(20)
                     .padding(.top, 16)
-                } else if let onShowMyQR = onShowMyQR {
+                } else if let onShowMyQR {
                     Button {
                         dismiss()
                         onShowMyQR()

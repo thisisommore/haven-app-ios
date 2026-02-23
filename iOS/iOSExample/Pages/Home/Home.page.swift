@@ -202,13 +202,13 @@ struct HomeView<T: XXDKP>: View {
                 Text("If you haven't backed up your identity, you will lose access to it permanently. Are you sure you want to logout?")
             }
             .overlay {
-                if let message = toastMessage {
+                if let toastMessage {
                     VStack {
                         Spacer()
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.white)
-                            Text(message)
+                            Text(toastMessage)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)

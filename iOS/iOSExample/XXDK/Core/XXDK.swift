@@ -142,19 +142,19 @@ public class XXDK: XXDKP {
     // MARK: - DM Nickname
 
     public func getDMNickname() throws -> String {
-        guard let dm = DM else {
+        guard let DM else {
             throw XXDKError.dmClientNotInitialized
         }
         var err: NSError?
-        let nickname = dm.getNickname(&err)
-        if let err = err { throw err }
+        let nickname = DM.getNickname(&err)
+        if let err { throw err }
         return nickname
     }
 
     public func setDMNickname(_ nickname: String) throws {
-        guard let dm = DM else {
+        guard let DM else {
             throw XXDKError.dmClientNotInitialized
         }
-        try dm.setNickname(nickname)
+        try DM.setNickname(nickname)
     }
 }

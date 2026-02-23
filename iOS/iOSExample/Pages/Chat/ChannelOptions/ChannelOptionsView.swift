@@ -118,7 +118,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         }
                         .tint(.haven)
 
-                        if let password = sharePassword, !password.isEmpty {
+                        if let sharePassword, !sharePassword.isEmpty {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack(spacing: 6) {
@@ -127,14 +127,14 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                             .foregroundColor(.secondary)
                                         SecretBadge()
                                     }
-                                    Text(password)
+                                    Text(sharePassword)
                                         .font(.body)
                                         .lineLimit(1)
                                         .truncationMode(.middle)
                                 }
                                 Spacer()
                                 Button {
-                                    UIPasteboard.general.string = password
+                                    UIPasteboard.general.string = sharePassword
                                     toastMessage = "Password copied"
                                 } label: {
                                     Image(systemName: "doc.on.doc")
@@ -342,13 +342,13 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 ChatBackgroundPickerView<T>()
             }
             .overlay {
-                if let message = toastMessage {
+                if let toastMessage {
                     VStack {
                         Spacer()
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.white)
-                            Text(message)
+                            Text(toastMessage)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)

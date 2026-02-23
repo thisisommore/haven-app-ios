@@ -31,7 +31,7 @@ struct MessageForm<T: XXDKP>: View {
     var body: some View {
         VStack(spacing: 0) {
             // Reply preview
-            if let replyTo = replyTo {
+            if let replyTo {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Replying to \(replyTo.sender?.codename ?? "You")")
@@ -112,11 +112,11 @@ struct MessageForm<T: XXDKP>: View {
             isSendingMessage = true
         }
 
-        if let chat = chat {
+        if let chat {
             if let token = chat.dmToken {
                 // DM chat: send direct message or reply
                 if let pubKey = Data(base64Encoded: chat.id) {
-                    if let replyTo = replyTo {
+                    if let replyTo {
                         Task {
                             xxdk.sendReply(
                                 msg: trimmed,
@@ -137,7 +137,7 @@ struct MessageForm<T: XXDKP>: View {
                 }
             } else {
                 // Channel chat: send via Channels Manager using channelId (stored in id)
-                if let replyTo = replyTo {
+                if let replyTo {
                     Task {
                         xxdk.sendReply(
                             msg: trimmed,

@@ -102,8 +102,8 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
                 completedAction: isSelfChat ? nil : openChat
             )
 
-            if let error = errorMessage {
-                Text(error)
+            if let errorMessage {
+                Text(errorMessage)
                     .font(.caption)
                     .foregroundStyle(.red)
             }

@@ -38,7 +38,7 @@ enum ReceiverHelpers {
     static func isSenderSelf(senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
         let selfChatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == "<self>" })
         if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
-            guard let senderPubKey = senderPubKey else { return false }
+            guard let senderPubKey else { return false }
             return Data(base64Encoded: selfChat.id) == senderPubKey
         }
         return false
@@ -58,7 +58,7 @@ enum ReceiverHelpers {
 
         if let existing = try ctx.fetch(descriptor).first {
             existing.dmToken = dmToken
-            if let nickname = nickname, !nickname.isEmpty {
+            if let nickname, !nickname.isEmpty {
                 existing.nickname = nickname
             }
             try ctx.save()
@@ -93,7 +93,7 @@ enum ReceiverHelpers {
         let isIncoming = !isSenderSelf(senderPubKey: senderPubKey, ctx: ctx)
 
         let msg: ChatMessageModel
-        if let ts = timestamp {
+        if let timestamp {
             msg = ChatMessageModel(
                 message: text,
                 isIncoming: isIncoming,
@@ -102,7 +102,7 @@ enum ReceiverHelpers {
                 id: messageId,
                 internalId: internalId,
                 replyTo: replyTo,
-                timestamp: ts
+                timestamp: timestamp
             )
         } else {
             msg = ChatMessageModel(
@@ -146,11 +146,11 @@ enum ReceiverHelpers {
         timestamp: Int64? = nil
     ) throws -> ChatMessageModel {
         var sender: MessageSenderModel? = nil
-        if let codename = senderCodename, let pubKey = senderPubKey {
+        if let senderCodename, let senderPubKey {
             sender = try upsertSender(
                 ctx: ctx,
-                pubKey: pubKey,
-                codename: codename,
+                pubKey: senderPubKey,
+                codename: senderCodename,
                 nickname: nickname,
                 dmToken: dmToken,
                 color: color

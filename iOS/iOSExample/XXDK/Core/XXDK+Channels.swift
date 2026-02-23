@@ -13,8 +13,8 @@ public extension XXDK {
 
         let prettyPrint = Bindings.BindingsDecodePublicURL(url, &err)
 
-        if let error = err {
-            throw error
+        if let err {
+            throw err
         }
 
         return try await joinChannel(prettyPrint)
@@ -23,12 +23,12 @@ public extension XXDK {
     /// Join a channel using pretty print format
     internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
         // channelsManager can be nil
-        if let channelsManager  {
+        if let channelsManager {
             let raw = try channelsManager.joinChannel(prettyPrint)
             let channel = try Parser.decodeChannel(from: raw)
             return channel
         } else {
-           throw XXDKError.channelManagerNotInitialized
+            throw XXDKError.channelManagerNotInitialized
         }
     }
 
@@ -39,7 +39,7 @@ public extension XXDK {
         privacyLevel: PrivacyLevel,
         enableDms: Bool = true
     ) async throws -> ChannelJSON {
-        guard let channelsManager = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
@@ -52,7 +52,7 @@ public extension XXDK {
             error: &err
         )
 
-        if let err = err {
+        if let err {
             throw err
         }
 
@@ -73,7 +73,7 @@ public extension XXDK {
 
     /// Leave a channel
     func leaveChannel(channelId: String) throws {
-        guard let channelsManager = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
@@ -93,7 +93,7 @@ public extension XXDK {
         guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
-        guard let cmix  else {
+        guard let cmix else {
             throw XXDKError.cmixNotInitialized
         }
 
@@ -123,8 +123,8 @@ public extension XXDK {
 
         let prettyPrint = Bindings.BindingsDecodePublicURL(url, &err)
 
-        if let error = err {
-            throw error
+        if let err {
+            throw err
         }
 
         guard
@@ -136,8 +136,8 @@ public extension XXDK {
             throw err ?? XXDKError.channelJsonNil
         }
 
-        if let error = err {
-            throw error
+        if let err {
+            throw err
         }
 
         return try Parser.decodeChannel(from: channelJSONString)
@@ -148,8 +148,8 @@ public extension XXDK {
         var err: NSError?
         let prettyPrint = Bindings.BindingsDecodePrivateURL(url, password, &err)
 
-        if let error = err {
-            throw error
+        if let err {
+            throw err
         }
 
         return prettyPrint
@@ -172,8 +172,8 @@ public extension XXDK {
             throw err ?? XXDKError.channelJsonNil
         }
 
-        if let error = err {
-            throw error
+        if let err {
+            throw err
         }
 
         return try Parser.decodeChannel(from: channelJSONString)
@@ -181,7 +181,7 @@ public extension XXDK {
 
     /// Enable direct messages for a channel
     func enableDirectMessages(channelId: String) throws {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
@@ -190,7 +190,7 @@ public extension XXDK {
                 ?? Data()
 
         do {
-            try cm.enableDirectMessages(channelIdData)
+            try channelsManager.enableDirectMessages(channelIdData)
         } catch {
             fatalError("failed to enable direct messages \(error)")
         }
@@ -198,7 +198,7 @@ public extension XXDK {
 
     /// Disable direct messages for a channel
     func disableDirectMessages(channelId: String) throws {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
@@ -207,7 +207,7 @@ public extension XXDK {
                 ?? Data()
 
         do {
-            try cm.disableDirectMessages(channelIdData)
+            try channelsManager.disableDirectMessages(channelIdData)
         } catch {
             fatalError("failed to disable direct messages \(error)")
         }
@@ -215,7 +215,7 @@ public extension XXDK {
 
     /// Check if direct messages are enabled for a channel
     func areDMsEnabled(channelId: String) throws -> Bool {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
@@ -225,14 +225,14 @@ public extension XXDK {
 
         var result = ObjCBool(false)
 
-        try cm.areDMsEnabled(channelIdData, ret0_: &result)
+        try channelsManager.areDMsEnabled(channelIdData, ret0_: &result)
 
         return result.boolValue
     }
 
     /// Check if current user is admin of a channel
     func isChannelAdmin(channelId: String) -> Bool {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             return false
         }
 
@@ -240,7 +240,7 @@ public extension XXDK {
 
         var result = ObjCBool(false)
         do {
-            try cm.isChannelAdmin(channelIdData, ret0_: &result)
+            try channelsManager.isChannelAdmin(channelIdData, ret0_: &result)
             return result.boolValue
         } catch {
             AppLogger.channels.error("isChannelAdmin failed: \(error.localizedDescription, privacy: .public)")
@@ -250,37 +250,37 @@ public extension XXDK {
 
     /// Export the admin key for a channel
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
-        let result = try cm.exportChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword)
+        let result = try channelsManager.exportChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword)
         return String(data: result, encoding: .utf8) ?? ""
     }
 
     /// Import an admin key for a channel
     func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
         let privateKeyData = privateKey.data(using: .utf8) ?? Data()
 
-        try cm.importChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKeyData)
+        try channelsManager.importChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKeyData)
     }
 
     /// Get muted users for a channel
     func getMutedUsers(channelId: String) throws -> [Data] {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
-        let resultData = try cm.getMutedUsers(channelIdData)
+        let resultData = try channelsManager.getMutedUsers(channelIdData)
 
         guard let jsonArray = try? JSONSerialization.jsonObject(with: resultData) as? [String] else {
             return []
@@ -291,18 +291,18 @@ public extension XXDK {
 
     /// Mute or unmute a user in a channel
     func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
-        try cm.muteUser(channelIdData, mutedUserPubKeyBytes: pubKey, undoAction: !mute, validUntilMS: Int(Bindings.BindingsValidForeverBindings), cmixParamsJSON: "".data)
+        try channelsManager.muteUser(channelIdData, mutedUserPubKeyBytes: pubKey, undoAction: !mute, validUntilMS: Int(Bindings.BindingsValidForeverBindings), cmixParamsJSON: "".data)
     }
 
     /// Check if current user is muted in a channel
     func isMuted(channelId: String) -> Bool {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             return false
         }
 
@@ -310,7 +310,7 @@ public extension XXDK {
 
         var result = ObjCBool(false)
         do {
-            try cm.muted(channelIdData, ret0_: &result)
+            try channelsManager.muted(channelIdData, ret0_: &result)
             return result.boolValue
         } catch {
             AppLogger.channels.error("isMuted failed: \(error.localizedDescription, privacy: .public)")
@@ -319,25 +319,25 @@ public extension XXDK {
     }
 
     func getChannelNickname(channelId: String) throws -> String {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
         guard let channelIdBytes = Data(base64Encoded: channelId) else {
             throw XXDKError.invalidChannelId
         }
         var err: NSError?
-        let nickname = cm.getNickname(channelIdBytes, error: &err)
-        if let err = err { throw err }
+        let nickname = channelsManager.getNickname(channelIdBytes, error: &err)
+        if let err { throw err }
         return nickname
     }
 
     func setChannelNickname(channelId: String, nickname: String) throws {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
         guard let channelIdBytes = Data(base64Encoded: channelId) else {
             throw XXDKError.invalidChannelId
         }
-        try cm.setNickname(nickname, channelIDBytes: channelIdBytes)
+        try channelsManager.setNickname(nickname, channelIDBytes: channelIdBytes)
     }
 }

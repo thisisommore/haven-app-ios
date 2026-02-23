@@ -138,8 +138,8 @@ extension XXDK {
                 )
             }
 
-            if let actor = modelActor {
-                eventModelBuilder?.configure(modelActor: actor)
+            if let modelActor {
+                eventModelBuilder?.configure(modelActor: modelActor)
             }
 
             let extensionJSON = try JSONEncoder().encode([String]())
@@ -219,14 +219,14 @@ extension XXDK {
             let selfPubKeyB64 = selfPubKeyData.base64EncodedString()
             do {
                 try await MainActor.run {
-                    guard let actor = self.modelActor else {
+                    guard let modelActor else {
                         AppLogger.identity.error("modelActor not available")
                         return
                     }
                     let descriptor = FetchDescriptor<ChatModel>(
                         predicate: #Predicate { $0.id == selfPubKeyB64 }
                     )
-                    let existing = try actor.fetch(descriptor)
+                    let existing = try modelActor.fetch(descriptor)
                     if existing.isEmpty {
                         let token64 = DM.getToken()
                         let tokenU32 = UInt32(truncatingIfNeeded: token64)
@@ -237,8 +237,8 @@ extension XXDK {
                             dmToken: selfToken,
                             color: 0xE97451
                         )
-                        actor.insert(chat)
-                        try actor.save()
+                        modelActor.insert(chat)
+                        try modelActor.save()
                     }
                 }
             } catch {
@@ -249,18 +249,18 @@ extension XXDK {
             let cd = try await joinChannelFromURL(XX_IOS_CHAT)
             let channelId = cd.channelId ?? "xxIOS"
             try await MainActor.run {
-                guard let actor = self.modelActor else {
+                guard let modelActor else {
                     AppLogger.identity.error("modelActor not available")
                     return
                 }
                 let check = FetchDescriptor<ChatModel>(
                     predicate: #Predicate { $0.id == channelId }
                 )
-                let existingChannel = try actor.fetch(check)
+                let existingChannel = try modelActor.fetch(check)
                 if existingChannel.isEmpty {
                     let channelChat = ChatModel(channelId: channelId, name: cd.name)
-                    actor.insert(channelChat)
-                    try actor.save()
+                    modelActor.insert(channelChat)
+                    try modelActor.save()
                 }
             }
         } catch {
@@ -292,8 +292,8 @@ extension XXDK {
 
             guard privateIdentity != nil else {
                 AppLogger.identity.error("Failed to generate private identity")
-                if let error = err {
-                    AppLogger.identity.error("Error: \(error.localizedDescription, privacy: .public)")
+                if let err {
+                    AppLogger.identity.error("Error: \(err.localizedDescription, privacy: .public)")
                 }
                 continue
             }
@@ -312,8 +312,8 @@ extension XXDK {
 
             guard publicIdentity != nil else {
                 AppLogger.identity.error("Failed to derive public identity")
-                if let error = err {
-                    AppLogger.identity.error("Error: \(error.localizedDescription, privacy: .public)")
+                if let err {
+                    AppLogger.identity.error("Error: \(err.localizedDescription, privacy: .public)")
                 }
                 continue
             }
@@ -346,7 +346,7 @@ extension XXDK {
 
     /// Export identity with password encryption
     public func exportIdentity(password _: String) throws -> Data {
-        guard let cmix = cmix else {
+        guard let cmix else {
             throw XXDKError.cmixNotInitialized
         }
         return try cmix.ekvGet("MyPrivateIdentity")
@@ -357,14 +357,14 @@ extension XXDK {
         var err: NSError?
         let imported = Bindings.BindingsImportPrivateIdentity(password, data, &err)
 
-        if let error = err {
-            throw error
+        if let err {
+            throw err
         }
 
-        guard let result = imported else {
+        guard let imported else {
             throw XXDKError.importReturnedNil
         }
 
-        return result
+        return imported
     }
 }

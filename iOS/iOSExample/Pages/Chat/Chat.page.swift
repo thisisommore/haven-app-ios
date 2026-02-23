@@ -845,13 +845,13 @@ struct ChatView<T: XXDKP>: View {
                 .allowsHitTesting(false)
         )
         .overlay {
-            if let message = toastMessage {
+            if let toastMessage {
                 VStack {
                     Spacer()
                     HStack(spacing: 10) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.white)
-                        Text(message)
+                        Text(toastMessage)
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.white)

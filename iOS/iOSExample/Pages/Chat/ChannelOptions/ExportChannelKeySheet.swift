@@ -61,8 +61,8 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
                 }
                 .padding(.horizontal, 24)
 
-                if let error = errorMessage {
-                    Text(error)
+                if let errorMessage {
+                    Text(errorMessage)
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.horizontal, 24)

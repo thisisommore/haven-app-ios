@@ -81,8 +81,8 @@ struct LogHeaderBar: View {
         .padding(.vertical, 12)
         .background(Color(uiColor: .secondarySystemBackground))
         .sheet(isPresented: $showShareSheet) {
-            if let url = logFileURL {
-                ShareSheet(items: [url])
+            if let logFileURL {
+                ShareSheet(items: [logFileURL])
             }
         }
     }

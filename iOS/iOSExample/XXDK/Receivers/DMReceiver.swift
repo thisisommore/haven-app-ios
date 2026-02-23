@@ -113,16 +113,16 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     func updateSentStatus(_: Int64, messageID _: Data?, timestamp _: Int64, roundID _: Int64, status _: Int64) {}
 
     private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int, internalId _: Int64, timestamp: Int64) {
-        guard let backgroundContext = modelActor else { return }
+        guard let modelActor else { return }
         guard let partnerKey else { fatalError("partner key is not available") }
         let name = (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown"
 
         Task { @MainActor in
             do {
-                let chat = try fetchOrCreateDMChat(codename: name, ctx: backgroundContext, pubKey: partnerKey, dmToken: dmToken, color: color)
+                let chat = try fetchOrCreateDMChat(codename: name, ctx: modelActor, pubKey: partnerKey, dmToken: dmToken, color: color)
 
                 _ = try ReceiverHelpers.persistIncomingMessage(
-                    ctx: backgroundContext,
+                    ctx: modelActor,
                     chat: chat,
                     text: message,
                     messageId: messageId.base64EncodedString(),

@@ -95,8 +95,8 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
                 completedAction: openChat
             )
 
-            if let error = errorMessage {
-                Text(error)
+            if let errorMessage {
+                Text(errorMessage)
                     .font(.caption)
                     .foregroundStyle(.red)
             }
@@ -192,8 +192,8 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
 
         do {
             let joinedChannel: ChannelJSON
-            if let pp = prettyPrint {
-                joinedChannel = try await xxdk.joinChannel(pp)
+            if let prettyPrint {
+                joinedChannel = try await xxdk.joinChannel(prettyPrint)
             } else {
                 joinedChannel = try await xxdk.joinChannelFromURL(link.url)
             }

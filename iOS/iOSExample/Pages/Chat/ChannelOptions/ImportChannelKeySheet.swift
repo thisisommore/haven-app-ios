@@ -81,8 +81,8 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
                 }
                 .padding(.horizontal, 24)
 
-                if let error = errorMessage {
-                    Text(error)
+                if let errorMessage {
+                    Text(errorMessage)
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.horizontal, 24)
@@ -151,13 +151,13 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
     }
 
     private func importKey() {
-        guard let keyContent = importedKeyContent else {
+        guard let importedKeyContent else {
             errorMessage = "No key file selected"
             return
         }
 
         do {
-            try xxdk.importChannelAdminKey(channelId: channelId, encryptionPassword: decryptionPassword, privateKey: keyContent)
+            try xxdk.importChannelAdminKey(channelId: channelId, encryptionPassword: decryptionPassword, privateKey: importedKeyContent)
             errorMessage = nil
             onSuccess("Key Imported Successfully")
             dismiss()

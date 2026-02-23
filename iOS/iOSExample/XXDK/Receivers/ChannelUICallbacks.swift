@@ -42,15 +42,15 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
     var modelActor: SwiftDataActor?
 
     private func short(_ data: Data?) -> String {
-        guard let d = data else { return "nil" }
-        let b64 = d.base64EncodedString()
+        guard let data else { return "nil" }
+        let b64 = data.base64EncodedString()
         return b64.count > 16 ? String(b64.prefix(16)) + "…" : b64
     }
 
     // Pretty-print JSON from Data. If the data isn't valid JSON, try to interpret it
     // as a UTF-8 base64 string that itself contains JSON. Falls back to a short base64 preview.
     private func prettyJSONString(from data: Data?) -> String {
-        guard let data = data else { return "nil" }
+        guard let data else { return "nil" }
 
         // 1) Try raw JSON bytes first
         if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),

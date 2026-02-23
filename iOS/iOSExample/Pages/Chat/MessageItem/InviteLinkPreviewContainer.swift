@@ -55,7 +55,7 @@ struct InviteLinkHeader: View {
                     .font(.headline)
                     .foregroundStyle(Color.primary)
 
-                if let subtitle = subtitle, !subtitle.isEmpty {
+                if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.subheadline)
                         .foregroundStyle(Color.secondary)

@@ -114,8 +114,8 @@ struct NicknamePickerView<T: XXDKP>: View {
                 }
             }
 
-            if let error = errorMessage {
-                Text(error)
+            if let errorMessage {
+                Text(errorMessage)
                     .font(.caption)
                     .foregroundColor(.red)
             }

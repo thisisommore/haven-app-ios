@@ -46,9 +46,9 @@ final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRe
             return
         }
         // Decode the new data if available and store the decoded entry
-        if let newData = new {
+        if let new {
             do {
-                let entry = try Parser.decodeRemoteKVEntry(from: newData)
+                let entry = try Parser.decodeRemoteKVEntry(from: new)
                 data = try Parser.decodeString(from: Data(base64Encoded: entry.Data)!).data
             } catch {
                 fatalError("Failed to decode RemoteKV entry: \(error.localizedDescription)")

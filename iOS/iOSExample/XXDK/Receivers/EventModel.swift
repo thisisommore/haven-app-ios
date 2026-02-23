@@ -26,8 +26,8 @@ final class EventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
 
     func build(_: String?) -> (any BindingsEventModelProtocol)? {
         // If a modelActor has been configured on the builder, ensure the model gets it
-        if let actor = modelActor, r.modelActor == nil {
-            r.configure(modelActor: actor)
+        if let modelActor, r.modelActor == nil {
+            r.configure(modelActor: modelActor)
         }
         return r
     }
@@ -51,17 +51,17 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     ) throws {}
 
     func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
-        guard let jsonData = messageUpdateInfoJSON else {
+        guard let messageUpdateInfoJSON else {
             return
         }
 
-        let updateInfo = try Parser.decodeMessageUpdateInfo(from: jsonData)
+        let updateInfo = try Parser.decodeMessageUpdateInfo(from: messageUpdateInfoJSON)
 
         guard updateInfo.messageIDSet, let newMessageId = updateInfo.messageID else {
             return
         }
 
-        guard let actor = modelActor else {
+        guard let modelActor else {
             return
         }
 
@@ -69,15 +69,15 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             predicate: #Predicate { $0.internalId == uuid }
         )
 
-        if let message = try actor.fetch(descriptor).first {
+        if let message = try modelActor.fetch(descriptor).first {
             message.id = newMessageId
-            try actor.save()
+            try modelActor.save()
         }
     }
 
     private func short(_ data: Data?) -> String {
-        guard let d = data else { return "nil" }
-        let b64 = d.base64EncodedString()
+        guard let data else { return "nil" }
+        let b64 = data.base64EncodedString()
         return b64.count > 16 ? String(b64.prefix(16)) + "…" : b64
     }
 
@@ -86,18 +86,18 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         channelId: String,
         channelName: String
     ) throws -> ChatModel {
-        guard let actor = modelActor else {
+        guard let modelActor else {
             throw EventModelError.modelActorNotAvailable
         }
         let descriptor = FetchDescriptor<ChatModel>(
             predicate: #Predicate { $0.id == channelId }
         )
-        if let existing = try actor.fetch(descriptor).first {
+        if let existing = try modelActor.fetch(descriptor).first {
             return existing
         }
         let newChat = ChatModel(channelId: channelId, name: channelName)
-        actor.insert(newChat)
-        try actor.save()
+        modelActor.insert(newChat)
+        try modelActor.save()
         return newChat
     }
 
@@ -116,7 +116,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         nickname: String? = nil
     ) -> Int64 {
         do {
-            guard let actor = modelActor else {
+            guard let modelActor else {
                 fatalError("no modelActor")
             }
             let chat = try fetchOrCreateChannelChat(
@@ -129,7 +129,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             }
 
             let msg = try ReceiverHelpers.persistIncomingMessage(
-                ctx: actor,
+                ctx: modelActor,
                 chat: chat,
                 text: text,
                 messageId: mid,
@@ -226,16 +226,16 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         }
 
         do {
-            guard let actor = modelActor else {
+            guard let modelActor else {
                 fatalError("no modelActor")
             }
 
             let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
 
             var sender: MessageSenderModel? = nil
-            if let pubKey = pubKey {
+            if let pubKey {
                 sender = try ReceiverHelpers.upsertSender(
-                    ctx: actor,
+                    ctx: modelActor,
                     pubKey: pubKey,
                     codename: codename,
                     nickname: nickname,
@@ -251,7 +251,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     reaction.targetMessageId == targetId && reaction.emoji == reactionText
                 }
             )
-            let duplicateCandidates = try actor.fetch(duplicateDescriptor)
+            let duplicateCandidates = try modelActor.fetch(duplicateDescriptor)
             let senderId = sender?.id
             let sameSenderReactions = duplicateCandidates.filter { reaction in
                 reaction.sender?.id == senderId
@@ -267,7 +267,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 }
                 // If duplicates already exist, keep one canonical row.
                 for duplicate in sameSenderReactions where duplicate !== canonical {
-                    actor.delete(duplicate)
+                    modelActor.delete(duplicate)
                 }
                 record = canonical
             } else {
@@ -279,11 +279,11 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     emoji: reactionText,
                     sender: sender
                 )
-                actor.insert(newRecord)
+                modelActor.insert(newRecord)
                 record = newRecord
             }
 
-            try actor.save()
+            try modelActor.save()
             if let channelID {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(
@@ -303,7 +303,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
 
     func deleteReaction(messageId: String, emoji: String) {
         do {
-            guard let actor = modelActor else {
+            guard let modelActor else {
                 return
             }
             let descriptor = FetchDescriptor<MessageReactionModel>(
@@ -311,13 +311,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                     $0.id == messageId && $0.emoji == emoji
                 }
             )
-            let reactions = try actor.fetch(descriptor)
+            let reactions = try modelActor.fetch(descriptor)
 
             for reaction in reactions {
-                actor.delete(reaction)
+                modelActor.delete(reaction)
             }
 
-            try actor.save()
+            try modelActor.save()
         } catch {
             AppLogger.storage.error("EventModel: Failed to delete reaction: \(error.localizedDescription, privacy: .public)")
         }
@@ -381,17 +381,17 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     func updateFromUUID(_ uuid: Int64, messageUpdateInfoJSON: Data?) throws
         -> Bool
     {
-        guard let jsonData = messageUpdateInfoJSON else {
+        guard let messageUpdateInfoJSON else {
             return false
         }
 
-        let updateInfo = try Parser.decodeMessageUpdateInfo(from: jsonData)
+        let updateInfo = try Parser.decodeMessageUpdateInfo(from: messageUpdateInfoJSON)
 
         guard updateInfo.messageIDSet, let newMessageId = updateInfo.messageID else {
             return false
         }
 
-        guard let actor = modelActor else {
+        guard let modelActor else {
             return false
         }
 
@@ -399,9 +399,9 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             predicate: #Predicate { $0.internalId == uuid }
         )
 
-        if let message = try actor.fetch(descriptor).first {
+        if let message = try modelActor.fetch(descriptor).first {
             message.id = newMessageId
-            try actor.save()
+            try modelActor.save()
             return true
         }
 
@@ -409,13 +409,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
 
     func getMessage(_ messageID: Data?) throws -> Data {
-        guard let messageID = messageID else {
+        guard let messageID else {
             throw EventModelError.messageNotFound
         }
 
         let messageIdB64 = messageID.base64EncodedString()
 
-        guard let actor = modelActor else {
+        guard let modelActor else {
             throw EventModelError.modelActorNotAvailable
         }
 
@@ -423,7 +423,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         let msgDescriptor = FetchDescriptor<ChatMessageModel>(
             predicate: #Predicate { $0.id == messageIdB64 }
         )
-        if let msg = try? actor.fetch(msgDescriptor).first {
+        if let msg = try? modelActor.fetch(msgDescriptor).first {
             let pubKeyData = msg.sender?.pubkey ?? Data()
             let modelMsg = ModelMessageJSON(
                 pubKey: pubKeyData,
@@ -436,7 +436,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
         let reactionDescriptor = FetchDescriptor<MessageReactionModel>(
             predicate: #Predicate { $0.id == messageIdB64 }
         )
-        if let reaction = try? actor.fetch(reactionDescriptor).first {
+        if let reaction = try? modelActor.fetch(reactionDescriptor).first {
             let pubKeyData = reaction.sender?.pubkey ?? Data()
             let modelMsg = ModelMessageJSON(
                 pubKey: pubKeyData,
@@ -449,13 +449,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
 
     func deleteMessage(_ messageID: Data?) throws {
-        guard let messageID = messageID else {
+        guard let messageID else {
             fatalError("message id is nil")
         }
 
         let messageIdB64 = messageID.base64EncodedString()
 
-        guard let actor = modelActor else {
+        guard let modelActor else {
             fatalError("deleteMessage: no modelActor available")
         }
 
@@ -464,13 +464,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             let messageDescriptor = FetchDescriptor<ChatMessageModel>(
                 predicate: #Predicate { $0.id == messageIdB64 }
             )
-            let messages = try actor.fetch(messageDescriptor)
+            let messages = try modelActor.fetch(messageDescriptor)
 
             if !messages.isEmpty {
                 for message in messages {
-                    actor.delete(message)
+                    modelActor.delete(message)
                 }
-                try actor.save()
+                try modelActor.save()
                 return
             }
 
@@ -478,13 +478,13 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             let reactionDescriptor = FetchDescriptor<MessageReactionModel>(
                 predicate: #Predicate { $0.id == messageIdB64 }
             )
-            let reactions = try actor.fetch(reactionDescriptor)
+            let reactions = try modelActor.fetch(reactionDescriptor)
 
             if !reactions.isEmpty {
                 for reaction in reactions {
-                    actor.delete(reaction)
+                    modelActor.delete(reaction)
                 }
-                try actor.save()
+                try modelActor.save()
                 return
             }
 
