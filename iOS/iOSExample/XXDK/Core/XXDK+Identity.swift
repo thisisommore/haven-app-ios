@@ -102,9 +102,8 @@ extension XXDK {
 
         await progress(.settingUpRemoteKV)
 
-        let storageTagListener: RemoteKVKeyChangeListener
         do {
-            storageTagListener = try RemoteKVKeyChangeListener(
+            self.storageTagListener = try RemoteKVKeyChangeListener(
                 key: "channels-storage-tag",
                 remoteKV: remoteKV!,
                 version: 0,
@@ -116,8 +115,6 @@ extension XXDK {
         }
 
         await progress(.waitingForNetwork)
-
-        self.storageTagListener = storageTagListener
 
         do {
             let cmixId = cmix.getID()
