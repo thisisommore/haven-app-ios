@@ -18,6 +18,7 @@ enum XXDKError: LocalizedError {
     case identityConstructionFailed
     case importReturnedNil
     case networkNotReady
+    case appStateDirNotFound
     case custom(String)
 
     var errorDescription: String? {
@@ -30,6 +31,7 @@ enum XXDKError: LocalizedError {
         case .identityConstructionFailed: return "Failed to construct identity"
         case .importReturnedNil: return "Import returned nil"
         case .networkNotReady: return "Network not ready"
+        case .appStateDirNotFound: return "App state directory not found"
         case let .custom(msg): return msg
         }
     }

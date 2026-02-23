@@ -67,7 +67,7 @@ struct Root: View {
                             Task {
                                 do {
                                     try await xxdk.logout()
-                                } catch MyError.appStateDirNotFound {
+                                } catch XXDKError.appStateDirNotFound {
                                     AppLogger.xxdk.warning("logout: appStateDir does not exist, skipping removal")
                                 } catch {
                                     fatalError("logout failed: \(error.localizedDescription)")

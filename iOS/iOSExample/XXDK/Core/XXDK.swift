@@ -124,7 +124,7 @@ public class XXDK: XXDKP {
         await MainActor.run { self.status = "Deleting data..." }
         // 5. Delete stateDir and recreate it
         guard FileManager.default.fileExists(atPath: stateDir.path) else {
-            throw MyError.appStateDirNotFound
+            throw XXDKError.appStateDirNotFound
         }
         try FileManager.default.removeItem(at: stateDir)
         let baseDir = stateDir.deletingLastPathComponent()

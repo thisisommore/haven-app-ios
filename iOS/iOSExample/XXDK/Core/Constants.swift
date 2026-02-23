@@ -22,7 +22,6 @@ public var MAINNET_CERT =
 
 enum MyError: Error {
     case runtimeError(String)
-    case appStateDirNotFound
 }
 
 // MARK: - Modern Swift Error Types
