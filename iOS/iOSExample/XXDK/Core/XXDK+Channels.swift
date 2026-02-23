@@ -22,7 +22,6 @@ public extension XXDK {
 
     /// Join a channel using pretty print format
     internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
-        try await Task.sleep(for: .seconds(20))
         guard let cmix else { throw XXDKError.cmixNotInitialized }
         guard let storageTagListener else {
             AppLogger.channels.critical("no storageTagListener")
