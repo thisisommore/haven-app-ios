@@ -155,18 +155,12 @@ extension XXDK {
                 nil,
                 &e2eErr
             ) else {
-                AppLogger.fileTransfer.critical("Failed to create E2e: \(e2eErr?.localizedDescription ?? "unknown", privacy: .public)")
-                throw e2eErr ?? MyError.runtimeError("[FT] Failed to create E2e")
+                AppLogger.identity.critical("Failed to create E2e: \(e2eErr?.localizedDescription ?? "unknown", privacy: .public)")
+                throw e2eErr ?? MyError.runtimeError("Failed to create E2e")
             }
             e2e = e2eObj
 
-            channelsFileTransfer = try ChannelsFileTransfer.initialize(
-                e2eID: Int(e2eObj.getID()),
-                paramsJson: nil
-            )
-
-            let extensionIDs = [channelsFileTransfer!.getExtensionBuilderID()]
-            let extensionJSON = try JSONEncoder().encode(extensionIDs)
+            let extensionJSON = try JSONEncoder().encode([String]())
 
             if !(sm?.isSetupComplete ?? false) {
                 guard

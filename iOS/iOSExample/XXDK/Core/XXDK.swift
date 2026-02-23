@@ -37,9 +37,6 @@ public class XXDK: XXDKP {
     var sm: SecretManager?
     var modelActor: SwiftDataActor?
     var e2e: BindingsE2e?
-    var channelsFileTransfer: ChannelsFileTransfer?
-
-    private var fileDownloadObserver: Any?
 
     // MARK: - Init
 
@@ -97,18 +94,6 @@ public class XXDK: XXDKP {
         dmReceiver.modelActor = mActor
         channelUICallbacks.configure(modelActor: mActor)
         eventModelBuilder?.configure(modelActor: mActor)
-
-        setupFileDownloadObserver()
-    }
-
-    private func setupFileDownloadObserver() {
-        fileDownloadObserver = NotificationCenter.default.addObserver(
-            forName: .fileDownloadNeeded,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            self?.handleFileDownloadNeeded(notification)
-        }
     }
 
     // MARK: - Logout

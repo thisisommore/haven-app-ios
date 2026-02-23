@@ -48,7 +48,7 @@ public enum XXDKProgressStatus {
         case .waitingForNetwork:
             return "Waiting for network to be ready"
         case .creatingE2e:
-            return "Setting up file transfer"
+            return "Setting up E2E"
         case .preparingChannelsManager:
             return "Preparing channels manager"
         case .joiningChannels:

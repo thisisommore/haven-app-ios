@@ -30,9 +30,6 @@ enum AppLogger {
     /// Logger for network operations
     static let network = Logger(subsystem: subsystem, category: "Network")
 
-    /// Logger for file transfer operations
-    static let fileTransfer = Logger(subsystem: subsystem, category: "FileTransfer")
-
     /// Logger for storage/persistence operations
     static let storage = Logger(subsystem: subsystem, category: "Storage")
 

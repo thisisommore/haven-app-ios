@@ -58,8 +58,7 @@ struct ChatMessageRow<T: XXDKP>: View {
                     timestamp: result.timestamp,
                     isAdmin: isAdmin,
                     onScrollToReply: onScrollToReply,
-                    isHighlighted: isHighlighted,
-                    chatMessage: result
+                    isHighlighted: isHighlighted
                 )
                 Reactions(reactions: reactions)
             }

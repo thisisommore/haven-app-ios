@@ -273,35 +273,4 @@ public class XXDKMock: XXDKP {
     func setDMNickname(_: String) throws {
         // Mock: do nothing
     }
-
-    func initChannelsFileTransfer(paramsJson _: Data?) throws {
-        // Mock: no-op
-    }
-
-    func uploadFile(fileData _: Data, retry _: Float, progressCB _: FtSentProgressCallback, periodMS _: Int) throws -> Data {
-        // Mock: return empty file ID
-        return Data()
-    }
-
-    func sendFile(channelId _: String, fileLinkJSON _: Data, fileName _: String, fileType _: String, preview _: Data?, validUntilMS _: Int) throws -> ChannelSendReportJSON {
-        // Mock: return empty report
-        return ChannelSendReportJSON(messageID: nil, ephId: nil)
-    }
-
-    func retryFileUpload(fileIDBytes _: Data, progressCB _: FtSentProgressCallback, periodMS _: Int) throws {
-        // Mock: no-op
-    }
-
-    func closeFileSend(fileIDBytes _: Data) throws {
-        // Mock: no-op
-    }
-
-    func registerFileProgressCallback(fileIDBytes _: Data, progressCB _: FtSentProgressCallback, periodMS _: Int) throws {
-        // Mock: no-op
-    }
-
-    func downloadFile(fileInfoJSON _: Data, progressCB _: FtReceivedProgressCallback, periodMS _: Int) throws -> Data {
-        // Mock: return empty file ID
-        return Data()
-    }
 }

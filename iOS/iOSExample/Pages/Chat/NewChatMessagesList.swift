@@ -427,10 +427,6 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             hasher.combine(message.newRenderKindRaw)
             hasher.combine(message.newRenderVersion)
             hasher.combine(message.newRenderPlainText ?? "")
-            hasher.combine(message.fileName ?? "")
-            hasher.combine(message.fileType ?? "")
-            hasher.combine(message.fileData?.count ?? -1)
-            hasher.combine(message.filePreview?.count ?? -1)
             if let sender = message.sender {
                 hasher.combine(sender.id)
                 hasher.combine(sender.codename)

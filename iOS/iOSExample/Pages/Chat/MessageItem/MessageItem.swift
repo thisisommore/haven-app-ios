@@ -19,9 +19,6 @@ struct MessageItem<T: XXDKP>: View {
     let timeStamp: String
     let isAdmin: Bool
 
-    // File message properties
-    let chatMessage: ChatMessageModel?
-
     var onReply: (() -> Void)?
     var onDM: ((String, Int32, Data, Int) -> Void)?
     var onDelete: (() -> Void)?
@@ -31,7 +28,7 @@ struct MessageItem<T: XXDKP>: View {
     var onScrollToReply: ((String) -> Void)?
     let isHighlighted: Bool
 
-    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: MessageSenderModel?, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false, chatMessage: ChatMessageModel? = nil) {
+    init(text: String, isIncoming: Bool, repliedTo: String?, repliedToId: String? = nil, sender: MessageSenderModel?, isFirstInGroup: Bool = true, isLastInGroup: Bool = true, showTimestamp: Bool = true, onReply: (() -> Void)? = nil, onDM: ((String, Int32, Data, Int) -> Void)? = nil, onDelete: (() -> Void)? = nil, onMute: ((Data) -> Void)? = nil, onUnmute: ((Data) -> Void)? = nil, isSenderMuted: Bool = false, isEmojiSheetPresented: Bool = false, shouldTriggerReply: Bool = false, selectedEmoji: MessageEmoji = .none, timestamp: Date, isAdmin: Bool = false, onScrollToReply: ((String) -> Void)? = nil, isHighlighted: Bool = false) {
         self.text = text
         self.isIncoming = isIncoming
         self.repliedTo = repliedTo
@@ -49,7 +46,6 @@ struct MessageItem<T: XXDKP>: View {
         self.isAdmin = isAdmin
         self.onScrollToReply = onScrollToReply
         self.isHighlighted = isHighlighted
-        self.chatMessage = chatMessage
         _isEmojiSheetPresented = State(initialValue: isEmojiSheetPresented)
         _shouldTriggerReply = State(initialValue: shouldTriggerReply)
         _selectedEmoji = State(initialValue: selectedEmoji)
@@ -83,17 +79,7 @@ struct MessageItem<T: XXDKP>: View {
                 HStack {
                     ConditionalSpacer(!isIncoming)
 
-                    // Check if this is a file message
-                    if let msg = chatMessage, msg.hasFile {
-                        FileMessageBubble(
-                            message: msg,
-                            isIncoming: isIncoming,
-                            timestamp: timeStamp,
-                            showTimestamp: showTimestamp,
-                            isHighlighted: isHighlighted
-                        )
-                    } else {
-                        MessageBubble<T>(
+                    MessageBubble<T>(
                             text: text,
                             isIncoming: isIncoming,
                             sender: sender,
@@ -111,7 +97,6 @@ struct MessageItem<T: XXDKP>: View {
                             isSenderMuted: isSenderMuted,
                             isHighlighted: isHighlighted
                         )
-                    }
 
                     ConditionalSpacer(isIncoming)
                 }
