@@ -23,8 +23,7 @@ public extension XXDK {
     /// Join a channel using pretty print format
     internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
         // channelsManager can be nil
-        if let channelsManager = channelsManager {
-            // _channelsManager will always be defined
+        if let channelsManager  {
             let raw = try channelsManager.joinChannel(prettyPrint)
             let channel = try Parser.decodeChannel(from: raw)
             return channel
@@ -40,21 +39,21 @@ public extension XXDK {
         privacyLevel: PrivacyLevel,
         enableDms: Bool = true
     ) async throws -> ChannelJSON {
-        guard let cm = channelsManager else {
+        guard let channelsManager = channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
         var err: NSError?
 
-        let prettyPrint = cm.generateChannel(
+        let prettyPrint = channelsManager.generateChannel(
             name,
             description: description,
             privacyLevel: privacyLevel.rawValue,
             error: &err
         )
 
-        if let error = err {
-            throw error
+        if let err = err {
+            throw err
         }
 
         let channel = try await joinChannel(prettyPrint)
@@ -74,7 +73,7 @@ public extension XXDK {
 
     /// Leave a channel
     func leaveChannel(channelId: String) throws {
-        guard let cm = channelsManager else {
+        guard let channelsManager = channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
 
@@ -83,7 +82,7 @@ public extension XXDK {
                 ?? Data()
 
         do {
-            try cm.leaveChannel(channelIdData)
+            try channelsManager.leaveChannel(channelIdData)
         } catch {
             fatalError("failed to leave channel \(error)")
         }
@@ -91,17 +90,17 @@ public extension XXDK {
 
     /// Get the share URL for a channel
     func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
-        guard let cm = channelsManager else {
+        guard let channelsManager else {
             throw XXDKError.channelManagerNotInitialized
         }
-        guard let cmixInstance = cmix else {
+        guard let cmix  else {
             throw XXDKError.cmixNotInitialized
         }
 
         let channelIdData =
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
-        let resultData = try cm.getShareURL(cmixInstance.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData)
+        let resultData = try channelsManager.getShareURL(cmix.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData)
         return try Parser.decodeShareURL(from: resultData)
     }
 
@@ -111,8 +110,8 @@ public extension XXDK {
         var typeValue = 0
         Bindings.BindingsGetShareUrlType(url, &typeValue, &err)
 
-        if let error = err {
-            throw error
+        if let err {
+            throw err
         }
 
         return typeValue == 2 ? .secret : .publicChannel
