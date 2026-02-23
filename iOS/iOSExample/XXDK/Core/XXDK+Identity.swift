@@ -347,7 +347,7 @@ extension XXDK {
     /// Export identity with password encryption
     public func exportIdentity(password _: String) throws -> Data {
         guard let cmix = cmix else {
-            throw MyError.runtimeError("cMix not initialized")
+            throw XXDKError.cmixNotInitialized
         }
         return try cmix.ekvGet("MyPrivateIdentity")
     }
@@ -362,7 +362,7 @@ extension XXDK {
         }
 
         guard let result = imported else {
-            throw MyError.runtimeError("Import returned nil")
+            throw XXDKError.importReturnedNil
         }
 
         return result

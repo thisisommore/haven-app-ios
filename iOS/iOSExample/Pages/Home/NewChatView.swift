@@ -152,7 +152,7 @@ struct NewChatView<T: XXDKP>: View {
 
             // Create and save the chat to the database
             guard let channelId = joinedChannel.channelId else {
-                throw MyError.runtimeError("Channel ID is missing")
+                throw XXDKError.channelIdMissing
             }
 
             // Enable or disable direct messages based on toggle

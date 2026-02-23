@@ -94,7 +94,7 @@ struct CreateSpaceView<T: XXDKP>: View {
                 )
 
                 guard let channelId = channel.channelId else {
-                    throw MyError.runtimeError("Channel ID is missing")
+                    throw XXDKError.channelIdMissing
                 }
 
                 let newChat = ChatModel(channelId: channelId, name: channel.name, isAdmin: true, isSecret: privacyLevel == .secret)

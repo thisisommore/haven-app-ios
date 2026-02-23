@@ -19,9 +19,3 @@ let XX_IOS_CHAT =
 public var MAINNET_CERT =
     Bundle.main.path(forResource: "mainnet", ofType: "crt")
         ?? "unknown resource path"
-
-enum MyError: Error {
-    case runtimeError(String)
-}
-
-// MARK: - Modern Swift Error Types

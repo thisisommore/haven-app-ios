@@ -143,7 +143,7 @@ public class XXDK: XXDKP {
 
     public func getDMNickname() throws -> String {
         guard let dm = DM else {
-            throw MyError.runtimeError("DM Client not initialized")
+            throw XXDKError.dmClientNotInitialized
         }
         var err: NSError?
         let nickname = dm.getNickname(&err)
@@ -153,7 +153,7 @@ public class XXDK: XXDKP {
 
     public func setDMNickname(_ nickname: String) throws {
         guard let dm = DM else {
-            throw MyError.runtimeError("DM Client not initialized")
+            throw XXDKError.dmClientNotInitialized
         }
         try dm.setNickname(nickname)
     }

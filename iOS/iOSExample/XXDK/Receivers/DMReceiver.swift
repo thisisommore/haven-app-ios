@@ -143,7 +143,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             if let existingByKey = try ctx.fetch(byKey).first {
                 return existingByKey
             } else {
-                guard let dmToken else { throw MyError.runtimeError("dmToken is required to create chat with pubKey") }
+                guard let dmToken else { throw XXDKError.dmTokenRequired }
                 let newChat = ChatModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
                 ctx.insert(newChat)
                 try ctx.save()
@@ -155,7 +155,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             if let existingByName = try ctx.fetch(byName).first {
                 return existingByName
             } else {
-                throw MyError.runtimeError("pubkey is required to create chat")
+                throw XXDKError.pubkeyRequired
             }
         }
     }

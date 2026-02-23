@@ -199,7 +199,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
             }
 
             guard let channelId = joinedChannel.channelId else {
-                throw MyError.runtimeError("Channel ID is missing")
+                throw XXDKError.channelIdMissing
             }
 
             if enableDM {

@@ -23,7 +23,7 @@ public extension XXDK {
     /// Join a channel using pretty print format
     internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
         try await Task.sleep(for: .seconds(20))
-        guard let cmix else { throw MyError.runtimeError("no net") }
+        guard let cmix else { throw XXDKError.cmixNotInitialized }
         guard let storageTagListener else {
             AppLogger.channels.critical("no storageTagListener")
             fatalError("no storageTagListener")
@@ -43,9 +43,7 @@ public extension XXDK {
             fatalError("notifications dummy was nil")
         }
         if let e = err {
-            throw MyError.runtimeError(
-                "could not load notifications dummy: \(e.localizedDescription)"
-            )
+            throw XXDKError.loadNotificationsDummyFailed(e.localizedDescription)
         }
 
         let cm: Bindings.BindingsChannelsManager
@@ -61,9 +59,7 @@ public extension XXDK {
                 channelUICallbacks,
                 &err
             ) else {
-                throw MyError.runtimeError(
-                    "could not load channels manager: \(err?.localizedDescription ?? "unknown error")"
-                )
+                throw XXDKError.loadChannelsManagerFailed(err?.localizedDescription ?? "unknown error")
             }
             cm = loadedCm
             channelsManager = cm
@@ -82,7 +78,7 @@ public extension XXDK {
         enableDms: Bool = true
     ) async throws -> ChannelJSON {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
 
         var err: NSError?
@@ -101,7 +97,7 @@ public extension XXDK {
         let channel = try await joinChannel(prettyPrint)
 
         guard let channelId = channel.channelId else {
-            throw MyError.runtimeError("ChannelID was not found")
+            throw XXDKError.channelIdNotFound
         }
 
         if enableDms {
@@ -116,7 +112,7 @@ public extension XXDK {
     /// Leave a channel
     func leaveChannel(channelId: String) throws {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData =
@@ -133,10 +129,10 @@ public extension XXDK {
     /// Get the share URL for a channel
     func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
         guard let cmixInstance = cmix else {
-            throw MyError.runtimeError("Cmix not initialized")
+            throw XXDKError.cmixNotInitialized
         }
 
         let channelIdData =
@@ -224,7 +220,7 @@ public extension XXDK {
     /// Enable direct messages for a channel
     func enableDirectMessages(channelId: String) throws {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData =
@@ -241,7 +237,7 @@ public extension XXDK {
     /// Disable direct messages for a channel
     func disableDirectMessages(channelId: String) throws {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData =
@@ -258,7 +254,7 @@ public extension XXDK {
     /// Check if direct messages are enabled for a channel
     func areDMsEnabled(channelId: String) throws -> Bool {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData =
@@ -317,7 +313,7 @@ public extension XXDK {
     /// Get muted users for a channel
     func getMutedUsers(channelId: String) throws -> [Data] {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
@@ -334,7 +330,7 @@ public extension XXDK {
     /// Mute or unmute a user in a channel
     func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
 
         let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
@@ -362,7 +358,7 @@ public extension XXDK {
 
     func getChannelNickname(channelId: String) throws -> String {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
         guard let channelIdBytes = Data(base64Encoded: channelId) else {
             throw XXDKError.invalidChannelId
@@ -375,7 +371,7 @@ public extension XXDK {
 
     func setChannelNickname(channelId: String, nickname: String) throws {
         guard let cm = channelsManager else {
-            throw MyError.runtimeError("Channels Manager not initialized")
+            throw XXDKError.channelManagerNotInitialized
         }
         guard let channelIdBytes = Data(base64Encoded: channelId) else {
             throw XXDKError.invalidChannelId
