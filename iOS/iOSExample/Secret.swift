@@ -14,7 +14,7 @@ enum KeychainError: Error {
     case unhandledError(status: OSStatus)
 }
 
-public class SecretManager: ObservableObject {
+public class AppStorage: ObservableObject {
     @Published var isPasswordSet: Bool = false
 
     private let serviceName = "internalPassword"

@@ -11,7 +11,7 @@ import SwiftUI
 struct Provider<Content: View>: View {
     @StateObject private var logOutput = LogViewer()
     @StateObject private var xxdk = XXDK()
-    @StateObject private var secretManager = SecretManager()
+    @StateObject private var secretManager = AppStorage()
     @StateObject private var navigation = AppNavigationPath()
     @StateObject private var selectedChat = SelectedChat()
 

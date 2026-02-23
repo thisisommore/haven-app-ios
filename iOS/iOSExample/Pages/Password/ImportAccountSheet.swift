@@ -12,7 +12,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var navigation: AppNavigationPath
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var sm: SecretManager
+    @EnvironmentObject var sm: AppStorage
 
     @Binding var importPassword: String
     @State private var selectedFileURL: URL?

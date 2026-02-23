@@ -11,7 +11,7 @@ struct LandingPage<T>: View where T: XXDKP {
     @State private var moveUp: Bool = false
     @State private var showProgress: Bool = false
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject private var sm: SecretManager
+    @EnvironmentObject private var sm: AppStorage
     @State private var isLoadingDone = false
     var body: some View {
         VStack(spacing: 12) {

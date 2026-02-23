@@ -12,7 +12,7 @@ import SwiftUI
 struct Root: View {
     @EnvironmentObject var logOutput: LogViewer
     @EnvironmentObject var xxdk: XXDK
-    @EnvironmentObject var secretManager: SecretManager
+    @EnvironmentObject var secretManager: AppStorage
     @EnvironmentObject var selectedChat: SelectedChat
     @EnvironmentObject var modelDataActor: SwiftDataActor
     @EnvironmentObject var navigation: AppNavigationPath

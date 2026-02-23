@@ -11,7 +11,7 @@ struct PasswordCreationView<T: XXDKP>: View {
     @State private var showImportSheet: Bool = false
     @State private var importPassword: String = ""
 
-    @EnvironmentObject var sm: SecretManager
+    @EnvironmentObject var sm: AppStorage
     @EnvironmentObject var xxdk: T
     @EnvironmentObject var swiftDataActor: SwiftDataActor
     @EnvironmentObject var navigation: AppNavigationPath
@@ -96,7 +96,7 @@ enum BranchColor {
 
 #Preview {
     PasswordCreationView<XXDKMock>()
-        .environmentObject(SecretManager())
+        .environmentObject(AppStorage())
         .environmentObject(AppNavigationPath())
         .mock()
 }
