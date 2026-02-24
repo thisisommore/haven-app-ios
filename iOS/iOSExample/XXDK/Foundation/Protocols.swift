@@ -39,7 +39,7 @@ protocol XXDKP: ObservableObject, AnyObject {
     func leaveChannel(channelId: String) throws
     func createChannel(name: String, description: String, privacyLevel: PrivacyLevel, enableDms: Bool) async throws -> ChannelJSON
     func getShareURL(channelId: String, host: String) throws -> ShareURLJSON
-    func setModelContainer(mActor: SwiftDataActor, sm: AppStorage)
+    func setStates(mActor: SwiftDataActor, appStorage: AppStorage)
     func isChannelAdmin(channelId: String) -> Bool
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
     func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws

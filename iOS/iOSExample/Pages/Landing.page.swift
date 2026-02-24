@@ -11,7 +11,7 @@ struct LandingPage<T>: View where T: XXDKP {
     @State private var moveUp: Bool = false
     @State private var showProgress: Bool = false
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject private var sm: AppStorage
+    @EnvironmentObject private var appStorage: AppStorage
     @State private var isLoadingDone = false
     var body: some View {
         VStack(spacing: 12) {
@@ -29,7 +29,7 @@ struct LandingPage<T>: View where T: XXDKP {
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .onChange(of: xxdk.statusPercentage) { _, newValue in
-                        if newValue == 100 && sm.isSetupComplete && !isLoadingDone {
+                        if newValue == 100 && appStorage.isSetupComplete && !isLoadingDone {
                             isLoadingDone = true
                         }
                     }
@@ -60,11 +60,11 @@ struct LandingPage<T>: View where T: XXDKP {
             }
         }
         .onChange(of: showProgress) { _, newValue in
-            if newValue && xxdk.statusPercentage == 100 && sm.isSetupComplete && !isLoadingDone {
+            if newValue && xxdk.statusPercentage == 100 && appStorage.isSetupComplete && !isLoadingDone {
                 isLoadingDone = true
             }
         }
-        .onChange(of: sm.isSetupComplete) { _, newValue in
+        .onChange(of: appStorage.isSetupComplete) { _, newValue in
             if newValue {
                 isLoadingDone = true
             }

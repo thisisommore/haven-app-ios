@@ -26,7 +26,7 @@ public class XXDK: XXDKP {
     var cmix: Bindings.BindingsCmix?
     var DM: BindingsDMClientWrapper?
     var dmReceiver = DMReceiver()
-    var eventModelBuilder: EventModelBuilder = .init(
+    var eventModelBuilder = EventModelBuilder(
         model: EventModel()
     )
     var channelsManager: BindingsChannelsManagerWrapper?
@@ -75,8 +75,8 @@ public class XXDK: XXDKP {
 
     // MARK: - Model Container Setup
 
-    public func setModelContainer(mActor: SwiftDataActor, sm: AppStorage) {
-        appStorage = sm
+    public func setStates(mActor: SwiftDataActor, appStorage: AppStorage) {
+        self.appStorage = appStorage
         modelActor = mActor
         dmReceiver.modelActor = mActor
         channelUICallbacks.configure(modelActor: mActor)
@@ -127,8 +127,6 @@ public class XXDK: XXDKP {
             self.statusPercentage = 0
         }
     }
-
-    // MARK: - DM Nickname
 
     public func getDMNickname() throws -> String {
         guard let DM else {

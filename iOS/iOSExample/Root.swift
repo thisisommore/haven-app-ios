@@ -21,74 +21,14 @@ struct Root: View {
 
     var body: some View {
         Group {
-            // we use split view when setup is completed
             if appStorage.isSetupComplete {
-                NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
-                    NavigationStack(path: $navigation.path) {
-                        HomeView<XXDK>()
-                            .navigationDestination(for: Destination.self) {
-                                destination in
-                                destination.destinationView()
-                            }
-                    }
-                } detail: {
-                    if let chatId = selectedChat.chatId {
-                        ChatView<XXDK>(
-                            chatId: chatId,
-                            chatTitle: selectedChat.chatTitle
-                        )
-                        .id(chatId)
-                    }
-                    // only display empty chat selection view for big screen, for small screen there is not enough space for that
-                    else if horizontalSizeClass == .regular {
-                        EmptyChatSelectionView()
-                    }
-                }
-                .navigationSplitViewStyle(.balanced)
-            }
-            // for setup we don't use split view
-            else {
-                NavigationStack(path: $navigation.path) {
-                    EmptyView()
-                        .navigationDestination(for: Destination.self) {
-                            destination in
-                            destination.destinationView()
-                        }
-                        .onAppear {
-                            if didRunOnboardingReset {
-                                return
-                            }
-                            didRunOnboardingReset = true
-                            xxdk.setModelContainer(
-                                mActor: modelDataActor,
-                                sm: appStorage
-                            )
-
-                            Task {
-                                do {
-                                    try await xxdk.logout()
-                                } catch XXDKError.appStateDirNotFound {
-                                    AppLogger.xxdk.warning("logout: appStateDir does not exist, skipping removal")
-                                } catch {
-                                    fatalError("logout failed: \(error.localizedDescription)")
-                                }
-                                try! modelDataActor.deleteAll(
-                                    MessageReactionModel.self
-                                )
-                                try! modelDataActor.deleteAll(
-                                    MessageSenderModel.self
-                                )
-                                try! modelDataActor.deleteAll(ChatModel.self)
-                                try! modelDataActor.save()
-                                appStorage.clearAll()
-                                navigation.path.append(Destination.password)
-                            }
-                        }
-                }
+                setupCompletedView
+            } else {
+                setupIncompleteView
             }
         }
         .onAppear {
-            xxdk.setModelContainer(mActor: modelDataActor, sm: appStorage)
+            xxdk.setStates(mActor: modelDataActor, appStorage: appStorage)
         }
         .onChange(of: appStorage.isSetupComplete) { _, newValue in
             if newValue {
@@ -97,6 +37,76 @@ struct Root: View {
         }
         .logViewerOnShake()
         .handleDeepLinks()
+    }
+
+    @ViewBuilder
+    private var setupCompletedView: some View {
+        NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+            NavigationStack(path: $navigation.path) {
+                HomeView<XXDK>()
+                    .navigationDestination(for: Destination.self) {
+                        destination in
+                        destination.destinationView()
+                    }
+            }
+        } detail: {
+            detailContent
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    @ViewBuilder
+    private var setupIncompleteView: some View {
+        NavigationStack(path: $navigation.path) {
+            EmptyView()
+                .navigationDestination(for: Destination.self) {
+                    destination in
+                    destination.destinationView()
+                }
+                .onAppear {
+                    if didRunOnboardingReset {
+                        return
+                    }
+                    didRunOnboardingReset = true
+                    xxdk.setStates(
+                        mActor: modelDataActor,
+                        appStorage: appStorage
+                    )
+
+                    Task {
+                        do {
+                            try await xxdk.logout()
+                        } catch XXDKError.appStateDirNotFound {
+                            AppLogger.xxdk.warning("logout: appStateDir does not exist, skipping removal")
+                        } catch {
+                            fatalError("logout failed: \(error.localizedDescription)")
+                        }
+                        try! modelDataActor.deleteAll(
+                            MessageReactionModel.self
+                        )
+                        try! modelDataActor.deleteAll(
+                            MessageSenderModel.self
+                        )
+                        try! modelDataActor.deleteAll(ChatModel.self)
+                        try! modelDataActor.save()
+                        appStorage.clearAll()
+                        navigation.path.append(Destination.password)
+                    }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var detailContent: some View {
+        if let chatId = selectedChat.chatId {
+            ChatView<XXDK>(
+                chatId: chatId,
+                chatTitle: selectedChat.chatTitle
+            )
+            .id(chatId)
+        } else if horizontalSizeClass == .regular {
+            EmptyChatSelectionView()
+        }
     }
 }
 

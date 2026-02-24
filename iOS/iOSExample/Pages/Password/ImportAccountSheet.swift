@@ -12,7 +12,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var navigation: AppNavigationPath
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var sm: AppStorage
+    @EnvironmentObject var appStorage: AppStorage
 
     @Binding var importPassword: String
     @State private var selectedFileURL: URL?
@@ -154,7 +154,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
             let identity = try xxdk.importIdentity(password: importPassword, data: data)
 
             // Use the import password as the app password
-            try sm.storePassword(importPassword)
+            try appStorage.storePassword(importPassword)
 
             Task.detached {
                 // Initialize Cmix before loading identity

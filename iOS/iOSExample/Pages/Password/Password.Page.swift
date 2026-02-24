@@ -11,7 +11,7 @@ struct PasswordCreationView<T: XXDKP>: View {
     @State private var showImportSheet: Bool = false
     @State private var importPassword: String = ""
 
-    @EnvironmentObject var sm: AppStorage
+    @EnvironmentObject var appStorage: AppStorage
     @EnvironmentObject var xxdk: T
     @EnvironmentObject var swiftDataActor: SwiftDataActor
     @EnvironmentObject var navigation: AppNavigationPath
@@ -68,7 +68,7 @@ struct PasswordCreationView<T: XXDKP>: View {
         attemptedSubmit = true
         guard canContinue else { return }
 
-        try! sm.storePassword(password)
+        try! appStorage.storePassword(password)
         isLoading = true
 
         Task.detached {

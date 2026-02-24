@@ -25,10 +25,6 @@ final class EventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
     }
 
     func build(_: String?) -> (any BindingsEventModelProtocol)? {
-        // If a modelActor has been configured on the builder, ensure the model gets it
-        if let modelActor, r.modelActor == nil {
-            r.configure(modelActor: modelActor)
-        }
         return r
     }
 }
