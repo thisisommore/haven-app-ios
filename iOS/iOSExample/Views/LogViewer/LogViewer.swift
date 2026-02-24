@@ -15,7 +15,7 @@ struct LogMessage: Identifiable {
 // LogViewer observes messages to stdout and stderr and sends them to your callback
 // function
 @MainActor
-public class LogViewer: ObservableObject {
+class LogViewer: ObservableObject {
     @Published var Messages: [LogMessage] = [LogMessage(Msg: "LogMessages")]
     private var size: Int
     private var count: UInt = 1

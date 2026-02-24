@@ -11,7 +11,7 @@ import Kronos
 import SwiftData
 import SwiftUI
 
-public class XXDK: XXDKP {
+class XXDK: XXDKP {
     @Published var status: String = "..."
     @Published var statusPercentage: Double = 0
     @Published var codename: String?
@@ -75,7 +75,7 @@ public class XXDK: XXDKP {
 
     // MARK: - Model Container Setup
 
-    public func setStates(mActor: SwiftDataActor, appStorage: AppStorage) {
+    func setStates(mActor: SwiftDataActor, appStorage: AppStorage) {
         self.appStorage = appStorage
         modelActor = mActor
         dmReceiver.modelActor = mActor
@@ -85,7 +85,7 @@ public class XXDK: XXDKP {
 
     // MARK: - Logout
 
-    public func logout() async throws {
+    func logout() async throws {
         // 1. Stop network follower
         try! cmix?.stopNetworkFollower()
 
@@ -128,14 +128,14 @@ public class XXDK: XXDKP {
         }
     }
 
-    public func getDMNickname() throws -> String {
+    func getDMNickname() throws -> String {
         guard let DM else {
             throw XXDKError.dmClientNotInitialized
         }
         return try DM.getNickname()
     }
 
-    public func setDMNickname(_ nickname: String) throws {
+    func setDMNickname(_ nickname: String) throws {
         guard let DM else {
             throw XXDKError.dmClientNotInitialized
         }

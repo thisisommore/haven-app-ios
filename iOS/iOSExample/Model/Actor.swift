@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @ModelActor
-public actor SwiftDataActor: ObservableObject {
+actor SwiftDataActor: ObservableObject {
     private func insert_<T: PersistentModel>(_ m: T) {
         modelContext.insert(m)
     }
@@ -122,9 +122,9 @@ public actor SwiftDataActor: ObservableObject {
     }
 }
 
-// Public convenience initializer for previews/tests that forwards to the
+// Convenience initializer for previews/tests that forwards to the
 // synthesized @ModelActor initializer without shadowing it.
-public extension SwiftDataActor {
+extension SwiftDataActor {
     nonisolated init(previewModelContainer container: ModelContainer) {
         self.init(modelContainer: container)
     }

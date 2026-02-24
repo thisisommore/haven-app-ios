@@ -6,15 +6,15 @@
 import Bindings
 import Foundation
 
-public extension XXDK {
+extension XXDK {
     /// Join a channel using a URL (public share link)
-    internal func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
+    func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
         let prettyPrint = try BindingsStatic.decodePublicURL(url)
         return try await joinChannel(prettyPrint)
     }
 
     /// Join a channel using pretty print format
-    internal func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
+    func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
         // channelsManager can be nil
         if let channelsManager {
             guard let raw = try channelsManager.joinChannel(prettyPrint) else {

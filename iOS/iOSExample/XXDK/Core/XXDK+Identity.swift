@@ -344,7 +344,7 @@ extension XXDK {
     }
 
     /// Export identity with password encryption
-    public func exportIdentity(password _: String) throws -> Data {
+    func exportIdentity(password _: String) throws -> Data {
         guard let cmix else {
             throw XXDKError.cmixNotInitialized
         }
@@ -352,7 +352,7 @@ extension XXDK {
     }
 
     /// Import a private identity using a password
-    public func importIdentity(password: String, data: Data) throws -> Data {
+    func importIdentity(password: String, data: Data) throws -> Data {
         guard let imported = try BindingsStatic.importPrivateIdentity(password: password, data: data) else {
             throw XXDKError.importReturnedNil
         }

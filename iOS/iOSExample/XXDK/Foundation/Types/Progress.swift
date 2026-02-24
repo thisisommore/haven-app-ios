@@ -6,7 +6,7 @@
 //
 
 // Add this enum before the XXDK class definition
-public enum XXDKProgressStatus {
+enum XXDKProgressStatus {
     case downloadingNDF
     case settingUpCmix
     case loadingCmix

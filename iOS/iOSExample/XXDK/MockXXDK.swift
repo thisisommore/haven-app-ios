@@ -11,14 +11,14 @@ import Kronos
 import SwiftData
 import SwiftUI
 
-public class XXDKMock: XXDKP {
+class XXDKMock: XXDKP {
     func importChannelAdminKey(channelId _: String, encryptionPassword _: String, privateKey _: String) throws {}
 
     func deleteMessage(channelId _: String, messageId _: String) {}
 
     @Published var status: String = "Initiating"
     @Published var statusPercentage: Double = 0
-    public func setStates(mActor: SwiftDataActor, appStorage _: AppStorage) {
+    func setStates(mActor: SwiftDataActor, appStorage _: AppStorage) {
         // Retain container and inject into receivers/callbacks
 
         dmReceiver.modelActor = mActor

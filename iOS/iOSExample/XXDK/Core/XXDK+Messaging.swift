@@ -109,7 +109,7 @@ extension XXDK {
     }
 
     // Send a reaction to a specific message in a channel
-    public func sendReaction(
+    func sendReaction(
         emoji: String,
         toMessageIdB64: String,
         inChannelId channelId: String
@@ -254,7 +254,7 @@ extension XXDK {
     }
 
     // Send a reaction to a specific message in a DM conversation
-    public func sendReaction(
+    func sendReaction(
         emoji: String,
         toMessageIdB64: String,
         toPubKey: Data,
@@ -297,7 +297,7 @@ extension XXDK {
     }
 
     /// Delete a message from a channel (admin or message owner only)
-    public func deleteMessage(channelId: String, messageId: String) {
+    func deleteMessage(channelId: String, messageId: String) {
         guard let channelsManager else {
             return
         }

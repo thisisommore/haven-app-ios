@@ -7,7 +7,7 @@ import Foundation
 import SwiftUI
 
 extension XXDK {
-    public func progress(_ status: XXDKProgressStatus) async {
+    func progress(_ status: XXDKProgressStatus) async {
         await MainActor.run {
             withAnimation {
                 self.status = status.message
