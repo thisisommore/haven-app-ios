@@ -96,20 +96,6 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
         self.modelActor = modelActor
     }
 
-    var modelContainer: ModelContainer?
-
-    private func fetchOrCreateChannelChat(channelId: String, channelName: String, ctx: SwiftDataActor) throws -> ChatModel {
-        let descriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == channelId })
-        if let existing = try ctx.fetch(descriptor).first {
-            return existing
-        } else {
-            let newChat = ChatModel(channelId: channelId, name: channelName)
-            ctx.insert(newChat)
-            try ctx.save()
-            return newChat
-        }
-    }
-
     // Event notifications (generic JSON payloads)
     func eventUpdate(_: Int64, jsonData _: Data?) {}
 }
