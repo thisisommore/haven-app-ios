@@ -103,9 +103,14 @@ extension XXDK {
         await progress(.settingUpRemoteKV)
 
         do {
+            guard let kv = cmix.getRemoteKV() else {
+                AppLogger.identity.critical("getRemoteKV returned nil")
+                fatalError("getRemoteKV returned nil")
+            }
+            remoteKV = kv
             storageTagListener = try RemoteKVKeyChangeListener(
                 key: "channels-storage-tag",
-                remoteKV: cmix.getRemoteKV()!,
+                remoteKV: kv,
                 version: 0,
                 localEvents: true
             )
@@ -166,11 +171,19 @@ extension XXDK {
                     timestamp: timestamp
                 )
                 let entryData = try Parser.encodeRemoteKVEntry(entry)
-                try remoteKV!.set("channels-storage-tag", objectJSON: entryData)
+                guard let remoteKV, let channelsManager, let storageTagListener else {
+                    AppLogger.identity.critical("remoteKV/channelsManager/storageTagListener is nil")
+                    fatalError("remoteKV/channelsManager/storageTagListener is nil")
+                }
+                try remoteKV.set("channels-storage-tag", objectJSON: entryData)
                 // the data sometimes is not available in the listener immediately so we set it manually
-                storageTagListener!.data = channelsManager!.getStorageTag().data
+                storageTagListener.data = channelsManager.getStorageTag().data
             } else {
-                let storageTagString = storageTagListener!.data!.utf8
+                guard let storageTagListener, let storageTagData = storageTagListener.data else {
+                    AppLogger.identity.critical("storageTagListener or its data is nil")
+                    fatalError("storageTagListener or its data is nil")
+                }
+                let storageTagString = storageTagData.utf8
                 let cm: Bindings.BindingsChannelsManager?
                 do {
                     cm = try BindingsStatic.loadChannelsManager(
