@@ -115,25 +115,20 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
     }
 
     private func deriveUserInfo() {
-        let identityData: Data?
+        let identity: IdentityJSON?
         do {
-            identityData = try BindingsStatic.constructIdentity(pubKey: link.pubKey, codeset: link.codeset)
+            identity = try BindingsStatic.constructIdentity(pubKey: link.pubKey, codeset: link.codeset)
         } catch {
             return
         }
-        guard let identityData else { return }
+        guard let identity else { return }
 
-        do {
-            let identity = try Parser.decodeIdentity(from: identityData)
-            userName = identity.codename
-            var colorStr = identity.color
-            if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
-                colorStr.removeFirst(2)
-            }
-            userColor = Int(colorStr, radix: 16) ?? 0xE97451
-        } catch {
-            // Keep defaults
+        userName = identity.codename
+        var colorStr = identity.color
+        if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
+            colorStr.removeFirst(2)
         }
+        userColor = Int(colorStr, radix: 16) ?? 0xE97451
     }
 
     private func checkIfAlreadyAdded() {

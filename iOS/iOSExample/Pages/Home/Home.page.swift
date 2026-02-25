@@ -305,9 +305,9 @@ struct HomeView<T: XXDKP>: View {
         }
 
         // Derive codename and color using BindingsConstructIdentity
-        let identityData: Data?
+        let identity: IdentityJSON?
         do {
-            identityData = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
+            identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
         } catch {
             AppLogger.home.error("BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)")
             withAnimation(.spring(response: 0.3)) {
@@ -318,7 +318,7 @@ struct HomeView<T: XXDKP>: View {
             }
             return
         }
-        guard let identityData else {
+        guard let identity else {
             AppLogger.home.error("BindingsConstructIdentity returned nil")
             withAnimation(.spring(response: 0.3)) { toastMessage = "Failed to derive identity" }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { withAnimation { toastMessage = nil } }
@@ -327,24 +327,12 @@ struct HomeView<T: XXDKP>: View {
 
         let name: String
         let color: Int
-        do {
-            let identity = try Parser.decodeIdentity(from: identityData)
-            name = identity.codename
-            var colorStr = identity.color
-            if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
-                colorStr.removeFirst(2)
-            }
-            color = Int(colorStr, radix: 16) ?? 0xE97451
-        } catch {
-            AppLogger.home.error("Failed to decode identity: \(error.localizedDescription, privacy: .public)")
-            withAnimation(.spring(response: 0.3)) {
-                toastMessage = "Failed to decode identity"
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                withAnimation { toastMessage = nil }
-            }
-            return
+        name = identity.codename
+        var colorStr = identity.color
+        if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
+            colorStr.removeFirst(2)
         }
+        color = Int(colorStr, radix: 16) ?? 0xE97451
 
         let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
 

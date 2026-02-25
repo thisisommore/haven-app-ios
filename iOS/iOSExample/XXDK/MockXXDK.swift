@@ -23,7 +23,7 @@ class XXDKMock: XXDKP {
 
         dmReceiver.modelActor = mActor
         channelUICallbacks.configure(modelActor: mActor)
-        eventModelBuilder = EventModelBuilder(model: EventModel())
+        eventModelBuilder = ChannelEventModelBuilder(model: ChannelEventModel())
         eventModelBuilder?.configure(modelActor: mActor)
     }
 
@@ -174,7 +174,7 @@ class XXDKMock: XXDKP {
 
     var cmix: Bindings.BindingsCmix?
     var channelsManager: BindingsChannelsManagerWrapper?
-    var eventModelBuilder: EventModelBuilder?
+    var eventModelBuilder: ChannelEventModelBuilder?
     var remoteKV: Bindings.BindingsRemoteKV?
     var storageTagListener: RemoteKVKeyChangeListener?
     private var modelContainer: ModelContainer?

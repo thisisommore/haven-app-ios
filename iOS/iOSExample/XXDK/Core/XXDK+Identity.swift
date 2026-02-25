@@ -44,23 +44,17 @@ extension XXDK {
             }
         }
 
-        let publicIdentity: Data?
+        let publicIdentity: IdentityJSON?
         do {
             publicIdentity = try BindingsStatic.getPublicChannelIdentityFromPrivate(privateIdentity)
         } catch {
             AppLogger.identity.critical("could not derive public identity: \(error.localizedDescription, privacy: .public)")
             fatalError("could not derive public identity: " + error.localizedDescription)
         }
-        if let publicIdentity {
-            do {
-                let identity = try Parser.decodeIdentity(from: publicIdentity)
-
-                await MainActor.run {
-                    self.codeset = identity.codeset
-                    self.codename = identity.codename
-                }
-            } catch {
-                AppLogger.identity.error("failed to decode public identity json: \(error.localizedDescription, privacy: .public)")
+        if let identity = publicIdentity {
+            await MainActor.run {
+                self.codeset = identity.codeset
+                self.codename = identity.codename
             }
         }
 
@@ -310,7 +304,7 @@ extension XXDK {
                 continue
             }
 
-            let publicIdentity: Data?
+            let publicIdentity: IdentityJSON?
             do {
                 publicIdentity = try BindingsStatic.getPublicChannelIdentityFromPrivate(privateIdentity)
             } catch {
@@ -318,26 +312,19 @@ extension XXDK {
                 continue
             }
 
-            guard let publicIdentity else {
+            guard let identity = publicIdentity else {
                 AppLogger.identity.error("Failed to derive public identity: returned nil")
                 continue
             }
 
-            do {
-                let identity = try Parser.decodeIdentity(from: publicIdentity)
+            let generatedIdentity = GeneratedIdentity(
+                privateIdentity: privateIdentity,
+                codename: identity.codename,
+                codeset: identity.codeset,
+                pubkey: identity.pubkey
+            )
 
-                let generatedIdentity = GeneratedIdentity(
-                    privateIdentity: privateIdentity,
-                    codename: identity.codename,
-                    codeset: identity.codeset,
-                    pubkey: identity.pubkey
-                )
-
-                identities.append(generatedIdentity)
-
-            } catch {
-                AppLogger.identity.error("Failed to decode identity JSON: \(error.localizedDescription, privacy: .public)")
-            }
+            identities.append(generatedIdentity)
         }
 
         return identities

@@ -177,15 +177,15 @@ struct DeepLinkHandler: ViewModifier {
             return
         }
 
-        let identityData: Data?
+        let identity: IdentityJSON?
         do {
-            identityData = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
+            identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
         } catch {
             AppLogger.app.error("DeepLink: BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)")
             deepLinkError = "Failed to derive identity"
             return
         }
-        guard let identityData else {
+        guard let identity else {
             AppLogger.app.error("DeepLink: BindingsConstructIdentity returned nil")
             deepLinkError = "Failed to derive identity"
             return
@@ -193,19 +193,12 @@ struct DeepLinkHandler: ViewModifier {
 
         let name: String
         let color: Int
-        do {
-            let identity = try Parser.decodeIdentity(from: identityData)
-            name = identity.codename
-            var colorStr = identity.color
-            if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
-                colorStr.removeFirst(2)
-            }
-            color = Int(colorStr, radix: 16) ?? 0xE97451
-        } catch {
-            AppLogger.app.error("DeepLink: Failed to decode identity: \(error.localizedDescription, privacy: .public)")
-            deepLinkError = "Failed to decode identity"
-            return
+        name = identity.codename
+        var colorStr = identity.color
+        if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
+            colorStr.removeFirst(2)
         }
+        color = Int(colorStr, radix: 16) ?? 0xE97451
 
         let newChat = ChatModel(
             pubKey: pubKey,

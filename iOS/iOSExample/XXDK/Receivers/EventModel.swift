@@ -7,8 +7,8 @@ extension Notification.Name {
     static let userMuteStatusChanged = Notification.Name("userMuteStatusChanged")
 }
 
-final class EventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
-    private var r: EventModel
+final class ChannelEventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
+    private var r: ChannelEventModel
 
     var modelActor: SwiftDataActor?
 
@@ -19,7 +19,7 @@ final class EventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
         r.configure(modelActor: modelActor)
     }
 
-    init(model: EventModel) {
+    init(model: ChannelEventModel) {
         r = model
         super.init()
     }
@@ -29,7 +29,7 @@ final class EventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
     }
 }
 
-final class EventModel: NSObject, BindingsEventModelProtocol {
+final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
     // Optional SwiftData container for persisting chats/messages
 
     var modelActor: SwiftDataActor?
@@ -98,7 +98,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
     }
 
     // Persist a message into SwiftData if modelActor is set
-    private func persistIncomingMessageIfPossible(
+    private func persistMessage(
         channelId: String,
         channelName: String,
         text: String,
@@ -120,7 +120,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 channelName: channelName
             )
 
-            guard let mid = messageIdB64, !mid.isEmpty else {
+            guard let messageIdB64 = messageIdB64, !messageIdB64.isEmpty else {
                 fatalError("no message id")
             }
 
@@ -128,7 +128,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
                 ctx: modelActor,
                 chat: chat,
                 text: text,
-                messageId: mid,
+                messageId: messageIdB64,
                 senderPubKey: senderPubKey,
                 senderCodename: senderCodename,
                 nickname: nickname,
@@ -173,7 +173,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
             if let decodedText = decodeMessage(messageTextB64) {
-                return persistIncomingMessageIfPossible(
+                return persistMessage(
                     channelId: channelIdB64,
                     channelName: "Channel \(String(channelIdB64.prefix(8)))",
                     text: decodedText,
@@ -350,7 +350,7 @@ final class EventModel: NSObject, BindingsEventModelProtocol {
             fatalError("reactionTo is missing")
         }
         if let decodedReply = decodeMessage(replyTextB64) {
-            return persistIncomingMessageIfPossible(
+            return persistMessage(
                 channelId: channelIdB64,
                 channelName: "Channel \(String(channelIdB64.prefix(8)))",
                 text: decodedReply,

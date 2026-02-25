@@ -48,21 +48,16 @@ extension XXDK {
             return
         }
         do {
-            let reportData = try channelsManager.sendMessage(
+            let report = try channelsManager.sendMessage(
                 channelIdData,
                 message: encodedMsg,
                 validUntilMS: 0,
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
             )
-            do {
-                let report = try Parser.decodeChannelSendReport(
-                    from: reportData
-                )
+            if let report {
                 if let mid = report.messageID {
                 } else {}
-            } catch {
-                AppLogger.messaging.error("Failed to decode ChannelSendReport: \(error.localizedDescription, privacy: .public)")
             }
         } catch {
             AppLogger.messaging.error("sendDM(channel) failed: \(error.localizedDescription, privacy: .public)")
@@ -86,7 +81,7 @@ extension XXDK {
             return
         }
         do {
-            let reportData = try channelsManager.sendReply(
+            let report = try channelsManager.sendReply(
                 channelIdData,
                 message: encodedMsg,
                 messageToReactTo: replyToMessageId,
@@ -94,14 +89,9 @@ extension XXDK {
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
             )
-            do {
-                let report = try Parser.decodeChannelSendReport(
-                    from: reportData
-                )
+            if let report {
                 if let mid = report.messageID {
                 } else {}
-            } catch {
-                AppLogger.messaging.error("Failed to decode ChannelSendReport (reply): \(error.localizedDescription, privacy: .public)")
             }
         } catch {
             AppLogger.messaging.error("sendReply(channel) failed: \(error.localizedDescription, privacy: .public)")
@@ -126,27 +116,20 @@ extension XXDK {
             return
         }
         do {
-            let reportData = try channelsManager.sendReaction(
+            let report = try channelsManager.sendReaction(
                 channelIdData,
                 reaction: emoji,
                 messageToReactTo: targetMessageId,
                 validUntilMS: Bindings.BindingsValidForeverBindings,
                 cmixParamsJSON: "".data
             )
-            do {
-                let report = try Parser.decodeChannelSendReport(
-                    from: reportData
-                )
-                if let mid = report.messageID {
-                } else {}
+            if let report, let messageID = report.messageID {
                 persistReaction(
-                    messageIdB64: report.messageID!.base64EncodedString(),
+                    messageIdB64: messageID.base64EncodedString(),
                     emoji: emoji,
                     targetMessageId: toMessageIdB64,
                     isMe: true
                 )
-            } catch {
-                AppLogger.messaging.error("Failed to decode ChannelSendReport (reaction): \(error.localizedDescription, privacy: .public)")
             }
         } catch {
             AppLogger.messaging.error("sendReaction(channel) failed: \(error.localizedDescription, privacy: .public)")
@@ -159,7 +142,7 @@ extension XXDK {
             fatalError("DM not there")
         }
         do {
-            let reportData = try DM.sendText(
+            let report = try DM.sendText(
                 toPubKey,
                 partnerToken: partnerToken,
                 message: msg,
@@ -167,27 +150,19 @@ extension XXDK {
                 cmixParamsJSON: "".data
             )
 
-            do {
-                let report = try Parser.decodeChannelSendReport(
-                    from: reportData
-                )
-                if let mid = report.messageID {
-                    let chatId = toPubKey.base64EncodedString()
-                    let _: String = {
-                        if let modelActor {
-                            let descriptor = FetchDescriptor<ChatModel>(
-                                predicate: #Predicate { $0.id == chatId }
-                            )
-                            if let found = try? modelActor.fetch(descriptor).first {
-                                return found.name
-                            }
+            if let report, let mid = report.messageID {
+                let chatId = toPubKey.base64EncodedString()
+                let _: String = {
+                    if let modelActor {
+                        let descriptor = FetchDescriptor<ChatModel>(
+                            predicate: #Predicate { $0.id == chatId }
+                        )
+                        if let found = try? modelActor.fetch(descriptor).first {
+                            return found.name
                         }
-                        return "Direct Message"
-                    }()
-
-                } else {}
-            } catch {
-                AppLogger.messaging.error("Failed to decode ChannelSendReport: \(error.localizedDescription, privacy: .public)")
+                    }
+                    return "Direct Message"
+                }()
             }
         } catch {
             AppLogger.messaging.error("Unable to send: \(error.localizedDescription, privacy: .public)")
@@ -214,7 +189,7 @@ extension XXDK {
             return
         }
         do {
-            let reportData = try DM.sendReply(
+            let report = try DM.sendReply(
                 toPubKey,
                 partnerToken: partnerToken,
                 replyMessage: encodedMsg,
@@ -222,30 +197,23 @@ extension XXDK {
                 leaseTimeMS: 0,
                 cmixParamsJSON: "".data
             )
-            do {
-                let report = try Parser.decodeChannelSendReport(
-                    from: reportData
-                )
-                if let mid = report.messageID {
-                    AppLogger.messaging.debug("DM sendReply messageID: \(mid.base64EncodedString(), privacy: .public)")
-                    let chatId = toPubKey.base64EncodedString()
-                    let _: String = {
-                        if let modelActor {
-                            let descriptor = FetchDescriptor<ChatModel>(
-                                predicate: #Predicate { $0.id == chatId }
-                            )
-                            if let found = try? modelActor.fetch(descriptor).first {
-                                return found.name
-                            }
+            if let report, let mid = report.messageID {
+                AppLogger.messaging.debug("DM sendReply messageID: \(mid.base64EncodedString(), privacy: .public)")
+                let chatId = toPubKey.base64EncodedString()
+                let _: String = {
+                    if let modelActor {
+                        let descriptor = FetchDescriptor<ChatModel>(
+                            predicate: #Predicate { $0.id == chatId }
+                        )
+                        if let found = try? modelActor.fetch(descriptor).first {
+                            return found.name
                         }
-                        return "Direct Message"
-                    }()
+                    }
+                    return "Direct Message"
+                }()
 
-                } else {
-                    AppLogger.messaging.warning("DM sendReply returned no messageID")
-                }
-            } catch {
-                AppLogger.messaging.error("Failed to decode ChannelSendReport (DM reply): \(error.localizedDescription, privacy: .public)")
+            } else {
+                AppLogger.messaging.warning("DM sendReply returned no messageID")
             }
         } catch {
             AppLogger.messaging.critical("Unable to send reply: \(error.localizedDescription, privacy: .public)")
@@ -268,27 +236,20 @@ extension XXDK {
             return
         }
         do {
-            let reportData = try DM.sendReaction(
+            let report = try DM.sendReaction(
                 toPubKey,
                 partnerToken: partnerToken,
                 reaction: emoji,
                 reactToBytes: targetMessageId,
                 cmixParamsJSON: "".data
             )
-            do {
-                let report = try Parser.decodeChannelSendReport(
-                    from: reportData
-                )
-                if let mid = report.messageID {
-                } else {}
+            if let report, let messageID = report.messageID {
                 persistReaction(
-                    messageIdB64: report.messageID!.base64EncodedString(),
+                    messageIdB64: messageID.base64EncodedString(),
                     emoji: emoji,
                     targetMessageId: toMessageIdB64,
                     isMe: true
                 )
-            } catch {
-                AppLogger.messaging.error("Failed to decode ChannelSendReport (DM reaction): \(error.localizedDescription, privacy: .public)")
             }
         } catch {
             AppLogger.messaging.critical("Unable to send reaction: \(error.localizedDescription, privacy: .public)")

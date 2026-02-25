@@ -26,8 +26,8 @@ class XXDK: XXDKP {
     var cmix: Bindings.BindingsCmix?
     var DM: BindingsDMClientWrapper?
     var dmReceiver = DMReceiver()
-    var eventModelBuilder = EventModelBuilder(
-        model: EventModel()
+    var eventModelBuilder = ChannelEventModelBuilder(
+        model: ChannelEventModel()
     )
     var channelsManager: BindingsChannelsManagerWrapper?
     var channelUICallbacks: ChannelUICallbacks
@@ -112,7 +112,10 @@ class XXDK: XXDKP {
         remoteKV = nil
         storageTagListener = nil
 
-        // 5. Delete stateDir and recreate it
+        // 5. Clear caches
+        ReceiverHelpers.clearSelfChatCache()
+
+        // 6. Delete stateDir and recreate it
         guard FileManager.default.fileExists(atPath: stateDir.path) else {
             throw XXDKError.appStateDirNotFound
         }

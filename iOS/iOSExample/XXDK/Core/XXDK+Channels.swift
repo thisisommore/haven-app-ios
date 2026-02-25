@@ -17,10 +17,9 @@ extension XXDK {
     func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
         // channelsManager can be nil
         if let channelsManager {
-            guard let raw = try channelsManager.joinChannel(prettyPrint) else {
+            guard let channel = try channelsManager.joinChannel(prettyPrint) else {
                 throw XXDKError.channelJsonNil
             }
-            let channel = try Parser.decodeChannel(from: raw)
             return channel
         } else {
             throw XXDKError.channelManagerNotInitialized
@@ -88,8 +87,10 @@ extension XXDK {
         let channelIdData =
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
 
-        let resultData = try channelsManager.getShareURL(cmix.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData)
-        return try Parser.decodeShareURL(from: resultData)
+        guard let shareURL = try channelsManager.getShareURL(cmix.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData) else {
+            throw XXDKError.channelJsonNil
+        }
+        return shareURL
     }
 
     /// Get the privacy level for a given channel URL
@@ -101,10 +102,10 @@ extension XXDK {
     /// Get channel data from a channel URL
     func getChannelFromURL(url: String) throws -> ChannelJSON {
         let prettyPrint = try BindingsStatic.decodePublicURL(url)
-        guard let channelJSONData = try BindingsStatic.getChannelJSON(prettyPrint) else {
+        guard let channel = try BindingsStatic.getChannelJSON(prettyPrint) else {
             throw XXDKError.channelJsonNil
         }
-        return try Parser.decodeChannel(from: channelJSONData)
+        return channel
     }
 
     /// Decode a private channel URL with password
@@ -115,10 +116,10 @@ extension XXDK {
     /// Get channel data from a private channel URL with password
     func getPrivateChannelFromURL(url: String, password: String) throws -> ChannelJSON {
         let prettyPrint = try decodePrivateURL(url: url, password: password)
-        guard let channelJSONData = try BindingsStatic.getChannelJSON(prettyPrint) else {
+        guard let channel = try BindingsStatic.getChannelJSON(prettyPrint) else {
             throw XXDKError.channelJsonNil
         }
-        return try Parser.decodeChannel(from: channelJSONData)
+        return channel
     }
 
     /// Enable direct messages for a channel

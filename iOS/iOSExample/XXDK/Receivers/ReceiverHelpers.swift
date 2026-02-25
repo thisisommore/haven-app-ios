@@ -10,6 +10,8 @@ import Foundation
 import SwiftData
 
 enum ReceiverHelpers {
+    private static var cachedSelfChatId: Data?
+
     private static func postChatMessageUpdate(chatId: String) {
         DispatchQueue.main.async {
             NotificationCenter.default.post(
@@ -22,10 +24,9 @@ enum ReceiverHelpers {
 
     /// Parse identity from pubKey and codeset, returning codename and color
     static func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
-        guard let identityData = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset) else {
+        guard let identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset) else {
             throw EventModelError.identityConstructionFailed
         }
-        let identity = try Parser.decodeIdentity(from: identityData)
         var colorStr = identity.color
         if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
             colorStr.removeFirst(2)
@@ -35,12 +36,24 @@ enum ReceiverHelpers {
 
     /// Check if sender's pubKey matches the "<self>" chat pubKey
     static func isSenderSelf(senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
-        let selfChatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == "<self>" })
-        if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
-            guard let senderPubKey else { return false }
-            return Data(base64Encoded: selfChat.id) == senderPubKey
+        guard let senderPubKey else { return false }
+
+        if cachedSelfChatId == nil {
+            let selfChatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == "<self>" })
+            if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
+                cachedSelfChatId = Data(base64Encoded: selfChat.id)
+            }
+        }
+
+        if let selfId = cachedSelfChatId {
+            return selfId == senderPubKey
         }
         return false
+    }
+
+    /// Clear cached self chat ID (call after user switches)
+    static func clearSelfChatCache() {
+        cachedSelfChatId = nil
     }
 
     /// Fetch or create a sender, updating dmToken and nickname if exists

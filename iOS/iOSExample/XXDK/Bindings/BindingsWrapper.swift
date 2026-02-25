@@ -27,11 +27,12 @@ enum BindingsStatic {
         return result
     }
 
-    static func getChannelJSON(_ prettyPrint: String) throws -> Data? {
+    static func getChannelJSON(_ prettyPrint: String) throws -> ChannelJSON? {
         var err: NSError?
         let result = Bindings.BindingsGetChannelJSON(prettyPrint, &err)
         if let err { throw err }
-        return result
+        guard let data = result else { return nil }
+        return try Parser.decodeChannel(from: data)
     }
 
     static func getShareUrlType(_ url: String) throws -> Int {
@@ -43,18 +44,20 @@ enum BindingsStatic {
     }
 
     // Identity
-    static func getPublicChannelIdentityFromPrivate(_ privateIdentity: Data) throws -> Data? {
+    static func getPublicChannelIdentityFromPrivate(_ privateIdentity: Data) throws -> IdentityJSON? {
         var err: NSError?
         let result = Bindings.BindingsGetPublicChannelIdentityFromPrivate(privateIdentity, &err)
         if let err { throw err }
-        return result
+        guard let data = result else { return nil }
+        return try Parser.decodeIdentity(from: data)
     }
 
-    static func constructIdentity(pubKey: Data?, codeset: Int) throws -> Data? {
+    static func constructIdentity(pubKey: Data?, codeset: Int) throws -> IdentityJSON? {
         var err: NSError?
         let result = Bindings.BindingsConstructIdentity(pubKey, codeset, &err)
         if let err { throw err }
-        return result
+        guard let data = result else { return nil }
+        return try Parser.decodeIdentity(from: data)
     }
 
     static func generateChannelIdentity(_ cmixId: Int) throws -> Data? {
@@ -167,8 +170,6 @@ final class BindingsChannelsManagerWrapper {
         self.inner = inner
     }
 
-    var unwrap: Bindings.BindingsChannelsManager { inner }
-
     func generateChannel(name: String, description: String, privacyLevel: Int) throws -> String {
         var err: NSError?
         let result = inner.generateChannel(name, description: description, privacyLevel: privacyLevel, error: &err)
@@ -202,10 +203,15 @@ final class BindingsChannelsManagerWrapper {
     }
 
     // Pass-through to inner (already use Swift throws)
-    func joinChannel(_ prettyPrint: String) throws -> Data? { try inner.joinChannel(prettyPrint) }
+    func joinChannel(_ prettyPrint: String) throws -> ChannelJSON? {
+        let data = try inner.joinChannel(prettyPrint)
+        return try Parser.decodeChannel(from: data)
+    }
+
     func leaveChannel(_ channelIdData: Data) throws { try inner.leaveChannel(channelIdData) }
-    func getShareURL(_ cmixId: Int, host: String, maxUses: Int, channelIdBytes: Data) throws -> Data {
-        try inner.getShareURL(cmixId, host: host, maxUses: maxUses, channelIdBytes: channelIdBytes)
+    func getShareURL(_ cmixId: Int, host: String, maxUses: Int, channelIdBytes: Data) throws -> ShareURLJSON? {
+        let data = try inner.getShareURL(cmixId, host: host, maxUses: maxUses, channelIdBytes: channelIdBytes)
+        return try Parser.decodeShareURL(from: data)
     }
 
     func enableDirectMessages(_ channelIdData: Data) throws { try inner.enableDirectMessages(channelIdData) }
@@ -228,16 +234,19 @@ final class BindingsChannelsManagerWrapper {
     }
 
     func getStorageTag() -> String { inner.getStorageTag() }
-    func sendMessage(_ channelIdData: Data, message: String, validUntilMS: Int64, cmixParamsJSON: Data, pingsJSON: Data?) throws -> Data {
-        try inner.sendMessage(channelIdData, message: message, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON, pingsJSON: pingsJSON)
+    func sendMessage(_ channelIdData: Data, message: String, validUntilMS: Int64, cmixParamsJSON: Data, pingsJSON: Data?) throws -> ChannelSendReportJSON? {
+        let data = try inner.sendMessage(channelIdData, message: message, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON, pingsJSON: pingsJSON)
+        return try Parser.decodeChannelSendReport(from: data)
     }
 
-    func sendReply(_ channelIdData: Data, message: String, messageToReactTo: Data, validUntilMS: Int64, cmixParamsJSON: Data, pingsJSON: Data?) throws -> Data {
-        try inner.sendReply(channelIdData, message: message, messageToReactTo: messageToReactTo, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON, pingsJSON: pingsJSON)
+    func sendReply(_ channelIdData: Data, message: String, messageToReactTo: Data, validUntilMS: Int64, cmixParamsJSON: Data, pingsJSON: Data?) throws -> ChannelSendReportJSON? {
+        let data = try inner.sendReply(channelIdData, message: message, messageToReactTo: messageToReactTo, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON, pingsJSON: pingsJSON)
+        return try Parser.decodeChannelSendReport(from: data)
     }
 
-    func sendReaction(_ channelIdData: Data, reaction: String, messageToReactTo: Data, validUntilMS: Int64, cmixParamsJSON: Data) throws -> Data {
-        try inner.sendReaction(channelIdData, reaction: reaction, messageToReactTo: messageToReactTo, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON)
+    func sendReaction(_ channelIdData: Data, reaction: String, messageToReactTo: Data, validUntilMS: Int64, cmixParamsJSON: Data) throws -> ChannelSendReportJSON? {
+        let data = try inner.sendReaction(channelIdData, reaction: reaction, messageToReactTo: messageToReactTo, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON)
+        return try Parser.decodeChannelSendReport(from: data)
     }
 
     func deleteMessage(_ channelIdData: Data, targetMessageIdBytes: Data, cmixParamsJSON: Data) throws {
@@ -254,8 +263,6 @@ final class BindingsDMClientWrapper {
         self.inner = inner
     }
 
-    var unwrap: Bindings.BindingsDMClient { inner }
-
     func getNickname() throws -> String {
         var err: NSError?
         let result = inner.getNickname(&err)
@@ -266,15 +273,18 @@ final class BindingsDMClientWrapper {
     func getPublicKey() -> Data? { inner.getPublicKey() }
     func getToken() -> Int64 { inner.getToken() }
     func setNickname(_ nickname: String) throws { try inner.setNickname(nickname) }
-    func sendText(_ toPubKey: Data, partnerToken: Int32, message: String, leaseTimeMS: Int64, cmixParamsJSON: Data) throws -> Data {
-        try inner.sendText(toPubKey, partnerToken: partnerToken, message: message, leaseTimeMS: leaseTimeMS, cmixParamsJSON: cmixParamsJSON)
+    func sendText(_ toPubKey: Data, partnerToken: Int32, message: String, leaseTimeMS: Int64, cmixParamsJSON: Data) throws -> ChannelSendReportJSON? {
+        let data = try inner.sendText(toPubKey, partnerToken: partnerToken, message: message, leaseTimeMS: leaseTimeMS, cmixParamsJSON: cmixParamsJSON)
+        return try Parser.decodeChannelSendReport(from: data)
     }
 
-    func sendReply(_ toPubKey: Data, partnerToken: Int32, replyMessage: String, replyToBytes: Data, leaseTimeMS: Int64, cmixParamsJSON: Data) throws -> Data {
-        try inner.sendReply(toPubKey, partnerToken: partnerToken, replyMessage: replyMessage, replyToBytes: replyToBytes, leaseTimeMS: leaseTimeMS, cmixParamsJSON: cmixParamsJSON)
+    func sendReply(_ toPubKey: Data, partnerToken: Int32, replyMessage: String, replyToBytes: Data, leaseTimeMS: Int64, cmixParamsJSON: Data) throws -> ChannelSendReportJSON? {
+        let data = try inner.sendReply(toPubKey, partnerToken: partnerToken, replyMessage: replyMessage, replyToBytes: replyToBytes, leaseTimeMS: leaseTimeMS, cmixParamsJSON: cmixParamsJSON)
+        return try Parser.decodeChannelSendReport(from: data)
     }
 
-    func sendReaction(_ toPubKey: Data, partnerToken: Int32, reaction: String, reactToBytes: Data, cmixParamsJSON: Data) throws -> Data {
-        try inner.sendReaction(toPubKey, partnerToken: partnerToken, reaction: reaction, reactToBytes: reactToBytes, cmixParamsJSON: cmixParamsJSON)
+    func sendReaction(_ toPubKey: Data, partnerToken: Int32, reaction: String, reactToBytes: Data, cmixParamsJSON: Data) throws -> ChannelSendReportJSON? {
+        let data = try inner.sendReaction(toPubKey, partnerToken: partnerToken, reaction: reaction, reactToBytes: reactToBytes, cmixParamsJSON: cmixParamsJSON)
+        return try Parser.decodeChannelSendReport(from: data)
     }
 }
