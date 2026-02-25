@@ -109,7 +109,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
             )
         }
         .sheet(isPresented: $showConfirmation) {
-            ChannelConfirmationView(
+            JoinChannelConfirmationView(
                 channelName: channelData?.name ?? link.name,
                 channelURL: link.url,
                 isJoining: $isJoining,
