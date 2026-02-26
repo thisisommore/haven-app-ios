@@ -56,19 +56,14 @@ struct IdentityJSON: Codable {
     let CodesetVersion: Int
 }
 
-struct ChannelJSON: Decodable, Identifiable {
-    let ReceptionID: String?
+struct ChannelJSON: Decodable {
     let ChannelID: String?
     let Name: String
     let Description: String
-
-    var id: String {
-        ChannelID ?? Name
-    }
 }
 
 struct RoundsListJSON: Decodable {
-    let rounds: [UInt64]?
+    let Rounds: [UInt64]?
 }
 
 struct ChannelSendReportJSON: Decodable {

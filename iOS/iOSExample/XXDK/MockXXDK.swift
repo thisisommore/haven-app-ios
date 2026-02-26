@@ -53,7 +53,6 @@ class XXDKMock: XXDKP {
         // Mock: return sample joined channel data after a short delay
         try await Task.sleep(for: .seconds(1))
         return ChannelJSON(
-            ReceptionID: "mock-reception-id",
             ChannelID: "mock-channel-id-\(UUID().uuidString)",
             Name: "Mock Joined Channel",
             Description: "This is a mock joined channel"
@@ -68,7 +67,6 @@ class XXDKMock: XXDKP {
     func getChannelFromURL(url _: String) throws -> ChannelJSON {
         // Mock: return sample channel data
         return ChannelJSON(
-            ReceptionID: "mock-reception-id",
             ChannelID: "mock-channel-id",
             Name: "Mock Channel",
             Description: "This is a mock channel for testing"
@@ -83,7 +81,6 @@ class XXDKMock: XXDKP {
     func getPrivateChannelFromURL(url _: String, password _: String) throws -> ChannelJSON {
         // Mock: return sample private channel data
         return ChannelJSON(
-            ReceptionID: "mock-reception-id",
             ChannelID: "mock-private-channel-id",
             Name: "Mock Private Channel",
             Description: "This is a mock private channel for testing"
@@ -117,7 +114,6 @@ class XXDKMock: XXDKP {
         try await Task.sleep(for: .seconds(1))
         let channelId = "mock-channel-\(UUID().uuidString)"
         return ChannelJSON(
-            ReceptionID: "mock-reception-id",
             ChannelID: channelId,
             Name: name,
             Description: description
