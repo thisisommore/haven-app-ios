@@ -51,13 +51,18 @@ extension XXDK {
             let report = try channelsManager.sendMessage(
                 channelIdData,
                 message: encodedMsg,
-                validUntilMS: 0,
+                validUntilMS: 30000,
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
             )
             if let report {
                 if let mid = report.messageID {
-                } else {}
+                    AppLogger.messaging.debug("DEL channel sendDM messageID: \(mid.base64EncodedString(), privacy: .public) msg: \(msg, privacy: .public)")
+                } else {
+                    AppLogger.messaging.error("DEL no messageID")
+                }
+            } else {
+                AppLogger.messaging.error("DEL no report")
             }
         } catch {
             AppLogger.messaging.error("sendDM(channel) failed: \(error.localizedDescription, privacy: .public)")
@@ -85,7 +90,7 @@ extension XXDK {
                 channelIdData,
                 message: encodedMsg,
                 messageToReactTo: replyToMessageId,
-                validUntilMS: 0,
+                validUntilMS: 30000,
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
             )
@@ -198,7 +203,6 @@ extension XXDK {
                 cmixParamsJSON: "".data
             )
             if let report, let mid = report.messageID {
-                AppLogger.messaging.debug("DM sendReply messageID: \(mid.base64EncodedString(), privacy: .public)")
                 let chatId = toPubKey.base64EncodedString()
                 let _: String = {
                     if let modelActor {

@@ -41,21 +41,24 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
     // MARK: - Helper Methods
 
     func update(
-        fromMessageID _: Data?,
-        messageUpdateInfoJSON _: Data?,
+        fromMessageID messageID: Data?,
+        messageUpdateInfoJSON: Data?,
         ret0_ _: UnsafeMutablePointer<Int64>?
-    ) throws {}
+    ) throws {
+        let msgIdB64 = messageID?.base64EncodedString()
+        let jsonString = messageUpdateInfoJSON.flatMap { String(data: $0, encoding: .utf8) } ?? "nil"
+        AppLogger.messaging.debug("DEL update(fromMessageID) messageID: \(msgIdB64 ?? "nil", privacy: .public) json: \(jsonString, privacy: .public)")
+    }
 
     func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
         guard let messageUpdateInfoJSON else {
             return
         }
 
+        let jsonString = String(data: messageUpdateInfoJSON, encoding: .utf8) ?? "nil"
         let updateInfo = try Parser.decodeMessageUpdateInfo(from: messageUpdateInfoJSON)
 
-        guard updateInfo.messageIDSet, let newMessageId = updateInfo.messageID else {
-            return
-        }
+        AppLogger.messaging.debug("DEL update(fromUUID) uuid: \(uuid, privacy: .public) json: \(jsonString, privacy: .public)")
 
         guard let modelActor else {
             return
@@ -66,7 +69,12 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         )
 
         if let message = try modelActor.fetch(descriptor).first {
-            message.id = newMessageId
+            if updateInfo.messageIDSet, let newMessageId = updateInfo.messageID {
+                message.id = newMessageId
+            }
+            if updateInfo.statusSet, let newStatus = updateInfo.status {
+                message.statusRaw = Int64(newStatus)
+            }
             try modelActor.save()
         }
     }
@@ -163,16 +171,18 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         lease _: Int64,
         roundID _: Int64,
         messageType _: Int64,
-        status _: Int64,
+        status: Int64,
         hidden _: Bool
     ) -> Int64 {
         let messageIdB64 = messageID?.base64EncodedString()
         let messageTextB64 = text ?? ""
+        let statusString = MessageStatus(rawValue: status)?.name ?? "unknown"
 
         do {
             let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
             if let decodedText = decodeMessage(messageTextB64) {
+                AppLogger.messaging.debug("DEL received messageID: \(messageIdB64 ?? "nil", privacy: .public) text: \(decodedText, privacy: .public) status: \(statusString, privacy: .public)")
                 return persistMessage(
                     channelId: channelIdB64,
                     channelName: "Channel \(String(channelIdB64.prefix(8)))",
@@ -367,10 +377,13 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
     }
 
     func updateFromMessageID(
-        _: Data?,
-        messageUpdateInfoJSON _: Data?,
+        messageID: Data?,
+        messageUpdateInfoJSON: Data?,
         ret0_ _: UnsafeMutablePointer<Int64>?
     ) throws -> Bool {
+        let msgIdB64 = messageID?.base64EncodedString()
+        let jsonString = messageUpdateInfoJSON.flatMap { String(data: $0, encoding: .utf8) } ?? "nil"
+        AppLogger.messaging.debug("DEL updateFromMessageID messageID: \(msgIdB64 ?? "nil", privacy: .public) json: \(jsonString, privacy: .public)")
         return true
     }
 
@@ -381,11 +394,15 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
             return false
         }
 
+        let jsonString = String(data: messageUpdateInfoJSON, encoding: .utf8) ?? "nil"
+
         let updateInfo = try Parser.decodeMessageUpdateInfo(from: messageUpdateInfoJSON)
 
         guard updateInfo.messageIDSet, let newMessageId = updateInfo.messageID else {
             return false
         }
+
+        AppLogger.messaging.debug("DEL updateFromUUID uuid: \(uuid, privacy: .public) newMessageID: \(newMessageId, privacy: .public) json: \(jsonString, privacy: .public)")
 
         guard let modelActor else {
             return false

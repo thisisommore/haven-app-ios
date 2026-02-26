@@ -14,6 +14,23 @@ enum MessageType: Int64 {
     case reaction = 3
 }
 
+/// Message delivery status
+enum MessageStatus: Int64 {
+    case unsent = 0
+    case sent = 1
+    case delivered = 2
+    case failed = 3
+
+    var name: String {
+        switch self {
+        case .unsent: return "unsent"
+        case .sent: return "sent"
+        case .delivered: return "delivered"
+        case .failed: return "failed"
+        }
+    }
+}
+
 @Model
 class ChatMessageModel: Identifiable {
     @Attribute(.unique) var id: String
@@ -22,6 +39,7 @@ class ChatMessageModel: Identifiable {
     var timestamp: Date
     var isIncoming: Bool
     var isRead: Bool
+    var statusRaw: Int64 = MessageStatus.sent.rawValue
     var sender: MessageSenderModel?
     var chat: ChatModel
     var replyTo: String?
@@ -30,6 +48,11 @@ class ChatMessageModel: Identifiable {
     var newRenderVersion: Int16 = 0
     var newRenderPlainText: String?
     var newRenderPayload: Data?
+    
+    var status: MessageStatus {
+        get { MessageStatus(rawValue: statusRaw) ?? .sent }
+        set { statusRaw = newValue.rawValue }
+    }
 
     init(message: String, isIncoming: Bool, chat: ChatModel, sender: MessageSenderModel? = nil, id: String, internalId: Int64, replyTo: String? = nil, timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3), isRead: Bool = false) {
         self.id = id

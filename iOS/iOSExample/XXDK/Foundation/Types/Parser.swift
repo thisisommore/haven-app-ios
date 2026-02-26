@@ -89,10 +89,14 @@ struct ChannelJSON: Decodable, Identifiable {
 
 // Channel send report returned by sendText/sendMessage
 // Keys map to: messageID ([]byte -> base64 in JSON), ephId (int64), roundsList
+struct RoundsListJSON: Decodable {
+    let rounds: [UInt64]?
+}
+
 struct ChannelSendReportJSON: Decodable {
     let messageID: Data?
     let ephId: Int64?
-    let roundsList: [Int64]?
+    let roundsList: RoundsListJSON?
 
     private enum CodingKeys: String, CodingKey {
         case messageID
@@ -100,13 +104,12 @@ struct ChannelSendReportJSON: Decodable {
         case roundsList
     }
 
-    init(messageID: Data?, ephId: Int64?, roundsList: [Int64]? = nil) {
+    init(messageID: Data?, ephId: Int64?, roundsList: RoundsListJSON? = nil) {
         self.messageID = messageID
         self.ephId = ephId
         self.roundsList = roundsList
     }
 }
-
 // Model message for getMessage responses
 // Minimal struct containing only required fields: pubKey and messageID
 struct ModelMessageJSON: Codable {
