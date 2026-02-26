@@ -27,10 +27,10 @@ extension XXDK {
         }
         let secret = try! appStorage.getPassword().data
         let defaultParamsJSON = Bindings.BindingsGetDefaultCMixParams()
-        var params = try! Parser.decodeCMixParams(from: defaultParamsJSON ?? Data())
+        var params = try! Parser.decode(CMixParamsJSON.self, from: defaultParamsJSON ?? Data())
 
         params.Network.EnableImmediateSending = true
-        let cmixParamsJSON = try! Parser.encodeCMixParams(params)
+        let cmixParamsJSON = try! Parser.encode(params)
         if !(appStorage.isSetupComplete) {
             guard let downloadedNdf else {
                 fatalError("no ndf downloaded yet")

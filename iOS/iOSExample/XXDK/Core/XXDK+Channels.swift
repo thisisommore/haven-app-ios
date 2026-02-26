@@ -45,7 +45,7 @@ extension XXDK {
 
         let channel = try await joinChannel(prettyPrint)
 
-        guard let channelId = channel.channelId else {
+        guard let channelId = channel.ChannelID else {
             throw XXDKError.channelIdNotFound
         }
 

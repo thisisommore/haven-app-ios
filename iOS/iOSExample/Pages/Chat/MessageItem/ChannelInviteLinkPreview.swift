@@ -110,7 +110,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
         }
         .sheet(isPresented: $showConfirmation) {
             JoinChannelConfirmationView(
-                channelName: channelData?.name ?? link.name,
+                channelName: channelData?.Name ?? link.name,
                 channelURL: link.url,
                 isJoining: $isJoining,
                 onConfirm: { enableDM in
@@ -163,7 +163,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
 
             // Try matching by channelId first
             if let channel = try? xxdk.getChannelFromURL(url: link.url),
-               let channelId = channel.channelId
+               let channelId = channel.ChannelID
             {
                 if let existingChat = allChats.first(where: { $0.id == channelId }) {
                     isAlreadyJoined = true
@@ -198,7 +198,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
                 joinedChannel = try await xxdk.joinChannelFromURL(link.url)
             }
 
-            guard let channelId = joinedChannel.channelId else {
+            guard let channelId = joinedChannel.ChannelID else {
                 throw XXDKError.channelIdMissing
             }
 
@@ -208,7 +208,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
 
-            let newChat = ChatModel(channelId: channelId, name: joinedChannel.name, isSecret: link.level == "Secret")
+            let newChat = ChatModel(channelId: channelId, name: joinedChannel.Name, isSecret: link.level == "Secret")
             swiftDataActor.insert(newChat)
             try swiftDataActor.save()
 

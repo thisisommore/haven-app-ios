@@ -53,10 +53,10 @@ class XXDKMock: XXDKP {
         // Mock: return sample joined channel data after a short delay
         try await Task.sleep(for: .seconds(1))
         return ChannelJSON(
-            receptionId: "mock-reception-id",
-            channelId: "mock-channel-id-\(UUID().uuidString)",
-            name: "Mock Joined Channel",
-            description: "This is a mock joined channel"
+            ReceptionID: "mock-reception-id",
+            ChannelID: "mock-channel-id-\(UUID().uuidString)",
+            Name: "Mock Joined Channel",
+            Description: "This is a mock joined channel"
         )
     }
 
@@ -68,10 +68,10 @@ class XXDKMock: XXDKP {
     func getChannelFromURL(url _: String) throws -> ChannelJSON {
         // Mock: return sample channel data
         return ChannelJSON(
-            receptionId: "mock-reception-id",
-            channelId: "mock-channel-id",
-            name: "Mock Channel",
-            description: "This is a mock channel for testing"
+            ReceptionID: "mock-reception-id",
+            ChannelID: "mock-channel-id",
+            Name: "Mock Channel",
+            Description: "This is a mock channel for testing"
         )
     }
 
@@ -83,10 +83,10 @@ class XXDKMock: XXDKP {
     func getPrivateChannelFromURL(url _: String, password _: String) throws -> ChannelJSON {
         // Mock: return sample private channel data
         return ChannelJSON(
-            receptionId: "mock-reception-id",
-            channelId: "mock-private-channel-id",
-            name: "Mock Private Channel",
-            description: "This is a mock private channel for testing"
+            ReceptionID: "mock-reception-id",
+            ChannelID: "mock-private-channel-id",
+            Name: "Mock Private Channel",
+            Description: "This is a mock private channel for testing"
         )
     }
 
@@ -117,10 +117,10 @@ class XXDKMock: XXDKP {
         try await Task.sleep(for: .seconds(1))
         let channelId = "mock-channel-\(UUID().uuidString)"
         return ChannelJSON(
-            receptionId: "mock-reception-id",
-            channelId: channelId,
-            name: name,
-            description: description
+            ReceptionID: "mock-reception-id",
+            ChannelID: channelId,
+            Name: name,
+            Description: description
         )
     }
 

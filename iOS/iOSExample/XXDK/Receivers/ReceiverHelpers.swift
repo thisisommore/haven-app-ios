@@ -27,11 +27,11 @@ enum ReceiverHelpers {
         guard let identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset) else {
             throw EventModelError.identityConstructionFailed
         }
-        var colorStr = identity.color
+        var colorStr = identity.Color
         if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
             colorStr.removeFirst(2)
         }
-        return (identity.codename, Int(colorStr, radix: 16) ?? 0)
+        return (identity.Codename, Int(colorStr, radix: 16) ?? 0)
     }
 
     /// Check if sender's pubKey matches the "<self>" chat pubKey

@@ -123,8 +123,8 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
         }
         guard let identity else { return }
 
-        userName = identity.codename
-        var colorStr = identity.color
+        userName = identity.Codename
+        var colorStr = identity.Color
         if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
             colorStr.removeFirst(2)
         }

@@ -193,8 +193,8 @@ struct DeepLinkHandler: ViewModifier {
 
         let name: String
         let color: Int
-        name = identity.codename
-        var colorStr = identity.color
+        name = identity.Codename
+        var colorStr = identity.Color
         if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
             colorStr.removeFirst(2)
         }

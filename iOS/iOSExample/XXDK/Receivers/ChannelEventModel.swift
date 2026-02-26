@@ -56,7 +56,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         }
 
         let jsonString = String(data: messageUpdateInfoJSON, encoding: .utf8) ?? "nil"
-        let updateInfo = try Parser.decodeMessageUpdateInfo(from: messageUpdateInfoJSON)
+        let updateInfo = try Parser.decode(MessageUpdateInfoJSON.self, from: messageUpdateInfoJSON)
 
         AppLogger.messaging.debug("DEL update(fromUUID) uuid: \(uuid, privacy: .public) json: \(jsonString, privacy: .public)")
 
@@ -69,16 +69,16 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         )
 
         if let message = try modelActor.fetch(descriptor).first {
-            if updateInfo.messageIDSet, let newMessageId = updateInfo.messageID {
+            if updateInfo.MessageIDSet, let newMessageId = updateInfo.MessageID {
                 message.id = newMessageId
             }
-            if updateInfo.statusSet, let newStatus = updateInfo.status {
+            if updateInfo.StatusSet, let newStatus = updateInfo.Status {
                 message.statusRaw = Int64(newStatus)
             }
             try modelActor.save()
             let updatedChatId = message.chat.id
             let updatedMessageId = message.id
-            let hasStatusUpdate = updateInfo.statusSet && updateInfo.status != nil
+            let hasStatusUpdate = updateInfo.StatusSet && updateInfo.Status != nil
             DispatchQueue.main.async {
                 var userInfo: [String: Any] = [
                     "chatId": updatedChatId,
@@ -414,13 +414,13 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
 
         let jsonString = String(data: messageUpdateInfoJSON, encoding: .utf8) ?? "nil"
 
-        let updateInfo = try Parser.decodeMessageUpdateInfo(from: messageUpdateInfoJSON)
-        let hasMessageIdUpdate = updateInfo.messageIDSet && updateInfo.messageID != nil
-        let hasStatusUpdate = updateInfo.statusSet && updateInfo.status != nil
+        let updateInfo = try Parser.decode(MessageUpdateInfoJSON.self, from: messageUpdateInfoJSON)
+        let hasMessageIdUpdate = updateInfo.MessageIDSet && updateInfo.MessageID != nil
+        let hasStatusUpdate = updateInfo.StatusSet && updateInfo.Status != nil
         guard hasMessageIdUpdate || hasStatusUpdate else {
             return false
         }
-        let newMessageIdLog = updateInfo.messageID ?? "nil"
+        let newMessageIdLog = updateInfo.MessageID ?? "nil"
         AppLogger.messaging.debug("DEL updateFromUUID uuid: \(uuid, privacy: .public) newMessageID: \(newMessageIdLog, privacy: .public) json: \(jsonString, privacy: .public)")
 
         guard let modelActor else {
@@ -432,10 +432,10 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         )
 
         if let message = try modelActor.fetch(descriptor).first {
-            if let newMessageId = updateInfo.messageID {
+            if let newMessageId = updateInfo.MessageID {
                 message.id = newMessageId
             }
-            if let newStatus = updateInfo.status {
+            if let newStatus = updateInfo.Status {
                 message.statusRaw = Int64(newStatus)
             }
             try modelActor.save()
@@ -483,7 +483,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                 pubKey: pubKeyData,
                 messageID: messageID
             )
-            return try Parser.encodeModelMessage(modelMsg)
+            return try Parser.encode(modelMsg)
         }
 
         // Check MessageReaction - if message not found, check if it's a reaction
@@ -496,7 +496,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                 pubKey: pubKeyData,
                 messageID: messageID
             )
-            return try Parser.encodeModelMessage(modelMsg)
+            return try Parser.encode(modelMsg)
         }
         // Not found
         throw EventModelError.messageNotFound

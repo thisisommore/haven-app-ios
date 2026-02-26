@@ -53,8 +53,8 @@ extension XXDK {
         }
         if let identity = publicIdentity {
             await MainActor.run {
-                self.codeset = identity.codeset
-                self.codename = identity.codename
+                self.codeset = identity.CodesetVersion
+                self.codename = identity.Codename
             }
         }
 
@@ -163,14 +163,14 @@ extension XXDK {
                 }
                 channelsManager = BindingsChannelsManagerWrapper(cm)
                 let timestamp = ISO8601DateFormatter().string(from: Date())
-                let storageTagDataJson = try Parser.encodeString(channelsManager!.getStorageTag())
+                let storageTagDataJson = try Parser.encode(channelsManager!.getStorageTag())
                 let storageTagData = storageTagDataJson.base64EncodedString()
                 let entry = RemoteKVEntry(
-                    version: 0,
-                    data: storageTagData,
-                    timestamp: timestamp
+                    Version: 0,
+                    Data: storageTagData,
+                    Timestamp: timestamp
                 )
-                let entryData = try Parser.encodeRemoteKVEntry(entry)
+                let entryData = try Parser.encode(entry)
                 guard let remoteKV, let channelsManager, let storageTagListener else {
                     AppLogger.identity.critical("remoteKV/channelsManager/storageTagListener is nil")
                     fatalError("remoteKV/channelsManager/storageTagListener is nil")
@@ -213,10 +213,8 @@ extension XXDK {
             await progress(.joiningChannels)
             while true {
                 let readyData = try cmix.isReady(0.1)
-                let readinessInfo = try Parser.decodeIsReadyInfo(
-                    from: readyData
-                )
-                if !readinessInfo.isReady {
+                let readinessInfo = try Parser.decode(IsReadyInfoJSON.self, from: readyData)
+                if !readinessInfo.IsReady {
                     try? await Task.sleep(nanoseconds: 2_000_000_000)
                     continue
                 } else {
@@ -267,7 +265,7 @@ extension XXDK {
         }
         do {
             let cd = try await joinChannelFromURL(XX_IOS_CHAT)
-            let channelId = cd.channelId ?? "xxIOS"
+            let channelId = cd.ChannelID ?? "xxIOS"
             try await MainActor.run {
                 guard let modelActor else {
                     AppLogger.identity.error("modelActor not available")
@@ -278,7 +276,7 @@ extension XXDK {
                 )
                 let existingChannel = try modelActor.fetch(check)
                 if existingChannel.isEmpty {
-                    let channelChat = ChatModel(channelId: channelId, name: cd.name)
+                    let channelChat = ChatModel(channelId: channelId, name: cd.Name)
                     modelActor.insert(channelChat)
                     try modelActor.save()
                 }
@@ -332,9 +330,9 @@ extension XXDK {
 
             let generatedIdentity = GeneratedIdentity(
                 privateIdentity: privateIdentity,
-                codename: identity.codename,
-                codeset: identity.codeset,
-                pubkey: identity.pubkey
+                codename: identity.Codename,
+                codeset: identity.CodesetVersion,
+                pubkey: identity.PubKey
             )
 
             identities.append(generatedIdentity)

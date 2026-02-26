@@ -93,11 +93,11 @@ struct CreateSpaceView<T: XXDKP>: View {
                     enableDms: enableDirectMessages
                 )
 
-                guard let channelId = channel.channelId else {
+                guard let channelId = channel.ChannelID else {
                     throw XXDKError.channelIdMissing
                 }
 
-                let newChat = ChatModel(channelId: channelId, name: channel.name, isAdmin: true, isSecret: privacyLevel == .secret)
+                let newChat = ChatModel(channelId: channelId, name: channel.Name, isAdmin: true, isSecret: privacyLevel == .secret)
                 swiftDataActor.insert(newChat)
                 try swiftDataActor.save()
 

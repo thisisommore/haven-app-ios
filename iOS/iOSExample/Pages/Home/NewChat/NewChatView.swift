@@ -114,7 +114,7 @@ struct NewChatView<T: XXDKP>: View {
             .sheet(isPresented: $showConfirmationSheet) {
                 [inviteLink, channelData] in
                 JoinChannelConfirmationView(
-                    channelName: channelData?.name ?? "",
+                    channelName: channelData?.Name ?? "",
                     channelURL: inviteLink,
                     isJoining: $isJoining,
                     onConfirm: { enableDM in
@@ -151,7 +151,7 @@ struct NewChatView<T: XXDKP>: View {
             }
 
             // Create and save the chat to the database
-            guard let channelId = joinedChannel.channelId else {
+            guard let channelId = joinedChannel.ChannelID else {
                 throw XXDKError.channelIdMissing
             }
 
@@ -162,7 +162,7 @@ struct NewChatView<T: XXDKP>: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
 
-            let newChat = ChatModel(channelId: channelId, name: joinedChannel.name, isSecret: isPrivateChannel)
+            let newChat = ChatModel(channelId: channelId, name: joinedChannel.Name, isSecret: isPrivateChannel)
             swiftDataActor.insert(newChat)
             try swiftDataActor.save()
 
