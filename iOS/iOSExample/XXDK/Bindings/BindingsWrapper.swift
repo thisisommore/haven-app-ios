@@ -234,9 +234,8 @@ final class BindingsChannelsManagerWrapper {
     }
 
     func getStorageTag() -> String { inner.getStorageTag() }
-    func sendMessage(_ channelIdData: Data, message: String, validUntilMS: Int64, cmixParamsJSON: Data, pingsJSON: Data?) throws -> ChannelSendReportJSON? {
-        let data = try inner.sendMessage(channelIdData, message: message, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON, pingsJSON: pingsJSON)
-        return try Parser.decode(ChannelSendReportJSON.self, from: data)
+    func sendMessage(_ channelIdData: Data, message: String, validUntilMS: Int64, cmixParamsJSON: Data, pingsJSON: Data?) throws {
+        try inner.sendMessage(channelIdData, message: message, validUntilMS: validUntilMS, cmixParamsJSON: cmixParamsJSON, pingsJSON: pingsJSON)
     }
 
     func sendReply(_ channelIdData: Data, message: String, messageToReactTo: Data, validUntilMS: Int64, cmixParamsJSON: Data, pingsJSON: Data?) throws -> ChannelSendReportJSON? {

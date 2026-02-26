@@ -48,22 +48,13 @@ extension XXDK {
             return
         }
         do {
-            let report = try channelsManager.sendMessage(
+            try channelsManager.sendMessage(
                 channelIdData,
                 message: encodedMsg,
                 validUntilMS: 30000,
                 cmixParamsJSON: "".data,
                 pingsJSON: nil
             )
-            if let report {
-                if let mid = report.messageID {
-                    AppLogger.messaging.debug("DEL channel sendDM messageID: \(mid.base64EncodedString(), privacy: .public) msg: \(msg, privacy: .public)")
-                } else {
-                    AppLogger.messaging.error("DEL no messageID")
-                }
-            } else {
-                AppLogger.messaging.error("DEL no report")
-            }
         } catch {
             AppLogger.messaging.error("sendDM(channel) failed: \(error.localizedDescription, privacy: .public)")
         }

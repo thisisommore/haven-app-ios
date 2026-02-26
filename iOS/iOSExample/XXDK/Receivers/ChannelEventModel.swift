@@ -45,9 +45,6 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         messageUpdateInfoJSON: Data?,
         ret0_ _: UnsafeMutablePointer<Int64>?
     ) throws {
-        let msgIdB64 = messageID?.base64EncodedString()
-        let jsonString = messageUpdateInfoJSON.flatMap { String(data: $0, encoding: .utf8) } ?? "nil"
-        AppLogger.messaging.debug("DEL update(fromMessageID) messageID: \(msgIdB64 ?? "nil", privacy: .public) json: \(jsonString, privacy: .public)")
     }
 
     func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
@@ -55,10 +52,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
             return
         }
 
-        let jsonString = String(data: messageUpdateInfoJSON, encoding: .utf8) ?? "nil"
         let updateInfo = try Parser.decode(MessageUpdateInfoJSON.self, from: messageUpdateInfoJSON)
-
-        AppLogger.messaging.debug("DEL update(fromUUID) uuid: \(uuid, privacy: .public) json: \(jsonString, privacy: .public)")
 
         guard let modelActor else {
             return
@@ -194,13 +188,11 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
     ) -> Int64 {
         let messageIdB64 = messageID?.base64EncodedString()
         let messageTextB64 = text ?? ""
-        let statusString = MessageStatus(rawValue: status)?.name ?? "unknown"
 
         do {
             let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
             if let decodedText = decodeMessage(messageTextB64) {
-                AppLogger.messaging.debug("DEL received messageID: \(messageIdB64 ?? "nil", privacy: .public) text: \(decodedText, privacy: .public) status: \(statusString, privacy: .public)")
                 return persistMessage(
                     channelId: channelIdB64,
                     channelName: "Channel \(String(channelIdB64.prefix(8)))",
@@ -392,74 +384,6 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
             )
         }
         return 0
-    }
-
-    func updateFromMessageID(
-        messageID: Data?,
-        messageUpdateInfoJSON: Data?,
-        ret0_ _: UnsafeMutablePointer<Int64>?
-    ) throws -> Bool {
-        let msgIdB64 = messageID?.base64EncodedString()
-        let jsonString = messageUpdateInfoJSON.flatMap { String(data: $0, encoding: .utf8) } ?? "nil"
-        AppLogger.messaging.debug("DEL updateFromMessageID messageID: \(msgIdB64 ?? "nil", privacy: .public) json: \(jsonString, privacy: .public)")
-        return true
-    }
-
-    func updateFromUUID(_ uuid: Int64, messageUpdateInfoJSON: Data?) throws
-        -> Bool
-    {
-        guard let messageUpdateInfoJSON else {
-            return false
-        }
-
-        let jsonString = String(data: messageUpdateInfoJSON, encoding: .utf8) ?? "nil"
-
-        let updateInfo = try Parser.decode(MessageUpdateInfoJSON.self, from: messageUpdateInfoJSON)
-        let hasMessageIdUpdate = updateInfo.MessageIDSet && updateInfo.MessageID != nil
-        let hasStatusUpdate = updateInfo.StatusSet && updateInfo.Status != nil
-        guard hasMessageIdUpdate || hasStatusUpdate else {
-            return false
-        }
-        let newMessageIdLog = updateInfo.MessageID ?? "nil"
-        AppLogger.messaging.debug("DEL updateFromUUID uuid: \(uuid, privacy: .public) newMessageID: \(newMessageIdLog, privacy: .public) json: \(jsonString, privacy: .public)")
-
-        guard let modelActor else {
-            return false
-        }
-
-        let descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { $0.internalId == uuid }
-        )
-
-        if let message = try modelActor.fetch(descriptor).first {
-            if let newMessageId = updateInfo.MessageID {
-                message.id = newMessageId
-            }
-            if let newStatus = updateInfo.Status {
-                message.statusRaw = Int64(newStatus)
-            }
-            try modelActor.save()
-            let updatedChatId = message.chat.id
-            let updatedMessageId = message.id
-            DispatchQueue.main.async {
-                var userInfo: [String: Any] = [
-                    "chatId": updatedChatId,
-                    "messageId": updatedMessageId,
-                    "messageInternalId": uuid,
-                ]
-                if hasStatusUpdate {
-                    userInfo["updateKind"] = "status"
-                }
-                NotificationCenter.default.post(
-                    name: .chatMessagesUpdated,
-                    object: nil,
-                    userInfo: userInfo
-                )
-            }
-            return true
-        }
-
-        return false
     }
 
     func getMessage(_ messageID: Data?) throws -> Data {
