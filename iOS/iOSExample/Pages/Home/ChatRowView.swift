@@ -115,10 +115,13 @@ struct ChatRowView<T: XXDKP>: View {
                         Text(senderName)
                             .foregroundStyle(Color(uiColor: .secondaryLabel))
                             .font(.system(size: 12))
-                        HTMLText(lastMessage.message,
-                                 textColor: .messageText,
-                                 customFontSize: 12,
-                                 lineLimit: 1)
+                        NewRenderedMessageText(
+                            message: lastMessage,
+                            textColor: .messageText,
+                            linkColor: .messageText,
+                            fontSize: 12,
+                            lineLimit: 1
+                        )
                     }
                 } else {
                     Text("No messages yet")

@@ -16,17 +16,18 @@ struct MessageReplyPreview: View {
 
     var body: some View {
         HStack {
-            HTMLText(
-                text,
+            NewRenderedMessageText(
+                rawHTML: text,
+                isIncoming: isIncoming,
                 textColor: .messageReplyPreview,
-                linkColor: .messageReplyPreview
+                linkColor: .messageReplyPreview,
+                fontSize: 12,
+                lineLimit: 4
             )
-            .fontSize(12)
             .padding(.top, 12)
             .foregroundStyle(.black)
             .opacity(0.4)
             .font(.footnote)
-            .lineLimit(4)
             .contextMenu {
                 Button {
                     UIPasteboard.general.setValue(

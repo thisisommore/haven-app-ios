@@ -84,6 +84,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var isUserScrolling = false
         private var isContextMenuActive = false
         private var pendingMessages: [ChatMessageModel]?
+        private var pendingTargetScrollMessageId: String?
 
         private var lastTopTriggerMessageId: String?
         private var shouldLockBottomOnNextLayoutPass = false
@@ -127,6 +128,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
             applyPendingMessagesIfNeeded()
+            scrollToPendingTargetIfNeeded()
         }
 
         override func viewDidLayoutSubviews() {
@@ -261,9 +263,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             updateLoadingIndicator()
 
             if let targetId = config.targetScrollMessageId {
-                DispatchQueue.main.async { [weak self] in
-                    self?.scrollToMessage(id: targetId)
-                }
+                pendingTargetScrollMessageId = targetId
             }
 
             // Pause updates if user is actively interacting to prevent jumpy scrolling
@@ -273,6 +273,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             }
 
             applyMessages(config.messages)
+            scrollToPendingTargetIfNeeded()
         }
 
         private func applyMessages(_ newMessages: [ChatMessageModel]) {
@@ -294,6 +295,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 if !self.hasInitialScroll {
                     self.hasInitialScroll = true
                     self.scrollToBottomStabilized()
+                    self.scrollToPendingTargetIfNeeded()
                     return
                 }
 
@@ -305,6 +307,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     self.restoreAnchorSnapshot(anchor)
                     self.maybeTriggerReachedTopIfNeeded()
                 }
+
+                self.scrollToPendingTargetIfNeeded()
             }
         }
 
@@ -381,9 +385,12 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
 
         // MARK: - Scroll Anchoring & Navigation
 
-        private func scrollToMessage(id: String) {
-            guard let indexPath = dataSource.indexPath(for: .message(id: id, renderHash: 0)) else { return } // Hash ignored in Diffable lookup if properly equated
+        @discardableResult
+        private func scrollToMessage(id: String) -> Bool {
+            guard tableView.window != nil else { return false }
+            guard let indexPath = dataSource.indexPath(for: .message(id: id, renderHash: 0)) else { return false } // Hash ignored in Diffable lookup if properly equated
             tableView.scrollToRow(at: indexPath, at: .middle, animated: true)
+            return true
         }
 
         private func scrollToBottom() {
@@ -459,6 +466,15 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
             guard let pending = pendingMessages else { return }
             pendingMessages = nil
             applyMessages(pending)
+        }
+
+        private func scrollToPendingTargetIfNeeded() {
+            guard tableView.window != nil else { return }
+            guard !isUserScrolling, !isContextMenuActive else { return }
+            guard let targetId = pendingTargetScrollMessageId else { return }
+            if scrollToMessage(id: targetId) {
+                pendingTargetScrollMessageId = nil
+            }
         }
 
         private func updateLoadingIndicator() {

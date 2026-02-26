@@ -22,9 +22,51 @@ final class NewMessageRenderCache {
             return cached.value
         }
 
-        let rendered = buildRenderedText(for: message)
+        let rendered = buildRenderedText(
+            kind: NewMessageRenderKind(rawValue: message.newRenderKindRaw) ?? .unknown,
+            plainText: message.newRenderPlainText,
+            payloadData: message.newRenderPayload,
+            rawHTML: message.message,
+            isIncoming: message.isIncoming,
+            baseFontSize: 16,
+            baseColorOverride: nil
+        )
         cache.setObject(NewMessageRenderCacheEntry(value: rendered), forKey: key)
         return rendered
+    }
+
+    func renderedText(
+        for message: ChatMessageModel,
+        baseFontSize: CGFloat,
+        baseColor: UIColor
+    ) -> NewMessageRenderableText {
+        buildRenderedText(
+            kind: NewMessageRenderKind(rawValue: message.newRenderKindRaw) ?? .unknown,
+            plainText: message.newRenderPlainText,
+            payloadData: message.newRenderPayload,
+            rawHTML: message.message,
+            isIncoming: message.isIncoming,
+            baseFontSize: baseFontSize,
+            baseColorOverride: baseColor
+        )
+    }
+
+    func renderedText(
+        fromRawHTML rawHTML: String,
+        isIncoming: Bool,
+        baseFontSize: CGFloat,
+        baseColor: UIColor
+    ) -> NewMessageRenderableText {
+        let precomputed = NewMessageHTMLPrecomputer.precompute(rawHTML: rawHTML)
+        return buildRenderedText(
+            kind: precomputed.kind,
+            plainText: precomputed.plainText,
+            payloadData: precomputed.payloadData,
+            rawHTML: rawHTML,
+            isIncoming: isIncoming,
+            baseFontSize: baseFontSize,
+            baseColorOverride: baseColor
+        )
     }
 
     func invalidate(messageId: String) {
@@ -33,37 +75,43 @@ final class NewMessageRenderCache {
         _ = messageId
     }
 
-    private func buildRenderedText(for message: ChatMessageModel) -> NewMessageRenderableText {
-        let kind = NewMessageRenderKind(rawValue: message.newRenderKindRaw) ?? .unknown
+    private func buildRenderedText(
+        kind: NewMessageRenderKind,
+        plainText: String?,
+        payloadData: Data?,
+        rawHTML: String,
+        isIncoming: Bool,
+        baseFontSize: CGFloat,
+        baseColorOverride: UIColor?
+    ) -> NewMessageRenderableText {
+        let baseFont = UIFont.systemFont(ofSize: baseFontSize)
+        let baseColor = baseColorOverride ?? (isIncoming ? UIColor(Color.messageText) : UIColor.white)
 
         switch kind {
         case .plain:
-            return .plain(message.newRenderPlainText ?? message.message)
+            return .plain(plainText ?? rawHTML)
 
         case .rich:
-            if let payloadData = message.newRenderPayload,
+            if let payloadData,
                let payload = try? decoder.decode(NewMessageParsedPayload.self, from: payloadData)
             {
-                return .rich(buildAttributedString(from: payload, isIncoming: message.isIncoming))
+                return .rich(buildAttributedString(from: payload, baseFont: baseFont, baseColor: baseColor))
             }
-            return .plain(message.newRenderPlainText ?? message.message)
+            return .plain(plainText ?? rawHTML)
 
         case .unknown, .failed:
-            let precomputed = NewMessageHTMLPrecomputer.precompute(rawHTML: message.message)
+            let precomputed = NewMessageHTMLPrecomputer.precompute(rawHTML: rawHTML)
             if precomputed.kind == .rich,
                let payloadData = precomputed.payloadData,
                let payload = try? decoder.decode(NewMessageParsedPayload.self, from: payloadData)
             {
-                return .rich(buildAttributedString(from: payload, isIncoming: message.isIncoming))
+                return .rich(buildAttributedString(from: payload, baseFont: baseFont, baseColor: baseColor))
             }
             return .plain(precomputed.plainText)
         }
     }
 
-    private func buildAttributedString(from payload: NewMessageParsedPayload, isIncoming: Bool) -> AttributedString {
-        let baseFont = UIFont.systemFont(ofSize: 16)
-        let baseColor = isIncoming ? UIColor(Color.messageText) : UIColor.white
-
+    private func buildAttributedString(from payload: NewMessageParsedPayload, baseFont: UIFont, baseColor: UIColor) -> AttributedString {
         let mutable = NSMutableAttributedString(
             string: payload.text,
             attributes: [
