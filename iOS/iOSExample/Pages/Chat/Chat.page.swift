@@ -585,6 +585,7 @@ struct ChatView<T: XXDKP>: View {
 
     @MainActor
     private func refreshChatMessagesNow() {
+        reloadMessagesFromPageIds()
         refreshNewerMessages()
         refreshBackfilledOlderMessagesIfNeeded()
         refreshInRangeMessagesIfNeeded()

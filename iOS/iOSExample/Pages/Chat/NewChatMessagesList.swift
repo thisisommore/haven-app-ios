@@ -336,6 +336,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 var hasher = Hasher()
                 hasher.combine(message.id)
                 hasher.combine(message.message)
+                hasher.combine(message.statusRaw)
                 hasher.combine(reactionsByMessageId[message.id]?.count ?? 0)
                 hasher.combine(meta.showSender)
                 hasher.combine(meta.showTimestamp)

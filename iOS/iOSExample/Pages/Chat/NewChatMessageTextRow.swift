@@ -183,6 +183,16 @@ private struct NewChatMessageBubbleText: View {
         }
     }
 
+    private var shouldShowStatusIcon: Bool {
+        guard !isIncoming else { return false }
+        switch message.status {
+        case .unsent, .sent, .failed:
+            return true
+        case .delivered:
+            return false
+        }
+    }
+
     var body: some View {
         Group {
             if let link = parsedChannelLink, let renderer = renderChannelPreview {
@@ -248,21 +258,40 @@ private struct NewChatMessageBubbleText: View {
                                 Color(hexNumber: senderColorHex).adaptive(for: colorScheme)
                             )
                     }
-                    NewChatRenderableMessageText(
-                        message: message,
-                        isIncoming: isIncoming,
-                        timestampPlaceholder: showTimestamp ? timestampText : nil
-                    )
+                    HStack(alignment: .bottom, spacing: 4) {
+                        NewChatRenderableMessageText(
+                            message: message,
+                            isIncoming: isIncoming,
+                            timestampPlaceholder: showTimestamp ? timestampText : nil
+                        )
+                        if shouldShowStatusIcon && !showTimestamp {
+                            Image(systemName: "clock")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.white)
+                        }
+                    }
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 .background(isHighlighted ? Color.haven : (isIncoming ? Color.messageBubble : Color.haven))
                 .clipShape(bubbleShape)
                 .overlay(alignment: .bottomTrailing) {
-                    if showTimestamp {
+                    if !isIncoming && showTimestamp {
+                        HStack(spacing: 2) {
+                            Text(timestampText)
+                                .font(.system(size: 10))
+                            if shouldShowStatusIcon {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 10))
+                            }
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 8)
+                    } else if isIncoming && showTimestamp {
                         Text(timestampText)
                             .font(.system(size: 10))
-                            .foregroundStyle(isIncoming ? Color.messageText : Color.white)
+                            .foregroundStyle(Color.messageText)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 8)
                     }

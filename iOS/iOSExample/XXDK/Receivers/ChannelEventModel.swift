@@ -76,6 +76,14 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                 message.statusRaw = Int64(newStatus)
             }
             try modelActor.save()
+            let updatedChatId = message.chat.id
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .chatMessagesUpdated,
+                    object: nil,
+                    userInfo: ["chatId": updatedChatId]
+                )
+            }
         }
     }
 
@@ -415,6 +423,14 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         if let message = try modelActor.fetch(descriptor).first {
             message.id = newMessageId
             try modelActor.save()
+            let updatedChatId = message.chat.id
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .chatMessagesUpdated,
+                    object: nil,
+                    userInfo: ["chatId": updatedChatId]
+                )
+            }
             return true
         }
 
