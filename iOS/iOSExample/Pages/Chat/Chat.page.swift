@@ -585,11 +585,55 @@ struct ChatView<T: XXDKP>: View {
 
     @MainActor
     private func refreshChatMessagesNow() {
-        reloadMessagesFromPageIds()
         refreshNewerMessages()
         refreshBackfilledOlderMessagesIfNeeded()
         refreshInRangeMessagesIfNeeded()
         refreshVisibleReactions()
+    }
+
+    private func parseMessageInternalId(from userInfo: [AnyHashable: Any]) -> Int64? {
+        if let id = userInfo["messageInternalId"] as? Int64 {
+            return id
+        }
+        if let id = userInfo["messageInternalId"] as? Int {
+            return Int64(id)
+        }
+        if let id = userInfo["messageInternalId"] as? NSNumber {
+            return id.int64Value
+        }
+        if let idString = userInfo["messageInternalId"] as? String {
+            return Int64(idString)
+        }
+        return nil
+    }
+
+    @MainActor
+    private func applyMessageUpdateIfLoaded(internalId: Int64) -> Bool {
+        guard let messageIndex = messages.firstIndex(where: { $0.internalId == internalId }) else { return false }
+
+        let targetInternalId = internalId
+        let descriptor = FetchDescriptor<ChatMessageModel>(
+            predicate: #Predicate { message in
+                message.internalId == targetInternalId
+            }
+        )
+
+        guard let refreshed = (try? modelContext.fetch(descriptor))?.first else { return false }
+
+        let oldMessageId = messages[messageIndex].id
+        messages[messageIndex] = refreshed
+
+        if let pagedIndex = pagedMessageIds.firstIndex(of: oldMessageId) {
+            pagedMessageIds[pagedIndex] = refreshed.id
+        }
+        if oldMessageId != refreshed.id {
+            refreshMessageDateLookup()
+            refreshVisibleReactions()
+        }
+
+        // Force SwiftUI to re-run list diffing for in-place model mutations.
+        messages = Array(messages)
+        return true
     }
 
     @MainActor
@@ -830,6 +874,12 @@ struct ChatView<T: XXDKP>: View {
             else { return }
             guard !isMessagesListScrolling else {
                 hasDeferredChatRefresh = true
+                return
+            }
+            if let userInfo = notification.userInfo,
+               let internalId = parseMessageInternalId(from: userInfo)
+            {
+                _ = applyMessageUpdateIfLoaded(internalId: internalId)
                 return
             }
             refreshChatMessagesNow()

@@ -77,11 +77,21 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
             }
             try modelActor.save()
             let updatedChatId = message.chat.id
+            let updatedMessageId = message.id
+            let hasStatusUpdate = updateInfo.statusSet && updateInfo.status != nil
             DispatchQueue.main.async {
+                var userInfo: [String: Any] = [
+                    "chatId": updatedChatId,
+                    "messageId": updatedMessageId,
+                    "messageInternalId": uuid,
+                ]
+                if hasStatusUpdate {
+                    userInfo["updateKind"] = "status"
+                }
                 NotificationCenter.default.post(
                     name: .chatMessagesUpdated,
                     object: nil,
-                    userInfo: ["chatId": updatedChatId]
+                    userInfo: userInfo
                 )
             }
         }
@@ -405,12 +415,13 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         let jsonString = String(data: messageUpdateInfoJSON, encoding: .utf8) ?? "nil"
 
         let updateInfo = try Parser.decodeMessageUpdateInfo(from: messageUpdateInfoJSON)
-
-        guard updateInfo.messageIDSet, let newMessageId = updateInfo.messageID else {
+        let hasMessageIdUpdate = updateInfo.messageIDSet && updateInfo.messageID != nil
+        let hasStatusUpdate = updateInfo.statusSet && updateInfo.status != nil
+        guard hasMessageIdUpdate || hasStatusUpdate else {
             return false
         }
-
-        AppLogger.messaging.debug("DEL updateFromUUID uuid: \(uuid, privacy: .public) newMessageID: \(newMessageId, privacy: .public) json: \(jsonString, privacy: .public)")
+        let newMessageIdLog = updateInfo.messageID ?? "nil"
+        AppLogger.messaging.debug("DEL updateFromUUID uuid: \(uuid, privacy: .public) newMessageID: \(newMessageIdLog, privacy: .public) json: \(jsonString, privacy: .public)")
 
         guard let modelActor else {
             return false
@@ -421,14 +432,28 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         )
 
         if let message = try modelActor.fetch(descriptor).first {
-            message.id = newMessageId
+            if let newMessageId = updateInfo.messageID {
+                message.id = newMessageId
+            }
+            if let newStatus = updateInfo.status {
+                message.statusRaw = Int64(newStatus)
+            }
             try modelActor.save()
             let updatedChatId = message.chat.id
+            let updatedMessageId = message.id
             DispatchQueue.main.async {
+                var userInfo: [String: Any] = [
+                    "chatId": updatedChatId,
+                    "messageId": updatedMessageId,
+                    "messageInternalId": uuid,
+                ]
+                if hasStatusUpdate {
+                    userInfo["updateKind"] = "status"
+                }
                 NotificationCenter.default.post(
                     name: .chatMessagesUpdated,
                     object: nil,
-                    userInfo: ["chatId": updatedChatId]
+                    userInfo: userInfo
                 )
             }
             return true
