@@ -674,56 +674,25 @@ struct ChatView<T: XXDKP>: View {
             } else if messages.isEmpty {
                 EmptyChatView()
             } else {
-                NewChatMessagesList(
-                    messages: messages,
-                    reactionsByMessageId: reactionsByMessageId,
-                    isLoadingOlderMessages: isLoadingOlderMessages,
-                    isAdmin: isAdmin,
-                    mutedUsers: Set(mutedUsers),
-                    targetScrollMessageId: targetScrollMessageId,
-                    onReachedTop: {
-                        loadOlderMessagesIfNeeded()
-                    },
-                    onTopVisibleMessageChanged: { messageId in
-                        onTopVisibleMessageChanged(messageId)
-                    },
-                    onReplyMessage: { message in
-                        replyingTo = message
-                    },
-                    onDMMessage: { codename, dmToken, pubKey, color in
-                        createDMChatAndNavigate(codename: codename, dmToken: dmToken, pubKey: pubKey, color: color)
-                    },
-                    onDeleteMessage: isChannel ? { message in
-                        deleteMessage(message)
-                    } : nil,
-                    onMuteUser: { pubKey in
-                        setMuteState(for: pubKey, muted: true)
-                    },
-                    onUnmuteUser: { pubKey in
-                        setMuteState(for: pubKey, muted: false)
-                    },
-                    onShowReactions: { messageId in
-                        selectedReactionsMessageId = messageId
-                    },
-                    onScrollToReply: { messageId in
-                        scrollToMessage(messageId)
-                    },
-                    onScrollActivityChanged: { isScrolling in
-                        if isMessagesListScrolling == isScrolling {
-                            return
+                List(messages) { message in
+                    VStack(alignment: message.isIncoming ? .leading : .trailing, spacing: 4) {
+                        if let sender = message.sender {
+                            Text(sender.codename)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
-                        isMessagesListScrolling = isScrolling
-                        guard !isScrolling, hasDeferredChatRefresh else { return }
-                        hasDeferredChatRefresh = false
-                        refreshChatMessagesNow()
-                    },
-                    renderChannelPreview: { link, isIncoming, timestamp in
-                        AnyView(ChannelInviteLinkPreview<T>(link: link, isIncoming: isIncoming, timestamp: timestamp).environmentObject(xxdk))
-                    },
-                    renderDMPreview: { link, isIncoming, timestamp in
-                        AnyView(DMInviteLinkPreview<T>(link: link, isIncoming: isIncoming, timestamp: timestamp).environmentObject(xxdk))
+                        Text(message.message)
+                            .padding(8)
+                            .background(message.isIncoming ? Color(.systemGray5) : Color.blue.opacity(0.2))
+                            .cornerRadius(8)
+                        Text(message.timestamp, style: .time)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
-                )
+                    .frame(maxWidth: .infinity, alignment: message.isIncoming ? .leading : .trailing)
+                    .listRowSeparator(.hidden)
+                }
+                .listStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -891,10 +860,10 @@ struct ChatView<T: XXDKP>: View {
             }
         }
         .background(ChatBackgroundView())
-        .background(
-            NewChatBackSwipeControl(isDisabled: true)
-                .allowsHitTesting(false)
-        )
+//        .background(
+//            NewChatBackSwipeControl(isDisabled: true)
+//                .allowsHitTesting(false)
+//        )
         .overlay {
             if let toastMessage {
                 VStack {

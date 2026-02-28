@@ -37,13 +37,6 @@ struct MessageForm<T: XXDKP>: View {
                         Text("Replying to \(replyTo.sender?.codename ?? "You")")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        NewRenderedMessageText(
-                            message: replyTo,
-                            textColor: .black,
-                            linkColor: .blue,
-                            fontSize: 13,
-                            lineLimit: 3
-                        )
                     }
                     Spacer()
                     Button {

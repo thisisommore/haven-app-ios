@@ -128,8 +128,8 @@ enum ReceiverHelpers {
             )
         }
 
-        let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
-        NewMessageRenderPersistence.apply(precomputedRender, to: msg)
+//        let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
+//        NewMessageRenderPersistence.apply(precomputedRender, to: msg)
 
         ctx.insert(msg)
         chat.messages.append(msg)
