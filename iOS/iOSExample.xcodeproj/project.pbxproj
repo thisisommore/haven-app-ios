@@ -19,6 +19,7 @@
 		A19FC0D02EF1A2A0007FDD0F /* Root.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CF2EF1A29D007FDD0F /* Root.swift */; };
 		A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */; };
 		A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
+		A1C734332F55E0B5003A4B05 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = A1C734322F55E0B5003A4B05 /* GRDB */; };
 		A1D378D42EFAC9240079CB0E /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D378D32EFAC9240079CB0E /* AppLogger.swift */; };
 		A1E0DB012EA35F3500E344DC /* Secret.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E0DB002EA35F3200E344DC /* Secret.swift */; };
 		A1E5FDBE2EE2AE5900627B46 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */; };
@@ -60,6 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1C734332F55E0B5003A4B05 /* GRDB in Frameworks */,
 				1662B707BC8225B49C368183 /* Pods_iOSExample.framework in Frameworks */,
 				A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */,
 			);
@@ -200,6 +202,7 @@
 			mainGroup = 980A0D602B96723C004FB15A;
 			packageReferences = (
 				A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */,
+				A1C734312F55E0B5003A4B05 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 			);
 			productRefGroup = 980A0D6A2B96723C004FB15A /* Products */;
 			projectDirPath = "";
@@ -543,6 +546,14 @@
 				minimumVersion = 1.1.1;
 			};
 		};
+		A1C734312F55E0B5003A4B05 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -550,6 +561,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */;
 			productName = SwiftHTMLtoMarkdown;
+		};
+		A1C734322F55E0B5003A4B05 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C734312F55E0B5003A4B05 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
