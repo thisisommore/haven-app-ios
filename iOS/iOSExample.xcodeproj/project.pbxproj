@@ -54,6 +54,7 @@
 		A10030FB2E83CE8B0096767A /* XXDK */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = XXDK; sourceTree = "<group>"; };
 		A17427A72EA2770D00D39261 /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
 		A19FC0D12EF1A8C7007FDD0F /* Pages */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Pages; sourceTree = "<group>"; };
+		A1C739F12F55E9F2003A4B05 /* Database */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Database; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,6 +121,7 @@
 				A1D378D32EFAC9240079CB0E /* AppLogger.swift */,
 				A193D10C2EF2653E00BE3590 /* Navigation.swift */,
 				A14987562EA202B800E72C00 /* UIScreen.swift */,
+				A1C739F12F55E9F2003A4B05 /* Database */,
 			);
 			path = iOSExample;
 			sourceTree = "<group>";
@@ -170,6 +172,7 @@
 				A10030FB2E83CE8B0096767A /* XXDK */,
 				A17427A72EA2770D00D39261 /* Views */,
 				A19FC0D12EF1A8C7007FDD0F /* Pages */,
+				A1C739F12F55E9F2003A4B05 /* Database */,
 			);
 			name = iOSExample;
 			productName = iOSExample;
