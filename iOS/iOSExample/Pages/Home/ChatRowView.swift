@@ -1,4 +1,3 @@
-import SwiftData
 import SwiftUI
 import UIKit
 
@@ -44,6 +43,7 @@ struct UnreadBadge: View {
 struct ChatRowView<T: XXDKP>: View {
     let chat: ChatModel
     @EnvironmentObject var xxdk: T
+    @EnvironmentObject var chatStore: ChatStore
 
     private var isChannel: Bool {
         chat.name != "<self>" && chat.dmToken == nil
@@ -53,19 +53,14 @@ struct ChatRowView<T: XXDKP>: View {
         chat.dmToken != nil
     }
 
-    /// For DMs, get the partner's nickname from their messages
-    private var dmPartnerNickname: String? {
-        guard isDM else { return nil }
-        // Find nickname from incoming message sender
-        return chat.messages
-            .first(where: { $0.isIncoming && $0.sender != nil })?
-            .sender?.nickname
-    }
-
     /// Truncate nickname to 10 chars for display
     private func truncateNickname(_ nickname: String) -> String {
         nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
     }
+
+    @State private var lastMessage: ChatMessageModel?
+    @State private var lastMessageSender: MessageSenderModel?
+    @State private var dmPartnerNickname: String?
 
     /// Display name for chat title
     private var chatDisplayName: String {
@@ -95,13 +90,12 @@ struct ChatRowView<T: XXDKP>: View {
                     }
                 }
 
-                if let lastMessage = chat.messages.max(by: { $0.timestamp < $1.timestamp }) {
+                if let lastMessage {
                     let senderName: String = {
                         if !lastMessage.isIncoming {
                             return "you"
                         }
-                        guard let sender = lastMessage.sender else { return "unknown" }
-                        // For DMs, only show codename since nickname is already in title
+                        guard let sender = lastMessageSender else { return "unknown" }
                         if isDM {
                             return sender.codename
                         }
@@ -115,10 +109,7 @@ struct ChatRowView<T: XXDKP>: View {
                         Text(senderName)
                             .foregroundStyle(Color(uiColor: .secondaryLabel))
                             .font(.system(size: 12))
-                        HTMLText(lastMessage.message,
-                                 textColor: .messageText,
-                                 customFontSize: 12,
-                                 lineLimit: 1)
+                        
                     }
                 } else {
                     Text("No messages yet")
@@ -131,6 +122,36 @@ struct ChatRowView<T: XXDKP>: View {
 
             if chat.unreadCount > 0 {
                 UnreadBadge(count: chat.unreadCount)
+            }
+        }
+        .onAppear {
+            loadLastMessage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .chatMessagesUpdated)) { notification in
+            if let updatedChatId = notification.userInfo?["chatId"] as? String,
+               updatedChatId == chat.id
+            {
+                loadLastMessage()
+            }
+        }
+    }
+
+    private func loadLastMessage() {
+        if let msgs = try? chatStore.fetchLatestMessages(chatId: chat.id, limit: 1),
+           let msg = msgs.last
+        {
+            lastMessage = msg
+            if let senderId = msg.senderId {
+                lastMessageSender = try? chatStore.fetchSender(id: senderId)
+            }
+        }
+        if isDM {
+            if let msgs = try? chatStore.fetchLatestMessages(chatId: chat.id, limit: 50) {
+                if let incomingWithSender = msgs.first(where: { $0.isIncoming && $0.senderId != nil }),
+                   let sender = try? chatStore.fetchSender(id: incomingWithSender.senderId!)
+                {
+                    dmPartnerNickname = sender.nickname
+                }
             }
         }
     }

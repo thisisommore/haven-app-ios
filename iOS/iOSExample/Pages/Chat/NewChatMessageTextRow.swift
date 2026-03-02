@@ -3,6 +3,7 @@ import UIKit
 
 struct NewChatMessageTextRow: View {
     let message: ChatMessageModel
+    let sender: MessageSenderModel?
     let reactions: [MessageReactionModel]
     let showSender: Bool
     let showTimestamp: Bool
@@ -22,7 +23,7 @@ struct NewChatMessageTextRow: View {
     var renderDMPreview: ((ParsedDMLink, Bool, String) -> AnyView)? = nil
 
     private var senderDisplayName: String {
-        guard let sender = message.sender else { return "" }
+        guard let sender else { return "" }
         guard let nickname = sender.nickname, !nickname.isEmpty else {
             return sender.codename
         }
@@ -92,7 +93,7 @@ struct NewChatMessageTextRow: View {
                         isIncoming: true,
                         showSender: showSender,
                         senderDisplayName: senderDisplayName,
-                        senderColorHex: message.sender?.color
+                        senderColorHex: sender?.color
                     )
                     if !reactions.isEmpty {
                         Reactions(

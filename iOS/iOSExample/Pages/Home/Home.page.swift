@@ -1,5 +1,4 @@
 import Bindings
-import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -31,11 +30,11 @@ struct HomeView<T: XXDKP>: View {
     @State private var searchText: String = ""
     @State private var isLoggingOut = false
     @State private var didNormalizeNavigation = false
-    @Query private var chats: [ChatModel]
+    @State private var chats: [ChatModel] = []
 
     @EnvironmentObject var xxdk: T
     @State private var didStartLoad = false
-    @EnvironmentObject private var swiftDataActor: SwiftDataActor
+    @EnvironmentObject private var chatStore: ChatStore
     @EnvironmentObject private var appStorage: AppStorage
     @EnvironmentObject private var navigation: AppNavigationPath
     @Environment(\.isSplitView) private var isSplitView
@@ -48,22 +47,16 @@ struct HomeView<T: XXDKP>: View {
             return chats
         }
         return chats.filter { chat in
-            // Search by chat name (use "Notes" for self chat)
             let displayName = chat.name == "<self>" ? "Notes" : chat.name
             if displayName.localizedCaseInsensitiveContains(searchText) {
                 return true
             }
-            // Search by DM partner nickname
-            if let nickname = chat.messages
-                .first(where: { $0.isIncoming && $0.sender != nil })?
-                .sender?.nickname,
-                !nickname.isEmpty,
-                nickname.localizedCaseInsensitiveContains(searchText)
-            {
-                return true
-            }
             return false
         }
+    }
+
+    private func refreshChats() {
+        chats = (try? chatStore.fetchAllChats()) ?? []
     }
 
     var body: some View {
@@ -183,14 +176,7 @@ struct HomeView<T: XXDKP>: View {
                     isLoggingOut = true
                     Task {
                         try! await xxdk.logout()
-
-                        // Clear SwiftData
-                        try! swiftDataActor.deleteAll(MessageReactionModel.self)
-                        try! swiftDataActor.deleteAll(MessageSenderModel.self)
-                        // ChatModel cascade-deletes ChatMessageModel
-                        try! swiftDataActor.deleteAll(ChatModel.self)
-                        try! swiftDataActor.save()
-
+                        try! chatStore.deleteAllChats()
                         appStorage.clearAll()
                         await MainActor.run {
                             navigation.path = NavigationPath()
@@ -261,6 +247,10 @@ struct HomeView<T: XXDKP>: View {
                     }
                 }
                 loadCurrentNickname()
+                refreshChats()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .chatMessagesUpdated)) { _ in
+                refreshChats()
             }
             .navigationTitle("Chat")
             .navigationBarTitleDisplayMode(NavigationBarItem.TitleDisplayMode.large)
@@ -288,10 +278,8 @@ struct HomeView<T: XXDKP>: View {
             return
         }
 
-        // Convert Int64 token to Int32 (handling unsigned 32-bit values that overflow signed Int32)
         let token = Int32(bitPattern: UInt32(truncatingIfNeeded: token64))
 
-        // Get codeset from URL
         guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
               let codeset = Int(codesetStr)
         else {
@@ -304,7 +292,6 @@ struct HomeView<T: XXDKP>: View {
             return
         }
 
-        // Derive codename and color using BindingsConstructIdentity
         let identity: IdentityJSON?
         do {
             identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
@@ -337,9 +324,10 @@ struct HomeView<T: XXDKP>: View {
         let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
 
         Task.detached {
-            swiftDataActor.insert(newChat)
-            try? swiftDataActor.save()
+            try? chatStore.insertChat(newChat)
         }
+
+        refreshChats()
 
         withAnimation(.spring(response: 0.3)) {
             toastMessage = "User added successfully"

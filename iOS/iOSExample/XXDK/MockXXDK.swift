@@ -8,7 +8,6 @@
 import Bindings
 import Foundation
 import Kronos
-import SwiftData
 import SwiftUI
 
 class XXDKMock: XXDKP {
@@ -18,13 +17,11 @@ class XXDKMock: XXDKP {
 
     @Published var status: String = "Initiating"
     @Published var statusPercentage: Double = 0
-    func setStates(mActor: SwiftDataActor, appStorage _: AppStorage) {
-        // Retain container and inject into receivers/callbacks
-
-        dmReceiver.modelActor = mActor
-        channelUICallbacks.configure(modelActor: mActor)
+    func setStates(chatStore: ChatStore, appStorage _: AppStorage) {
+        dmReceiver.chatStore = chatStore
+        channelUICallbacks.configure(chatStore: chatStore)
         eventModelBuilder = ChannelEventModelBuilder(model: ChannelEventModel())
-        eventModelBuilder?.configure(modelActor: mActor)
+        eventModelBuilder?.configure(chatStore: chatStore)
     }
 
     func sendDM(msg _: String, toPubKey _: Data, partnerToken _: Int32) {}
@@ -173,7 +170,6 @@ class XXDKMock: XXDKP {
     var eventModelBuilder: ChannelEventModelBuilder?
     var remoteKV: Bindings.BindingsRemoteKV?
     var storageTagListener: RemoteKVKeyChangeListener?
-    private var modelContainer: ModelContainer?
     private let channelUICallbacks: ChannelUICallbacks
 
     init() {

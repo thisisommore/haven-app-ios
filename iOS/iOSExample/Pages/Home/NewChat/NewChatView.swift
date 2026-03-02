@@ -9,7 +9,7 @@ import SwiftUI
 
 struct NewChatView<T: XXDKP>: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
+    @EnvironmentObject var chatStore: ChatStore
     @State private var showConfirmationSheet: Bool = false
     @EnvironmentObject var xxdk: T
     @State private var inviteLink: String = ""
@@ -163,8 +163,7 @@ struct NewChatView<T: XXDKP>: View {
             }
 
             let newChat = ChatModel(channelId: channelId, name: joinedChannel.Name, isSecret: isPrivateChannel)
-            swiftDataActor.insert(newChat)
-            try swiftDataActor.save()
+            try chatStore.insertChat(newChat)
 
             // Dismiss both sheets and reset state
             channelData = nil

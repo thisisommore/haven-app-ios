@@ -1,4 +1,3 @@
-import SwiftData
 import SwiftUI
 
 @MainActor
@@ -13,7 +12,7 @@ struct PasswordCreationView<T: XXDKP>: View {
 
     @EnvironmentObject var appStorage: AppStorage
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
+    @EnvironmentObject var chatStore: ChatStore
     @EnvironmentObject var navigation: AppNavigationPath
 
     private var failingRules: [PasswordRule] {

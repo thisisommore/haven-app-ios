@@ -1,6 +1,5 @@
 import Bindings
 import Foundation
-import SwiftData
 
 // NOTE:
 // This is a stub implementation of the Channels UI callbacks used by the
@@ -39,7 +38,7 @@ enum ChannelEvent: Int64, CustomStringConvertible {
 }
 
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
-    var modelActor: SwiftDataActor?
+    var chatStore: ChatStore?
 
     private func short(_ data: Data?) -> String {
         guard let data else { return "nil" }
@@ -92,8 +91,8 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
         super.init()
     }
 
-    func configure(modelActor: SwiftDataActor? = nil) {
-        self.modelActor = modelActor
+    func configure(chatStore: ChatStore? = nil) {
+        self.chatStore = chatStore
     }
 
     // Event notifications (generic JSON payloads)

@@ -6,7 +6,6 @@
 //
 
 import Bindings
-import SwiftData
 
 class DMReceiverBuilder: NSObject, Bindings.BindingsDMReceiverBuilderProtocol {
     private var r: DMReceiver
@@ -35,7 +34,7 @@ struct ReceivedMessage: Identifiable {
 }
 
 class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings.BindingsDmCallbacksProtocol {
-    var modelActor: SwiftDataActor?
+    var chatStore: ChatStore?
     func eventUpdate(_: Int64, jsonData _: Data?) {}
 
     func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
@@ -113,17 +112,17 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     func updateSentStatus(_: Int64, messageID _: Data?, timestamp _: Int64, roundID _: Int64, status _: Int64) {}
 
     private func persistIncoming(message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32, messageId: Data, color: Int, internalId _: Int64, timestamp: Int64) {
-        guard let modelActor else { return }
+        guard let chatStore else { return }
         guard let partnerKey else { fatalError("partner key is not available") }
         let name = (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown"
 
         Task { @MainActor in
             do {
-                let chat = try fetchOrCreateDMChat(codename: name, ctx: modelActor, pubKey: partnerKey, dmToken: dmToken, color: color)
+                let chat = try chatStore.fetchOrCreateDMChat(pubKey: partnerKey, codename: name, dmToken: dmToken, color: color)
 
                 _ = try ReceiverHelpers.persistIncomingMessage(
-                    ctx: modelActor,
-                    chat: chat,
+                    store: chatStore,
+                    chatId: chat.id,
                     text: message,
                     messageId: messageId.base64EncodedString(),
                     senderPubKey: senderKey,
@@ -133,30 +132,6 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
                     timestamp: timestamp
                 )
             } catch {}
-        }
-    }
-
-    private func fetchOrCreateDMChat(codename: String, ctx: SwiftDataActor, pubKey: Data?, dmToken: Int32?, color: Int) throws -> ChatModel {
-        if let pubKey {
-            let pubKeyB64 = pubKey.base64EncodedString()
-            let byKey = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == pubKeyB64 })
-            if let existingByKey = try ctx.fetch(byKey).first {
-                return existingByKey
-            } else {
-                guard let dmToken else { throw XXDKError.dmTokenRequired }
-                let newChat = ChatModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
-                ctx.insert(newChat)
-                try ctx.save()
-                return newChat
-            }
-        } else {
-            // Fallback to codename-based lookup (may collide)
-            let byName = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == codename })
-            if let existingByName = try ctx.fetch(byName).first {
-                return existingByName
-            } else {
-                throw XXDKError.pubkeyRequired
-            }
         }
     }
 }

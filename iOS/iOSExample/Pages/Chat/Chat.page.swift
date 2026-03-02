@@ -5,7 +5,6 @@
 //  Created by Om More on 22/09/25.
 //
 
-import SwiftData
 import SwiftUI
 
 struct ChatView<T: XXDKP>: View {
@@ -19,8 +18,8 @@ struct ChatView<T: XXDKP>: View {
     }
 
     @EnvironmentObject var selectedChat: SelectedChat
-    @Environment(\.modelContext) private var modelContext
-    @Query private var chatResults: [ChatModel]
+    @EnvironmentObject var chatStore: ChatStore
+    @State private var chat: ChatModel?
 
     private let messagesPageSize = 120
 
@@ -29,17 +28,15 @@ struct ChatView<T: XXDKP>: View {
         let internalId: Int64
     }
 
-    private struct MessageIdentity {
-        let id: String
-        let timestamp: Date
-        let internalId: Int64
+    private var isChannel: Bool {
+        guard let chat else { return false }
+        return chat.name != "<self>" && chat.dmToken == nil
     }
-
-    private var chat: ChatModel? { chatResults.first }
 
     private struct MessageDisplayInfo: Identifiable {
         let id: String
         let message: ChatMessageModel
+        let sender: MessageSenderModel?
         let showDateSeparator: Bool
         let isFirst: Bool
         let isFirstInGroup: Bool
@@ -49,33 +46,33 @@ struct ChatView<T: XXDKP>: View {
         let reactions: [MessageReactionModel]
     }
 
-    private static func buildDisplayMessages(from messages: [ChatMessageModel], reactions: [MessageReactionModel] = []) -> [MessageDisplayInfo] {
-        let reactionsByMessage = Dictionary(grouping: reactions, by: { $0.targetMessageId })
+    private func buildDisplayMessages(from messages: [ChatMessageModel], senders: [String: MessageSenderModel], reactions: [String: [MessageReactionModel]]) -> [MessageDisplayInfo] {
         let calendar = Calendar.current
         let count = messages.count
         let messageById = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0) })
         return messages.enumerated().map { index, msg in
             let prevMsg = index > 0 ? messages[index - 1] : nil
             let nextMsg = index < count - 1 ? messages[index + 1] : nil
+            let sender = msg.senderId.flatMap { senders[$0] }
 
             let showDateSeparator = prevMsg == nil || !calendar.isDate(msg.timestamp, inSameDayAs: prevMsg!.timestamp)
 
             let isFirstInGroup: Bool = {
                 guard let prev = prevMsg else { return true }
                 if showDateSeparator { return true }
-                return msg.sender?.id != prev.sender?.id
+                return msg.senderId != prev.senderId
             }()
 
             let isLastInGroup: Bool = {
                 guard let next = nextMsg else { return true }
                 if !calendar.isDate(msg.timestamp, inSameDayAs: next.timestamp) { return true }
-                return msg.sender?.id != next.sender?.id
+                return msg.senderId != next.senderId
             }()
 
             let showTimestamp: Bool = {
                 guard let next = nextMsg else { return true }
                 if !calendar.isDate(msg.timestamp, inSameDayAs: next.timestamp) { return true }
-                if msg.sender?.id != next.sender?.id { return true }
+                if msg.senderId != next.senderId { return true }
                 let currentTime = DateFormatter.localizedString(from: msg.timestamp, dateStyle: .none, timeStyle: .short)
                 let nextTime = DateFormatter.localizedString(from: next.timestamp, dateStyle: .none, timeStyle: .short)
                 return currentTime != nextTime
@@ -86,25 +83,22 @@ struct ChatView<T: XXDKP>: View {
             return MessageDisplayInfo(
                 id: msg.id,
                 message: msg,
+                sender: sender,
                 showDateSeparator: showDateSeparator,
                 isFirst: index == 0,
                 isFirstInGroup: isFirstInGroup,
                 isLastInGroup: isLastInGroup,
                 showTimestamp: showTimestamp,
                 repliedToMessage: repliedToMessage,
-                reactions: reactionsByMessage[msg.id] ?? []
+                reactions: reactions[msg.id] ?? []
             )
         }
-    }
-
-    private var isChannel: Bool {
-        guard let chat else { return false }
-        return chat.name != "<self>" && chat.dmToken == nil
     }
 
     @Environment(\.dismiss) private var dismiss
     @State var abc: String = ""
     @State private var replyingTo: ChatMessageModel? = nil
+    @State private var replyingToSenderName: String? = nil
     @State private var showChannelOptions: Bool = false
     @State private var visibleDate: Date? = nil
     @State private var showDateHeader: Bool = false
@@ -117,6 +111,7 @@ struct ChatView<T: XXDKP>: View {
     @State private var highlightedMessageId: String? = nil
     @State private var pagedMessageIds: [String] = []
     @State private var messages: [ChatMessageModel] = []
+    @State private var senderCache: [String: MessageSenderModel] = [:]
     @State private var isLoadingInitialMessages: Bool = false
     @State private var isLoadingOlderMessages: Bool = false
     @State private var isRefreshingNewerMessages: Bool = false
@@ -144,40 +139,17 @@ struct ChatView<T: XXDKP>: View {
     }
 
     private func markMessagesAsRead() {
-        guard let chat else { return }
-        let joinedAt = chat.joinedAt
-        let chatId = chat.id
-
-        let descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                message.chat.id == chatId &&
-                    message.isIncoming &&
-                    !message.isRead &&
-                    message.timestamp > joinedAt
-            }
-        )
-
-        guard let unreadMessages = try? modelContext.fetch(descriptor),
-              !unreadMessages.isEmpty
-        else { return }
-
-        for message in unreadMessages {
-            message.isRead = true
-        }
-        chat.unreadCount = 0
-        try? modelContext.save()
+        guard chat != nil else { return }
+        try? chatStore.markMessagesAsRead(chatId: chatId)
+        chat = try? chatStore.fetchChat(id: chatId)
     }
 
     @MainActor
     func createDMChatAndNavigate(codename: String, dmToken: Int32, pubKey: Data, color: Int) {
-        // Create a new DM chat
         let dmChat = ChatModel(pubKey: pubKey, name: codename, dmToken: dmToken, color: color)
 
         do {
-            modelContext.insert(dmChat)
-            try modelContext.save()
-
-            // Navigate to the new chat using SelectedChat
+            try chatStore.insertChat(dmChat)
             selectedChat.select(id: dmChat.id, title: dmChat.name)
         } catch {
             AppLogger.chat.error("Failed to create DM chat: \(error.localizedDescription, privacy: .public)")
@@ -202,11 +174,6 @@ struct ChatView<T: XXDKP>: View {
     init(chatId: String, chatTitle: String) {
         self.chatId = chatId
         self.chatTitle = chatTitle
-        _chatResults = Query(
-            filter: #Predicate<ChatModel> { chat in
-                chat.id == chatId
-            }
-        )
     }
 
     private func onTopVisibleMessageChanged(_ messageId: String?) {
@@ -247,6 +214,16 @@ struct ChatView<T: XXDKP>: View {
         }
     }
 
+    private var oldestCursor: MessageCursor? {
+        guard let first = messages.first else { return nil }
+        return MessageCursor(timestamp: first.timestamp, internalId: first.internalId)
+    }
+
+    private var newestCursor: MessageCursor? {
+        guard let last = messages.last else { return nil }
+        return MessageCursor(timestamp: last.timestamp, internalId: last.internalId)
+    }
+
     @MainActor
     private func refreshMessageDateLookup() {
         messageDateLookup = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0.timestamp) })
@@ -258,18 +235,17 @@ struct ChatView<T: XXDKP>: View {
             reactionsByMessageId = [:]
             return
         }
+        reactionsByMessageId = (try? chatStore.fetchReactions(targetMessageIds: pagedMessageIds)) ?? [:]
+    }
 
-        let visibleMessageIds = pagedMessageIds
-        let descriptor = FetchDescriptor<MessageReactionModel>(
-            predicate: #Predicate { reaction in
-                visibleMessageIds.contains(reaction.targetMessageId)
-            },
-            sortBy: [
-                SortDescriptor(\MessageReactionModel.internalId),
-            ]
-        )
-        let fetchedReactions = (try? modelContext.fetch(descriptor)) ?? []
-        reactionsByMessageId = Dictionary(grouping: fetchedReactions, by: { $0.targetMessageId })
+    @MainActor
+    private func refreshSenderCache() {
+        let senderIds = Set(messages.compactMap(\.senderId))
+        let newIds = senderIds.subtracting(senderCache.keys)
+        guard !newIds.isEmpty else { return }
+        if let fetched = try? chatStore.fetchSenders(ids: Array(newIds)) {
+            senderCache.merge(fetched) { _, new in new }
+        }
     }
 
     private func groupedReactionsForSheet(messageId: String) -> [(emoji: String, reactions: [MessageReactionModel])] {
@@ -284,148 +260,43 @@ struct ChatView<T: XXDKP>: View {
             }
     }
 
-    private var oldestCursor: MessageCursor? {
-        guard let first = messages.first else { return nil }
-        return MessageCursor(timestamp: first.timestamp, internalId: first.internalId)
-    }
+    // MARK: - Paging
 
-    private var newestCursor: MessageCursor? {
-        guard let last = messages.last else { return nil }
-        return MessageCursor(timestamp: last.timestamp, internalId: last.internalId)
+    @MainActor
+    private func fetchLatestMessages(limit: Int) -> [ChatMessageModel] {
+        (try? chatStore.fetchLatestMessages(chatId: chatId, limit: limit)) ?? []
     }
 
     @MainActor
-    private func fetchLatestMessages(limit: Int) -> [MessageIdentity] {
-        let currentChatId = chatId
-        var descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                message.chat.id == currentChatId
-            },
-            sortBy: [
-                SortDescriptor(\ChatMessageModel.timestamp, order: .reverse),
-                SortDescriptor(\ChatMessageModel.internalId, order: .reverse),
-            ]
-        )
-        descriptor.fetchLimit = limit
+    private func fetchOlderMessages(before cursor: MessageCursor, limit: Int) -> [ChatMessageModel] {
+        (try? chatStore.fetchOlderMessages(chatId: chatId, beforeTimestamp: cursor.timestamp, beforeInternalId: cursor.internalId, limit: limit)) ?? []
+    }
 
-        let newestFirst = (try? modelContext.fetch(descriptor)) ?? []
-        let identities = newestFirst.map { message in
-            MessageIdentity(
-                id: message.id,
-                timestamp: message.timestamp,
-                internalId: message.internalId
-            )
+    @MainActor
+    private func fetchNewerMessages(after cursor: MessageCursor, limit: Int) -> [ChatMessageModel] {
+        (try? chatStore.fetchNewerMessages(chatId: chatId, afterTimestamp: cursor.timestamp, afterInternalId: cursor.internalId, limit: limit)) ?? []
+    }
+
+    @MainActor
+    private func fetchMessagesInLoadedWindow(oldest: MessageCursor, newest: MessageCursor) -> [ChatMessageModel] {
+        (try? chatStore.fetchMessagesInRange(chatId: chatId, oldestTimestamp: oldest.timestamp, oldestInternalId: oldest.internalId, newestTimestamp: newest.timestamp, newestInternalId: newest.internalId)) ?? []
+    }
+
+    @MainActor
+    private func mergePagedMessageIdsChronologically(with newMessages: [ChatMessageModel]) {
+        guard !newMessages.isEmpty else { return }
+        let existingIds = Set(pagedMessageIds)
+        let uniqueNew = newMessages.filter { !existingIds.contains($0.id) }
+        guard !uniqueNew.isEmpty else { return }
+
+        messages.append(contentsOf: uniqueNew)
+        messages.sort {
+            if $0.timestamp == $1.timestamp { return $0.internalId < $1.internalId }
+            return $0.timestamp < $1.timestamp
         }
-        return Array(identities.reversed())
-    }
-
-    @MainActor
-    private func fetchOlderMessages(before cursor: MessageCursor, limit: Int) -> [MessageIdentity] {
-        let currentChatId = chatId
-        let cursorTimestamp = cursor.timestamp
-        let cursorInternalId = cursor.internalId
-        var descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                message.chat.id == currentChatId &&
-                    (message.timestamp < cursorTimestamp ||
-                        (message.timestamp == cursorTimestamp && message.internalId < cursorInternalId))
-            },
-            sortBy: [
-                SortDescriptor(\ChatMessageModel.timestamp, order: .reverse),
-                SortDescriptor(\ChatMessageModel.internalId, order: .reverse),
-            ]
-        )
-        descriptor.fetchLimit = limit
-
-        let olderDescending = (try? modelContext.fetch(descriptor)) ?? []
-        let identities = olderDescending.map { message in
-            MessageIdentity(
-                id: message.id,
-                timestamp: message.timestamp,
-                internalId: message.internalId
-            )
-        }
-        return Array(identities.reversed())
-    }
-
-    @MainActor
-    private func fetchNewerMessages(after cursor: MessageCursor, limit: Int) -> [MessageIdentity] {
-        let currentChatId = chatId
-        let cursorTimestamp = cursor.timestamp
-        let cursorInternalId = cursor.internalId
-        var descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                message.chat.id == currentChatId &&
-                    (message.timestamp > cursorTimestamp ||
-                        (message.timestamp == cursorTimestamp && message.internalId > cursorInternalId))
-            },
-            sortBy: [
-                SortDescriptor(\ChatMessageModel.timestamp),
-                SortDescriptor(\ChatMessageModel.internalId),
-            ]
-        )
-        descriptor.fetchLimit = limit
-        let newerAscending = (try? modelContext.fetch(descriptor)) ?? []
-        return newerAscending.map { message in
-            MessageIdentity(
-                id: message.id,
-                timestamp: message.timestamp,
-                internalId: message.internalId
-            )
-        }
-    }
-
-    @MainActor
-    private func fetchMessagesInLoadedWindow(oldest: MessageCursor, newest: MessageCursor) -> [MessageIdentity] {
-        let currentChatId = chatId
-        let oldestTimestamp = oldest.timestamp
-        let oldestInternalId = oldest.internalId
-        let newestTimestamp = newest.timestamp
-        let newestInternalId = newest.internalId
-        let descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                message.chat.id == currentChatId &&
-                    (message.timestamp > oldestTimestamp ||
-                        (message.timestamp == oldestTimestamp && message.internalId >= oldestInternalId)) &&
-                    (message.timestamp < newestTimestamp ||
-                        (message.timestamp == newestTimestamp && message.internalId <= newestInternalId))
-            },
-            sortBy: [
-                SortDescriptor(\ChatMessageModel.timestamp),
-                SortDescriptor(\ChatMessageModel.internalId),
-            ]
-        )
-
-        let inRangeMessages = (try? modelContext.fetch(descriptor)) ?? []
-        return inRangeMessages.map { message in
-            MessageIdentity(
-                id: message.id,
-                timestamp: message.timestamp,
-                internalId: message.internalId
-            )
-        }
-    }
-
-    @MainActor
-    private func mergePagedMessageIdsChronologically(with additionalIds: [String]) {
-        guard !additionalIds.isEmpty else { return }
-
-        let mergedIds = Array(Set(pagedMessageIds).union(additionalIds))
-        var descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                mergedIds.contains(message.id)
-            },
-            sortBy: [
-                SortDescriptor(\ChatMessageModel.timestamp),
-                SortDescriptor(\ChatMessageModel.internalId),
-            ]
-        )
-        descriptor.fetchLimit = mergedIds.count
-
-        guard let orderedMessages = try? modelContext.fetch(descriptor) else { return }
-        pagedMessageIds = orderedMessages.map(\.id)
-        messages = orderedMessages
+        pagedMessageIds = messages.map(\.id)
         refreshMessageDateLookup()
+        refreshSenderCache()
         refreshVisibleReactions()
     }
 
@@ -438,22 +309,11 @@ struct ChatView<T: XXDKP>: View {
             return
         }
 
-        let ids = pagedMessageIds
-        var descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                ids.contains(message.id)
-            },
-            sortBy: [
-                SortDescriptor(\ChatMessageModel.timestamp),
-                SortDescriptor(\ChatMessageModel.internalId),
-            ]
-        )
-        descriptor.fetchLimit = pagedMessageIds.count
-
-        let fetched = (try? modelContext.fetch(descriptor)) ?? []
+        let fetched = (try? chatStore.fetchMessages(ids: pagedMessageIds)) ?? []
         let byId = Dictionary(uniqueKeysWithValues: fetched.map { ($0.id, $0) })
         messages = pagedMessageIds.compactMap { byId[$0] }
         refreshMessageDateLookup()
+        refreshSenderCache()
         refreshVisibleReactions()
     }
 
@@ -463,11 +323,12 @@ struct ChatView<T: XXDKP>: View {
 
         Task(priority: .userInitiated) { @MainActor in
             let initialBatch = fetchLatestMessages(limit: messagesPageSize)
-            let initialIds = initialBatch.map(\.id)
-
-            pagedMessageIds = initialIds
-            reloadMessagesFromPageIds()
+            pagedMessageIds = initialBatch.map(\.id)
+            messages = initialBatch
             hasMoreOlderMessages = initialBatch.count == messagesPageSize
+            refreshMessageDateLookup()
+            refreshSenderCache()
+            refreshVisibleReactions()
             isLoadingInitialMessages = false
         }
     }
@@ -479,16 +340,9 @@ struct ChatView<T: XXDKP>: View {
 
         Task(priority: .utility) { @MainActor in
             let olderBatch = fetchOlderMessages(before: cursor, limit: messagesPageSize)
-            let olderIds = olderBatch.map(\.id)
+            mergePagedMessageIdsChronologically(with: olderBatch)
 
-            let existingIds = Set(pagedMessageIds)
-            let uniqueOlderIds = olderIds.filter { !existingIds.contains($0) }
-
-            if !uniqueOlderIds.isEmpty {
-                mergePagedMessageIdsChronologically(with: uniqueOlderIds)
-            }
-
-            if olderBatch.count < messagesPageSize || uniqueOlderIds.isEmpty {
+            if olderBatch.count < messagesPageSize {
                 hasMoreOlderMessages = false
             }
             isLoadingOlderMessages = false
@@ -505,25 +359,17 @@ struct ChatView<T: XXDKP>: View {
         isRefreshingNewerMessages = true
 
         Task(priority: .utility) { @MainActor in
-            var appended: [MessageIdentity] = []
+            var appended: [ChatMessageModel] = []
 
             while true {
                 let batch = fetchNewerMessages(after: cursor, limit: messagesPageSize)
                 guard !batch.isEmpty else { break }
-
                 appended.append(contentsOf: batch)
-
                 guard batch.count == messagesPageSize, let newest = batch.last else { break }
                 cursor = MessageCursor(timestamp: newest.timestamp, internalId: newest.internalId)
             }
 
-            let appendedIds = appended.map(\.id)
-
-            let existingIds = Set(pagedMessageIds)
-            let uniqueAppendedIds = appendedIds.filter { !existingIds.contains($0) }
-            if !uniqueAppendedIds.isEmpty {
-                mergePagedMessageIdsChronologically(with: uniqueAppendedIds)
-            }
+            mergePagedMessageIdsChronologically(with: appended)
             isRefreshingNewerMessages = false
             refreshInRangeMessagesIfNeeded()
         }
@@ -542,14 +388,7 @@ struct ChatView<T: XXDKP>: View {
 
         Task(priority: .utility) { @MainActor in
             let olderBatch = fetchOlderMessages(before: cursor, limit: messagesPageSize)
-            let olderIds = olderBatch.map(\.id)
-            let existingIds = Set(pagedMessageIds)
-            let uniqueOlderIds = olderIds.filter { !existingIds.contains($0) }
-
-            if !uniqueOlderIds.isEmpty {
-                mergePagedMessageIdsChronologically(with: uniqueOlderIds)
-            }
-
+            mergePagedMessageIdsChronologically(with: olderBatch)
             hasMoreOlderMessages = olderBatch.count == messagesPageSize
             isRefreshingBackfilledOlderMessages = false
             refreshInRangeMessagesIfNeeded()
@@ -571,14 +410,7 @@ struct ChatView<T: XXDKP>: View {
 
         Task(priority: .utility) { @MainActor in
             let inRangeBatch = fetchMessagesInLoadedWindow(oldest: oldest, newest: newest)
-            let inRangeIds = inRangeBatch.map(\.id)
-            let existingIds = Set(pagedMessageIds)
-            let missingIds = inRangeIds.filter { !existingIds.contains($0) }
-
-            if !missingIds.isEmpty {
-                mergePagedMessageIdsChronologically(with: missingIds)
-            }
-
+            mergePagedMessageIdsChronologically(with: inRangeBatch)
             isRefreshingInRangeMessages = false
         }
     }
@@ -611,14 +443,7 @@ struct ChatView<T: XXDKP>: View {
     private func applyMessageUpdateIfLoaded(internalId: Int64) -> Bool {
         guard let messageIndex = messages.firstIndex(where: { $0.internalId == internalId }) else { return false }
 
-        let targetInternalId = internalId
-        let descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { message in
-                message.internalId == targetInternalId
-            }
-        )
-
-        guard let refreshed = (try? modelContext.fetch(descriptor))?.first else { return false }
+        guard let refreshed = try? chatStore.fetchMessage(internalId: internalId) else { return false }
 
         let oldMessageId = messages[messageIndex].id
         messages[messageIndex] = refreshed
@@ -631,27 +456,8 @@ struct ChatView<T: XXDKP>: View {
             refreshVisibleReactions()
         }
 
-        // Force SwiftUI to re-run list diffing for in-place model mutations.
         messages = Array(messages)
         return true
-    }
-
-    @MainActor
-    private func seedInitialMessagesFromChatIfNeeded() {
-        guard messages.isEmpty, pagedMessageIds.isEmpty, let chat else { return }
-        let sorted = chat.messages.sorted { lhs, rhs in
-            if lhs.timestamp == rhs.timestamp {
-                return lhs.internalId < rhs.internalId
-            }
-            return lhs.timestamp < rhs.timestamp
-        }
-        guard !sorted.isEmpty else { return }
-        let seeded = Array(sorted.suffix(messagesPageSize))
-        messages = seeded
-        pagedMessageIds = seeded.map(\.id)
-        hasMoreOlderMessages = sorted.count > seeded.count
-        refreshMessageDateLookup()
-        refreshVisibleReactions()
     }
 
     @MainActor
@@ -662,7 +468,6 @@ struct ChatView<T: XXDKP>: View {
                 targetScrollMessageId = nil
             }
         } else {
-            // TODO: Fetch older messages if necessary to reach the target message
             showToast("Message is not loaded")
         }
     }
@@ -674,56 +479,26 @@ struct ChatView<T: XXDKP>: View {
             } else if messages.isEmpty {
                 EmptyChatView()
             } else {
-                NewChatMessagesList(
-                    messages: messages,
-                    reactionsByMessageId: reactionsByMessageId,
-                    isLoadingOlderMessages: isLoadingOlderMessages,
-                    isAdmin: isAdmin,
-                    mutedUsers: Set(mutedUsers),
-                    targetScrollMessageId: targetScrollMessageId,
-                    onReachedTop: {
-                        loadOlderMessagesIfNeeded()
-                    },
-                    onTopVisibleMessageChanged: { messageId in
-                        onTopVisibleMessageChanged(messageId)
-                    },
-                    onReplyMessage: { message in
-                        replyingTo = message
-                    },
-                    onDMMessage: { codename, dmToken, pubKey, color in
-                        createDMChatAndNavigate(codename: codename, dmToken: dmToken, pubKey: pubKey, color: color)
-                    },
-                    onDeleteMessage: isChannel ? { message in
-                        deleteMessage(message)
-                    } : nil,
-                    onMuteUser: { pubKey in
-                        setMuteState(for: pubKey, muted: true)
-                    },
-                    onUnmuteUser: { pubKey in
-                        setMuteState(for: pubKey, muted: false)
-                    },
-                    onShowReactions: { messageId in
-                        selectedReactionsMessageId = messageId
-                    },
-                    onScrollToReply: { messageId in
-                        scrollToMessage(messageId)
-                    },
-                    onScrollActivityChanged: { isScrolling in
-                        if isMessagesListScrolling == isScrolling {
-                            return
+                List(messages, id: \.id) { message in
+                    let sender = message.senderId.flatMap { senderCache[$0] }
+                    VStack(alignment: message.isIncoming ? .leading : .trailing, spacing: 4) {
+                        if let sender {
+                            Text(sender.codename)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
-                        isMessagesListScrolling = isScrolling
-                        guard !isScrolling, hasDeferredChatRefresh else { return }
-                        hasDeferredChatRefresh = false
-                        refreshChatMessagesNow()
-                    },
-                    renderChannelPreview: { link, isIncoming, timestamp in
-                        AnyView(ChannelInviteLinkPreview<T>(link: link, isIncoming: isIncoming, timestamp: timestamp).environmentObject(xxdk))
-                    },
-                    renderDMPreview: { link, isIncoming, timestamp in
-                        AnyView(DMInviteLinkPreview<T>(link: link, isIncoming: isIncoming, timestamp: timestamp).environmentObject(xxdk))
+                        Text(message.message)
+                            .padding(8)
+                            .background(message.isIncoming ? Color(.systemGray5) : Color.blue.opacity(0.2))
+                            .cornerRadius(8)
+                        Text(message.timestamp, style: .time)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
-                )
+                    .frame(maxWidth: .infinity, alignment: message.isIncoming ? .leading : .trailing)
+                    .listRowSeparator(.hidden)
+                }
+                .listStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -752,8 +527,10 @@ struct ChatView<T: XXDKP>: View {
                 MessageForm<T>(
                     chat: chat,
                     replyTo: replyingTo,
+                    replyToSenderName: replyingToSenderName,
                     onCancelReply: {
                         replyingTo = nil
+                        replyingToSenderName = nil
                     }
                 )
             }
@@ -818,16 +595,8 @@ struct ChatView<T: XXDKP>: View {
                 Task {
                     do {
                         try xxdk.leaveChannel(channelId: chatId)
-
+                        try chatStore.deleteChat(id: chatId)
                         await MainActor.run {
-                            let descriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.id == chatId })
-                            let chatsToDelete = (try? modelContext.fetch(descriptor)) ?? []
-
-                            for chatToDelete in chatsToDelete {
-                                modelContext.delete(chatToDelete)
-                            }
-
-                            try? modelContext.save()
                             dismiss()
                         }
                     } catch {
@@ -838,7 +607,7 @@ struct ChatView<T: XXDKP>: View {
             .environmentObject(xxdk)
         }
         .onAppear {
-            seedInitialMessagesFromChatIfNeeded()
+            chat = try? chatStore.fetchChat(id: chatId)
             loadInitialMessagesIfNeeded()
             isAdmin = chat?.isAdmin ?? false
             if isChannel {
@@ -852,7 +621,6 @@ struct ChatView<T: XXDKP>: View {
                 isMuted = false
                 mutedUsers = []
             }
-            // Mark all incoming messages as read
             markMessagesAsRead()
         }
         .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
@@ -887,14 +655,11 @@ struct ChatView<T: XXDKP>: View {
         .id("chat-\(chatId)")
         .onChange(of: showChannelOptions) { _, newValue in
             if !newValue {
+                chat = try? chatStore.fetchChat(id: chatId)
                 isAdmin = chat?.isAdmin ?? false
             }
         }
         .background(ChatBackgroundView())
-        .background(
-            NewChatBackSwipeControl(isDisabled: true)
-                .allowsHitTesting(false)
-        )
         .overlay {
             if let toastMessage {
                 VStack {

@@ -3,7 +3,7 @@ import SwiftUI
 struct CreateSpaceView<T: XXDKP>: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
+    @EnvironmentObject var chatStore: ChatStore
 
     @State private var name: String = ""
     @State private var description: String = ""
@@ -98,8 +98,7 @@ struct CreateSpaceView<T: XXDKP>: View {
                 }
 
                 let newChat = ChatModel(channelId: channelId, name: channel.Name, isAdmin: true, isSecret: privacyLevel == .secret)
-                swiftDataActor.insert(newChat)
-                try swiftDataActor.save()
+                try chatStore.insertChat(newChat)
 
                 await MainActor.run {
                     dismiss()
