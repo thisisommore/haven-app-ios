@@ -45,7 +45,7 @@ struct NewMessagePrecomputedRender {
 }
 
 enum NewMessageRenderPersistence {
-    static func apply(_ precomputed: NewMessagePrecomputedRender, to message: ChatMessageModel) {
+    static func apply(_ precomputed: NewMessagePrecomputedRender, to message: inout ChatMessageModel) {
         message.newContainsMarkup = precomputed.containsMarkup
         message.newRenderKindRaw = precomputed.kind.rawValue
         message.newRenderVersion = precomputed.version

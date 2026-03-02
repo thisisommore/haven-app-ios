@@ -1,7 +1,7 @@
 import Foundation
 import GRDB
 
-struct MessageSenderModel: Identifiable, Codable, FetchableRecord, PersistableRecord, Encodable {
+struct MessageSenderModel: Identifiable, Hashable, Codable, FetchableRecord, PersistableRecord {
     static let databaseTableName = "messageSenderModel"
 
     var id: String
