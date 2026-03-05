@@ -13,7 +13,7 @@ typealias Messages = [Message]
 struct MaxChat: UIViewControllerRepresentable {
   @EnvironmentObject private var chatStore: ChatStore
   let chatId: String
-  let pageSize: Int = 200
+  let pageSize: Int = 50
 
   init(chatId: String) {
     self.chatId = chatId
@@ -27,7 +27,9 @@ struct MaxChat: UIViewControllerRepresentable {
     uiViewController.update(chatId: chatId, pageSize: pageSize, chatStore: chatStore)
   }
 
-  final class Controller: UIViewController, UICollectionViewDataSource, Deletage {
+  final class Controller: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,
+    Deletage
+  {
     private struct VisibleAnchor {
       let messageId: String
       let minY: CGFloat
@@ -39,8 +41,18 @@ struct MaxChat: UIViewControllerRepresentable {
       let updates: [IndexPath]
     }
 
+    private struct ObservedMessagesPage {
+      let messages: [ChatMessageModel]
+      let hasOlderMessages: Bool
+    }
+
     private var chatId: String
     private var pageSize: Int
+    private let loadMorePageSize = 20
+    private let observedLimitLock = NSLock()
+    private var currentObservedLimit: Int
+    private var canLoadMore = true
+    private var isLoadingMore = false
     private var chatStore: ChatStore
     private var messages: Messages
     private var lastObservedMessages: [ChatMessageModel]
@@ -49,23 +61,27 @@ struct MaxChat: UIViewControllerRepresentable {
     private var observationSession = 0
     private var cancelMessagesObservation: (() -> Void)?
     private var didReceiveInitialMessagesSnapshot = false
+    private var currentCollectionWidth: CGFloat = 0
     private lazy var collectionView: UICollectionView = {
       let layout = CVLayout(delegate: self)
       let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
       view.translatesAutoresizingMaskIntoConstraints = false
       view.dataSource = self
+      view.delegate = self
       view.bounces = true
       view.alwaysBounceVertical = true
 
       view.register(TextCell.self, forCellWithReuseIdentifier: TextCell.identifier)
       view.register(LoadMoreMessages.self, forCellWithReuseIdentifier: LoadMoreMessages.identifier)
       view.backgroundColor = .clear
+      view.contentInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
       return view
     }()
 
     init(chatId: String, pageSize: Int, chatStore: ChatStore) {
       self.chatId = chatId
       self.pageSize = pageSize
+      currentObservedLimit = pageSize
       self.chatStore = chatStore
       messages = []
       lastObservedMessages = []
@@ -88,6 +104,13 @@ struct MaxChat: UIViewControllerRepresentable {
         collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       ])
       startMessagesObservation()
+    }
+
+    override func viewDidLayoutSubviews() {
+      super.viewDidLayoutSubviews()
+      currentCollectionWidth =
+        collectionView.bounds.width - collectionView.adjustedContentInset.left
+        - collectionView.adjustedContentInset.right
     }
 
     func update(chatId: String, pageSize: Int, chatStore: ChatStore) {
@@ -114,123 +137,232 @@ struct MaxChat: UIViewControllerRepresentable {
       observationSession += 1
       let session = observationSession
       didReceiveInitialMessagesSnapshot = false
+      setCurrentObservedLimit(pageSize)
+      canLoadMore = true
+      isLoadingMore = false
       lastObservedMessages = messages.compactMap { message in
         guard case .Text(let textMessage) = message else { return nil }
         return textMessage
       }
 
       let observedChatId = chatId
-      let observedLimit = pageSize
-      let observation = ValueObservation.tracking { db in
-        let rows =
-          try ChatMessageModel
-          .filter(Column("chatId") == observedChatId)
-          .order(Column("timestamp").desc, Column("internalId").asc)
-          .limit(observedLimit)
-          .fetchAll(db)
-        return Array(rows.reversed())
-      }
-
-      let cancellable = observation.start(
-        in: chatStore.dbQueue,
-        scheduling: .async(onQueue: updateWorkQueue),
-        onError: { error in
-          AppLogger.chat.error(
-            "CV: GRDB messages listener failed for chat \(observedChatId, privacy: .public): \(error.localizedDescription, privacy: .public)"
-          )
-        },
-        onChange: { [weak self] (latest: [ChatMessageModel]) in
+      let dbQueue = chatStore.dbQueue
+      let observer = ChatMessagesTransactionObserver2(
+        tableName: ChatMessageModel.databaseTableName,
+        onPublishedChanges: { [weak self] in
           guard let self else { return }
-          guard self.didReceiveInitialMessagesSnapshot else {
-            self.didReceiveInitialMessagesSnapshot = true
-            self.lastObservedMessages = latest
-            DispatchQueue.main.async { [weak self] in
-              guard let self else { return }
-              guard self.observationSession == session else { return }
-              self.messages = [.LoadMore] + latest.map { .Text($0) }
-              if let layout = self.collectionView.collectionViewLayout as? CVLayout {
-                layout.didInitialScrollToBottom = false
-              }
-              self.collectionView.reloadData()
-            }
-            return
-          }
-
-          let beforeObserved = self.lastObservedMessages
-          self.lastObservedMessages = latest
-          self.updateWorkQueue.async { [weak self] in
-            guard let self else { return }
-
-            let diff = self.buildBatchDiff(from: beforeObserved, to: latest)
-            let hasAnyChange =
-              !diff.inserts.isEmpty || !diff.deletes.isEmpty || !diff.updates.isEmpty
-            guard hasAnyChange else { return }
-            let detectedFalseDelete = self.detectFalseDeleteWindowShift(
-              from: beforeObserved,
-              to: latest,
-              diff: diff,
-              pageLimit: observedLimit
-            )
-
-            var deleteDebugLog: String?
-            if !diff.deletes.isEmpty {
-              let deletedItems = diff.deletes.map(\.item).map(String.init).joined(separator: ",")
-              let deletedInternalIds = diff.deletes.compactMap { indexPath -> String? in
-                let index = indexPath.item - 1
-                guard beforeObserved.indices.contains(index) else { return nil }
-                return String(beforeObserved[index].internalId)
-              }.joined(separator: ",")
-              let beforeSnapshot = self.describeMessagesForDeleteDebug(beforeObserved)
-              let afterSnapshot = self.describeMessagesForDeleteDebug(latest)
-              deleteDebugLog =
-                "CV: GRDB delete-debug chat \(observedChatId) deleteItems[\(deletedItems)] deleteInternalIds[\(deletedInternalIds)] before[\(beforeSnapshot)] after[\(afterSnapshot)]"
-            }
-
-            DispatchQueue.main.async { [weak self] in
-              guard let self else { return }
-              guard self.observationSession == session else { return }
-
-              let oldMessages = self.messages
-              let newMessages: Messages = [.LoadMore] + latest.map { .Text($0) }
-              let anchor = self.captureVisibleAnchor(in: self.collectionView, messages: oldMessages)
-              self.messages = newMessages
-
-              if let anchor, let layout = self.collectionView.collectionViewLayout as? CVLayout {
-                if let newIndex = self.messages.firstIndex(where: { message in
-                  guard case .Text(let textMessage) = message else { return false }
-                  return textMessage.id == anchor.messageId
-                }) {
-                  layout.pendingAnchor = (IndexPath(item: newIndex, section: 0), anchor.minY)
-                }
-              }
-
-              UIView.performWithoutAnimation {
-                self.collectionView.performBatchUpdates {
-                  if !diff.deletes.isEmpty {
-                    self.collectionView.deleteItems(at: diff.deletes)
-                  }
-                  if !diff.inserts.isEmpty {
-                    self.collectionView.insertItems(at: diff.inserts)
-                  }
-                  if !diff.updates.isEmpty {
-                    self.collectionView.reloadItems(at: diff.updates)
-                  }
-                } completion: { _ in
-                }
-              }
-
-              if let deleteDebugLog {
-                AppLogger.chat.info("\(deleteDebugLog, privacy: .public)")
-              }
-              if detectedFalseDelete {
-                AppLogger.chat.info("CV:False Delete")
-              }
-            }
-          }
+          self.processMessagesObservationChange(
+            session: session,
+            observedChatId: observedChatId,
+            observedLimit: self.getCurrentObservedLimit(),
+            dbQueue: dbQueue
+          )
         }
       )
+      dbQueue.add(transactionObserver: observer, extent: .observerLifetime)
+      observer.triggerInitialPublish()
+      cancelMessagesObservation = {
+        dbQueue.remove(transactionObserver: observer)
+        observer.stop()
+      }
+    }
 
-      cancelMessagesObservation = { cancellable.cancel() }
+    private func processMessagesObservationChange(
+      session: Int,
+      observedChatId: String,
+      observedLimit: Int,
+      dbQueue: DatabaseQueue
+    ) {
+      updateWorkQueue.async { [weak self] in
+        guard let self else { return }
+        guard self.observationSession == session else { return }
+        guard observedLimit == self.getCurrentObservedLimit() else { return }
+
+        let latestPage = self.fetchLatestObservedMessages(
+          chatId: observedChatId,
+          limit: observedLimit,
+          dbQueue: dbQueue
+        )
+        let latest = latestPage.messages
+        let hasOlderMessages = latestPage.hasOlderMessages
+
+        let width = self.currentCollectionWidth
+        if width > 0 {
+          for msg in latest {
+            _ = TextCell.size(width: width, message: msg)
+          }
+        }
+
+        guard self.didReceiveInitialMessagesSnapshot else {
+          self.didReceiveInitialMessagesSnapshot = true
+          self.lastObservedMessages = latest
+          DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            guard self.observationSession == session else { return }
+            guard observedLimit == self.getCurrentObservedLimit() else { return }
+            self.canLoadMore = hasOlderMessages
+            self.isLoadingMore = false
+            self.messages = [.LoadMore] + latest.map { .Text($0) }
+            if let layout = self.collectionView.collectionViewLayout as? CVLayout {
+              layout.didInitialScrollToBottom = false
+            }
+            self.collectionView.reloadData()
+          }
+          return
+        }
+
+        let beforeObserved = self.lastObservedMessages
+        self.lastObservedMessages = latest
+
+        let diff = self.buildBatchDiff(from: beforeObserved, to: latest)
+        let hasAnyChange =
+          !diff.inserts.isEmpty || !diff.deletes.isEmpty || !diff.updates.isEmpty
+        let detectedFalseDelete =
+          hasAnyChange
+          ? self.detectFalseDeleteWindowShift(
+            from: beforeObserved,
+            to: latest,
+            diff: diff,
+            pageLimit: observedLimit
+          )
+          : false
+
+        var deleteDebugLog: String?
+        if hasAnyChange, !diff.deletes.isEmpty {
+          let deletedItems = diff.deletes.map(\.item).map(String.init).joined(separator: ",")
+          let deletedInternalIds = diff.deletes.compactMap { indexPath -> String? in
+            let index = indexPath.item - 1
+            guard beforeObserved.indices.contains(index) else { return nil }
+            return String(beforeObserved[index].internalId)
+          }.joined(separator: ",")
+          let beforeSnapshot = self.describeMessagesForDeleteDebug(beforeObserved)
+          let afterSnapshot = self.describeMessagesForDeleteDebug(latest)
+          deleteDebugLog =
+            "CV: GRDB delete-debug chat \(observedChatId) deleteItems[\(deletedItems)] deleteInternalIds[\(deletedInternalIds)] before[\(beforeSnapshot)] after[\(afterSnapshot)]"
+        }
+
+        DispatchQueue.main.async { [weak self] in
+          guard let self else { return }
+          guard self.observationSession == session else { return }
+          guard observedLimit == self.getCurrentObservedLimit() else { return }
+          self.canLoadMore = hasOlderMessages
+          self.isLoadingMore = false
+          guard hasAnyChange else { return }
+
+          let oldMessages = self.messages
+          let newMessages: Messages = [.LoadMore] + latest.map { .Text($0) }
+          let anchor = self.captureVisibleAnchor(in: self.collectionView, messages: oldMessages)
+          self.messages = newMessages
+
+          if let anchor, let layout = self.collectionView.collectionViewLayout as? CVLayout {
+            if let newIndex = self.messages.firstIndex(where: { message in
+              guard case .Text(let textMessage) = message else { return false }
+              return textMessage.id == anchor.messageId
+            }) {
+              layout.pendingAnchor = (IndexPath(item: newIndex, section: 0), anchor.minY)
+            }
+          }
+
+          UIView.performWithoutAnimation {
+            self.collectionView.performBatchUpdates {
+              if !diff.deletes.isEmpty {
+                self.collectionView.deleteItems(at: diff.deletes)
+              }
+              if !diff.inserts.isEmpty {
+                self.collectionView.insertItems(at: diff.inserts)
+              }
+              if !diff.updates.isEmpty {
+                self.collectionView.reloadItems(at: diff.updates)
+              }
+            } completion: { _ in
+            }
+          }
+
+          if let deleteDebugLog {
+            AppLogger.chat.info("\(deleteDebugLog, privacy: .public)")
+          }
+          if detectedFalseDelete {
+            AppLogger.chat.info("CV:False Delete")
+          }
+        }
+      }
+    }
+
+    private func fetchLatestObservedMessages(
+      chatId: String,
+      limit: Int,
+      dbQueue: DatabaseQueue
+    ) -> ObservedMessagesPage {
+      do {
+        return try dbQueue.read { db in
+          let rows =
+            try ChatMessageModel
+            .filter(Column("chatId") == chatId)
+            .order(Column("timestamp").desc, Column("internalId").asc)
+            .limit(limit)
+            .fetchAll(db)
+          let messages = Array(rows.reversed())
+          let hasOlderMessages: Bool
+          if let oldestMessage = messages.first {
+            hasOlderMessages =
+              try ChatMessageModel
+              .filter(Column("chatId") == chatId)
+              .filter(
+                Column("timestamp") < oldestMessage.timestamp
+                  || (Column("timestamp") == oldestMessage.timestamp
+                    && Column("internalId") < oldestMessage.internalId)
+              )
+              .limit(1)
+              .fetchOne(db) != nil
+          } else {
+            hasOlderMessages = false
+          }
+
+          return ObservedMessagesPage(messages: messages, hasOlderMessages: hasOlderMessages)
+        }
+      } catch {
+        AppLogger.chat.error(
+          "CV: GRDB messages fetch failed for chat \(chatId, privacy: .public): \(error.localizedDescription, privacy: .public)"
+        )
+        return ObservedMessagesPage(messages: [], hasOlderMessages: false)
+      }
+    }
+
+    private func requestLoadMoreIfNeeded() {
+      guard canLoadMore else { return }
+      guard !isLoadingMore else { return }
+      guard observationSession > 0 else { return }
+      guard !messages.isEmpty else { return }
+      guard case .LoadMore = messages[0] else { return }
+
+      isLoadingMore = true
+      let nextLimit = increaseCurrentObservedLimit(by: loadMorePageSize)
+      processMessagesObservationChange(
+        session: observationSession,
+        observedChatId: chatId,
+        observedLimit: nextLimit,
+        dbQueue: chatStore.dbQueue
+      )
+    }
+
+    private func getCurrentObservedLimit() -> Int {
+      observedLimitLock.lock()
+      defer { observedLimitLock.unlock() }
+      return currentObservedLimit
+    }
+
+    private func setCurrentObservedLimit(_ newValue: Int) {
+      observedLimitLock.lock()
+      currentObservedLimit = newValue
+      observedLimitLock.unlock()
+    }
+
+    private func increaseCurrentObservedLimit(by value: Int) -> Int {
+      observedLimitLock.lock()
+      currentObservedLimit += value
+      let updatedValue = currentObservedLimit
+      observedLimitLock.unlock()
+      return updatedValue
     }
 
     deinit {
@@ -355,6 +487,17 @@ struct MaxChat: UIViewControllerRepresentable {
         return cell
       }
     }
+
+    func collectionView(
+      _: UICollectionView,
+      willDisplay _: UICollectionViewCell,
+      forItemAt indexPath: IndexPath
+    ) {
+      guard indexPath.item == 0 else { return }
+      guard indexPath.item < messages.count else { return }
+      guard case .LoadMore = messages[indexPath.item] else { return }
+      requestLoadMoreIfNeeded()
+    }
   }
 }
 
@@ -381,7 +524,8 @@ class CVLayout: UICollectionViewLayout {
 
   // 1. Define the overall scroll area (just 5x5)
   override var collectionViewContentSize: CGSize {
-    let w = collectionView?.bounds.width ?? 0
+    guard let cv = collectionView else { return .zero }
+    let w = cv.bounds.width - cv.adjustedContentInset.left - cv.adjustedContentInset.right
     return CGSize(width: w, height: height)
   }
 
@@ -394,8 +538,11 @@ class CVLayout: UICollectionViewLayout {
 
     // First pass: calculate total content height
     var totalContentHeight: CGFloat = 0
-    let w = collectionView.bounds.width
+    let w =
+      collectionView.bounds.width - collectionView.adjustedContentInset.left
+      - collectionView.adjustedContentInset.right
     let numberOfItems = collectionView.numberOfItems(inSection: 0)
+    let cellSpacing: CGFloat = 8
 
     var sizes = [CGSize]()
     sizes.reserveCapacity(numberOfItems)
@@ -404,7 +551,7 @@ class CVLayout: UICollectionViewLayout {
       let indexPath = IndexPath(item: item, section: 0)
       let size = delegate.getSize(at: indexPath, width: w)
       sizes.append(size.size)
-      totalContentHeight += size.height
+      totalContentHeight += size.height + cellSpacing
     }
 
     // Determine starting Y offset to push content to bottom if it's smaller than the view
@@ -420,7 +567,7 @@ class CVLayout: UICollectionViewLayout {
       let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
       let size = sizes[item]
       attributes.frame = CGRect(x: 0, y: topOffset, width: size.width, height: size.height)
-      topOffset += size.height
+      topOffset += size.height + cellSpacing
       cache.append(attributes)
     }
 
@@ -466,7 +613,37 @@ class CVLayout: UICollectionViewLayout {
   // 3. Return attributes for all items in the visible area
   override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]?
   {
-    return cache.filter { $0.frame.intersects(rect) }
+    guard !cache.isEmpty else { return [] }
+
+    let startIndex = firstIndexWithMaxY(atLeast: rect.minY)
+    guard startIndex < cache.count else { return [] }
+
+    var visibleAttributes: [UICollectionViewLayoutAttributes] = []
+    var index = startIndex
+    while index < cache.count {
+      let attributes = cache[index]
+      if attributes.frame.minY > rect.maxY {
+        break
+      }
+      visibleAttributes.append(attributes)
+      index += 1
+    }
+    return visibleAttributes
+  }
+
+  private func firstIndexWithMaxY(atLeast minY: CGFloat) -> Int {
+    var low = 0
+    var high = cache.count
+
+    while low < high {
+      let mid = low + (high - low) / 2
+      if cache[mid].frame.maxY < minY {
+        low = mid + 1
+      } else {
+        high = mid
+      }
+    }
+    return low
   }
 
   override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint)
