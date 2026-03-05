@@ -63,7 +63,7 @@ struct MaxChat: UIViewControllerRepresentable {
   }
 
   final class Controller: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,
-    Deletage
+    UIGestureRecognizerDelegate, Deletage
   {
     private struct VisibleAnchor {
       let messageId: String
@@ -114,12 +114,31 @@ struct MaxChat: UIViewControllerRepresentable {
       formatter.dateFormat = "EEE d MMM yyyy"
       return formatter
     }()
+    private static let swipeReplyTriggerThreshold: CGFloat = 60
+    private static let swipeReplyMaxDrag: CGFloat = 100
+    private static let swipeReplyIndicatorSize: CGFloat = 36
+    private static let swipeReplyIndicatorIconSize: CGFloat = 16
+    private static let swipeReplyIndicatorInset: CGFloat = 8
     private static let jumpButtonBottomSpacing: CGFloat = 16
     private static let jumpButtonTrailingSpacing: CGFloat = 16
     private let floatingDateBadge = UIView()
     private let floatingDateLabel = UILabel()
     private var floatingDateHideWorkItem: DispatchWorkItem?
     private var floatingDateValue: String?
+    private let swipeReplyIndicatorView = UIView()
+    private let swipeReplyIndicatorImageView = UIImageView()
+    private let swipeReplyHaptic = UIImpactFeedbackGenerator(style: .medium)
+    private weak var activeSwipeCell: UICollectionViewCell?
+    private var activeSwipeMessage: ChatMessageModel?
+    private var hasTriggeredSwipeReplyHaptic = false
+    private var swipeReplyIndicatorIsArmed = false
+    private lazy var swipeReplyPanGesture: UIPanGestureRecognizer = {
+      let recognizer = UIPanGestureRecognizer(
+        target: self, action: #selector(handleSwipeToReplyPan(_:)))
+      recognizer.delegate = self
+      recognizer.cancelsTouchesInView = false
+      return recognizer
+    }()
     private let jumpToBottomButton = UIButton(type: .system)
     private var isJumpToBottomButtonVisible = false
     private lazy var collectionView: UICollectionView = {
@@ -166,9 +185,15 @@ struct MaxChat: UIViewControllerRepresentable {
         collectionView.topAnchor.constraint(equalTo: view.topAnchor),
         collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       ])
+      setupSwipeToReply()
       setupJumpToBottomButton()
       setupFloatingDateBadge()
       startMessagesObservation()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+      super.viewWillDisappear(animated)
+      endSwipeToReply(triggerReply: false, animated: false)
     }
 
     override func viewDidLayoutSubviews() {
@@ -277,17 +302,34 @@ struct MaxChat: UIViewControllerRepresentable {
       cancelMessagesObservation = nil
       observationSession += 1
       let session = observationSession
-      didReceiveInitialMessagesSnapshot = false
+      
+      // Reset state on the background queue to prevent data races
+      // with ongoing diff calculations from previous observations.
+      updateWorkQueue.async { [weak self] in
+        guard let self else { return }
+        if self.observationSession == session {
+          self.didReceiveInitialMessagesSnapshot = false
+          self.lastObservedMessages = []
+        }
+      }
+      
       setCurrentObservedLimit(pageSize)
       canLoadMore = true
       isLoadingMore = false
-      lastObservedMessages = messages.compactMap(chatMessage(from:))
 
       let observedChatId = chatId
       let dbQueue = chatStore.dbQueue
-      let observer = ChatMessagesTransactionObserver2(
-        tableName: ChatMessageModel.databaseTableName,
-        onPublishedChanges: { [weak self] in
+      let observation = DatabaseRegionObservation(
+        tracking: ChatMessageModel.filter(Column("chatId") == observedChatId)
+      )
+      let cancellable = observation.start(
+        in: dbQueue,
+        onError: { error in
+          AppLogger.chat.error(
+            "CL: observation error: \(error.localizedDescription, privacy: .public)"
+          )
+        },
+        onChange: { [weak self] _ in
           guard let self else { return }
           self.processMessagesObservationChange(
             session: session,
@@ -297,11 +339,14 @@ struct MaxChat: UIViewControllerRepresentable {
           )
         }
       )
-      dbQueue.add(transactionObserver: observer, extent: .observerLifetime)
-      observer.triggerInitialPublish()
+      processMessagesObservationChange(
+        session: session,
+        observedChatId: observedChatId,
+        observedLimit: getCurrentObservedLimit(),
+        dbQueue: dbQueue
+      )
       cancelMessagesObservation = {
-        dbQueue.remove(transactionObserver: observer)
-        observer.stop()
+        cancellable.cancel()
       }
     }
 
@@ -339,13 +384,16 @@ struct MaxChat: UIViewControllerRepresentable {
           }
         }
 
+        // Ensure this session wasn't cancelled while we were fetching/sizing.
+        // If an old session updates lastObservedMessages, it corrupts the diffing state.
+        guard self.observationSession == session else { return }
+
         guard self.didReceiveInitialMessagesSnapshot else {
           self.didReceiveInitialMessagesSnapshot = true
           self.lastObservedMessages = latest
           DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             guard self.observationSession == session else { return }
-            guard observedLimit == self.getCurrentObservedLimit() else { return }
             self.canLoadMore = hasOlderMessages
             self.isLoadingMore = false
             self.textRowMetaByInternalId = latestTextRowMeta
@@ -353,6 +401,7 @@ struct MaxChat: UIViewControllerRepresentable {
             if let layout = self.collectionView.collectionViewLayout as? CVLayout {
               layout.didInitialScrollToBottom = false
             }
+            self.endSwipeToReply(triggerReply: false, animated: false)
             self.collectionView.reloadData()
             self.updateJumpToBottomButtonVisibility(animated: false)
           }
@@ -392,7 +441,11 @@ struct MaxChat: UIViewControllerRepresentable {
         DispatchQueue.main.async { [weak self] in
           guard let self else { return }
           guard self.observationSession == session else { return }
-          guard observedLimit == self.getCurrentObservedLimit() else { return }
+          
+          // CRITICAL: We must NOT skip this update (e.g., by checking if observedLimit changed).
+          // Every update computed on the background queue MUST be applied to self.messages.
+          // Otherwise, self.messages (UI state) gets out of sync with lastObservedMessages (background state),
+          // causing the next diff's index math to be wrong and crashing the UICollectionView.
           let oldTextRowMeta = self.textRowMetaByInternalId
           let didLoadMoreAvailabilityChange = self.canLoadMore != hasOlderMessages
           self.canLoadMore = hasOlderMessages
@@ -452,6 +505,7 @@ struct MaxChat: UIViewControllerRepresentable {
             }
           }
 
+          self.endSwipeToReply(triggerReply: false, animated: false)
           UIView.performWithoutAnimation {
             self.collectionView.performBatchUpdates {
               if !displayDiff.deletes.isEmpty {
@@ -837,6 +891,199 @@ struct MaxChat: UIViewControllerRepresentable {
       String(Int(Calendar.current.startOfDay(for: date).timeIntervalSince1970))
     }
 
+    private func setupSwipeToReply() {
+      let havenColor = UIColor(named: "Haven") ?? UIColor(Color.haven)
+      swipeReplyIndicatorView.translatesAutoresizingMaskIntoConstraints = false
+      swipeReplyIndicatorView.isUserInteractionEnabled = false
+      swipeReplyIndicatorView.alpha = 0
+      swipeReplyIndicatorView.backgroundColor = havenColor.withAlphaComponent(0.12)
+      swipeReplyIndicatorView.layer.cornerRadius = Self.swipeReplyIndicatorSize / 2
+      swipeReplyIndicatorView.layer.masksToBounds = true
+      swipeReplyIndicatorView.layer.borderWidth = 1
+      swipeReplyIndicatorView.layer.borderColor = havenColor.withAlphaComponent(0.25).cgColor
+
+      swipeReplyIndicatorImageView.translatesAutoresizingMaskIntoConstraints = false
+      swipeReplyIndicatorImageView.contentMode = .scaleAspectFit
+      swipeReplyIndicatorImageView.tintColor = havenColor
+      swipeReplyIndicatorImageView.image = UIImage(systemName: "arrowshape.turn.up.left.fill")
+
+      swipeReplyIndicatorView.addSubview(swipeReplyIndicatorImageView)
+      NSLayoutConstraint.activate([
+        swipeReplyIndicatorImageView.centerXAnchor.constraint(
+          equalTo: swipeReplyIndicatorView.centerXAnchor),
+        swipeReplyIndicatorImageView.centerYAnchor.constraint(
+          equalTo: swipeReplyIndicatorView.centerYAnchor),
+        swipeReplyIndicatorImageView.widthAnchor.constraint(
+          equalToConstant: Self.swipeReplyIndicatorIconSize),
+        swipeReplyIndicatorImageView.heightAnchor.constraint(
+          equalToConstant: Self.swipeReplyIndicatorIconSize),
+      ])
+
+      // Use absolute positioning instead of constraints for the indicator view itself
+      // so we can freely move it around in updateSwipeToReply
+      swipeReplyIndicatorView.translatesAutoresizingMaskIntoConstraints = true
+      collectionView.addSubview(swipeReplyIndicatorView)
+      collectionView.sendSubviewToBack(swipeReplyIndicatorView)
+      collectionView.addGestureRecognizer(swipeReplyPanGesture)
+    }
+
+    private func replyMessage(at indexPath: IndexPath) -> ChatMessageModel? {
+      guard messages.indices.contains(indexPath.item) else { return nil }
+      return chatMessage(from: messages[indexPath.item])
+    }
+
+    private func beginSwipeToReply(at location: CGPoint) -> Bool {
+      guard let indexPath = collectionView.indexPathForItem(at: location),
+        let message = replyMessage(at: indexPath),
+        let cell = collectionView.cellForItem(at: indexPath)
+      else {
+        return false
+      }
+
+      activeSwipeCell = cell
+      activeSwipeMessage = message
+      hasTriggeredSwipeReplyHaptic = false
+      setSwipeReplyIndicatorArmed(false)
+      swipeReplyHaptic.prepare()
+      updateSwipeToReply(translationX: 0)
+      return true
+    }
+
+    private func setSwipeReplyIndicatorArmed(_ isArmed: Bool) {
+      guard swipeReplyIndicatorIsArmed != isArmed else { return }
+      swipeReplyIndicatorIsArmed = isArmed
+
+      let havenColor = UIColor(named: "Haven") ?? UIColor(Color.haven)
+      swipeReplyIndicatorView.backgroundColor = havenColor.withAlphaComponent(isArmed ? 0.22 : 0.12)
+      swipeReplyIndicatorView.layer.borderColor =
+        havenColor.withAlphaComponent(isArmed ? 0.55 : 0.25).cgColor
+    }
+
+    private func updateSwipeToReply(translationX: CGFloat) {
+      guard let cell = activeSwipeCell else { return }
+
+      var alpha = max(translationX, 0)
+      let threshold = Self.swipeReplyTriggerThreshold
+
+      if alpha > threshold {
+        let overflow = alpha - threshold
+        alpha = threshold + overflow / 4
+      }
+
+      let fastOffset = alpha
+      let slowOffset = alpha / 8
+
+      // Direct frame manipulation (no transform, no layout pass)
+      cell.contentView.frame.origin.x = fastOffset
+
+      let indicatorSize = Self.swipeReplyIndicatorSize
+
+      // Start the indicator just to the left of the cell's starting position
+      // and move it right at 1/8th speed
+      let cellCurrentX = cell.frame.minX + fastOffset
+      let indicatorX = cellCurrentX - indicatorSize - 8 + slowOffset
+
+      // Ensure the indicator is visible and properly positioned in the collection view's coordinate space
+      swipeReplyIndicatorView.frame = CGRect(
+        x: indicatorX,
+        y: cell.frame.minY + (cell.frame.height - indicatorSize) / 2,
+        width: indicatorSize,
+        height: indicatorSize
+      )
+      swipeReplyIndicatorView.alpha = min(alpha / (threshold * 0.5), 1.0)
+
+      // Bring it to front so it's not hidden behind cells
+      collectionView.bringSubviewToFront(swipeReplyIndicatorView)
+
+      let isPastThreshold = translationX >= threshold
+      setSwipeReplyIndicatorArmed(isPastThreshold)
+      if isPastThreshold, !hasTriggeredSwipeReplyHaptic {
+        hasTriggeredSwipeReplyHaptic = true
+        swipeReplyHaptic.impactOccurred()
+
+        UIView.animate(
+          withDuration: 0.2, delay: 0,
+          usingSpringWithDamping: 0.6, initialSpringVelocity: 0.8,
+          options: [.allowUserInteraction, .beginFromCurrentState]
+        ) {
+          self.swipeReplyIndicatorImageView.transform = CGAffineTransform(scaleX: 1.16, y: 1.16)
+        }
+      } else if !isPastThreshold, hasTriggeredSwipeReplyHaptic {
+        hasTriggeredSwipeReplyHaptic = false
+        UIView.animate(
+          withDuration: 0.2, delay: 0,
+          usingSpringWithDamping: 0.6, initialSpringVelocity: 0.8,
+          options: [.allowUserInteraction, .beginFromCurrentState]
+        ) {
+          self.swipeReplyIndicatorImageView.transform = .identity
+        }
+      }
+    }
+
+    private func endSwipeToReply(triggerReply: Bool, animated: Bool) {
+      let message = activeSwipeMessage
+      let cell = activeSwipeCell
+
+      let cleanup = { [weak self] in
+        guard let self else { return }
+        self.activeSwipeCell = nil
+        self.activeSwipeMessage = nil
+        self.hasTriggeredSwipeReplyHaptic = false
+        self.setSwipeReplyIndicatorArmed(false)
+        self.swipeReplyIndicatorImageView.transform = .identity
+        if triggerReply, let message {
+          self.onReplyMessage?(message)
+        }
+      }
+
+      if animated {
+        UIView.animate(
+          withDuration: 0.25,
+          delay: 0,
+          usingSpringWithDamping: 0.75,
+          initialSpringVelocity: 0,
+          options: [.allowUserInteraction, .beginFromCurrentState],
+          animations: {
+            cell?.contentView.frame.origin.x = 0
+            self.swipeReplyIndicatorView.alpha = 0
+            if let cell = cell {
+              let indicatorSize = Self.swipeReplyIndicatorSize
+              let indicatorX = cell.frame.minX - indicatorSize - 8
+              self.swipeReplyIndicatorView.frame.origin.x = indicatorX
+            }
+          }
+        ) { _ in
+          // Push it back behind cells when done
+          self.collectionView.sendSubviewToBack(self.swipeReplyIndicatorView)
+          cleanup()
+        }
+      } else {
+        cell?.contentView.frame.origin.x = 0
+        self.swipeReplyIndicatorView.alpha = 0
+        self.collectionView.sendSubviewToBack(self.swipeReplyIndicatorView)
+        cleanup()
+      }
+    }
+
+    @objc
+    private func handleSwipeToReplyPan(_ gesture: UIPanGestureRecognizer) {
+      let translationX = max(gesture.translation(in: collectionView).x, 0)
+
+      switch gesture.state {
+      case .began:
+        _ = beginSwipeToReply(at: gesture.location(in: collectionView))
+      case .changed:
+        updateSwipeToReply(translationX: translationX)
+      case .ended:
+        let shouldReply = translationX >= Self.swipeReplyTriggerThreshold
+        endSwipeToReply(triggerReply: shouldReply, animated: true)
+      case .cancelled, .failed:
+        endSwipeToReply(triggerReply: false, animated: true)
+      default:
+        break
+      }
+    }
+
     private func setupJumpToBottomButton() {
       jumpToBottomButton.translatesAutoresizingMaskIntoConstraints = false
       jumpToBottomButton.isHidden = true
@@ -1046,7 +1293,7 @@ struct MaxChat: UIViewControllerRepresentable {
         let minY = collectionView.layoutAttributesForItem(at: indexPath)?.frame.minY
         guard let minY else { return nil }
         return VisibleAnchor(messageId: message.id, minY: minY)
-      }.min(by: { $0.minY < $1.minY })
+      }.max(by: { $0.minY < $1.minY })
 
       guard let anchorCandidate else { return nil }
       return anchorCandidate
@@ -1066,6 +1313,7 @@ struct MaxChat: UIViewControllerRepresentable {
           collectionView.dequeueReusableCell(
             withReuseIdentifier: TextCell.identifier, for: indexPath)
           as! TextCell
+        cell.contentView.frame.origin.x = 0
         let rowMeta = textRowMetaByInternalId[textMessage.internalId]
         cell.render(
           message: textMessage,
@@ -1079,6 +1327,7 @@ struct MaxChat: UIViewControllerRepresentable {
             withReuseIdentifier: ChannelLinkCell.identifier, for: indexPath
           )
           as! ChannelLinkCell
+        cell.contentView.frame.origin.x = 0
         let rowMeta = textRowMetaByInternalId[textMessage.internalId]
         cell.render(
           message: textMessage,
@@ -1092,6 +1341,7 @@ struct MaxChat: UIViewControllerRepresentable {
           collectionView.dequeueReusableCell(
             withReuseIdentifier: DateCell.identifier, for: indexPath)
           as! DateCell
+        cell.contentView.frame.origin.x = 0
         cell.render(date: date, isFirst: isFirst)
         return cell
       case .LoadMore:
@@ -1100,6 +1350,7 @@ struct MaxChat: UIViewControllerRepresentable {
             withReuseIdentifier: LoadMoreMessages.identifier, for: indexPath
           )
           as! LoadMoreMessages
+        cell.contentView.frame.origin.x = 0
         cell.isHidden = !canLoadMore
         cell.render()
         return cell
@@ -1179,8 +1430,43 @@ struct MaxChat: UIViewControllerRepresentable {
       }
     }
 
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+      guard gestureRecognizer === swipeReplyPanGesture,
+        let pan = gestureRecognizer as? UIPanGestureRecognizer
+      else {
+        return true
+      }
+
+      let velocity = pan.velocity(in: collectionView)
+      let shouldBeginHorizontalSwipe: Bool
+      if velocity == .zero {
+        let translation = pan.translation(in: collectionView)
+        shouldBeginHorizontalSwipe =
+          translation.x > 0 && abs(translation.x) > abs(translation.y) * 1.1
+      } else {
+        shouldBeginHorizontalSwipe = velocity.x > 0 && abs(velocity.x) > abs(velocity.y) * 1.1
+      }
+      guard shouldBeginHorizontalSwipe else { return false }
+
+      let location = pan.location(in: collectionView)
+      guard let indexPath = collectionView.indexPathForItem(at: location),
+        replyMessage(at: indexPath) != nil
+      else {
+        return false
+      }
+      return true
+    }
+
+    func gestureRecognizer(
+      _ gestureRecognizer: UIGestureRecognizer,
+      shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+      return false
+    }
+
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
       guard scrollView === collectionView else { return }
+      endSwipeToReply(triggerReply: false, animated: false)
       updateFloatingDateBadgeDuringScroll()
       updateJumpToBottomButtonVisibility(animated: true)
     }

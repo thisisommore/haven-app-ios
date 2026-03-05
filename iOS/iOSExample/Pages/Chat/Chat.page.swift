@@ -48,7 +48,21 @@ struct ChatView<T: XXDKP>: View {
   }
 
   var body: some View {
-    MaxChat(chatId: chatId)
+    MaxChat(
+      chatId: chatId,
+      onReplyMessage: { message in
+        replyingTo = message
+        if let senderId = message.senderId, let sender = try? chatStore.fetchSender(id: senderId) {
+          replyingToSenderName = sender.nickname ?? sender.codename
+        } else {
+          replyingToSenderName = nil
+        }
+      },
+      onDMMessage: nil, // Add other callbacks as needed later
+      onDeleteMessage: nil,
+      onMuteUser: nil,
+      onUnmuteUser: nil
+    )
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .safeAreaInset(edge: .bottom) {
         if isMuted {

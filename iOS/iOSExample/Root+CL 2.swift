@@ -3,127 +3,6 @@ import SwiftData
 import SwiftUI
 import UIKit
 
-extension NSLock {
-  fileprivate func withLock<T>(_ work: () -> T) -> T {
-    lock()
-    defer { unlock() }
-    return work()
-  }
-}
-
-final class ChatMessagesTransactionObserver2: NSObject, TransactionObserver {
-  private let tableName: String
-  private let onPublishedChanges: () -> Void
-  private let lock = NSLock()
-  private var pendingHasChanges = false
-  private var committedHasChanges = false
-  private var recentCommitTimes: [TimeInterval] = []
-  private var lastPublishTime: TimeInterval = 0
-  private var displayLink: CADisplayLink?
-
-  private let fastUpdateInterval: TimeInterval = 1.0 / 20.0
-  private let slowUpdateInterval: TimeInterval = 1.0 / 1.0
-  private let heavyLoadCommitThreshold = 20
-
-  init(tableName: String, onPublishedChanges: @escaping () -> Void) {
-    self.tableName = tableName
-    self.onPublishedChanges = onPublishedChanges
-  }
-
-  func observes(eventsOfKind eventKind: DatabaseEventKind) -> Bool {
-    eventKind.tableName == tableName
-  }
-
-  func databaseDidChange(with event: DatabaseEvent) {
-    guard event.tableName == tableName else { return }
-    lock.withLock {
-      pendingHasChanges = true
-    }
-    stopObservingDatabaseChangesUntilNextTransaction()
-  }
-
-  func databaseDidCommit(_: Database) {
-    let shouldPublish: Bool = lock.withLock {
-      guard pendingHasChanges else { return false }
-      pendingHasChanges = false
-      committedHasChanges = true
-      recentCommitTimes.append(ProcessInfo.processInfo.systemUptime)
-      return true
-    }
-    guard shouldPublish else { return }
-
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
-      self.ensureDisplayLink()
-      self.publishUpdatesIfNecessary()
-    }
-  }
-
-  func databaseDidRollback(_: Database) {
-    lock.withLock {
-      pendingHasChanges = false
-    }
-  }
-
-  func triggerInitialPublish() {
-    lock.withLock {
-      committedHasChanges = true
-    }
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
-      self.ensureDisplayLink()
-      self.publishUpdatesIfNecessary()
-    }
-  }
-
-  func stop() {
-    DispatchQueue.main.async { [weak self] in
-      self?.displayLink?.invalidate()
-      self?.displayLink = nil
-    }
-  }
-
-  @objc private func displayLinkDidFire() {
-    publishUpdatesIfNecessary()
-  }
-
-  private func ensureDisplayLink() {
-    guard displayLink == nil else { return }
-    let link = CADisplayLink(target: self, selector: #selector(displayLinkDidFire))
-    link.preferredFramesPerSecond = 20
-    link.add(to: .main, forMode: .default)
-    displayLink = link
-  }
-
-  private func publishUpdatesIfNecessary() {
-    let now = ProcessInfo.processInfo.systemUptime
-    let interval = currentUpdateInterval(now: now)
-    guard now - lastPublishTime >= interval else { return }
-
-    let shouldPublish = lock.withLock {
-      guard committedHasChanges else { return false }
-      committedHasChanges = false
-      return true
-    }
-    guard shouldPublish else { return }
-
-    lastPublishTime = now
-    onPublishedChanges()
-  }
-
-  private func currentUpdateInterval(now: TimeInterval) -> TimeInterval {
-    let isHeavy = lock.withLock {
-      recentCommitTimes = recentCommitTimes.filter { now - $0 <= 1.0 }
-      return recentCommitTimes.count >= heavyLoadCommitThreshold
-    }
-    let desiredFps = isHeavy ? 1 : 20
-    if displayLink?.preferredFramesPerSecond != desiredFps {
-      displayLink?.preferredFramesPerSecond = desiredFps
-    }
-    return isHeavy ? slowUpdateInterval : fastUpdateInterval
-  }
-}
-
 struct MaxChat2: UIViewControllerRepresentable {
   @EnvironmentObject private var chatStore: ChatStore
   let chatId: String
@@ -148,7 +27,7 @@ struct MaxChat2: UIViewControllerRepresentable {
     private var messageSizes: [CGSize] = []
     private let observationQueue = DispatchQueue(
       label: "cv2.messages.observation", qos: .userInitiated)
-    private var transactionObserver: ChatMessagesTransactionObserver2?
+    private var observationCancellable: DatabaseCancellable?
     private var didStartObservation = false
     private var measuredWidth: CGFloat = 0
 
@@ -209,17 +88,24 @@ struct MaxChat2: UIViewControllerRepresentable {
     private func startMessagesObservation() {
       stopMessagesObservation()
 
-      let observer = ChatMessagesTransactionObserver2(
-        tableName: ChatMessageModel.databaseTableName,
-        onPublishedChanges: { [weak self] in
+      let observation = DatabaseRegionObservation(
+        tracking: ChatMessageModel.filter(Column("chatId") == self.chatId)
+      )
+      
+      observationCancellable = observation.start(
+        in: chatStore.dbQueue,
+        onError: { error in
+          AppLogger.chat.error(
+            "CV2: failed observation: \(error.localizedDescription, privacy: .public)"
+          )
+        },
+        onChange: { [weak self] _ in
           self?.scheduleReloadFromDatabase()
         }
       )
-      transactionObserver = observer
-      chatStore.dbQueue.add(transactionObserver: observer, extent: .observerLifetime)
 
       // Initial load uses the same pipeline as updates.
-      observer.triggerInitialPublish()
+      scheduleReloadFromDatabase()
     }
 
     private func scheduleReloadFromDatabase(width: CGFloat? = nil) {
@@ -271,10 +157,8 @@ struct MaxChat2: UIViewControllerRepresentable {
     }
 
     private func stopMessagesObservation() {
-      guard let transactionObserver else { return }
-      chatStore.dbQueue.remove(transactionObserver: transactionObserver)
-      transactionObserver.stop()
-      self.transactionObserver = nil
+      observationCancellable?.cancel()
+      observationCancellable = nil
     }
 
     deinit {
