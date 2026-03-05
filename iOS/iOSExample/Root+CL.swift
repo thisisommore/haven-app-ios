@@ -127,6 +127,7 @@ struct MaxChat: UIViewControllerRepresentable {
       case .Text(let textMessage):
         return TextCell.size(width: width, message: textMessage)
       case .LoadMore:
+        guard canLoadMore else { return .zero }
         return LoadMoreMessages.size(width: width)
       }
     }
@@ -245,9 +246,29 @@ struct MaxChat: UIViewControllerRepresentable {
           guard let self else { return }
           guard self.observationSession == session else { return }
           guard observedLimit == self.getCurrentObservedLimit() else { return }
+          let didLoadMoreAvailabilityChange = self.canLoadMore != hasOlderMessages
           self.canLoadMore = hasOlderMessages
           self.isLoadingMore = false
-          guard hasAnyChange else { return }
+          guard hasAnyChange else {
+            guard didLoadMoreAvailabilityChange, !self.messages.isEmpty else { return }
+
+            let anchor = self.captureVisibleAnchor(in: self.collectionView, messages: self.messages)
+            if let anchor, let layout = self.collectionView.collectionViewLayout as? CVLayout {
+              if let newIndex = self.messages.firstIndex(where: { message in
+                guard case .Text(let textMessage) = message else { return false }
+                return textMessage.id == anchor.messageId
+              }) {
+                layout.pendingAnchor = (IndexPath(item: newIndex, section: 0), anchor.minY)
+              }
+            }
+
+            UIView.performWithoutAnimation {
+              self.collectionView.performBatchUpdates {
+                self.collectionView.reloadItems(at: [IndexPath(item: 0, section: 0)])
+              }
+            }
+            return
+          }
 
           let oldMessages = self.messages
           let newMessages: Messages = [.LoadMore] + latest.map { .Text($0) }
@@ -483,6 +504,7 @@ struct MaxChat: UIViewControllerRepresentable {
             withReuseIdentifier: LoadMoreMessages.identifier, for: indexPath
           )
           as! LoadMoreMessages
+        cell.isHidden = !canLoadMore
         cell.render()
         return cell
       }

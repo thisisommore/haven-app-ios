@@ -49,105 +49,106 @@ struct ChatView<T: XXDKP>: View {
 
   var body: some View {
     MaxChat(chatId: chatId)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .safeAreaInset(edge: .bottom) {
-      if isMuted {
-        HStack {
-          Image(systemName: "speaker.slash.fill")
-            .foregroundColor(.secondary)
-          Text("You are muted in this channel")
-            .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(.ultraThinMaterial)
-      } else {
-        MessageForm<T>(
-          chat: chat,
-          replyTo: replyingTo,
-          replyToSenderName: replyingToSenderName,
-          onCancelReply: {
-            replyingTo = nil
-            replyingToSenderName = nil
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .safeAreaInset(edge: .bottom) {
+        if isMuted {
+          HStack {
+            Image(systemName: "speaker.slash.fill")
+              .foregroundColor(.secondary)
+            Text("You are muted in this channel")
+              .foregroundColor(.secondary)
           }
-        )
-      }
-    }
-    .navigationBarTitleDisplayMode(.inline)
-    .navigationBarBackButtonHidden(true)
-    .toolbar {
-      ToolbarItem(placement: .topBarLeading) {
-        Button {
-          if selectedChat.chatId == chatId {
-            selectedChat.clear()
-          } else {
-            dismiss()
-          }
-        } label: {
-          HStack(spacing: 2) {
-            Image(systemName: "chevron.left")
-            Text("Back")
-          }
-          .font(.headline)
-          .foregroundStyle(.haven)
-        }
-      }
-      ToolbarItem(placement: .principal) {
-        Button {
-          showChannelOptions = true
-        } label: {
-          HStack(spacing: 4) {
-            Text(chatTitle == "<self>" ? "Notes" : chatTitle)
-              .font(.headline.weight(.semibold))
-              .foregroundStyle(.primary)
-            if isChannel && chat?.isSecret == true {
-              SecretBadge()
+          .frame(maxWidth: .infinity)
+          .padding()
+          .background(.ultraThinMaterial)
+        } else {
+          MessageForm<T>(
+            chat: chat,
+            replyTo: replyingTo,
+            replyToSenderName: replyingToSenderName,
+            onCancelReply: {
+              replyingTo = nil
+              replyingToSenderName = nil
             }
-            if isChannel && isAdmin {
-              AdminBadge()
-            }
-          }
+          )
         }
       }
-    }
-    .sheet(isPresented: $showChannelOptions) {
-      ChannelOptionsView<T>(chat: chat) {
-        Task {
-          do {
-            try xxdk.leaveChannel(channelId: chatId)
-            try chatStore.deleteChat(id: chatId)
-            await MainActor.run {
+      .navigationBarTitleDisplayMode(.inline)
+      .navigationBarBackButtonHidden(true)
+      .toolbar {
+        ToolbarItem(placement: .topBarLeading) {
+          Button {
+            if selectedChat.chatId == chatId {
+              selectedChat.clear()
+            } else {
               dismiss()
             }
-          } catch {
-            AppLogger.channels.error(
-              "Failed to leave channel: \(error.localizedDescription, privacy: .public)")
+          } label: {
+            HStack(spacing: 2) {
+              Image(systemName: "chevron.left")
+              Text("Back")
+            }
+            .font(.headline)
+            .foregroundStyle(.haven)
+          }
+        }
+        ToolbarItem(placement: .principal) {
+          Button {
+            showChannelOptions = true
+          } label: {
+            HStack(spacing: 4) {
+              Text(chatTitle == "<self>" ? "Notes" : chatTitle)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+              if isChannel && chat?.isSecret == true {
+                SecretBadge()
+              }
+              if isChannel && isAdmin {
+                AdminBadge()
+              }
+            }
           }
         }
       }
-      .environmentObject(xxdk)
-    }
-    .onAppear {
-      chat = try? chatStore.fetchChat(id: chatId)
-      isAdmin = chat?.isAdmin ?? false
-      refreshMuteState()
-      markMessagesAsRead()
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
-      if let channelID = notification.userInfo?["channelID"] as? String,
-        channelID == chatId
-      {
-        refreshMuteState()
+      .sheet(isPresented: $showChannelOptions) {
+        ChannelOptionsView<T>(chat: chat) {
+          Task {
+            do {
+              try xxdk.leaveChannel(channelId: chatId)
+              try chatStore.deleteChat(id: chatId)
+              await MainActor.run {
+                dismiss()
+              }
+            } catch {
+              AppLogger.channels.error(
+                "Failed to leave channel: \(error.localizedDescription, privacy: .public)")
+            }
+          }
+        }
+        .environmentObject(xxdk)
       }
-    }
-    .id("chat-\(chatId)")
-    .onChange(of: showChannelOptions) { _, newValue in
-      if !newValue {
+      .onAppear {
         chat = try? chatStore.fetchChat(id: chatId)
         isAdmin = chat?.isAdmin ?? false
+        refreshMuteState()
+        markMessagesAsRead()
       }
-    }
-    .background(ChatBackgroundView())
+      .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) {
+        notification in
+        if let channelID = notification.userInfo?["channelID"] as? String,
+          channelID == chatId
+        {
+          refreshMuteState()
+        }
+      }
+      .id("chat-\(chatId)")
+      .onChange(of: showChannelOptions) { _, newValue in
+        if !newValue {
+          chat = try? chatStore.fetchChat(id: chatId)
+          isAdmin = chat?.isAdmin ?? false
+        }
+      }
+      .background(ChatBackgroundView())
   }
 }
 
