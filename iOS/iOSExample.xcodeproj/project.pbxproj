@@ -20,7 +20,6 @@
 		A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */; };
 		A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
 		A1C734332F55E0B5003A4B05 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = A1C734322F55E0B5003A4B05 /* GRDB */; };
-		A1C739F52F55EBB4003A4B05 /* Root+CL.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C739F42F55EBB4003A4B05 /* Root+CL.swift */; };
 		A1D336A82F594B70006966CD /* Root+CL 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D336A72F594B70006966CD /* Root+CL 2.swift */; };
 		A1D336AA2F595F1B006966CD /* SimpleCL.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D336A92F595F1B006966CD /* SimpleCL.swift */; };
 		A1D378D42EFAC9240079CB0E /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D378D32EFAC9240079CB0E /* AppLogger.swift */; };
@@ -44,7 +43,6 @@
 		A19FC0CD2EF1A254007FDD0F /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		A19FC0CF2EF1A29D007FDD0F /* Root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Root.swift; sourceTree = "<group>"; };
 		A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = HavenIcon.icon; sourceTree = "<group>"; };
-		A1C739F42F55EBB4003A4B05 /* Root+CL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Root+CL.swift"; sourceTree = "<group>"; };
 		A1D336A72F594B70006966CD /* Root+CL 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Root+CL 2.swift"; sourceTree = "<group>"; };
 		A1D336A92F595F1B006966CD /* SimpleCL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleCL.swift; sourceTree = "<group>"; };
 		A1D378D32EFAC9240079CB0E /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
@@ -128,7 +126,6 @@
 				A193D10C2EF2653E00BE3590 /* Navigation.swift */,
 				A14987562EA202B800E72C00 /* UIScreen.swift */,
 				A1C739F12F55E9F2003A4B05 /* Database */,
-				A1C739F42F55EBB4003A4B05 /* Root+CL.swift */,
 				A1D336A72F594B70006966CD /* Root+CL 2.swift */,
 				A1D336A92F595F1B006966CD /* SimpleCL.swift */,
 			);
@@ -295,7 +292,6 @@
 				A1E0DB012EA35F3500E344DC /* Secret.swift in Sources */,
 				A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */,
 				A1D336AA2F595F1B006966CD /* SimpleCL.swift in Sources */,
-				A1C739F52F55EBB4003A4B05 /* Root+CL.swift in Sources */,
 				980A0D6D2B96723C004FB15A /* Main.swift in Sources */,
 				A193D1312EF2653E00BE3590 /* Navigation.swift in Sources */,
 				A1D378D42EFAC9240079CB0E /* AppLogger.swift in Sources */,
