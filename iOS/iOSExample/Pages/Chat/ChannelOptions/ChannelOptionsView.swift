@@ -5,7 +5,6 @@
 //  Created by Om More
 //
 
-import SwiftData
 import SwiftUI
 
 struct ChannelOptionsView<T: XXDKP>: View {
@@ -14,6 +13,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
     var onDeleteChat: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var xxdk: T
+    @EnvironmentObject var chatStore: ChatStore
     @State private var isDMEnabled: Bool = false
     @State private var shareURL: String?
     @State private var sharePassword: String?
@@ -325,7 +325,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     channelName: chat?.name ?? "Unknown",
                     xxdk: xxdk,
                     onSuccess: { message in
-                        chat?.isAdmin = true
+                        if let chatId = chat?.id {
+                            try? chatStore.updateChatAdmin(id: chatId, isAdmin: true)
+                        }
                         refreshAdminStatus()
                         withAnimation(.spring(response: 0.3)) {
                             toastMessage = message
@@ -379,7 +381,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
     }
 
     private func refreshAdminStatus() {
-        isAdmin = chat?.isAdmin ?? false
+        if let chatId = chat?.id, let freshChat = try? chatStore.fetchChat(id: chatId) {
+            isAdmin = freshChat.isAdmin
+        } else {
+            isAdmin = chat?.isAdmin ?? false
+        }
     }
 
     private func saveNickname() {
@@ -406,14 +412,12 @@ struct ChannelOptionsView<T: XXDKP>: View {
 }
 
 private struct ChannelOptionsPreviewWrapper: View {
-    @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
+    @EnvironmentObject var chatStore: ChatStore
 
     var body: some View {
-        if let chat = chats.first {
+        let chat = try? chatStore.fetchChat(id: previewChatId)
+        if let chat {
             ChannelOptionsView<XXDKMock>(chat: chat) {}
-                .task {
-                    chat.channelDescription = "A channel for general team discussions and announcements"
-                }
         } else {
             ProgressView()
         }

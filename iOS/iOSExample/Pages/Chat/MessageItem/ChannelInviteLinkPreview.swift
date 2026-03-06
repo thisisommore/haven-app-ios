@@ -5,7 +5,6 @@
 //  Created by Om More on 07/12/25.
 //
 
-import SwiftData
 import SwiftUI
 
 struct ParsedChannelLink {
@@ -64,7 +63,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
     let timestamp: String
 
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
+    @EnvironmentObject var chatStore: ChatStore
     @EnvironmentObject var selectedChat: SelectedChat
 
     @State private var isLoading = false
@@ -158,10 +157,8 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
 
     private func checkIfAlreadyJoined() {
         do {
-            let descriptor = FetchDescriptor<ChatModel>()
-            let allChats = try swiftDataActor.fetch(descriptor)
+            let allChats = try chatStore.fetchAllChats()
 
-            // Try matching by channelId first
             if let channel = try? xxdk.getChannelFromURL(url: link.url),
                let channelId = channel.ChannelID
             {
@@ -172,13 +169,12 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
                 }
             }
 
-            // Fallback: match by name (for secret channels or if URL parsing fails)
             if let existingChat = allChats.first(where: { $0.name == link.name }) {
                 isAlreadyJoined = true
                 existingChatId = existingChat.id
             }
         } catch {
-            // Ignore errors - if we can't check, assume not joined
+            // Ignore errors
         }
     }
 
@@ -209,8 +205,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
             }
 
             let newChat = ChatModel(channelId: channelId, name: joinedChannel.Name, isSecret: link.level == "Secret")
-            swiftDataActor.insert(newChat)
-            try swiftDataActor.save()
+            try chatStore.insertChat(newChat)
 
             showConfirmation = false
         } catch {

@@ -6,7 +6,6 @@
 //
 
 import Bindings
-import SwiftData
 import SwiftUI
 
 struct Root: View {
@@ -14,7 +13,7 @@ struct Root: View {
     @EnvironmentObject var xxdk: XXDK
     @EnvironmentObject var appStorage: AppStorage
     @EnvironmentObject var selectedChat: SelectedChat
-    @EnvironmentObject var modelDataActor: SwiftDataActor
+    @EnvironmentObject var chatStore: ChatStore
     @EnvironmentObject var navigation: AppNavigationPath
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var didRunOnboardingReset = false
@@ -28,7 +27,7 @@ struct Root: View {
             }
         }
         .onAppear {
-            xxdk.setStates(mActor: modelDataActor, appStorage: appStorage)
+            xxdk.setStates(chatStore: chatStore, appStorage: appStorage)
         }
         .onChange(of: appStorage.isSetupComplete) { _, newValue in
             if newValue {
@@ -69,7 +68,7 @@ struct Root: View {
                     }
                     didRunOnboardingReset = true
                     xxdk.setStates(
-                        mActor: modelDataActor,
+                        chatStore: chatStore,
                         appStorage: appStorage
                     )
 
@@ -81,14 +80,7 @@ struct Root: View {
                         } catch {
                             fatalError("logout failed: \(error.localizedDescription)")
                         }
-                        try! modelDataActor.deleteAll(
-                            MessageReactionModel.self
-                        )
-                        try! modelDataActor.deleteAll(
-                            MessageSenderModel.self
-                        )
-                        try! modelDataActor.deleteAll(ChatModel.self)
-                        try! modelDataActor.save()
+                        try! chatStore.deleteAllChats()
                         appStorage.clearAll()
                         navigation.path.append(Destination.password)
                     }
@@ -112,7 +104,7 @@ struct Root: View {
 
 struct DeepLinkHandler: ViewModifier {
     @EnvironmentObject var selectedChat: SelectedChat
-    @EnvironmentObject var modelDataActor: SwiftDataActor
+    @EnvironmentObject var chatStore: ChatStore
 
     @State private var deepLinkError: String?
 
@@ -208,8 +200,7 @@ struct DeepLinkHandler: ViewModifier {
         )
 
         Task {
-            modelDataActor.insert(newChat)
-            try? modelDataActor.save()
+            try? chatStore.insertChat(newChat)
 
             await MainActor.run {
                 selectedChat.select(id: newChat.id, title: name)

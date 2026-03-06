@@ -5,7 +5,6 @@
 //  Created by Om More on 28/09/25.
 //
 
-import SwiftData
 import SwiftUI
 
 struct Reactions: View {
@@ -129,7 +128,7 @@ struct ReactorsSheet: View {
                     HStack {
                         Text(reaction.emoji)
                             .font(.title2)
-                        Text(reaction.sender?.codename ?? (reaction.isMe ? "You" : "Unknown"))
+                        Text(reaction.isMe ? "You" : (reaction.senderId ?? "Unknown"))
                             .foregroundStyle(reaction.isMe ? Color.accentColor : Color.primary)
                         Spacer()
                         if reaction.isMe {

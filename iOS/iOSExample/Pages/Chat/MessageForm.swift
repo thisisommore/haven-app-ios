@@ -4,7 +4,6 @@
 //
 //  Created by Om More on 28/09/25.
 //
-import SwiftData
 import SwiftUI
 
 extension View {
@@ -23,6 +22,7 @@ struct MessageForm<T: XXDKP>: View {
     @State private var isSendingMessage: Bool = false
     var chat: ChatModel?
     var replyTo: ChatMessageModel?
+    var replyToSenderName: String?
     var onCancelReply: (() -> Void)?
     @EnvironmentObject private var xxdk: T
     @State private var showSendButton: Bool = false
@@ -34,7 +34,7 @@ struct MessageForm<T: XXDKP>: View {
             if let replyTo {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Replying to \(replyTo.sender?.codename ?? "You")")
+                        Text("Replying to \(replyToSenderName ?? "You")")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         HTMLText(
@@ -174,14 +174,15 @@ struct MessageForm<T: XXDKP>: View {
 }
 
 private struct MessageFormPreviewWrapper: View {
-    @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
-    @Query private var messages: [ChatMessageModel]
+    @EnvironmentObject var chatStore: ChatStore
     var replyMode: Bool = false
 
     var body: some View {
+        let chat = try? chatStore.fetchChat(id: previewChatId)
+        let messages = (try? chatStore.fetchLatestMessages(chatId: previewChatId, limit: 1)) ?? []
         ZStack {
             Color.appBackground.edgesIgnoringSafeArea(.all)
-            if let chat = chats.first {
+            if let chat {
                 VStack {
                     Spacer()
                     MessageForm<XXDKMock>(

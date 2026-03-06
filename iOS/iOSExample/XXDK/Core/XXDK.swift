@@ -8,7 +8,6 @@
 import Bindings
 import Foundation
 import Kronos
-import SwiftData
 import SwiftUI
 
 class XXDK: XXDKP {
@@ -32,7 +31,7 @@ class XXDK: XXDKP {
     var channelsManager: BindingsChannelsManagerWrapper?
     var channelUICallbacks: ChannelUICallbacks
     var appStorage: AppStorage?
-    var modelActor: SwiftDataActor?
+    var chatStore: ChatStore?
 
     // MARK: - Init
 
@@ -73,14 +72,14 @@ class XXDK: XXDKP {
         }
     }
 
-    // MARK: - Model Container Setup
+    // MARK: - Store Setup
 
-    func setStates(mActor: SwiftDataActor, appStorage: AppStorage) {
+    func setStates(chatStore: ChatStore, appStorage: AppStorage) {
         self.appStorage = appStorage
-        modelActor = mActor
-        dmReceiver.modelActor = mActor
-        channelUICallbacks.configure(modelActor: mActor)
-        eventModelBuilder.configure(modelActor: mActor)
+        self.chatStore = chatStore
+        dmReceiver.chatStore = chatStore
+        channelUICallbacks.chatStore = chatStore
+        eventModelBuilder.configure(chatStore: chatStore)
     }
 
     // MARK: - Logout

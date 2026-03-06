@@ -4,6 +4,7 @@ import UIKit
 
 struct NewChatMessagesList: UIViewControllerRepresentable {
     let messages: [ChatMessageModel]
+    let senders: [String: MessageSenderModel]
     let reactionsByMessageId: [String: [MessageReactionModel]]
     let isLoadingOlderMessages: Bool
     let isAdmin: Bool
@@ -90,6 +91,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         private var lastReportedTopVisibleMessageId: String?
 
         // Configuration State
+        private var senders: [String: MessageSenderModel] = [:]
         private var reactionsByMessageId: [String: [MessageReactionModel]] = [:]
         private var isLoadingOlderMessages = false
         private var isAdmin = false
@@ -195,7 +197,8 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     guard let message = self.messageMap[id],
                           let meta = self.metaMap[id] else { return cell }
 
-                    let isSenderMuted = message.sender.map { self.mutedUsers.contains($0.pubkey) } ?? false
+                    let sender = message.senderId.flatMap { self.senders[$0] }
+                    let isSenderMuted = sender.map { self.mutedUsers.contains($0.pubkey) } ?? false
                     let reactions = self.reactionsByMessageId[message.id] ?? []
                     let repliedToMessage = message.replyTo.flatMap { self.messageMap[$0]?.message }
 
@@ -203,6 +206,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                     cell.contentConfiguration = UIHostingConfiguration {
                         NewChatMessageTextRow(
                             message: message,
+                            sender: sender,
                             reactions: reactions,
                             showSender: meta.showSender,
                             showTimestamp: meta.showTimestamp,
@@ -238,6 +242,7 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
         // MARK: - State Updates
 
         func update(from config: NewChatMessagesList) {
+            senders = config.senders
             reactionsByMessageId = config.reactionsByMessageId
             isLoadingOlderMessages = config.isLoadingOlderMessages
             isAdmin = config.isAdmin
@@ -353,21 +358,21 @@ struct NewChatMessagesList: UIViewControllerRepresentable {
                 guard index > 0 else { return true }
                 let previous = messages[index - 1]
                 if !calendar.isDate(message.timestamp, inSameDayAs: previous.timestamp) { return true }
-                return message.isIncoming != previous.isIncoming || message.sender?.id != previous.sender?.id
+                return message.isIncoming != previous.isIncoming || message.senderId != previous.senderId
             }()
 
             let showSender: Bool = {
-                guard message.isIncoming, let senderId = message.sender?.id else { return false }
+                guard message.isIncoming, let senderId = message.senderId else { return false }
                 guard index > 0 else { return true }
                 let previous = messages[index - 1]
-                return !previous.isIncoming || previous.sender?.id != senderId
+                return !previous.isIncoming || previous.senderId != senderId
             }()
 
             let showTimestamp: Bool = {
                 guard index < messages.count - 1 else { return true }
                 let next = messages[index + 1]
                 if !calendar.isDate(message.timestamp, inSameDayAs: next.timestamp) { return true }
-                if message.isIncoming != next.isIncoming || message.sender?.id != next.sender?.id { return true }
+                if message.isIncoming != next.isIncoming || message.senderId != next.senderId { return true }
                 return !calendar.isDate(message.timestamp, equalTo: next.timestamp, toGranularity: .minute)
             }()
 
@@ -539,14 +544,15 @@ extension NewChatMessagesList.Controller: UITableViewDelegate {
     }
 
     private func makeContextMenu(for message: ChatMessageModel, displayText: String) -> UIMenu {
-        let isSenderMuted = message.sender.map { mutedUsers.contains($0.pubkey) } ?? false
+        let sender = message.senderId.flatMap { senders[$0] }
+        let isSenderMuted = sender.map { mutedUsers.contains($0.pubkey) } ?? false
         var actions: [UIAction] = []
 
         actions.append(UIAction(title: "Reply", image: UIImage(systemName: "arrowshape.turn.up.left")) { [weak self] _ in
             self?.onReplyMessage?(message)
         })
 
-        if message.isIncoming, let sender = message.sender, sender.dmToken != 0 {
+        if message.isIncoming, let sender, sender.dmToken != 0 {
             actions.append(UIAction(title: "Send DM", image: UIImage(systemName: "message")) { [weak self] _ in
                 self?.onDMMessage?(sender.codename, sender.dmToken, sender.pubkey, sender.color)
             })
@@ -562,7 +568,7 @@ extension NewChatMessagesList.Controller: UITableViewDelegate {
             })
         }
 
-        if isAdmin, message.isIncoming, let sender = message.sender {
+        if isAdmin, message.isIncoming, let sender {
             if isSenderMuted {
                 actions.append(UIAction(title: "Unmute User", image: UIImage(systemName: "speaker.wave.2")) { [weak self] _ in
                     self?.onUnmuteUser?(sender.pubkey)

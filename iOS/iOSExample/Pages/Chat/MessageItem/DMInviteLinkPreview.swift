@@ -6,7 +6,6 @@
 //
 
 import Bindings
-import SwiftData
 import SwiftUI
 
 struct ParsedDMLink {
@@ -74,7 +73,7 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
     let timestamp: String
 
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
+    @EnvironmentObject var chatStore: ChatStore
     @EnvironmentObject var selectedChat: SelectedChat
 
     @State private var isLoading = false
@@ -133,15 +132,9 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
 
     private func checkIfAlreadyAdded() {
         let chatId = link.pubKey.base64EncodedString()
-        do {
-            let descriptor = FetchDescriptor<ChatModel>()
-            let allChats = try swiftDataActor.fetch(descriptor)
-            if let existingChat = allChats.first(where: { $0.id == chatId }) {
-                isAlreadyAdded = true
-                isSelfChat = existingChat.name == "<self>"
-            }
-        } catch {
-            // Ignore errors
+        if let existingChat = try? chatStore.fetchChat(id: chatId) {
+            isAlreadyAdded = true
+            isSelfChat = existingChat.name == "<self>"
         }
     }
 
@@ -163,9 +156,8 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
         )
 
         Task {
-            swiftDataActor.insert(newChat)
             do {
-                try swiftDataActor.save()
+                try chatStore.insertChat(newChat)
                 await MainActor.run {
                     isAlreadyAdded = true
                     isLoading = false

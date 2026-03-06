@@ -6,7 +6,6 @@
 //
 
 import Bindings
-import SwiftData
 import SwiftUI
 
 @main
