@@ -84,6 +84,7 @@ struct MaxChat: UIViewControllerRepresentable {
     private struct TextRowMeta: Equatable {
       let senderDisplayName: String?
       let senderColor: Int?
+      let replyPreviewText: String?
     }
 
     private var chatId: String
@@ -141,6 +142,11 @@ struct MaxChat: UIViewControllerRepresentable {
     }()
     private let jumpToBottomButton = UIButton(type: .system)
     private var isJumpToBottomButtonVisible = false
+    private var pendingReplyScrollMessageId: String?
+    private var highlightedReplyMessageId: String?
+    private var pendingReplyHighlightMessageId: String?
+    private var replyHighlightResetWorkItem: DispatchWorkItem?
+    private static let replyHighlightDuration: TimeInterval = 1.6
     private lazy var collectionView: UICollectionView = {
       let layout = CVLayout(delegate: self)
       let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -302,6 +308,7 @@ struct MaxChat: UIViewControllerRepresentable {
       cancelMessagesObservation = nil
       observationSession += 1
       let session = observationSession
+      pendingReplyScrollMessageId = nil
       
       // Reset state on the background queue to prevent data races
       // with ongoing diff calculations from previous observations.
@@ -368,7 +375,20 @@ struct MaxChat: UIViewControllerRepresentable {
         )
         let latest = latestPage.messages
         let latestSenders = self.fetchSendersForMessages(latest)
-        let latestTextRowMeta = self.buildTextRowMeta(messages: latest, senders: latestSenders)
+        let replyTargetMessagesById = self.fetchReplyTargetMessagesById(
+          for: latest,
+          chatId: observedChatId
+        )
+        let latestTextRowMeta = self.buildTextRowMeta(
+          messages: latest,
+          senders: latestSenders,
+          messageById: replyTargetMessagesById
+        )
+        let latestReplyPreviewTexts = self.buildReplyPreviewTexts(
+          messages: latest,
+          rowMetaByInternalId: latestTextRowMeta
+        )
+        ReplyPreviewRegistry.replace(with: latestReplyPreviewTexts)
         let hasOlderMessages = latestPage.hasOlderMessages
 
         let width = self.currentCollectionWidth
@@ -404,6 +424,7 @@ struct MaxChat: UIViewControllerRepresentable {
             self.endSwipeToReply(triggerReply: false, animated: false)
             self.collectionView.reloadData()
             self.updateJumpToBottomButtonVisibility(animated: false)
+            self.continuePendingReplyScrollIfNeeded()
           }
           return
         }
@@ -454,6 +475,7 @@ struct MaxChat: UIViewControllerRepresentable {
             self.textRowMetaByInternalId = latestTextRowMeta
             guard didLoadMoreAvailabilityChange, !self.messages.isEmpty else {
               self.updateJumpToBottomButtonVisibility(animated: true)
+              self.continuePendingReplyScrollIfNeeded()
               return
             }
 
@@ -472,6 +494,7 @@ struct MaxChat: UIViewControllerRepresentable {
               }
             }
             self.updateJumpToBottomButtonVisibility(animated: true)
+            self.continuePendingReplyScrollIfNeeded()
             return
           }
 
@@ -522,6 +545,7 @@ struct MaxChat: UIViewControllerRepresentable {
                 self.scrollToBottom(in: self.collectionView)
               }
               self.updateJumpToBottomButtonVisibility(animated: true)
+              self.continuePendingReplyScrollIfNeeded()
             }
           }
 
@@ -600,9 +624,28 @@ struct MaxChat: UIViewControllerRepresentable {
       return (try? chatStore.fetchSenders(ids: senderIds)) ?? [:]
     }
 
+    private func fetchReplyTargetMessagesById(
+      for messages: [ChatMessageModel],
+      chatId: String
+    ) -> [String: ChatMessageModel] {
+      var messageById = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0) })
+      let missingReplyTargetIds = Array(
+        Set(messages.compactMap(\.replyTo)).subtracting(messageById.keys)
+      )
+      guard !missingReplyTargetIds.isEmpty else { return messageById }
+
+      let fetchedReplyTargets = (try? chatStore.fetchMessages(ids: missingReplyTargetIds)) ?? []
+      for replyTarget in fetchedReplyTargets where replyTarget.chatId == chatId {
+        messageById[replyTarget.id] = replyTarget
+      }
+
+      return messageById
+    }
+
     private func buildTextRowMeta(
       messages: [ChatMessageModel],
-      senders: [String: MessageSenderModel]
+      senders: [String: MessageSenderModel],
+      messageById: [String: ChatMessageModel]
     ) -> [Int64: TextRowMeta] {
       guard !messages.isEmpty else { return [:] }
       let calendar = Calendar.current
@@ -615,11 +658,21 @@ struct MaxChat: UIViewControllerRepresentable {
         senderDisplayNameById[id] = senderDisplayName(for: sender)
       }
 
+      var replyPreviewByMessageId: [String: String?] = [:]
+      replyPreviewByMessageId.reserveCapacity(messages.count)
+
       for (index, message) in messages.enumerated() {
+        let replyPreviewText = replyPreviewText(
+          for: message.replyTo,
+          messageById: messageById,
+          cache: &replyPreviewByMessageId
+        )
+
         guard message.isIncoming else {
           rowMetaByInternalId[message.internalId] = TextRowMeta(
             senderDisplayName: nil,
-            senderColor: nil
+            senderColor: nil,
+            replyPreviewText: replyPreviewText
           )
           continue
         }
@@ -639,7 +692,8 @@ struct MaxChat: UIViewControllerRepresentable {
         if !shouldShowSender {
           rowMetaByInternalId[message.internalId] = TextRowMeta(
             senderDisplayName: nil,
-            senderColor: nil
+            senderColor: nil,
+            replyPreviewText: replyPreviewText
           )
           continue
         }
@@ -647,12 +701,14 @@ struct MaxChat: UIViewControllerRepresentable {
         if let senderId = message.senderId, let sender = senders[senderId] {
           rowMetaByInternalId[message.internalId] = TextRowMeta(
             senderDisplayName: senderDisplayNameById[senderId] ?? senderDisplayName(for: sender),
-            senderColor: sender.color
+            senderColor: sender.color,
+            replyPreviewText: replyPreviewText
           )
         } else {
           rowMetaByInternalId[message.internalId] = TextRowMeta(
             senderDisplayName: "Unknown",
-            senderColor: nil
+            senderColor: nil,
+            replyPreviewText: replyPreviewText
           )
         }
       }
@@ -667,6 +723,182 @@ struct MaxChat: UIViewControllerRepresentable {
       }
       let truncatedNickname = nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
       return "\(truncatedNickname) aka \(sender.codename)"
+    }
+
+    private func buildReplyPreviewTexts(
+      messages: [ChatMessageModel],
+      rowMetaByInternalId: [Int64: TextRowMeta]
+    ) -> [Int64: String] {
+      var previewsByMessageInternalId: [Int64: String] = [:]
+      previewsByMessageInternalId.reserveCapacity(messages.count)
+
+      for message in messages {
+        if let replyPreviewText = rowMetaByInternalId[message.internalId]?.replyPreviewText {
+          previewsByMessageInternalId[message.internalId] = replyPreviewText
+        }
+      }
+
+      return previewsByMessageInternalId
+    }
+
+    private func continuePendingReplyScrollIfNeeded() {
+      guard let pendingReplyScrollMessageId else { return }
+      guard messages.contains(where: { message in
+        chatMessage(from: message)?.id == pendingReplyScrollMessageId
+      }) else {
+        return
+      }
+
+      self.pendingReplyScrollMessageId = nil
+      scrollToReplyMessage(pendingReplyScrollMessageId)
+    }
+
+    private func updateReplyHighlightStateForVisibleCells(animated: Bool) {
+      for indexPath in collectionView.indexPathsForVisibleItems {
+        guard messages.indices.contains(indexPath.item) else { continue }
+        guard let message = chatMessage(from: messages[indexPath.item]) else { continue }
+        guard let cell = collectionView.cellForItem(at: indexPath) as? ReplyHighlightableCell else {
+          continue
+        }
+        cell.setReplyTargetHighlighted(message.id == highlightedReplyMessageId, animated: animated)
+      }
+    }
+
+    private func clearReplyMessageHighlight(animated: Bool) {
+      replyHighlightResetWorkItem?.cancel()
+      replyHighlightResetWorkItem = nil
+      guard highlightedReplyMessageId != nil else { return }
+      highlightedReplyMessageId = nil
+      updateReplyHighlightStateForVisibleCells(animated: animated)
+    }
+
+    private func scheduleReplyMessageHighlightReset(for messageId: String) {
+      replyHighlightResetWorkItem?.cancel()
+
+      let workItem = DispatchWorkItem { [weak self] in
+        guard let self, self.highlightedReplyMessageId == messageId else { return }
+        self.highlightedReplyMessageId = nil
+        self.updateReplyHighlightStateForVisibleCells(animated: true)
+        self.replyHighlightResetWorkItem = nil
+      }
+
+      replyHighlightResetWorkItem = workItem
+      DispatchQueue.main.asyncAfter(
+        deadline: .now() + Self.replyHighlightDuration,
+        execute: workItem
+      )
+    }
+
+    private func applyPendingReplyHighlightIfNeeded(animated: Bool) {
+      guard let pendingReplyHighlightMessageId else { return }
+      self.pendingReplyHighlightMessageId = nil
+      highlightedReplyMessageId = pendingReplyHighlightMessageId
+      updateReplyHighlightStateForVisibleCells(animated: animated)
+      scheduleReplyMessageHighlightReset(for: pendingReplyHighlightMessageId)
+    }
+
+    private func scrollToReplyMessage(_ replyToMessageId: String) {
+      guard let itemIndex = messages.firstIndex(where: { message in
+        chatMessage(from: message)?.id == replyToMessageId
+      }) else {
+        guard
+          let targetMessage = try? chatStore.fetchMessage(id: replyToMessageId),
+          targetMessage.chatId == chatId
+        else {
+          pendingReplyScrollMessageId = nil
+          return
+        }
+
+        guard let newerMessageCount = try? chatStore.countNewerMessages(
+          chatId: chatId,
+          afterTimestamp: targetMessage.timestamp,
+          afterInternalId: targetMessage.internalId
+        ) else {
+          pendingReplyScrollMessageId = nil
+          return
+        }
+        let requiredObservedLimit = max(getCurrentObservedLimit(), newerMessageCount + 1)
+        pendingReplyScrollMessageId = replyToMessageId
+
+        guard requiredObservedLimit > getCurrentObservedLimit() else { return }
+
+        setCurrentObservedLimit(requiredObservedLimit)
+        isLoadingMore = true
+        processMessagesObservationChange(
+          session: observationSession,
+          observedChatId: chatId,
+          observedLimit: requiredObservedLimit,
+          dbQueue: chatStore.dbQueue
+        )
+        return
+      }
+
+      collectionView.layoutIfNeeded()
+      let indexPath = IndexPath(item: itemIndex, section: 0)
+      guard let attributes = collectionView.layoutAttributesForItem(at: indexPath) else {
+        return
+      }
+
+      let visibleHeight =
+        collectionView.bounds.height - collectionView.adjustedContentInset.top
+        - collectionView.adjustedContentInset.bottom
+      let minOffsetY = -collectionView.adjustedContentInset.top
+      let maxOffsetY = max(
+        minOffsetY,
+        collectionView.contentSize.height
+          - collectionView.bounds.height
+          + collectionView.adjustedContentInset.bottom
+      )
+      let desiredOffsetY =
+        attributes.frame.midY - visibleHeight / 2 - collectionView.adjustedContentInset.top
+      let targetOffsetY = min(max(desiredOffsetY, minOffsetY), maxOffsetY)
+      let currentOffsetY = collectionView.contentOffset.y
+
+      clearReplyMessageHighlight(animated: false)
+      pendingReplyHighlightMessageId = replyToMessageId
+
+      guard abs(currentOffsetY - targetOffsetY) > 1 else {
+        applyPendingReplyHighlightIfNeeded(animated: true)
+        return
+      }
+
+      collectionView.setContentOffset(
+        CGPoint(x: collectionView.contentOffset.x, y: targetOffsetY),
+        animated: true
+      )
+    }
+
+    private func replyPreviewText(
+      for replyToMessageId: String?,
+      messageById: [String: ChatMessageModel],
+      cache: inout [String: String?]
+    ) -> String? {
+      guard let replyToMessageId else { return nil }
+      if let cached = cache[replyToMessageId] {
+        return cached
+      }
+
+      let previewText = messageById[replyToMessageId].flatMap { message in
+        normalizedReplyPreviewText(for: message)
+      }
+      cache[replyToMessageId] = previewText
+      return previewText
+    }
+
+    private func normalizedReplyPreviewText(for message: ChatMessageModel) -> String? {
+      let renderKind = NewMessageRenderKind(rawValue: message.newRenderKindRaw) ?? .unknown
+      let plainText: String
+      if
+        message.newRenderVersion == NewMessageRenderVersion.current,
+        renderKind != .unknown,
+        let storedPlainText = message.newRenderPlainText
+      {
+        plainText = storedPlainText
+      } else {
+        plainText = NewMessageHTMLPrecomputer.precompute(rawHTML: message.message).plainText
+      }
+      let trimmed = plainText.trimmingCharacters(in: .whitespacesAndNewlines)
+      return trimmed.isEmpty ? nil : trimmed
     }
 
     private func didInsertBottomMessage(rawDiff: MessageBatchDiff, newObservedCount: Int) -> Bool {
@@ -721,6 +953,7 @@ struct MaxChat: UIViewControllerRepresentable {
 
     deinit {
       floatingDateHideWorkItem?.cancel()
+      replyHighlightResetWorkItem?.cancel()
       cancelMessagesObservation?()
       cancelMessagesObservation = nil
     }
@@ -1320,6 +1553,14 @@ struct MaxChat: UIViewControllerRepresentable {
           senderDisplayName: rowMeta?.senderDisplayName,
           senderColor: rowMeta?.senderColor
         )
+        cell.setReplyTargetHighlighted(textMessage.id == highlightedReplyMessageId, animated: false)
+        if let replyToMessageId = textMessage.replyTo, rowMeta?.replyPreviewText != nil {
+          cell.onReplyPreviewTap = { [weak self] in
+            self?.scrollToReplyMessage(replyToMessageId)
+          }
+        } else {
+          cell.onReplyPreviewTap = nil
+        }
         return cell
       case .ChannelLink(let textMessage, let parsedLink):
         let cell =
@@ -1335,6 +1576,14 @@ struct MaxChat: UIViewControllerRepresentable {
           senderDisplayName: rowMeta?.senderDisplayName,
           senderColor: rowMeta?.senderColor
         )
+        cell.setReplyTargetHighlighted(textMessage.id == highlightedReplyMessageId, animated: false)
+        if let replyToMessageId = textMessage.replyTo, rowMeta?.replyPreviewText != nil {
+          cell.onReplyPreviewTap = { [weak self] in
+            self?.scrollToReplyMessage(replyToMessageId)
+          }
+        } else {
+          cell.onReplyPreviewTap = nil
+        }
         return cell
       case .DateSeparator(let date, let isFirst):
         let cell =
@@ -1490,6 +1739,7 @@ struct MaxChat: UIViewControllerRepresentable {
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
       guard scrollView === collectionView else { return }
       updateJumpToBottomButtonVisibility(animated: true)
+      applyPendingReplyHighlightIfNeeded(animated: true)
     }
   }
 }

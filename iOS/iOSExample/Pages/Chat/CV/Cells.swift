@@ -12,10 +12,62 @@ protocol CVCell: UICollectionViewCell {
   static func size(width: CGFloat, message: ChatMessageModel) -> CGRect
 }
 
-class TextCell: UICollectionViewCell, CVCell {
+protocol ReplyHighlightableCell: AnyObject {
+  func setReplyTargetHighlighted(_ highlighted: Bool, animated: Bool)
+}
+
+private enum ReplyPreviewLayout {
+  static let font = UIFont.systemFont(ofSize: 12)
+  static let bottomSpacing: CGFloat = 6
+  static let maxNumberOfLines = 4
+  static let textColor = UIColor.secondaryLabel.withAlphaComponent(0.65)
+
+  static func normalizedText(_ text: String?) -> String? {
+    guard let text else { return nil }
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
+  }
+
+  static func size(for text: String?, maxWidth: CGFloat) -> CGSize {
+    guard let text = normalizedText(text), maxWidth > 0 else { return .zero }
+    let boundingBox = text.boundingRect(
+      with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude),
+      options: .usesLineFragmentOrigin,
+      attributes: [.font: font],
+      context: nil
+    )
+    let maxHeight = ceil(font.lineHeight * CGFloat(maxNumberOfLines))
+    return CGSize(
+      width: min(ceil(boundingBox.width), maxWidth),
+      height: min(ceil(boundingBox.height), maxHeight)
+    )
+  }
+}
+
+enum ReplyPreviewRegistry {
+  private static let queue = DispatchQueue(
+    label: "cv.reply-preview.cache", attributes: .concurrent)
+  private static var previewsByMessageInternalId: [Int64: String] = [:]
+
+  static func replace(with previewsByMessageInternalId: [Int64: String]) {
+    queue.sync(flags: .barrier) {
+      self.previewsByMessageInternalId = previewsByMessageInternalId
+    }
+  }
+
+  static func text(for messageInternalId: Int64) -> String? {
+    queue.sync {
+      previewsByMessageInternalId[messageInternalId]
+    }
+  }
+}
+
+class TextCell: UICollectionViewCell, CVCell, ReplyHighlightableCell {
   static let identifier = String(describing: TextCell.self)
   private static let verticalPadding: CGFloat = 6
   private static let horizontalPadding: CGFloat = 8
+  private static let replyHighlightBorderWidth: CGFloat = 2
+  private static let replyHighlightAnimationDuration: TimeInterval = 0.22
   private static let baseFont = UIFont.systemFont(ofSize: 17)
   private static let senderFont = UIFont.systemFont(ofSize: 12, weight: .bold)
   private static let senderBottomSpacing: CGFloat = 2
@@ -38,11 +90,17 @@ class TextCell: UICollectionViewCell, CVCell {
   private static let renderedContentCacheQueue = DispatchQueue(
     label: "cv.textcell.renderCache", attributes: .concurrent)
   private static let payloadDecoder = JSONDecoder()
+  private let bubbleView = UIView()
+  private let replyPreviewLabel = UILabel()
   private let senderLabel: UILabel = UILabel()
   private let timeLabel: UILabel = UILabel()
   let label: UILabel = UILabel()
   private var labelTopToContentConstraint: NSLayoutConstraint?
   private var labelTopToSenderConstraint: NSLayoutConstraint?
+  private var bubbleTopToContentConstraint: NSLayoutConstraint?
+  private var bubbleTopToReplyConstraint: NSLayoutConstraint?
+  var onReplyPreviewTap: (() -> Void)?
+  private var isReplyTargetHighlighted = false
 
   func render(message: ChatMessageModel) {
     render(message: message, senderDisplayName: nil)
@@ -54,9 +112,17 @@ class TextCell: UICollectionViewCell, CVCell {
       senderColor: sender?.color)
   }
 
-  func render(message: ChatMessageModel, senderDisplayName: String?, senderColor: Int? = nil) {
+  func render(
+    message: ChatMessageModel,
+    senderDisplayName: String?,
+    senderColor: Int? = nil,
+    replyPreviewText: String? = nil
+  ) {
     let shouldShowSender = message.isIncoming && senderDisplayName != nil
     currentSenderColorHex = shouldShowSender ? senderColor : nil
+    let normalizedReplyPreviewText = ReplyPreviewLayout.normalizedText(
+      replyPreviewText ?? ReplyPreviewRegistry.text(for: message.internalId)
+    )
 
     if shouldShowSender {
       senderLabel.isHidden = false
@@ -76,6 +142,18 @@ class TextCell: UICollectionViewCell, CVCell {
       senderLabel.textColor = UIColor.secondaryLabel
       labelTopToSenderConstraint?.isActive = false
       labelTopToContentConstraint?.isActive = true
+    }
+
+    if let normalizedReplyPreviewText {
+      replyPreviewLabel.isHidden = false
+      replyPreviewLabel.text = normalizedReplyPreviewText
+      bubbleTopToContentConstraint?.isActive = false
+      bubbleTopToReplyConstraint?.isActive = true
+    } else {
+      replyPreviewLabel.isHidden = true
+      replyPreviewLabel.text = nil
+      bubbleTopToReplyConstraint?.isActive = false
+      bubbleTopToContentConstraint?.isActive = true
     }
 
     let timeText = Self.timeText(from: message.timestamp)
@@ -101,9 +179,23 @@ class TextCell: UICollectionViewCell, CVCell {
 
     // Bubble styling must be on contentView so swipe offset moves full bubble (bg + text)
     backgroundColor = .clear
-    contentView.backgroundColor = UIColor(named: "MessageBubble")
-    contentView.layer.cornerRadius = 16
-    contentView.layer.masksToBounds = true
+    contentView.backgroundColor = .clear
+    bubbleView.translatesAutoresizingMaskIntoConstraints = false
+    bubbleView.backgroundColor = UIColor(named: "MessageBubble") ?? UIColor(Color.messageBubble)
+    bubbleView.layer.cornerRadius = 16
+    bubbleView.layer.borderWidth = 0
+    bubbleView.layer.borderColor = UIColor.clear.cgColor
+    bubbleView.layer.masksToBounds = true
+    replyPreviewLabel.translatesAutoresizingMaskIntoConstraints = false
+    replyPreviewLabel.numberOfLines = ReplyPreviewLayout.maxNumberOfLines
+    replyPreviewLabel.font = ReplyPreviewLayout.font
+    replyPreviewLabel.textColor = ReplyPreviewLayout.textColor
+    replyPreviewLabel.lineBreakMode = .byTruncatingTail
+    replyPreviewLabel.isHidden = true
+    replyPreviewLabel.isUserInteractionEnabled = true
+    replyPreviewLabel.addGestureRecognizer(
+      UITapGestureRecognizer(target: self, action: #selector(didTapReplyPreview))
+    )
     senderLabel.numberOfLines = 1
     senderLabel.font = Self.senderFont
     senderLabel.textColor = UIColor.secondaryLabel
@@ -117,34 +209,52 @@ class TextCell: UICollectionViewCell, CVCell {
     label.numberOfLines = 0
     label.font = Self.baseFont
     label.translatesAutoresizingMaskIntoConstraints = false
-    contentView.addSubview(senderLabel)
-    contentView.addSubview(timeLabel)
-    contentView.addSubview(label)
+    contentView.addSubview(replyPreviewLabel)
+    contentView.addSubview(bubbleView)
+    bubbleView.addSubview(senderLabel)
+    bubbleView.addSubview(timeLabel)
+    bubbleView.addSubview(label)
     labelTopToContentConstraint = label.topAnchor.constraint(
-      equalTo: contentView.topAnchor, constant: Self.verticalPadding)
+      equalTo: bubbleView.topAnchor, constant: Self.verticalPadding)
     labelTopToSenderConstraint = label.topAnchor.constraint(
       equalTo: senderLabel.bottomAnchor, constant: Self.senderBottomSpacing)
     labelTopToContentConstraint?.isActive = true
+    bubbleTopToContentConstraint = bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor)
+    bubbleTopToReplyConstraint = bubbleView.topAnchor.constraint(
+      equalTo: replyPreviewLabel.bottomAnchor,
+      constant: ReplyPreviewLayout.bottomSpacing
+    )
+    bubbleTopToContentConstraint?.isActive = true
 
     NSLayoutConstraint.activate([
-      senderLabel.topAnchor.constraint(
-        equalTo: contentView.topAnchor, constant: Self.verticalPadding),
-      senderLabel.leadingAnchor.constraint(
+      replyPreviewLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
+      replyPreviewLabel.leadingAnchor.constraint(
         equalTo: contentView.leadingAnchor, constant: Self.horizontalPadding),
-      senderLabel.trailingAnchor.constraint(
+      replyPreviewLabel.trailingAnchor.constraint(
         equalTo: contentView.trailingAnchor, constant: -Self.horizontalPadding),
+
+      bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+      bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+      bubbleView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+      senderLabel.topAnchor.constraint(
+        equalTo: bubbleView.topAnchor, constant: Self.verticalPadding),
+      senderLabel.leadingAnchor.constraint(
+        equalTo: bubbleView.leadingAnchor, constant: Self.horizontalPadding),
+      senderLabel.trailingAnchor.constraint(
+        equalTo: bubbleView.trailingAnchor, constant: -Self.horizontalPadding),
 
       timeLabel.trailingAnchor.constraint(
-        equalTo: contentView.trailingAnchor, constant: -Self.horizontalPadding),
+        equalTo: bubbleView.trailingAnchor, constant: -Self.horizontalPadding),
       timeLabel.bottomAnchor.constraint(
-        equalTo: contentView.bottomAnchor, constant: -Self.verticalPadding),
+        equalTo: bubbleView.bottomAnchor, constant: -Self.verticalPadding),
 
       label.bottomAnchor.constraint(
-        equalTo: contentView.bottomAnchor, constant: -Self.verticalPadding),
+        equalTo: bubbleView.bottomAnchor, constant: -Self.verticalPadding),
       label.leadingAnchor.constraint(
-        equalTo: contentView.leadingAnchor, constant: Self.horizontalPadding),
+        equalTo: bubbleView.leadingAnchor, constant: Self.horizontalPadding),
       label.trailingAnchor.constraint(
-        equalTo: contentView.trailingAnchor, constant: -Self.horizontalPadding),
+        equalTo: bubbleView.trailingAnchor, constant: -Self.horizontalPadding),
     ])
   }
 
@@ -174,11 +284,20 @@ class TextCell: UICollectionViewCell, CVCell {
     size(width: width, message: message, senderDisplayName: nil)
   }
 
-  static func size(width: CGFloat, message: ChatMessageModel, senderDisplayName: String?)
+  static func size(
+    width: CGFloat,
+    message: ChatMessageModel,
+    senderDisplayName: String?,
+    replyPreviewText: String? = nil
+  )
     -> CGRect
   {
+    let normalizedReplyPreviewText = ReplyPreviewLayout.normalizedText(
+      replyPreviewText ?? ReplyPreviewRegistry.text(for: message.internalId)
+    )
     let senderHashPart = senderDisplayName?.hashValue ?? 0
-    let key = "\(message.id)_\(width)_\(senderHashPart)"
+    let replyHashPart = normalizedReplyPreviewText?.hashValue ?? 0
+    let key = "\(message.id)_\(width)_\(senderHashPart)_\(replyHashPart)"
 
     var cachedSize: CGRect?
     cacheQueue.sync {
@@ -225,6 +344,11 @@ class TextCell: UICollectionViewCell, CVCell {
       senderTextWidth = 0
     }
 
+    let replyPreviewSize = ReplyPreviewLayout.size(
+      for: normalizedReplyPreviewText,
+      maxWidth: maxContentWidth
+    )
+
     let renderedWithTime = contentWithTimePlaceholder(renderedContent, timeText: timeText)
     let timedConstraintRect = CGSize(
       width: maxContentWidth, height: .greatestFiniteMagnitude)
@@ -235,7 +359,10 @@ class TextCell: UICollectionViewCell, CVCell {
     )
 
     let timedTextWidth = ceil(timedBoundingBox.width)
-    let contentWidth = min(max(timedTextWidth, senderTextWidth), maxContentWidth)
+    let contentWidth = min(
+      max(max(timedTextWidth, senderTextWidth), replyPreviewSize.width),
+      maxContentWidth
+    )
 
     let result = CGRect(
       x: baseBoundingBox.origin.x,
@@ -250,6 +377,9 @@ class TextCell: UICollectionViewCell, CVCell {
       y: result.origin.y,
       width: result.width,
       height: result.height + incomingSenderHeight
+        + (replyPreviewSize.height > 0
+          ? replyPreviewSize.height + ReplyPreviewLayout.bottomSpacing
+          : 0)
     )
 
     cacheQueue.async(flags: .barrier) {
@@ -384,14 +514,63 @@ class TextCell: UICollectionViewCell, CVCell {
     timeFormatter.string(from: date)
   }
 
+  private func applyReplyTargetHighlightStyle(_ highlighted: Bool) {
+    let havenColor = (UIColor(named: "Haven") ?? UIColor(Color.haven))
+      .withAlphaComponent(highlighted ? 0.9 : 0)
+    bubbleView.layer.borderWidth = highlighted ? Self.replyHighlightBorderWidth : 0
+    bubbleView.layer.borderColor = havenColor.cgColor
+    replyPreviewLabel.textColor = highlighted
+      ? (UIColor(named: "Haven") ?? UIColor(Color.haven))
+      : ReplyPreviewLayout.textColor
+  }
+
+  func setReplyTargetHighlighted(_ highlighted: Bool, animated: Bool) {
+    guard isReplyTargetHighlighted != highlighted else { return }
+    isReplyTargetHighlighted = highlighted
+
+    let updates = {
+      self.applyReplyTargetHighlightStyle(highlighted)
+    }
+
+    if animated {
+      UIView.animate(withDuration: Self.replyHighlightAnimationDuration, animations: updates)
+    } else {
+      updates()
+    }
+  }
+
+  @objc
+  private func didTapReplyPreview() {
+    onReplyPreviewTap?()
+  }
+
+  override func prepareForReuse() {
+    super.prepareForReuse()
+    senderLabel.isHidden = true
+    senderLabel.text = nil
+    senderLabel.textColor = UIColor.secondaryLabel
+    labelTopToSenderConstraint?.isActive = false
+    labelTopToContentConstraint?.isActive = true
+    replyPreviewLabel.isHidden = true
+    replyPreviewLabel.text = nil
+    bubbleTopToReplyConstraint?.isActive = false
+    bubbleTopToContentConstraint?.isActive = true
+    currentSenderColorHex = nil
+    onReplyPreviewTap = nil
+    isReplyTargetHighlighted = false
+    applyReplyTargetHighlightStyle(false)
+  }
+
   @available(*, unavailable)
   required init?(coder _: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
 }
 
-class ChannelLinkCell: UICollectionViewCell, CVCell {
+class ChannelLinkCell: UICollectionViewCell, CVCell, ReplyHighlightableCell {
   static let identifier = String(describing: ChannelLinkCell.self)
+  private static let replyHighlightBorderWidth: CGFloat = 2
+  private static let replyHighlightAnimationDuration: TimeInterval = 0.22
   private static let senderFont = UIFont.systemFont(ofSize: 12, weight: .bold)
   private static let messageFont = UIFont.systemFont(ofSize: 16)
   private static let titleFont = UIFont.preferredFont(forTextStyle: .headline)
@@ -414,6 +593,7 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
   private static let bubbleWidthInset: CGFloat = 44
 
   private let bubbleView = UIView()
+  private let replyPreviewLabel = UILabel()
   private let topMessageView = UIView()
   private let senderLabel = UILabel()
   private let messageLabel = UILabel()
@@ -424,10 +604,14 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
   private let buttonContainer = UIView()
   private let buttonLabel = UILabel()
   private let timestampLabel = UILabel()
+  private var bubbleTopToContentConstraint: NSLayoutConstraint?
+  private var bubbleTopToReplyConstraint: NSLayoutConstraint?
   private var messageTopToTopConstraint: NSLayoutConstraint?
   private var messageTopToSenderConstraint: NSLayoutConstraint?
   private var currentSenderColorHex: Int?
   private var currentIsIncoming = true
+  var onReplyPreviewTap: (() -> Void)?
+  private var isReplyTargetHighlighted = false
 
   private static var sizeCache: [String: CGRect] = [:]
   private static let cacheQueue = DispatchQueue(
@@ -456,11 +640,15 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
     message: ChatMessageModel,
     link: ParsedChannelLink,
     senderDisplayName: String?,
-    senderColor: Int? = nil
+    senderColor: Int? = nil,
+    replyPreviewText: String? = nil
   ) {
     currentIsIncoming = message.isIncoming
     let shouldShowSender = message.isIncoming && senderDisplayName != nil
     currentSenderColorHex = shouldShowSender ? senderColor : nil
+    let normalizedReplyPreviewText = ReplyPreviewLayout.normalizedText(
+      replyPreviewText ?? ReplyPreviewRegistry.text(for: message.internalId)
+    )
     if shouldShowSender {
       senderLabel.isHidden = false
       senderLabel.text = senderDisplayName
@@ -473,6 +661,18 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
       senderLabel.textColor = UIColor.secondaryLabel
       messageTopToSenderConstraint?.isActive = false
       messageTopToTopConstraint?.isActive = true
+    }
+
+    if let normalizedReplyPreviewText {
+      replyPreviewLabel.isHidden = false
+      replyPreviewLabel.text = normalizedReplyPreviewText
+      bubbleTopToContentConstraint?.isActive = false
+      bubbleTopToReplyConstraint?.isActive = true
+    } else {
+      replyPreviewLabel.isHidden = true
+      replyPreviewLabel.text = nil
+      bubbleTopToReplyConstraint?.isActive = false
+      bubbleTopToContentConstraint?.isActive = true
     }
 
     messageLabel.text = Self.displayText(from: message)
@@ -507,8 +707,22 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
     backgroundColor = .clear
     contentView.backgroundColor = .clear
 
+    replyPreviewLabel.translatesAutoresizingMaskIntoConstraints = false
+    replyPreviewLabel.numberOfLines = ReplyPreviewLayout.maxNumberOfLines
+    replyPreviewLabel.font = ReplyPreviewLayout.font
+    replyPreviewLabel.textColor = ReplyPreviewLayout.textColor
+    replyPreviewLabel.lineBreakMode = .byTruncatingTail
+    replyPreviewLabel.isHidden = true
+    replyPreviewLabel.isUserInteractionEnabled = true
+    replyPreviewLabel.addGestureRecognizer(
+      UITapGestureRecognizer(target: self, action: #selector(didTapReplyPreview))
+    )
+    contentView.addSubview(replyPreviewLabel)
+
     bubbleView.translatesAutoresizingMaskIntoConstraints = false
     bubbleView.layer.cornerRadius = Self.bubbleCornerRadius
+    bubbleView.layer.borderWidth = 0
+    bubbleView.layer.borderColor = UIColor.clear.cgColor
     bubbleView.layer.masksToBounds = true
     contentView.addSubview(bubbleView)
 
@@ -597,9 +811,20 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
     messageTopToSenderConstraint = messageLabel.topAnchor.constraint(
       equalTo: senderLabel.bottomAnchor, constant: Self.senderBottomSpacing)
     messageTopToTopConstraint?.isActive = true
+    bubbleTopToContentConstraint = bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor)
+    bubbleTopToReplyConstraint = bubbleView.topAnchor.constraint(
+      equalTo: replyPreviewLabel.bottomAnchor,
+      constant: ReplyPreviewLayout.bottomSpacing
+    )
+    bubbleTopToContentConstraint?.isActive = true
 
     NSLayoutConstraint.activate([
-      bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor),
+      replyPreviewLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
+      replyPreviewLabel.leadingAnchor.constraint(
+        equalTo: contentView.leadingAnchor, constant: Self.messageHorizontalPadding),
+      replyPreviewLabel.trailingAnchor.constraint(
+        equalTo: contentView.trailingAnchor, constant: -Self.messageHorizontalPadding),
+
       bubbleView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
       bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
       bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
@@ -698,10 +923,17 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
     senderLabel.textColor = UIColor.secondaryLabel
     messageTopToSenderConstraint?.isActive = false
     messageTopToTopConstraint?.isActive = true
+    replyPreviewLabel.isHidden = true
+    replyPreviewLabel.text = nil
+    bubbleTopToReplyConstraint?.isActive = false
+    bubbleTopToContentConstraint?.isActive = true
     subtitleLabel.isHidden = false
     subtitleLabel.text = nil
     currentSenderColorHex = nil
     currentIsIncoming = true
+    onReplyPreviewTap = nil
+    isReplyTargetHighlighted = false
+    applyReplyTargetHighlightStyle(false)
   }
 
   static func size(width: CGFloat, message: ChatMessageModel) -> CGRect {
@@ -715,11 +947,16 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
     width: CGFloat,
     message: ChatMessageModel,
     link: ParsedChannelLink,
-    senderDisplayName: String?
+    senderDisplayName: String?,
+    replyPreviewText: String? = nil
   ) -> CGRect {
+    let normalizedReplyPreviewText = ReplyPreviewLayout.normalizedText(
+      replyPreviewText ?? ReplyPreviewRegistry.text(for: message.internalId)
+    )
     let senderHashPart = senderDisplayName?.hashValue ?? 0
+    let replyHashPart = normalizedReplyPreviewText?.hashValue ?? 0
     let key =
-      "\(message.id)_\(message.message.hashValue)_\(width)_\(senderHashPart)_\(link.url.hashValue)"
+      "\(message.id)_\(message.message.hashValue)_\(width)_\(senderHashPart)_\(replyHashPart)_\(link.url.hashValue)"
 
     var cachedSize: CGRect?
     cacheQueue.sync {
@@ -735,7 +972,12 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
     let sizingCell = Self.sizingCell
     sizingCell.bounds = CGRect(x: 0, y: 0, width: bubbleWidth, height: 1)
     sizingCell.contentView.bounds = sizingCell.bounds
-    sizingCell.render(message: message, link: link, senderDisplayName: senderDisplayName)
+    sizingCell.render(
+      message: message,
+      link: link,
+      senderDisplayName: senderDisplayName,
+      replyPreviewText: normalizedReplyPreviewText
+    )
     sizingCell.setNeedsLayout()
     sizingCell.layoutIfNeeded()
 
@@ -767,6 +1009,36 @@ class ChannelLinkCell: UICollectionViewCell, CVCell {
 
   private static func timeText(from date: Date) -> String {
     timeFormatter.string(from: date)
+  }
+
+  private func applyReplyTargetHighlightStyle(_ highlighted: Bool) {
+    let havenColor = (UIColor(named: "Haven") ?? UIColor(Color.haven))
+      .withAlphaComponent(highlighted ? 0.9 : 0)
+    bubbleView.layer.borderWidth = highlighted ? Self.replyHighlightBorderWidth : 0
+    bubbleView.layer.borderColor = havenColor.cgColor
+    replyPreviewLabel.textColor = highlighted
+      ? (UIColor(named: "Haven") ?? UIColor(Color.haven))
+      : ReplyPreviewLayout.textColor
+  }
+
+  func setReplyTargetHighlighted(_ highlighted: Bool, animated: Bool) {
+    guard isReplyTargetHighlighted != highlighted else { return }
+    isReplyTargetHighlighted = highlighted
+
+    let updates = {
+      self.applyReplyTargetHighlightStyle(highlighted)
+    }
+
+    if animated {
+      UIView.animate(withDuration: Self.replyHighlightAnimationDuration, animations: updates)
+    } else {
+      updates()
+    }
+  }
+
+  @objc
+  private func didTapReplyPreview() {
+    onReplyPreviewTap?()
   }
 
   @available(*, unavailable)

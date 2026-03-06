@@ -47,6 +47,53 @@ struct ChatView<T: XXDKP>: View {
     isMuted = xxdk.isMuted(channelId: chatId)
   }
 
+  private func openDMChat(
+    codename: String,
+    dmToken: Int32,
+    pubKey: Data,
+    color: Int
+  ) {
+    let dmChatId = pubKey.base64EncodedString()
+
+    Task { @MainActor in
+      do {
+        if var existingChat = try chatStore.fetchChat(id: dmChatId) {
+          var didChange = false
+
+          if existingChat.name != codename {
+            existingChat.name = codename
+            didChange = true
+          }
+          if existingChat.dmToken != dmToken {
+            existingChat.dmToken = dmToken
+            didChange = true
+          }
+          if existingChat.color != color {
+            existingChat.color = color
+            didChange = true
+          }
+
+          if didChange {
+            try chatStore.upsertChat(existingChat)
+          }
+        } else {
+          let newChat = ChatModel(
+            pubKey: pubKey,
+            name: codename,
+            dmToken: dmToken,
+            color: color
+          )
+          try chatStore.insertChat(newChat)
+        }
+
+        selectedChat.select(id: dmChatId, title: codename)
+      } catch {
+        AppLogger.messaging.error(
+          "Failed to open DM chat: \(error.localizedDescription, privacy: .public)")
+      }
+    }
+  }
+
   var body: some View {
     MaxChat(
       chatId: chatId,
@@ -58,7 +105,14 @@ struct ChatView<T: XXDKP>: View {
           replyingToSenderName = nil
         }
       },
-      onDMMessage: nil, // Add other callbacks as needed later
+      onDMMessage: { codename, dmToken, pubKey, color in
+        openDMChat(
+          codename: codename,
+          dmToken: dmToken,
+          pubKey: pubKey,
+          color: color
+        )
+      },
       onDeleteMessage: nil,
       onMuteUser: nil,
       onUnmuteUser: nil

@@ -235,6 +235,18 @@ final class ChatStore: ObservableObject {
         }
     }
 
+    func countNewerMessages(chatId: String, afterTimestamp: Date, afterInternalId: Int64) throws -> Int {
+        try dbQueue.read { db in
+            try ChatMessageModel
+                .filter(Column("chatId") == chatId)
+                .filter(
+                    Column("timestamp") > afterTimestamp ||
+                        (Column("timestamp") == afterTimestamp && Column("internalId") > afterInternalId)
+                )
+                .fetchCount(db)
+        }
+    }
+
     func fetchMessagesInRange(chatId: String, oldestTimestamp: Date, oldestInternalId: Int64, newestTimestamp: Date, newestInternalId: Int64) throws -> [ChatMessageModel] {
         try dbQueue.read { db in
             try ChatMessageModel
