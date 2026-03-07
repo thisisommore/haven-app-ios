@@ -14,6 +14,7 @@ struct ChatModel: Identifiable, Hashable {
     var name: String
     var channelDescription: String?
     var dmToken: Int32?
+    // burnt sienna
     var color: Int = 0xE97451
     var isAdmin: Bool = false
     var isSecret: Bool = false
