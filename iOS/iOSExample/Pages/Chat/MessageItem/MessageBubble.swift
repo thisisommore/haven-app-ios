@@ -150,7 +150,6 @@ struct MessageBubble<T: XXDKP>: View {
                     isSenderMuted: isSenderMuted
                 )
             }
-            .id(sender)
             .sheet(isPresented: $showTextSelection) {
                 TextSelectionView(text: text)
             }

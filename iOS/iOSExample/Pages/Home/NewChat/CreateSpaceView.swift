@@ -1,9 +1,10 @@
+import SQLiteData
 import SwiftUI
 
 struct CreateSpaceView<T: XXDKP>: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
+    @Dependency(\.defaultDatabase) var database
 
     @State private var name: String = ""
     @State private var description: String = ""
@@ -20,13 +21,17 @@ struct CreateSpaceView<T: XXDKP>: View {
                         .textInputAutocapitalization(.words)
 
                     TextField("Description", text: $description, axis: .vertical)
-                        .lineLimit(3 ... 6)
+                        .lineLimit(3...6)
                 }
 
-                Section(header: Text("Privacy"), footer: Text(isSecret
-                        ? "Secret Chats hide everything: The name, description, members, messages, and more. No one knows anything about the Haven Chat unless they are invited."
-                        : "Public Chats are accessible by anyone with just the link. No passphrase is needed to join. You can assume everyone knows when your codename is in a public chat."
-                )) {
+                Section(
+                    header: Text("Privacy"),
+                    footer: Text(
+                        isSecret
+                            ? "Secret Chats hide everything: The name, description, members, messages, and more. No one knows anything about the Haven Chat unless they are invited."
+                            : "Public Chats are accessible by anyone with just the link. No passphrase is needed to join. You can assume everyone knows when your codename is in a public chat."
+                    )
+                ) {
                     Toggle("Secret", isOn: $isSecret)
                         .tint(.haven)
                 }
@@ -97,9 +102,12 @@ struct CreateSpaceView<T: XXDKP>: View {
                     throw XXDKError.channelIdMissing
                 }
 
-                let newChat = ChatModel(channelId: channelId, name: channel.Name, isAdmin: true, isSecret: privacyLevel == .secret)
-                swiftDataActor.insert(newChat)
-                try swiftDataActor.save()
+                let newChat = ChatModel(
+                    channelId: channelId, name: channel.Name, isAdmin: true,
+                    isSecret: privacyLevel == .secret)
+                try await database.write { db in
+                    try ChatModel.insert { newChat }.execute(db)
+                }
 
                 await MainActor.run {
                     dismiss()

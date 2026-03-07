@@ -5,15 +5,16 @@
 //  Created by Om More
 //
 
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 struct ChannelOptionsView<T: XXDKP>: View {
-    let chat: ChatModel?
+    var chat: ChatModel?
     let onLeaveChannel: () -> Void
     var onDeleteChat: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var xxdk: T
+    @Dependency(\.defaultDatabase) var database
     @State private var isDMEnabled: Bool = false
     @State private var shareURL: String?
     @State private var sharePassword: String?
@@ -100,7 +101,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                         try xxdk.disableDirectMessages(channelId: channelId)
                                     }
                                 } catch {
-                                    AppLogger.channels.error("Failed to toggle DM: \(error.localizedDescription, privacy: .public)")
+                                    AppLogger.channels.error(
+                                        "Failed to toggle DM: \(error.localizedDescription, privacy: .public)"
+                                    )
                                     isDMEnabled = oldValue
                                 }
                             }
@@ -151,30 +154,39 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     do {
                         isDMEnabled = try xxdk.areDMsEnabled(channelId: channelId)
                     } catch {
-                        AppLogger.channels.error("Failed to fetch DM status: \(error.localizedDescription, privacy: .public)")
+                        AppLogger.channels.error(
+                            "Failed to fetch DM status: \(error.localizedDescription, privacy: .public)"
+                        )
                         isDMEnabled = false
                     }
                     do {
-                        let shareData = try xxdk.getShareURL(channelId: channelId, host: "https://xxnetwork.com/join")
+                        let shareData = try xxdk.getShareURL(
+                            channelId: channelId, host: "https://xxnetwork.com/join")
                         shareURL = shareData.url
                         sharePassword = shareData.password
                     } catch {
-                        AppLogger.channels.error("Failed to fetch share URL: \(error.localizedDescription, privacy: .public)")
+                        AppLogger.channels.error(
+                            "Failed to fetch share URL: \(error.localizedDescription, privacy: .public)"
+                        )
                     }
                     do {
                         mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
                     } catch {
-                        AppLogger.channels.error("Failed to fetch muted users: \(error.localizedDescription, privacy: .public)")
+                        AppLogger.channels.error(
+                            "Failed to fetch muted users: \(error.localizedDescription, privacy: .public)"
+                        )
                     }
                     do {
                         channelNickname = try xxdk.getChannelNickname(channelId: channelId)
                     } catch {
-                        AppLogger.channels.error("Failed to fetch channel nickname: \(error.localizedDescription, privacy: .public)")
+                        AppLogger.channels.error(
+                            "Failed to fetch channel nickname: \(error.localizedDescription, privacy: .public)"
+                        )
                     }
                 }
 
                 // Admin section - only visible for channel admins (not for DMs)
-                if !isDM, let _ = chat?.id, isAdmin {
+                if !isDM, chat?.id != nil, isAdmin {
                     Section(header: Text("Admin")) {
                         Button {
                             showExportKeySheet = true
@@ -193,7 +205,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 }
 
                 // Muted Users section - only visible for admins (not for DMs)
-                if !isDM, let _ = chat?.id, isAdmin {
+                if !isDM, chat?.id != nil, isAdmin {
                     Section(header: Text("Muted Users")) {
                         if mutedUsers.isEmpty {
                             Text("No muted users")
@@ -203,7 +215,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                 MutedUserRow(pubKey: pubKey) {
                                     guard let channelId = chat?.id else { return }
                                     do {
-                                        try xxdk.muteUser(channelId: channelId, pubKey: pubKey, mute: false)
+                                        try xxdk.muteUser(
+                                            channelId: channelId, pubKey: pubKey, mute: false)
                                         mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
                                         withAnimation(.spring(response: 0.3)) {
                                             toastMessage = "User unmuted"
@@ -214,7 +227,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                                             }
                                         }
                                     } catch {
-                                        AppLogger.channels.error("Failed to unmute user: \(error.localizedDescription, privacy: .public)")
+                                        AppLogger.channels.error(
+                                            "Failed to unmute user: \(error.localizedDescription, privacy: .public)"
+                                        )
                                     }
                                 }
                             }
@@ -223,7 +238,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 }
 
                 // Import key section - only visible for non-admins and not for DMs
-                if !isDM, let _ = chat?.id, !isAdmin {
+                if !isDM, chat?.id != nil, !isAdmin {
                     Section {
                         Button {
                             showImportKeySheet = true
@@ -290,7 +305,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                         dismiss()
                     }
                 } message: {
-                    Text("Are you sure you want to delete this chat with \"\(chat?.name ?? "this contact")\"?")
+                    Text(
+                        "Are you sure you want to delete this chat with \"\(chat?.name ?? "this contact")\"?"
+                    )
                 }
             }
             .navigationTitle(isDM ? "DM Options" : "Channel Options")
@@ -325,7 +342,13 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     channelName: chat?.name ?? "Unknown",
                     xxdk: xxdk,
                     onSuccess: { message in
-                        chat?.isAdmin = true
+                        if let chatId = chat?.id {
+                            try? database.write { db in
+                                try ChatModel.where { $0.id.eq(chatId) }
+                                    .update { $0.isAdmin = true }
+                                    .execute(db)
+                            }
+                        }
                         refreshAdminStatus()
                         withAnimation(.spring(response: 0.3)) {
                             toastMessage = message
@@ -363,15 +386,18 @@ struct ChannelOptionsView<T: XXDKP>: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
+            .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) {
+                notification in
                 guard let channelId = chat?.id else { return }
                 if let notificationChannelID = notification.userInfo?["channelID"] as? String,
-                   notificationChannelID == channelId
+                    notificationChannelID == channelId
                 {
                     do {
                         mutedUsers = try xxdk.getMutedUsers(channelId: channelId)
                     } catch {
-                        AppLogger.channels.error("Failed to refresh muted users: \(error.localizedDescription, privacy: .public)")
+                        AppLogger.channels.error(
+                            "Failed to refresh muted users: \(error.localizedDescription, privacy: .public)"
+                        )
                     }
                 }
             }
@@ -395,7 +421,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 }
             }
         } catch {
-            AppLogger.channels.error("Failed to save nickname: \(error.localizedDescription, privacy: .public)")
+            AppLogger.channels.error(
+                "Failed to save nickname: \(error.localizedDescription, privacy: .public)")
         }
     }
 }
@@ -406,13 +433,14 @@ struct ChannelOptionsView<T: XXDKP>: View {
 }
 
 private struct ChannelOptionsPreviewWrapper: View {
-    @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
+    @FetchOne(ChatModel.where { $0.id.eq(previewChatId) }) private var chat: ChatModel?
 
     var body: some View {
-        if let chat = chats.first {
+        if var chat {
             ChannelOptionsView<XXDKMock>(chat: chat) {}
                 .task {
-                    chat.channelDescription = "A channel for general team discussions and announcements"
+                    chat.channelDescription =
+                        "A channel for general team discussions and announcements"
                 }
         } else {
             ProgressView()

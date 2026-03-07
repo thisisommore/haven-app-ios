@@ -5,7 +5,7 @@
 //  Created by Om More on 28/09/25.
 //
 
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 struct Reactions: View {
@@ -83,6 +83,7 @@ struct ReactorsSheet: View {
     let groupedReactions: [(emoji: String, reactions: [MessageReactionModel])]
     let selectedEmoji: String?
     @State private var currentEmoji: String?
+    @Dependency(\.defaultDatabase) var database
 
     var displayedReactions: [MessageReactionModel] {
         if let emoji = currentEmoji ?? selectedEmoji {
@@ -129,7 +130,7 @@ struct ReactorsSheet: View {
                     HStack {
                         Text(reaction.emoji)
                             .font(.title2)
-                        Text(reaction.sender?.codename ?? (reaction.isMe ? "You" : "Unknown"))
+                        Text(senderCodename(for: reaction))
                             .foregroundStyle(reaction.isMe ? Color.accentColor : Color.primary)
                         Spacer()
                         if reaction.isMe {
@@ -144,5 +145,14 @@ struct ReactorsSheet: View {
             .navigationTitle("Reactions")
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+
+    private func senderCodename(for reaction: MessageReactionModel) -> String {
+        guard let senderId = reaction.senderId,
+              let sender = try? database.read({ db in
+                  try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)
+              })
+        else { return reaction.isMe ? "You" : "Unknown" }
+        return sender.codename
     }
 }

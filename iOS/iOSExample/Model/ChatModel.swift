@@ -6,56 +6,37 @@
 //
 
 import Foundation
-import SwiftData
+import SQLiteData
 
-@Model
-class ChatModel {
-    // For channels, this is the channel ID. For DMs, this is the pub key.
-    @Attribute(.unique) var id: String
-    // Human-readable name (channel name or partner codename)
+@Table("chats")
+struct ChatModel: Identifiable, Hashable {
+    let id: String
     var name: String
-    // Channel description
     var channelDescription: String?
-
-    // needed for direct dm
     var dmToken: Int32?
-    @Relationship(deleteRule: .cascade, inverse: \ChatMessageModel.chat)
-    var messages = [ChatMessageModel]()
     var color: Int = 0xE97451
-    // Whether user is admin of this channel
     var isAdmin: Bool = false
-    // Whether this is a secret channel
     var isSecret: Bool = false
-    // Timestamp when user joined this chat
-    var joinedAt: Date = Date()
-    // Unread message count (stored for SwiftUI reactivity)
+    var joinedAt: Date = .init()
     var unreadCount: Int = 0
+}
 
-    // Recalculate unread count from messages
-    func recalculateUnreadCount() {
-        unreadCount = messages.filter { $0.isIncoming && !$0.isRead && $0.timestamp > joinedAt }.count
-    }
-
-    // General initializer (use for channels where you have a channel id and name)
-    init(channelId: String, name: String, description: String? = nil, isAdmin: Bool = false, isSecret: Bool = false) {
+extension ChatModel {
+    init(
+        channelId: String, name: String, description: String? = nil, isAdmin: Bool = false,
+        isSecret: Bool = false
+    ) {
         id = channelId
         self.name = name
         channelDescription = description
         self.isAdmin = isAdmin
         self.isSecret = isSecret
-        joinedAt = Date()
     }
 
-    // initializer for DM chats where pubkey and dmToken is required
     init(pubKey: Data, name: String, dmToken: Int32, color: Int) {
         id = pubKey.base64EncodedString()
         self.name = name
         self.dmToken = dmToken
         self.color = color
-        joinedAt = Date()
-    }
-
-    func add(m: ChatMessageModel) {
-        messages.append(m)
     }
 }

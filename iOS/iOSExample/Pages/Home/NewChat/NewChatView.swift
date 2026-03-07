@@ -5,13 +5,14 @@
 //  Created by Om More on 17/12/25.
 //
 import Foundation
+import SQLiteData
 import SwiftUI
 
 struct NewChatView<T: XXDKP>: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
     @State private var showConfirmationSheet: Bool = false
     @EnvironmentObject var xxdk: T
+    @Dependency(\.defaultDatabase) var database
     @State private var inviteLink: String = ""
     @State private var channelData: ChannelJSON?
     @State private var errorMessage: String?
@@ -40,8 +41,7 @@ struct NewChatView<T: XXDKP>: View {
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Close")
-                            { dismiss() }.tint(.haven)
+                        Button("Close") { dismiss() }.tint(.haven)
                     }.hiddenSharedBackground()
                     ToolbarItem(placement: .topBarTrailing) {
                         Button(
@@ -162,16 +162,19 @@ struct NewChatView<T: XXDKP>: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
 
-            let newChat = ChatModel(channelId: channelId, name: joinedChannel.Name, isSecret: isPrivateChannel)
-            swiftDataActor.insert(newChat)
-            try swiftDataActor.save()
+            let newChat = ChatModel(
+                channelId: channelId, name: joinedChannel.Name, isSecret: isPrivateChannel)
+            try await database.write { db in
+                try ChatModel.insert { newChat }.execute(db)
+            }
 
             // Dismiss both sheets and reset state
             channelData = nil
             prettyPrint = nil
             dismiss()
         } catch {
-            AppLogger.channels.error("Failed to join channel: \(error.localizedDescription, privacy: .public)")
+            AppLogger.channels.error(
+                "Failed to join channel: \(error.localizedDescription, privacy: .public)")
             errorMessage =
                 "Failed to join channel: \(error.localizedDescription)"
             channelData = nil

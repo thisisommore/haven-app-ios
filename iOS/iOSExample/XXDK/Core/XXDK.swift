@@ -8,7 +8,7 @@
 import Bindings
 import Foundation
 import Kronos
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 class XXDK: XXDKP {
@@ -16,7 +16,7 @@ class XXDK: XXDKP {
     @Published var statusPercentage: Double = 0
     @Published var codename: String?
     @Published var codeset: Int = 0
-
+    @Dependency(\.defaultDatabase) var database
     var downloadedNdf: Data?
     var nsLock = NSLock()
     var stateDir: URL
@@ -32,7 +32,6 @@ class XXDK: XXDKP {
     var channelsManager: BindingsChannelsManagerWrapper?
     var channelUICallbacks: ChannelUICallbacks
     var appStorage: AppStorage?
-    var modelActor: SwiftDataActor?
 
     // MARK: - Init
 
@@ -75,12 +74,8 @@ class XXDK: XXDKP {
 
     // MARK: - Model Container Setup
 
-    func setStates(mActor: SwiftDataActor, appStorage: AppStorage) {
+    func setStates(appStorage: AppStorage) {
         self.appStorage = appStorage
-        modelActor = mActor
-        dmReceiver.modelActor = mActor
-        channelUICallbacks.configure(modelActor: mActor)
-        eventModelBuilder.configure(modelActor: mActor)
     }
 
     // MARK: - Logout
@@ -92,11 +87,11 @@ class XXDK: XXDKP {
         // 2. Wait for all running processes to finish
         var retryCount = 0
         while cmix?.hasRunningProcessies() == true {
-            if retryCount > 30 { // 3 seconds timeout
+            if retryCount > 30 {  // 3 seconds timeout
                 AppLogger.xxdk.warning("Force stopping processes after timeout")
                 break
             }
-            try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            try await Task.sleep(nanoseconds: 100_000_000)  // 100ms
             retryCount += 1
         }
 

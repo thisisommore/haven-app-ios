@@ -6,126 +6,20 @@
 //
 
 import Foundation
-import SwiftData
+import SQLiteData
 
-@ModelActor
-actor SwiftDataActor: ObservableObject {
-    private func insert_<T: PersistentModel>(_ m: T) {
-        modelContext.insert(m)
+actor DatabaseActor {
+    let database: any DatabaseWriter
+
+    init(database: any DatabaseWriter) {
+        self.database = database
     }
 
-    private func save_() throws {
-        try modelContext.save()
+    func read<T: Sendable>(_ block: @Sendable (Database) throws -> T) throws -> T {
+        try database.read(block)
     }
 
-    private func fetch_<T: PersistentModel>(_ d: FetchDescriptor<T>) throws -> [T] {
-        return try modelContext.fetch(d)
-    }
-
-    private func delete_<T: PersistentModel>(_ m: T) {
-        modelContext.delete(m)
-    }
-
-    private func deleteAll_<T: PersistentModel>(_ type: T.Type) throws {
-        try modelContext.delete(model: type)
-    }
-
-    nonisolated func insert<T: PersistentModel>(_ m: T) {
-        let semaphore = DispatchSemaphore(value: 0)
-
-        Task {
-            await self.insert_(m)
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-    }
-
-    nonisolated func save() throws {
-        let semaphore = DispatchSemaphore(value: 0)
-        var thrownError: Error?
-
-        Task {
-            do {
-                try await self.save_()
-            } catch {
-                thrownError = error
-            }
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-
-        if let error = thrownError {
-            throw error
-        }
-    }
-
-    nonisolated func fetch<T: PersistentModel>(
-        _ d: FetchDescriptor<T>
-    ) throws -> [T] {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: [T]?
-        var thrownError: Error?
-
-        Task {
-            do {
-                result = try await self.fetch_(d)
-            } catch {
-                thrownError = error
-            }
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-
-        if let error = thrownError {
-            throw error
-        }
-
-        guard let result else {
-            fatalError("fetch_ completed but returned no result")
-        }
-
-        return result
-    }
-
-    nonisolated func delete<T: PersistentModel>(_ m: T) {
-        let semaphore = DispatchSemaphore(value: 0)
-
-        Task {
-            await self.delete_(m)
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-    }
-
-    nonisolated func deleteAll<T: PersistentModel>(_ type: T.Type) throws {
-        let semaphore = DispatchSemaphore(value: 0)
-        var thrownError: Error?
-
-        Task {
-            do {
-                try await self.deleteAll_(type)
-            } catch {
-                thrownError = error
-            }
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-
-        if let error = thrownError {
-            throw error
-        }
-    }
-}
-
-// Convenience initializer for previews/tests that forwards to the
-// synthesized @ModelActor initializer without shadowing it.
-extension SwiftDataActor {
-    nonisolated init(previewModelContainer container: ModelContainer) {
-        self.init(modelContainer: container)
+    func write<T: Sendable>(_ block: @Sendable (Database) throws -> T) throws -> T {
+        try database.write(block)
     }
 }

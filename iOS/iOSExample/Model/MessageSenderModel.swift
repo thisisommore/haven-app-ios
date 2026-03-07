@@ -1,9 +1,9 @@
 import Foundation
-import SwiftData
+import SQLiteData
 
-@Model
-class MessageSenderModel: Encodable {
-    @Attribute(.unique) var id: String
+@Table("messageSenders")
+struct MessageSenderModel: Encodable {
+    var id: String
     var pubkey: Data
     // codename
     var codename: String
@@ -13,7 +13,10 @@ class MessageSenderModel: Encodable {
     var dmToken: Int32
 
     var color: Int
-    init(id: String, pubkey: Data, codename: String, nickname: String? = nil, dmToken: Int32 = 0, color: Int) {
+    init(
+        id: String, pubkey: Data, codename: String, nickname: String? = nil, dmToken: Int32 = 0,
+        color: Int
+    ) {
         self.id = id
         self.pubkey = pubkey
         self.codename = codename

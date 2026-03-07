@@ -7,12 +7,15 @@
 
 import Bindings
 import Foundation
+import SQLiteData
 import SwiftData
 
-enum ReceiverHelpers {
+class ReceiverHelpers {
+    @Dependency(\.defaultDatabase) var database
+
     private static var cachedSelfChatId: Data?
 
-    private static func postChatMessageUpdate(chatId: String) {
+    private func postChatMessageUpdate(chatId: String) {
         DispatchQueue.main.async {
             NotificationCenter.default.post(
                 name: .chatMessagesUpdated,
@@ -23,8 +26,10 @@ enum ReceiverHelpers {
     }
 
     /// Parse identity from pubKey and codeset, returning codename and color
-    static func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
-        guard let identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset) else {
+    static func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int)
+    {
+        guard let identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
+        else {
             throw EventModelError.identityConstructionFailed
         }
         var colorStr = identity.Color
@@ -35,17 +40,18 @@ enum ReceiverHelpers {
     }
 
     /// Check if sender's pubKey matches the "<self>" chat pubKey
-    static func isSenderSelf(senderPubKey: Data?, ctx: SwiftDataActor) -> Bool {
+    func isSenderSelf(senderPubKey: Data?) -> Bool {
         guard let senderPubKey else { return false }
 
-        if cachedSelfChatId == nil {
-            let selfChatDescriptor = FetchDescriptor<ChatModel>(predicate: #Predicate { $0.name == "<self>" })
-            if let selfChat = try? ctx.fetch(selfChatDescriptor).first {
-                cachedSelfChatId = Data(base64Encoded: selfChat.id)
+        if Self.cachedSelfChatId == nil {
+            if let selfChat = try? database.read({ db in
+                try ChatModel.where { $0.name.eq("<self>") }.fetchOne(db)
+            }) {
+                Self.cachedSelfChatId = Data(base64Encoded: selfChat.id)
             }
         }
 
-        if let selfId = cachedSelfChatId {
+        if let selfId = Self.cachedSelfChatId {
             return selfId == senderPubKey
         }
         return false
@@ -57,8 +63,7 @@ enum ReceiverHelpers {
     }
 
     /// Fetch or create a sender, updating dmToken and nickname if exists
-    static func upsertSender(
-        ctx: SwiftDataActor,
+    func upsertSender(
         pubKey: Data,
         codename: String,
         nickname: String? = nil,
@@ -66,15 +71,19 @@ enum ReceiverHelpers {
         color: Int
     ) throws -> MessageSenderModel {
         let senderId = pubKey.base64EncodedString()
-        let descriptor = FetchDescriptor<MessageSenderModel>(predicate: #Predicate { $0.id == senderId })
 
-        if let existing = try ctx.fetch(descriptor).first {
-            existing.dmToken = dmToken
+        if let existing = try database.read({ db in
+            try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)
+        }) {
+            var updated = existing
+            updated.dmToken = dmToken
             if let nickname, !nickname.isEmpty {
-                existing.nickname = nickname
+                updated.nickname = nickname
             }
-            try ctx.save()
-            return existing
+            try database.write { db in
+                try MessageSenderModel.update(updated).execute(db)
+            }
+            return updated
         }
 
         let sender = MessageSenderModel(
@@ -85,14 +94,14 @@ enum ReceiverHelpers {
             dmToken: dmToken,
             color: color
         )
-        ctx.insert(sender)
-        try ctx.save()
+        try database.write { db in
+            try MessageSenderModel.insert { sender }.execute(db)
+        }
         return sender
     }
 
     /// Insert a new text message
-    static func insertMessage(
-        ctx: SwiftDataActor,
+    func insertMessage(
         chat: ChatModel,
         sender: MessageSenderModel?,
         text: String,
@@ -102,15 +111,15 @@ enum ReceiverHelpers {
         replyTo: String? = nil,
         timestamp: Int64? = nil
     ) throws -> ChatMessageModel {
-        let isIncoming = !isSenderSelf(senderPubKey: senderPubKey, ctx: ctx)
+        let isIncoming = !isSenderSelf(senderPubKey: senderPubKey)
 
         let msg: ChatMessageModel
         if let timestamp {
             msg = ChatMessageModel(
                 message: text,
                 isIncoming: isIncoming,
-                chat: chat,
-                sender: sender,
+                chatId: chat.id,
+                senderId: sender?.id,
                 id: messageId,
                 internalId: internalId,
                 replyTo: replyTo,
@@ -120,32 +129,33 @@ enum ReceiverHelpers {
             msg = ChatMessageModel(
                 message: text,
                 isIncoming: isIncoming,
-                chat: chat,
-                sender: sender,
+                chatId: chat.id,
+                senderId: sender?.id,
                 id: messageId,
                 internalId: internalId,
                 replyTo: replyTo
             )
         }
 
-//        let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
-//        NewMessageRenderPersistence.apply(precomputedRender, to: msg)
+        //        let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
+        //        NewMessageRenderPersistence.apply(precomputedRender, to: msg)
 
-        ctx.insert(msg)
-        chat.messages.append(msg)
+        try database.write { db in
+            try ChatMessageModel.insert { msg }.execute(db)
 
-        if isIncoming && msg.timestamp > chat.joinedAt {
-            chat.unreadCount += 1
+            if isIncoming && msg.timestamp > chat.joinedAt {
+                var updatedChat = chat
+                updatedChat.unreadCount += 1
+                try ChatModel.update(updatedChat).execute(db)
+            }
         }
 
-        try ctx.save()
         postChatMessageUpdate(chatId: chat.id)
         return msg
     }
 
     /// Persist an incoming message: upserts sender and inserts message
-    static func persistIncomingMessage(
-        ctx: SwiftDataActor,
+    func persistIncomingMessage(
         chat: ChatModel,
         text: String,
         messageId: String,
@@ -160,7 +170,6 @@ enum ReceiverHelpers {
         var sender: MessageSenderModel? = nil
         if let senderCodename, let senderPubKey {
             sender = try upsertSender(
-                ctx: ctx,
                 pubKey: senderPubKey,
                 codename: senderCodename,
                 nickname: nickname,
@@ -171,7 +180,6 @@ enum ReceiverHelpers {
 
         let internalId = InternalIdGenerator.shared.next()
         return try insertMessage(
-            ctx: ctx,
             chat: chat,
             sender: sender,
             text: text,

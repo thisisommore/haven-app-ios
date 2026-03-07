@@ -5,27 +5,26 @@
 //  Created by Om More
 //
 
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 struct MutedUserRow: View {
     let pubKey: Data
     var onUnmute: (() -> Void)?
-    @Query private var senders: [MessageSenderModel]
+    @FetchOne private var sender: MessageSenderModel?
 
     init(pubKey: Data, onUnmute: (() -> Void)? = nil) {
         self.pubKey = pubKey
         self.onUnmute = onUnmute
-        _senders = Query(filter: #Predicate<MessageSenderModel> { sender in
-            sender.pubkey == pubKey
-        })
+        let pk = pubKey
+        _sender = FetchOne(MessageSenderModel.where { $0.pubkey.eq(pk) })
     }
 
     var body: some View {
         HStack {
             Image(systemName: "speaker.slash.fill")
                 .foregroundColor(.secondary)
-            if let sender = senders.first {
+            if let sender {
                 Text(sender.codename)
                     .foregroundColor(.primary)
             } else {

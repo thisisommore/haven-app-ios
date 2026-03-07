@@ -5,7 +5,7 @@
 //  Created by Om More on 07/12/25.
 //
 
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 struct ParsedChannelLink {
@@ -16,7 +16,8 @@ struct ParsedChannelLink {
 
     static func parse(from text: String) -> ParsedChannelLink? {
         // Decode HTML entities first (e.g., &amp; -> &)
-        let decodedText = text
+        let decodedText =
+            text
             .replacingOccurrences(of: "&amp;", with: "&")
             .replacingOccurrences(of: "&lt;", with: "<")
             .replacingOccurrences(of: "&gt;", with: ">")
@@ -24,8 +25,9 @@ struct ParsedChannelLink {
         // Find xx network channel URL in text (supports xxnetwork.com and haven.xx.network)
         let pattern = #"https?://(xxnetwork\.com|haven\.xx\.network)/join\?[^\s<\"\']+"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(in: decodedText, range: NSRange(decodedText.startIndex..., in: decodedText)),
-              let range = Range(match.range, in: decodedText)
+            let match = regex.firstMatch(
+                in: decodedText, range: NSRange(decodedText.startIndex..., in: decodedText)),
+            let range = Range(match.range, in: decodedText)
         else {
             return nil
         }
@@ -54,7 +56,9 @@ struct ParsedChannelLink {
         let isSecret = name.isEmpty
         let displayName = isSecret ? "Secret Channel" : name
 
-        return ParsedChannelLink(url: url, name: displayName, description: description, level: isSecret ? "Secret" : level)
+        return ParsedChannelLink(
+            url: url, name: displayName, description: description,
+            level: isSecret ? "Secret" : level)
     }
 }
 
@@ -64,8 +68,8 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
     let timestamp: String
 
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
     @EnvironmentObject var selectedChat: SelectedChat
+    @Dependency(\.defaultDatabase) var database
 
     @State private var isLoading = false
     @State private var isJoining = false
@@ -158,12 +162,13 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
 
     private func checkIfAlreadyJoined() {
         do {
-            let descriptor = FetchDescriptor<ChatModel>()
-            let allChats = try swiftDataActor.fetch(descriptor)
+            let allChats = try database.read { db in
+                try ChatModel.all.fetchAll(db)
+            }
 
             // Try matching by channelId first
             if let channel = try? xxdk.getChannelFromURL(url: link.url),
-               let channelId = channel.ChannelID
+                let channelId = channel.ChannelID
             {
                 if let existingChat = allChats.first(where: { $0.id == channelId }) {
                     isAlreadyJoined = true
@@ -208,9 +213,11 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
                 try xxdk.disableDirectMessages(channelId: channelId)
             }
 
-            let newChat = ChatModel(channelId: channelId, name: joinedChannel.Name, isSecret: link.level == "Secret")
-            swiftDataActor.insert(newChat)
-            try swiftDataActor.save()
+            let newChat = ChatModel(
+                channelId: channelId, name: joinedChannel.Name, isSecret: link.level == "Secret")
+            try await database.write { db in
+                try ChatModel.insert { newChat }.execute(db)
+            }
 
             showConfirmation = false
         } catch {

@@ -8,6 +8,7 @@
 import Bindings
 import Foundation
 import Kronos
+import SQLiteData
 import SwiftData
 
 protocol XXDKP: ObservableObject, AnyObject {
@@ -37,12 +38,15 @@ protocol XXDKP: ObservableObject, AnyObject {
     func disableDirectMessages(channelId: String) throws
     func areDMsEnabled(channelId: String) throws -> Bool
     func leaveChannel(channelId: String) throws
-    func createChannel(name: String, description: String, privacyLevel: PrivacyLevel, enableDms: Bool) async throws -> ChannelJSON
+    func createChannel(
+        name: String, description: String, privacyLevel: PrivacyLevel, enableDms: Bool
+    ) async throws -> ChannelJSON
     func getShareURL(channelId: String, host: String) throws -> ShareURLJSON
-    func setStates(mActor: SwiftDataActor, appStorage: AppStorage)
+    func setStates(appStorage: AppStorage)
     func isChannelAdmin(channelId: String) -> Bool
     func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
-    func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws
+    func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
+        throws
     func exportIdentity(password: String) throws -> Data
     func importIdentity(password: String, data: Data) throws -> Data
     func deleteMessage(channelId: String, messageId: String)

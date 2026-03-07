@@ -6,7 +6,7 @@
 //
 
 import Bindings
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 struct Root: View {
@@ -14,9 +14,9 @@ struct Root: View {
     @EnvironmentObject var xxdk: XXDK
     @EnvironmentObject var appStorage: AppStorage
     @EnvironmentObject var selectedChat: SelectedChat
-    @EnvironmentObject var modelDataActor: SwiftDataActor
     @EnvironmentObject var navigation: AppNavigationPath
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Dependency(\.defaultDatabase) var database
     @State private var didRunOnboardingReset = false
 
     var body: some View {
@@ -28,7 +28,7 @@ struct Root: View {
             }
         }
         .onAppear {
-            xxdk.setStates(mActor: modelDataActor, appStorage: appStorage)
+            xxdk.setStates(appStorage: appStorage)
         }
         .onChange(of: appStorage.isSetupComplete) { _, newValue in
             if newValue {
@@ -68,27 +68,22 @@ struct Root: View {
                         return
                     }
                     didRunOnboardingReset = true
-                    xxdk.setStates(
-                        mActor: modelDataActor,
-                        appStorage: appStorage
-                    )
+                    xxdk.setStates(appStorage: appStorage)
 
                     Task {
                         do {
                             try await xxdk.logout()
                         } catch XXDKError.appStateDirNotFound {
-                            AppLogger.xxdk.warning("logout: appStateDir does not exist, skipping removal")
+                            AppLogger.xxdk.warning(
+                                "logout: appStateDir does not exist, skipping removal")
                         } catch {
                             fatalError("logout failed: \(error.localizedDescription)")
                         }
-                        try! modelDataActor.deleteAll(
-                            MessageReactionModel.self
-                        )
-                        try! modelDataActor.deleteAll(
-                            MessageSenderModel.self
-                        )
-                        try! modelDataActor.deleteAll(ChatModel.self)
-                        try! modelDataActor.save()
+                        try! await database.write { db in
+                            try MessageReactionModel.delete().execute(db)
+                            try MessageSenderModel.delete().execute(db)
+                            try ChatModel.delete().execute(db)
+                        }
                         appStorage.clearAll()
                         navigation.path.append(Destination.password)
                     }
@@ -112,7 +107,7 @@ struct Root: View {
 
 struct DeepLinkHandler: ViewModifier {
     @EnvironmentObject var selectedChat: SelectedChat
-    @EnvironmentObject var modelDataActor: SwiftDataActor
+    @Dependency(\.defaultDatabase) var database
 
     @State private var deepLinkError: String?
 
@@ -156,10 +151,10 @@ struct DeepLinkHandler: ViewModifier {
     private func handleDMDeepLink(queryItems: [URLQueryItem]) {
         guard
             let tokenStr = queryItems.first(where: { $0.name == "token" })?
-            .value,
+                .value,
             let token64 = Int64(tokenStr),
             let pubKeyBase64 = queryItems.first(where: { $0.name == "pubKey" })?
-            .value,
+                .value,
             let pubKey = Data(base64Encoded: pubKeyBase64)
         else {
             deepLinkError = "Invalid link: missing token or pubKey"
@@ -170,7 +165,7 @@ struct DeepLinkHandler: ViewModifier {
 
         guard
             let codesetStr = queryItems.first(where: { $0.name == "codeset" })?
-            .value,
+                .value,
             let codeset = Int(codesetStr)
         else {
             deepLinkError = "Invalid link: missing codeset"
@@ -181,7 +176,9 @@ struct DeepLinkHandler: ViewModifier {
         do {
             identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
         } catch {
-            AppLogger.app.error("DeepLink: BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.app.error(
+                "DeepLink: BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)"
+            )
             deepLinkError = "Failed to derive identity"
             return
         }
@@ -208,8 +205,9 @@ struct DeepLinkHandler: ViewModifier {
         )
 
         Task {
-            modelDataActor.insert(newChat)
-            try? modelDataActor.save()
+            try! await database.write { db in
+                try ChatModel.insert { newChat }.execute(db)
+            }
 
             await MainActor.run {
                 selectedChat.select(id: newChat.id, title: name)

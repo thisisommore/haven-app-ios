@@ -8,23 +8,21 @@
 import Bindings
 import Foundation
 import Kronos
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 class XXDKMock: XXDKP {
-    func importChannelAdminKey(channelId _: String, encryptionPassword _: String, privateKey _: String) throws {}
+    func importChannelAdminKey(
+        channelId _: String, encryptionPassword _: String, privateKey _: String
+    ) throws {}
 
     func deleteMessage(channelId _: String, messageId _: String) {}
 
     @Published var status: String = "Initiating"
     @Published var statusPercentage: Double = 0
-    func setStates(mActor: SwiftDataActor, appStorage _: AppStorage) {
+    func setStates(appStorage _: AppStorage) {
         // Retain container and inject into receivers/callbacks
-
-        dmReceiver.modelActor = mActor
-        channelUICallbacks.configure(modelActor: mActor)
         eventModelBuilder = ChannelEventModelBuilder(model: ChannelEventModel())
-        eventModelBuilder?.configure(modelActor: mActor)
     }
 
     func sendDM(msg _: String, toPubKey _: Data, partnerToken _: Int32) {}
@@ -37,7 +35,9 @@ class XXDKMock: XXDKP {
         // Mock channel reply: no-op
     }
 
-    func sendReply(msg _: String, toPubKey _: Data, partnerToken _: Int32, replyToMessageIdB64 _: String) {
+    func sendReply(
+        msg _: String, toPubKey _: Data, partnerToken _: Int32, replyToMessageIdB64 _: String
+    ) {
         // Mock DM reply: no-op
     }
 
@@ -46,7 +46,7 @@ class XXDKMock: XXDKP {
 
     func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
         // Mock: simulate URL decode and join
-        return try await joinChannel(url) // For mock, treat URL as prettyPrint
+        return try await joinChannel(url)  // For mock, treat URL as prettyPrint
     }
 
     func joinChannel(_: String) async throws -> ChannelJSON {
@@ -109,7 +109,9 @@ class XXDKMock: XXDKP {
         return ShareURLJSON(url: "\(host)?channelId=\(channelId)", password: "")
     }
 
-    func createChannel(name: String, description: String, privacyLevel _: PrivacyLevel, enableDms _: Bool) async throws -> ChannelJSON {
+    func createChannel(
+        name: String, description: String, privacyLevel _: PrivacyLevel, enableDms _: Bool
+    ) async throws -> ChannelJSON {
         // Mock: simulate channel creation
         try await Task.sleep(for: .seconds(1))
         let channelId = "mock-channel-\(UUID().uuidString)"
@@ -140,25 +142,25 @@ class XXDKMock: XXDKP {
 
     func load(privateIdentity _: Data?) async {
         do {
-            try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
+            try await Task.sleep(nanoseconds: 2_000_000_000)  // Reduced to 2 seconds for testing
             withAnimation {
                 statusPercentage = 30
                 status = "Connecting to network"
             }
 
-            try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
+            try await Task.sleep(nanoseconds: 2_000_000_000)  // Reduced to 2 seconds for testing
             withAnimation {
                 statusPercentage = 40
                 status = "Joining xxNetwork channel"
             }
 
-            try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
+            try await Task.sleep(nanoseconds: 2_000_000_000)  // Reduced to 2 seconds for testing
             withAnimation {
                 statusPercentage = 60
                 status = "Setting up KV"
             }
 
-            try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
+            try await Task.sleep(nanoseconds: 2_000_000_000)  // Reduced to 2 seconds for testing
             withAnimation {
                 statusPercentage = 100
             }
@@ -173,7 +175,6 @@ class XXDKMock: XXDKP {
     var eventModelBuilder: ChannelEventModelBuilder?
     var remoteKV: Bindings.BindingsRemoteKV?
     var storageTagListener: RemoteKVKeyChangeListener?
-    private var modelContainer: ModelContainer?
     private let channelUICallbacks: ChannelUICallbacks
 
     init() {
@@ -190,9 +191,10 @@ class XXDKMock: XXDKP {
     func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity] {
         var identities: [GeneratedIdentity] = []
 
-        for i in 0 ..< amountOfIdentities {
+        for i in 0..<amountOfIdentities {
             // Generate mock private identity data
-            let mockPrivateIdentity = "mock_private_identity_\(i)_\(UUID().uuidString)".data(using: .utf8) ?? Data()
+            let mockPrivateIdentity =
+                "mock_private_identity_\(i)_\(UUID().uuidString)".data(using: .utf8) ?? Data()
 
             // Generate mock identity details
             let mockCodename = "MockUser\(i)_\(UUID().uuidString.prefix(8))"

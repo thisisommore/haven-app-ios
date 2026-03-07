@@ -1,10 +1,10 @@
 PODS:
   - Kronos (4.3.0)
-  - XXDK (4.7.5)
+  - XXDK (4.8.0)
 
 DEPENDENCIES:
   - Kronos
-  - XXDK (from `/Users/ommore/Documents/github/xx-network/clean/xx_network/client`)
+  - XXDK (from `/Users/ommore/Documents/github/xx-network/ios/client`)
 
 SPEC REPOS:
   trunk:
@@ -12,12 +12,12 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   XXDK:
-    :path: "/Users/ommore/Documents/github/xx-network/clean/xx_network/client"
+    :path: "/Users/ommore/Documents/github/xx-network/ios/client"
 
 SPEC CHECKSUMS:
   Kronos: a1a15fb5bb0f7a79591bfcdd5d1863a922c5c03e
-  XXDK: 2f5b088988accc1c8bcf6b6714c581e645b62536
+  XXDK: 2666eb6bc23c0f83521253b82f0aabff78e8e5e5
 
-PODFILE CHECKSUM: cbcd53bd29762046009bf3bb6d70d88a6a4e1c38
+PODFILE CHECKSUM: 81b8daaa710d2b75d0e49ff6e9a54f86cf32d5bd
 
 COCOAPODS: 1.16.2

@@ -42,7 +42,8 @@ enum XXDKError: LocalizedError {
         case .channelIdNotFound: return "ChannelID was not found"
         case .dmTokenRequired: return "dmToken is required to create chat with pubKey"
         case .pubkeyRequired: return "pubkey is required to create chat"
-        case let .loadNotificationsDummyFailed(msg): return "could not load notifications dummy: \(msg)"
+        case let .loadNotificationsDummyFailed(msg):
+            return "could not load notifications dummy: \(msg)"
         case let .loadChannelsManagerFailed(msg): return "could not load channels manager: \(msg)"
         case let .custom(msg): return msg
         }
@@ -51,13 +52,11 @@ enum XXDKError: LocalizedError {
 
 /// Errors related to EventModel operations
 enum EventModelError: LocalizedError {
-    case modelActorNotAvailable
     case messageNotFound
     case identityConstructionFailed
 
     var errorDescription: String? {
         switch self {
-        case .modelActorNotAvailable: return "modelActor not available"
         case .messageNotFound: return BindingsGetNoMessageErr()
         case .identityConstructionFailed: return "Failed to construct identity"
         }

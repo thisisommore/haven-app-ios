@@ -6,7 +6,7 @@
 //
 
 import Bindings
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 struct ParsedDMLink {
@@ -17,7 +17,8 @@ struct ParsedDMLink {
 
     static func parse(from text: String) -> ParsedDMLink? {
         // Decode HTML entities first (e.g., &amp; -> &)
-        let decodedText = text
+        let decodedText =
+            text
             .replacingOccurrences(of: "&amp;", with: "&")
             .replacingOccurrences(of: "&lt;", with: "<")
             .replacingOccurrences(of: "&gt;", with: ">")
@@ -25,8 +26,9 @@ struct ParsedDMLink {
         // Find haven DM URL in text
         let pattern = #"haven://dm\?[^\s<\"\']+"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(in: decodedText, range: NSRange(decodedText.startIndex..., in: decodedText)),
-              let range = Range(match.range, in: decodedText)
+            let match = regex.firstMatch(
+                in: decodedText, range: NSRange(decodedText.startIndex..., in: decodedText)),
+            let range = Range(match.range, in: decodedText)
         else {
             return nil
         }
@@ -58,8 +60,8 @@ struct ParsedDMLink {
         }
 
         guard let token = tokenValue,
-              let pubKey = pubKeyData,
-              let codeset = codesetValue
+            let pubKey = pubKeyData,
+            let codeset = codesetValue
         else {
             return nil
         }
@@ -74,8 +76,8 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
     let timestamp: String
 
     @EnvironmentObject var xxdk: T
-    @EnvironmentObject var swiftDataActor: SwiftDataActor
     @EnvironmentObject var selectedChat: SelectedChat
+    @Dependency(\.defaultDatabase) var database
 
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -117,7 +119,8 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
     private func deriveUserInfo() {
         let identity: IdentityJSON?
         do {
-            identity = try BindingsStatic.constructIdentity(pubKey: link.pubKey, codeset: link.codeset)
+            identity = try BindingsStatic.constructIdentity(
+                pubKey: link.pubKey, codeset: link.codeset)
         } catch {
             return
         }
@@ -134,8 +137,9 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
     private func checkIfAlreadyAdded() {
         let chatId = link.pubKey.base64EncodedString()
         do {
-            let descriptor = FetchDescriptor<ChatModel>()
-            let allChats = try swiftDataActor.fetch(descriptor)
+            let allChats = try database.read { db in
+                try ChatModel.all.fetchAll(db)
+            }
             if let existingChat = allChats.first(where: { $0.id == chatId }) {
                 isAlreadyAdded = true
                 isSelfChat = existingChat.name == "<self>"
@@ -163,9 +167,10 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
         )
 
         Task {
-            swiftDataActor.insert(newChat)
             do {
-                try swiftDataActor.save()
+                try await database.write { db in
+                    try ChatModel.insert { newChat }.execute(db)
+                }
                 await MainActor.run {
                     isAlreadyAdded = true
                     isLoading = false

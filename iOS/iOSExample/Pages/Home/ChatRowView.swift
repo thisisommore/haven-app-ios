@@ -1,4 +1,4 @@
-import SwiftData
+import SQLiteData
 import SwiftUI
 import UIKit
 
@@ -44,6 +44,7 @@ struct UnreadBadge: View {
 struct ChatRowView<T: XXDKP>: View {
     let chat: ChatModel
     @EnvironmentObject var xxdk: T
+    @Dependency(\.defaultDatabase) var database
 
     private var isChannel: Bool {
         chat.name != "<self>" && chat.dmToken == nil
@@ -53,13 +54,18 @@ struct ChatRowView<T: XXDKP>: View {
         chat.dmToken != nil
     }
 
-    /// For DMs, get the partner's nickname from their messages
     private var dmPartnerNickname: String? {
         guard isDM else { return nil }
-        // Find nickname from incoming message sender
-        return chat.messages
-            .first(where: { $0.isIncoming && $0.sender != nil })?
-            .sender?.nickname
+        guard
+            let senderId = try? database.read({ db in
+                try ChatMessageModel.where {
+                    $0.chatId.eq(chat.id) && $0.isIncoming && $0.senderId != nil
+                }.limit(1).fetchOne(db)?.senderId
+            })
+        else { return nil }
+        return try? database.read { db in
+            try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.nickname
+        }
     }
 
     /// Truncate nickname to 10 chars for display
@@ -81,7 +87,9 @@ struct ChatRowView<T: XXDKP>: View {
     var body: some View {
         HStack {
             if chat.name == "<self>" {
-                Image(systemName: "bookmark.circle.fill").font(.system(size: 40)).foregroundStyle(.orange).symbolRenderingMode(.hierarchical)
+                Image(systemName: "bookmark.circle.fill").font(.system(size: 40)).foregroundStyle(
+                    .orange
+                ).symbolRenderingMode(.hierarchical)
             }
 
             VStack(alignment: .leading) {
@@ -95,13 +103,21 @@ struct ChatRowView<T: XXDKP>: View {
                     }
                 }
 
-                if let lastMessage = chat.messages.max(by: { $0.timestamp < $1.timestamp }) {
+                if let lastMessage = try? database.read({ db in
+                    try ChatMessageModel.where { $0.chatId.eq(chat.id) }
+                        .order { $0.timestamp.desc() }
+                        .limit(1)
+                        .fetchOne(db)
+                }) {
                     let senderName: String = {
                         if !lastMessage.isIncoming {
                             return "you"
                         }
-                        guard let sender = lastMessage.sender else { return "unknown" }
-                        // For DMs, only show codename since nickname is already in title
+                        guard let senderId = lastMessage.senderId,
+                            let sender = try? database.read({ db in
+                                try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)
+                            })
+                        else { return "unknown" }
                         if isDM {
                             return sender.codename
                         }
@@ -115,7 +131,6 @@ struct ChatRowView<T: XXDKP>: View {
                         Text(senderName)
                             .foregroundStyle(Color(uiColor: .secondaryLabel))
                             .font(.system(size: 12))
-                        
                     }
                 } else {
                     Text("No messages yet")

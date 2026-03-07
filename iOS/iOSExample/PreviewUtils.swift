@@ -6,287 +6,210 @@
 //
 
 import Foundation
-import SwiftData
+import SQLiteData
 import SwiftUI
 
-import Foundation
-import SwiftData
-import SwiftUI
-
-// Create a mock chat and some messages
 let previewChatId = "previewChatId"
 let greenColorInt = 0x0B421F
 
 extension View {
     func mock() -> some View {
         #if DEBUG
-            let container: ModelContainer = {
-                let c = try! ModelContainer(
-                    for: ChatModel.self,
-                    configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-                )
+            prepareDependencies {
+                $0.defaultDatabase = try! appDatabase()
+            }
+            @Dependency(\.defaultDatabase) var database
 
-                let chat = ChatModel(channelId: previewChatId, name: "Mayur")
-                let mockSender = MessageSenderModel(id: "mock-sender-id", pubkey: Data(), codename: "Mayur", dmToken: 0, color: greenColorInt)
+            let chat = ChatModel(channelId: previewChatId, name: "Mayur")
+            let mockSender = MessageSenderModel(
+                id: "mock-sender-id", pubkey: Data(), codename: "Mayur", dmToken: 0,
+                color: greenColorInt)
 
-                c.mainContext.insert(chat)
+            try! database.write { db in
+                try ChatModel.insert { chat }.execute(db)
+                try MessageSenderModel.insert { mockSender }.execute(db)
 
                 let mockMsgs = [
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
-                    ), ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
-                    ), ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Yes sir",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next(),
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
+                    ),
+                    ChatMessageModel(
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
+                    ),
+                    ChatMessageModel(
+                        message: "Yes sir", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next(),
                         replyTo: "Study overs?"
                     ),
                     ChatMessageModel(
-                        message: "Study over?",
-                        isIncoming: false,
-                        chat: chat,
-                        id: "Study over?",
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Study over?", isIncoming: false,
+                        chatId: chat.id,
+                        id: "Study over?", internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "All good! Working on the demo.",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
+                        message: "All good! Working on the demo.", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
                         id: "4TDppExKKwB/pAvRNkCn9pGDi8IGPIGhJSKdouDoCqE=",
                         internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "How's it going?",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "How's it going?", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hey Mayur!",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hey Mayur!", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "All good! Working on the demo.",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next(),
+                        message: "All good! Working on the demo.", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next(),
                         replyTo: "How's it going?"
                     ),
                     ChatMessageModel(
-                        message: "How's it going?",
-                        isIncoming: false,
-                        chat: chat,
-                        id: "How's it going?",
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "How's it going?", isIncoming: false,
+                        chatId: chat.id,
+                        id: "How's it going?", internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hey Mayur!",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hey Mayur!", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "All good! Working on the demo.",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "All good! Working on the demo.", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "How's it going?",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "How's it going?", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hey Mayur!",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hey Mayur!", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "All good! Working on the demo.",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "All good! Working on the demo.", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "How's it going?",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "How's it going?", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hey Mayur!",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hey Mayur!", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "All good! Working on the demo.",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "All good! Working on the demo.", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "How's it going?",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "How's it going?", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "Hi there 👋",
-                        isIncoming: true,
-                        chat: chat,
-                        sender: mockSender,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "Hi there 👋", isIncoming: true,
+                        chatId: chat.id, senderId: mockSender.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                     ChatMessageModel(
-                        message: "<p>Hey Mayur!</p>",
-                        isIncoming: false,
-                        chat: chat,
-                        id: UUID().uuidString,
-                        internalId: InternalIdGenerator.shared.next()
+                        message: "<p>Hey Mayur!</p>", isIncoming: false,
+                        chatId: chat.id,
+                        id: UUID().uuidString, internalId: InternalIdGenerator.shared.next()
                     ),
                 ]
 
-                let reactions = [
+                for msg in mockMsgs {
+                    try ChatMessageModel.insert { msg }.execute(db)
+                }
+
+                try MessageReactionModel.insert {
                     MessageReactionModel(
                         id: "wow",
                         internalId: InternalIdGenerator.shared.next(),
                         targetMessageId: "4TDppExKKwB/pAvRNkCn9pGDi8IGPIGhJSKdouDoCqE=",
                         emoji: "💚",
-                        sender: mockSender
-                    ),
-                ]
-
-                for msg in mockMsgs {
-                    c.mainContext.insert(msg)
-                }
-                for reaction in reactions {
-                    c.mainContext.insert(reaction)
-                }
+                        senderId: mockSender.id
+                    )
+                }.execute(db)
 
                 for name in ["<self>", "Tom", "Shashank"] {
-                    let chat = ChatModel(pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
-                    c.mainContext.insert(chat)
-                    c.mainContext.insert(
+                    let dmChat = ChatModel(
+                        pubKey: name.data, name: name, dmToken: 0, color: greenColorInt)
+                    try ChatModel.insert { dmChat }.execute(db)
+                    try ChatMessageModel.insert {
                         ChatMessageModel(
                             message: "<p>Hello world</p>",
                             isIncoming: true,
-                            chat: chat,
-                            sender: nil,
+                            chatId: dmChat.id,
                             id: name,
                             internalId: InternalIdGenerator.shared.next(),
                             replyTo: nil,
                             timestamp: 1
                         )
-                    )
+                    }.execute(db)
                 }
-                try! c.mainContext.save()
-                return c
-            }()
+            }
 
             return NavigationStack {
                 self
             }
-            .modelContainer(container)
-            .environmentObject(SwiftDataActor(previewModelContainer: container))
             .environmentObject(XXDKMock())
             .environmentObject(SelectedChat())
             .navigationBarBackButtonHidden()

@@ -1,6 +1,7 @@
 import Bindings
 import Dispatch
 import Foundation
+import SQLiteData
 import SwiftData
 
 extension Notification.Name {
@@ -9,15 +10,6 @@ extension Notification.Name {
 
 final class ChannelEventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
     private var r: ChannelEventModel
-
-    var modelActor: SwiftDataActor?
-
-    // Allow late injection from the app so the EventModel can persist messages
-    func configure(modelActor: SwiftDataActor) {
-        self.modelActor = modelActor
-        // Propagate immediately to the underlying model if already created
-        r.configure(modelActor: modelActor)
-    }
 
     init(model: ChannelEventModel) {
         r = model
@@ -31,21 +23,16 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelBuilderProtoco
 
 final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
     // Optional SwiftData container for persisting chats/messages
-
-    var modelActor: SwiftDataActor?
-
-    func configure(modelActor: SwiftDataActor) {
-        self.modelActor = modelActor
-    }
+    @Dependency(\.defaultDatabase) var database
+    private let receiverHelpers = ReceiverHelpers()
 
     // MARK: - Helper Methods
 
     func update(
-        fromMessageID messageID: Data?,
-        messageUpdateInfoJSON: Data?,
+        fromMessageID _: Data?,
+        messageUpdateInfoJSON _: Data?,
         ret0_ _: UnsafeMutablePointer<Int64>?
-    ) throws {
-    }
+    ) throws {}
 
     func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
         guard let messageUpdateInfoJSON else {
@@ -53,40 +40,19 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         }
 
         let updateInfo = try Parser.decode(MessageUpdateInfoJSON.self, from: messageUpdateInfoJSON)
-
-        guard let modelActor else {
-            return
+        var message = try database.read {
+            db in
+            try ChatMessageModel.where { $0.internalId.eq(uuid) }.fetchOne(db)
         }
-
-        let descriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { $0.internalId == uuid }
-        )
-
-        if let message = try modelActor.fetch(descriptor).first {
+        if var message {
             if updateInfo.MessageIDSet, let newMessageId = updateInfo.MessageID {
                 message.id = newMessageId
             }
             if updateInfo.StatusSet, let newStatus = updateInfo.Status {
                 message.statusRaw = Int64(newStatus)
             }
-            try modelActor.save()
-            let updatedChatId = message.chat.id
-            let updatedMessageId = message.id
-            let hasStatusUpdate = updateInfo.StatusSet && updateInfo.Status != nil
-            DispatchQueue.main.async {
-                var userInfo: [String: Any] = [
-                    "chatId": updatedChatId,
-                    "messageId": updatedMessageId,
-                    "messageInternalId": uuid,
-                ]
-                if hasStatusUpdate {
-                    userInfo["updateKind"] = "status"
-                }
-                NotificationCenter.default.post(
-                    name: .chatMessagesUpdated,
-                    object: nil,
-                    userInfo: userInfo
-                )
+            try database.write { db in
+                try ChatMessageModel.update(message).execute(db)
             }
         }
     }
@@ -102,22 +68,22 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         channelId: String,
         channelName: String
     ) throws -> ChatModel {
-        guard let modelActor else {
-            throw EventModelError.modelActorNotAvailable
+        let existing = try database.read { db in
+            try ChatModel.where { $0.id.eq(channelId) }.fetchOne(db)
         }
-        let descriptor = FetchDescriptor<ChatModel>(
-            predicate: #Predicate { $0.id == channelId }
-        )
-        if let existing = try modelActor.fetch(descriptor).first {
+
+        if let existing {
             return existing
         }
         let newChat = ChatModel(channelId: channelId, name: channelName)
-        modelActor.insert(newChat)
-        try modelActor.save()
+        try database.write {
+            db in
+            try ChatModel.insert { newChat }.execute(db)
+        }
         return newChat
     }
 
-    // Persist a message into SwiftData if modelActor is set
+    // Persist a message into SwiftData
     private func persistMessage(
         channelId: String,
         channelName: String,
@@ -131,10 +97,10 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         color: Int,
         nickname: String? = nil
     ) -> Int64 {
+        print(
+            "PM: channelId=\(channelId) channelName=\(channelName) text=\(text) senderCodename=\(senderCodename ?? "nil") senderPubKey=\(short(senderPubKey)) messageIdB64=\(messageIdB64 ?? "nil") replyTo=\(replyTo ?? "nil") timestamp=\(timestamp) dmToken=\(dmToken.map { String($0) } ?? "nil") color=\(color) nickname=\(nickname ?? "nil")"
+        )
         do {
-            guard let modelActor else {
-                fatalError("no modelActor")
-            }
             let chat = try fetchOrCreateChannelChat(
                 channelId: channelId,
                 channelName: channelName
@@ -144,8 +110,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                 fatalError("no message id")
             }
 
-            let msg = try ReceiverHelpers.persistIncomingMessage(
-                ctx: modelActor,
+            let msg = try receiverHelpers.persistIncomingMessage(
                 chat: chat,
                 text: text,
                 messageId: messageIdB64,
@@ -160,7 +125,8 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
 
             return msg.internalId
         } catch {
-            AppLogger.storage.critical("persist msg error: \(error.localizedDescription, privacy: .public)")
+            AppLogger.storage.critical(
+                "persist msg error: \(error.localizedDescription, privacy: .public)")
             fatalError(
                 error.localizedDescription
             )
@@ -183,14 +149,16 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         lease _: Int64,
         roundID _: Int64,
         messageType _: Int64,
-        status: Int64,
+        status _: Int64,
         hidden _: Bool
     ) -> Int64 {
         let messageIdB64 = messageID?.base64EncodedString()
         let messageTextB64 = text ?? ""
 
         do {
-            let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
+            let (codename, color) = try ReceiverHelpers.parseIdentity(
+                pubKey: pubKey, codeset: codeset
+            )
             let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
             if let decodedText = decodeMessage(messageTextB64) {
                 return persistMessage(
@@ -237,21 +205,19 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         guard !reactionText.isEmpty else {
             fatalError("no reaction")
         }
-        guard let reactionMessageId = messageID?.base64EncodedString(), !reactionMessageId.isEmpty else {
+        guard let reactionMessageId = messageID?.base64EncodedString(), !reactionMessageId.isEmpty
+        else {
             fatalError("no reaction message id")
         }
 
         do {
-            guard let modelActor else {
-                fatalError("no modelActor")
-            }
-
-            let (codename, color) = try ReceiverHelpers.parseIdentity(pubKey: pubKey, codeset: codeset)
+            let (codename, color) = try ReceiverHelpers.parseIdentity(
+                pubKey: pubKey, codeset: codeset
+            )
 
             var sender: MessageSenderModel? = nil
             if let pubKey {
-                sender = try ReceiverHelpers.upsertSender(
-                    ctx: modelActor,
+                sender = try receiverHelpers.upsertSender(
                     pubKey: pubKey,
                     codename: codename,
                     nickname: nickname,
@@ -262,28 +228,28 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
 
             // De-duplicate by message target + emoji + sender.
             // If a duplicate exists, update its id instead of creating another row.
-            let duplicateDescriptor = FetchDescriptor<MessageReactionModel>(
-                predicate: #Predicate { reaction in
-                    reaction.targetMessageId == targetId && reaction.emoji == reactionText
-                }
-            )
-            let duplicateCandidates = try modelActor.fetch(duplicateDescriptor)
-            let senderId = sender?.id
-            let sameSenderReactions = duplicateCandidates.filter { reaction in
-                reaction.sender?.id == senderId
+            let sameSenderReactions = try database.read { db in
+                try MessageReactionModel.where {
+                    $0.targetMessageId.eq(targetId) && $0.emoji.eq(reactionText)
+                        && $0.senderId.eq(sender?.id)
+                }.fetchAll(db)
             }
 
             let record: MessageReactionModel
-            if let canonical = sameSenderReactions.first(where: { $0.id == reactionMessageId }) ?? sameSenderReactions.first {
+            if var canonical = sameSenderReactions.first(where: { $0.id == reactionMessageId })
+                ?? sameSenderReactions.first
+            {
                 if canonical.id != reactionMessageId {
                     canonical.id = reactionMessageId
                 }
-                if canonical.sender == nil, let sender {
-                    canonical.sender = sender
+                if canonical.senderId == nil, let sender {
+                    canonical.senderId = sender.id
                 }
                 // If duplicates already exist, keep one canonical row.
-                for duplicate in sameSenderReactions where duplicate !== canonical {
-                    modelActor.delete(duplicate)
+                for duplicate in sameSenderReactions where duplicate.id != canonical.id {
+                    try database.write { db in
+                        try MessageReactionModel.delete(duplicate).execute(db)
+                    }
                 }
                 record = canonical
             } else {
@@ -293,13 +259,14 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                     internalId: internalId,
                     targetMessageId: targetId,
                     emoji: reactionText,
-                    sender: sender
+                    senderId: sender?.id
                 )
-                modelActor.insert(newRecord)
+                try database.write { db in
+                    try MessageReactionModel.insert { newRecord }.execute(db)
+                }
                 record = newRecord
             }
 
-            try modelActor.save()
             if let channelID {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(
@@ -319,23 +286,21 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
 
     func deleteReaction(messageId: String, emoji: String) {
         do {
-            guard let modelActor else {
-                return
+            let reactions = try database.read { db in
+                try MessageReactionModel.where {
+                    $0.id.eq(messageId) && $0.emoji.eq(emoji)
+                }.fetchAll(db)
             }
-            let descriptor = FetchDescriptor<MessageReactionModel>(
-                predicate: #Predicate {
-                    $0.id == messageId && $0.emoji == emoji
-                }
-            )
-            let reactions = try modelActor.fetch(descriptor)
 
             for reaction in reactions {
-                modelActor.delete(reaction)
+                try database.write { db in
+                    try MessageReactionModel.delete(reaction).execute(db)
+                }
             }
-
-            try modelActor.save()
         } catch {
-            AppLogger.storage.error("EventModel: Failed to delete reaction: \(error.localizedDescription, privacy: .public)")
+            AppLogger.storage.error(
+                "EventModel: Failed to delete reaction: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
@@ -393,16 +358,14 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
 
         let messageIdB64 = messageID.base64EncodedString()
 
-        guard let modelActor else {
-            throw EventModelError.modelActorNotAvailable
-        }
-
-        // Check ChatMessage
-        let msgDescriptor = FetchDescriptor<ChatMessageModel>(
-            predicate: #Predicate { $0.id == messageIdB64 }
-        )
-        if let msg = try? modelActor.fetch(msgDescriptor).first {
-            let pubKeyData = msg.sender?.pubkey ?? Data()
+        if let sender = try? database.read({ db in
+            try ChatMessageModel
+                .where { $0.id.eq(messageIdB64) }
+                .join(MessageSenderModel.all) { $0.senderId.eq($1.id) }
+                .select { _, sender in sender }
+                .fetchOne(db)
+        }) {
+            let pubKeyData = sender.pubkey
             let modelMsg = ModelMessageJSON(
                 pubKey: pubKeyData,
                 messageID: messageID
@@ -411,11 +374,14 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         }
 
         // Check MessageReaction - if message not found, check if it's a reaction
-        let reactionDescriptor = FetchDescriptor<MessageReactionModel>(
-            predicate: #Predicate { $0.id == messageIdB64 }
-        )
-        if let reaction = try? modelActor.fetch(reactionDescriptor).first {
-            let pubKeyData = reaction.sender?.pubkey ?? Data()
+        if let sender = try? database.read({ db in
+            try MessageReactionModel
+                .where { $0.id.eq(messageIdB64) }
+                .join(MessageSenderModel.all) { $0.senderId.eq($1.id) }
+                .select { _, sender in sender }
+                .fetchOne(db)
+        }) {
+            let pubKeyData = sender.pubkey
             let modelMsg = ModelMessageJSON(
                 pubKey: pubKeyData,
                 messageID: messageID
@@ -433,41 +399,39 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
 
         let messageIdB64 = messageID.base64EncodedString()
 
-        guard let modelActor else {
-            fatalError("deleteMessage: no modelActor available")
-        }
-
         do {
             // First, try to find and delete a ChatMessage
-            let messageDescriptor = FetchDescriptor<ChatMessageModel>(
-                predicate: #Predicate { $0.id == messageIdB64 }
-            )
-            let messages = try modelActor.fetch(messageDescriptor)
+            let messages = try database.read { db in
+                try ChatMessageModel.where { $0.id.eq(messageIdB64) }.fetchAll(db)
+            }
 
             if !messages.isEmpty {
                 for message in messages {
-                    modelActor.delete(message)
+                    try database.write { db in
+                        try ChatMessageModel.delete(message).execute(db)
+                    }
                 }
-                try modelActor.save()
                 return
             }
 
             // If no message found, check for reactions
-            let reactionDescriptor = FetchDescriptor<MessageReactionModel>(
-                predicate: #Predicate { $0.id == messageIdB64 }
-            )
-            let reactions = try modelActor.fetch(reactionDescriptor)
+            let reactions = try database.read { db in
+                try MessageReactionModel.where { $0.id.eq(messageIdB64) }.fetchAll(db)
+            }
 
             if !reactions.isEmpty {
                 for reaction in reactions {
-                    modelActor.delete(reaction)
+                    try database.write { db in
+                        try MessageReactionModel.delete(reaction).execute(db)
+                    }
                 }
-                try modelActor.save()
                 return
             }
 
         } catch {
-            AppLogger.storage.error("EventModel: Failed to delete message/reaction: \(error.localizedDescription, privacy: .public)")
+            AppLogger.storage.error(
+                "EventModel: Failed to delete message/reaction: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 

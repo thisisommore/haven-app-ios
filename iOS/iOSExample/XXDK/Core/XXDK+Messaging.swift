@@ -5,6 +5,7 @@
 
 import Bindings
 import Foundation
+import SQLiteData
 import SwiftData
 
 extension XXDK {
@@ -15,9 +16,6 @@ extension XXDK {
         targetMessageId: String,
         isMe: Bool = true
     ) {
-        guard let modelActor else {
-            return
-        }
         Task {
             do {
                 let reaction = MessageReactionModel(
@@ -27,8 +25,9 @@ extension XXDK {
                     emoji: emoji,
                     isMe: isMe
                 )
-                modelActor.insert(reaction)
-                try modelActor.save()
+                try database.write { db in
+                    try MessageReactionModel.insert { reaction }.execute(db)
+                }
             } catch {
                 AppLogger.messaging.error("persistReaction failed: \(error.localizedDescription, privacy: .public)")
             }
@@ -149,13 +148,10 @@ extension XXDK {
             if let report, let mid = report.messageID {
                 let chatId = toPubKey.base64EncodedString()
                 let _: String = {
-                    if let modelActor {
-                        let descriptor = FetchDescriptor<ChatModel>(
-                            predicate: #Predicate { $0.id == chatId }
-                        )
-                        if let found = try? modelActor.fetch(descriptor).first {
-                            return found.name
-                        }
+                    if let found = try? database.read({ db in
+                        try ChatModel.where { $0.id.eq(chatId) }.fetchOne(db)
+                    }) {
+                        return found.name
                     }
                     return "Direct Message"
                 }()
@@ -196,13 +192,10 @@ extension XXDK {
             if let report, let mid = report.messageID {
                 let chatId = toPubKey.base64EncodedString()
                 let _: String = {
-                    if let modelActor {
-                        let descriptor = FetchDescriptor<ChatModel>(
-                            predicate: #Predicate { $0.id == chatId }
-                        )
-                        if let found = try? modelActor.fetch(descriptor).first {
-                            return found.name
-                        }
+                    if let found = try? database.read({ db in
+                        try ChatModel.where { $0.id.eq(chatId) }.fetchOne(db)
+                    }) {
+                        return found.name
                     }
                     return "Direct Message"
                 }()

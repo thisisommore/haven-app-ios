@@ -1,5 +1,6 @@
 import Bindings
 import Foundation
+import SQLiteData
 import SwiftData
 
 // NOTE:
@@ -39,8 +40,6 @@ enum ChannelEvent: Int64, CustomStringConvertible {
 }
 
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
-    var modelActor: SwiftDataActor?
-
     private func short(_ data: Data?) -> String {
         guard let data else { return "nil" }
         let b64 = data.base64EncodedString()
@@ -56,8 +55,10 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
         if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
            JSONSerialization.isValidJSONObject(jsonObject) == false || true
         { // allow any JSON object
-            if let pretty = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]),
-               let prettyStr = String(data: pretty, encoding: .utf8)
+            if let pretty = try? JSONSerialization.data(
+                withJSONObject: jsonObject, options: [.prettyPrinted]
+            ),
+                let prettyStr = String(data: pretty, encoding: .utf8)
             {
                 return prettyStr
             }
@@ -68,7 +69,9 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
             // Attempt base64 decode
             if let b64Data = Data(base64Encoded: asString) {
                 if let jsonObject = try? JSONSerialization.jsonObject(with: b64Data, options: []),
-                   let pretty = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]),
+                   let pretty = try? JSONSerialization.data(
+                       withJSONObject: jsonObject, options: [.prettyPrinted]
+                   ),
                    let prettyStr = String(data: pretty, encoding: .utf8)
                 {
                     return prettyStr
@@ -77,7 +80,9 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
             // 3) If it's already UTF-8 JSON string, pretty print it by reparsing
             if let strData = asString.data(using: .utf8),
                let jsonObject = try? JSONSerialization.jsonObject(with: strData, options: []),
-               let pretty = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]),
+               let pretty = try? JSONSerialization.data(
+                   withJSONObject: jsonObject, options: [.prettyPrinted]
+               ),
                let prettyStr = String(data: pretty, encoding: .utf8)
             {
                 return prettyStr
@@ -90,10 +95,6 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
 
     override init() {
         super.init()
-    }
-
-    func configure(modelActor: SwiftDataActor? = nil) {
-        self.modelActor = modelActor
     }
 
     // Event notifications (generic JSON payloads)

@@ -4,7 +4,7 @@
 //
 //  Created by Om More on 28/09/25.
 //
-import SwiftData
+import SQLiteData
 import SwiftUI
 
 extension View {
@@ -34,9 +34,7 @@ struct MessageForm<T: XXDKP>: View {
             if let replyTo {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Replying to \(replyTo.sender?.codename ?? "You")")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        ReplyToSenderView(messageId: replyTo.id, senderId: replyTo.senderId)
                     }
                     Spacer()
                     Button {
@@ -57,7 +55,7 @@ struct MessageForm<T: XXDKP>: View {
                     "",
                     text: $abc,
                     axis: .vertical
-                ).lineLimit(1 ... 10)
+                ).lineLimit(1...10)
                     .onSubmit {
                         sendMessage()
                     }
@@ -167,14 +165,14 @@ struct MessageForm<T: XXDKP>: View {
 }
 
 private struct MessageFormPreviewWrapper: View {
-    @Query(filter: #Predicate<ChatModel> { $0.id == previewChatId }) private var chats: [ChatModel]
-    @Query private var messages: [ChatMessageModel]
+    @FetchOne(ChatModel.where { $0.id.eq(previewChatId) }) private var chat: ChatModel?
+    @FetchAll(ChatMessageModel.order { $0.timestamp.desc() }.limit(1)) private var messages: [ChatMessageModel]
     var replyMode: Bool = false
 
     var body: some View {
         ZStack {
             Color.appBackground.edgesIgnoringSafeArea(.all)
-            if let chat = chats.first {
+            if let chat {
                 VStack {
                     Spacer()
                     MessageForm<XXDKMock>(
@@ -185,5 +183,24 @@ private struct MessageFormPreviewWrapper: View {
                 }
             }
         }
+    }
+}
+
+private struct ReplyToSenderView: View {
+    let messageId: String
+    let senderId: String?
+    @Dependency(\.defaultDatabase) var database
+    @State private var senderCodename: String?
+
+    var body: some View {
+        Text("Replying to \(senderCodename ?? "You")")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .task {
+                guard let senderId else { return }
+                senderCodename = try? database.read({ db in
+                    try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.codename
+                })
+            }
     }
 }

@@ -36,7 +36,8 @@ struct IsReadyInfoJSON: Decodable {
         } else if let i = try? container.decode(Int.self, forKey: .HowClose) {
             HowClose = Double(i)
         } else if let s = try? container.decode(String.self, forKey: .HowClose),
-                  let d = Double(s) {
+                  let d = Double(s)
+        {
             HowClose = d
         } else {
             throw DecodingError.dataCorruptedError(
@@ -180,7 +181,7 @@ enum Parser {
     private static let encoder = JSONEncoder()
 
     /// Decodes any Decodable object from Data
-    static func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+    static func decode<T: Decodable>(_: T.Type, from data: Data) throws -> T {
         try decoder.decode(T.self, from: data)
     }
 

@@ -1,5 +1,5 @@
 import Bindings
-import SwiftData
+import SQLiteData
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -31,11 +31,11 @@ struct HomeView<T: XXDKP>: View {
     @State private var searchText: String = ""
     @State private var isLoggingOut = false
     @State private var didNormalizeNavigation = false
-    @Query private var chats: [ChatModel]
+    @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
 
     @EnvironmentObject var xxdk: T
     @State private var didStartLoad = false
-    @EnvironmentObject private var swiftDataActor: SwiftDataActor
+    @Dependency(\.defaultDatabase) var database
     @EnvironmentObject private var appStorage: AppStorage
     @EnvironmentObject private var navigation: AppNavigationPath
     @Environment(\.isSplitView) private var isSplitView
@@ -53,10 +53,15 @@ struct HomeView<T: XXDKP>: View {
             if displayName.localizedCaseInsensitiveContains(searchText) {
                 return true
             }
-            // Search by DM partner nickname
-            if let nickname = chat.messages
-                .first(where: { $0.isIncoming && $0.sender != nil })?
-                .sender?.nickname,
+            if let senderId =
+                (try? database.read({ db in
+                    try ChatMessageModel.where {
+                        $0.chatId.eq(chat.id) && $0.isIncoming && $0.senderId != nil
+                    }.limit(1).fetchOne(db)?.senderId
+                })).flatMap({ $0 }),
+                let nickname = try? database.read({ db in
+                    try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.nickname
+                }),
                 !nickname.isEmpty,
                 nickname.localizedCaseInsensitiveContains(searchText)
             {
@@ -75,13 +80,14 @@ struct HomeView<T: XXDKP>: View {
         }
         .onChange(of: selectedChat.chatId) { _, newValue in
             if let chatId = newValue,
-               let chat = chats.first(where: { $0.id == chatId })
+                let chat = chats.first(where: { $0.id == chatId })
             {
                 selectedChat.chatTitle = chat.name
             }
         }
 
-        let listHeader = chatList
+        let listHeader =
+            chatList
             .searchable(
                 text: $searchText,
                 placement: .navigationBarDrawer(displayMode: .automatic),
@@ -102,12 +108,15 @@ struct HomeView<T: XXDKP>: View {
                             },
                             onShareQR: {
                                 guard let dm = xxdk.DM,
-                                      let pubKey = dm.getPublicKey(),
-                                      !pubKey.isEmpty
+                                    let pubKey = dm.getPublicKey(),
+                                    !pubKey.isEmpty
                                 else {
                                     return
                                 }
-                                activeSheet = .qrCode(QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset))
+                                activeSheet = .qrCode(
+                                    QRData(
+                                        token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset)
+                                )
                             },
                             onLogout: {
                                 showLogoutAlert = true
@@ -135,14 +144,15 @@ struct HomeView<T: XXDKP>: View {
                 }.hiddenSharedBackground()
             }
 
-        return listHeader
+        let withSheet =
+            listHeader
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .newChat:
                     NewChatView<T>()
                 case .createSpace:
                     CreateSpaceView<T>()
-                case let .qrCode(data):
+                case .qrCode(let data):
                     QRCodeView(dmToken: data.token, pubKey: data.pubKey, codeset: data.codeset)
                 case .qrScanner:
                     QRScannerView(
@@ -151,8 +161,13 @@ struct HomeView<T: XXDKP>: View {
                         },
                         onShowMyQR: {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                guard let dm = xxdk.DM, let pubKey = dm.getPublicKey() else { return }
-                                activeSheet = .qrCode(QRData(token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset))
+                                guard let dm = xxdk.DM, let pubKey = dm.getPublicKey() else {
+                                    return
+                                }
+                                activeSheet = .qrCode(
+                                    QRData(
+                                        token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset)
+                                )
                             }
                         }
                     )
@@ -184,12 +199,11 @@ struct HomeView<T: XXDKP>: View {
                     Task {
                         try! await xxdk.logout()
 
-                        // Clear SwiftData
-                        try! swiftDataActor.deleteAll(MessageReactionModel.self)
-                        try! swiftDataActor.deleteAll(MessageSenderModel.self)
-                        // ChatModel cascade-deletes ChatMessageModel
-                        try! swiftDataActor.deleteAll(ChatModel.self)
-                        try! swiftDataActor.save()
+                        try! await database.write { db in
+                            try MessageReactionModel.delete().execute(db)
+                            try MessageSenderModel.delete().execute(db)
+                            try ChatModel.delete().execute(db)
+                        }
 
                         appStorage.clearAll()
                         await MainActor.run {
@@ -199,8 +213,13 @@ struct HomeView<T: XXDKP>: View {
                     }
                 }
             } message: {
-                Text("If you haven't backed up your identity, you will lose access to it permanently. Are you sure you want to logout?")
+                Text(
+                    "If you haven't backed up your identity, you will lose access to it permanently. Are you sure you want to logout?"
+                )
             }
+
+        return
+            withSheet
             .overlay {
                 if let toastMessage {
                     VStack {
@@ -228,7 +247,7 @@ struct HomeView<T: XXDKP>: View {
                     ZStack {
                         Color.black.opacity(0.3)
                             .ignoresSafeArea()
-                            .onTapGesture {} // Block taps
+                            .onTapGesture {}  // Block taps
 
                         VStack(spacing: 16) {
                             ProgressView()
@@ -268,22 +287,22 @@ struct HomeView<T: XXDKP>: View {
 
     private func handleAddUser(code: String) {
         guard let url = URL(string: code),
-              let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         else {
             return
         }
 
         guard components.scheme == "haven",
-              components.host == "dm",
-              let queryItems = components.queryItems
+            components.host == "dm",
+            let queryItems = components.queryItems
         else {
             return
         }
 
         guard let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
-              let token64 = Int64(tokenStr),
-              let pubKeyStr = queryItems.first(where: { $0.name == "pubKey" })?.value,
-              let pubKey = Data(base64Encoded: pubKeyStr)
+            let token64 = Int64(tokenStr),
+            let pubKeyStr = queryItems.first(where: { $0.name == "pubKey" })?.value,
+            let pubKey = Data(base64Encoded: pubKeyStr)
         else {
             return
         }
@@ -293,7 +312,7 @@ struct HomeView<T: XXDKP>: View {
 
         // Get codeset from URL
         guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
-              let codeset = Int(codesetStr)
+            let codeset = Int(codesetStr)
         else {
             withAnimation(.spring(response: 0.3)) {
                 toastMessage = "Invalid QR code: missing codeset"
@@ -309,7 +328,8 @@ struct HomeView<T: XXDKP>: View {
         do {
             identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
         } catch {
-            AppLogger.home.error("BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.home.error(
+                "BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)")
             withAnimation(.spring(response: 0.3)) {
                 toastMessage = "Failed to derive identity"
             }
@@ -321,7 +341,9 @@ struct HomeView<T: XXDKP>: View {
         guard let identity else {
             AppLogger.home.error("BindingsConstructIdentity returned nil")
             withAnimation(.spring(response: 0.3)) { toastMessage = "Failed to derive identity" }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { withAnimation { toastMessage = nil } }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                withAnimation { toastMessage = nil }
+            }
             return
         }
 
@@ -337,8 +359,9 @@ struct HomeView<T: XXDKP>: View {
         let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
 
         Task.detached {
-            swiftDataActor.insert(newChat)
-            try? swiftDataActor.save()
+            try? database.write { db in
+                try ChatModel.insert { newChat }.execute(db)
+            }
         }
 
         withAnimation(.spring(response: 0.3)) {
