@@ -113,7 +113,7 @@ class ReceiverHelpers {
     ) throws -> ChatMessageModel {
         let isIncoming = !isSenderSelf(senderPubKey: senderPubKey)
 
-        let msg: ChatMessageModel
+        var msg: ChatMessageModel
         if let timestamp {
             msg = ChatMessageModel(
                 message: text,
@@ -137,8 +137,15 @@ class ReceiverHelpers {
             )
         }
 
-        //        let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
-        //        NewMessageRenderPersistence.apply(precomputedRender, to: msg)
+        let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
+        msg.newContainsMarkup = precomputedRender.containsMarkup
+        msg.newRenderKindRaw = Int(precomputedRender.kind.rawValue)
+        msg.newRenderVersion = Int(precomputedRender.version)
+        msg.newRenderPlainText = precomputedRender.plainText
+        msg.newRenderPayload = precomputedRender.payloadData
+        try database.write { db in
+            try ChatMessageModel.update(msg).execute(db)
+        }
 
         try database.write { db in
             try ChatMessageModel.insert { msg }.execute(db)

@@ -7,6 +7,13 @@
 
 import UIKit
 
+extension ChatMessagesVC {
+    func message(at indexPath: IndexPath) -> String {
+        let message = messages[indexPath.item]
+        return message.newRenderPlainText ?? message.message
+    }
+}
+
 extension ChatMessagesVC: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int)
         -> Int
@@ -20,7 +27,7 @@ extension ChatMessagesVC: UICollectionViewDataSource {
         let c =
             collectionView.dequeueReusableCell(
                 withReuseIdentifier: TextCell.identifier, for: indexPath) as! TextCell
-        c.label.text = messages[indexPath.item].message
+        c.label.text = message(at: indexPath)
         return c
     }
 }
@@ -31,7 +38,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         sizeForItemAt indexPath: IndexPath
     ) -> CGSize {
         return TextCell.size(
-            text: messages[indexPath.item].message, width: collectionView.bounds.width
+            text: message(at: indexPath), width: collectionView.bounds.width
         )
     }
 
