@@ -7,8 +7,6 @@
 
 import UIKit
 
-let SPACE_BETWEEN: CGFloat = 10
-
 enum Align {
     case left
     case right
@@ -27,7 +25,7 @@ protocol ChatMessagesCollectionViewLayoutDelegate {
 }
 
 class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
-
+    static let SPACE_BETWEEN: CGFloat = 10
     var cachedAttributes: [UICollectionViewLayoutAttributes] = []
     var firstPrepare = true
     var height: CGFloat = 0
@@ -55,8 +53,9 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
 
             let x = alignment == .left ? 0 : collectionView!.bounds.width - size.width
             let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
-            attributes.frame = CGRect(origin: CGPoint(x: x, y: height + SPACE_BETWEEN), size: size)
-            height += (size.height + SPACE_BETWEEN)
+            attributes.frame = CGRect(
+                origin: CGPoint(x: x, y: height + Self.SPACE_BETWEEN), size: size)
+            height += (size.height + Self.SPACE_BETWEEN)
             cachedAttributes.append(attributes)
         }
 
