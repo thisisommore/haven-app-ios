@@ -7,11 +7,21 @@
 
 import UIKit
 
+enum Align {
+    case left
+    case right
+}
+
 protocol ChatMessagesCollectionViewLayoutDelegate {
     func collectionView(
         _ collectionView: UICollectionView, layout: UICollectionViewLayout,
         sizeForItemAt indexPath: IndexPath
     ) -> CGSize
+
+    func collectionView(
+        _ collectionView: UICollectionView, layout: UICollectionViewLayout,
+        alignForItemAt indexPath: IndexPath
+    ) -> Align
 }
 
 class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
@@ -33,12 +43,17 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
             return
         }
         cachedAttributes.reserveCapacity(noOfItems!)
-        for index in 0...(noOfItems! - 1) {
+        for index in (0...(noOfItems! - 1)).reversed() {
             let indexPath = IndexPath(item: index, section: 0)
             let size = delegate.collectionView(
                 collectionView!, layout: self, sizeForItemAt: indexPath)
+
+            let alignment = delegate.collectionView(
+                collectionView!, layout: self, alignForItemAt: indexPath)
+
+            let x = alignment == .left ? 0 : collectionView!.bounds.width - size.width
             let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
-            attributes.frame = CGRect(origin: CGPoint(x: 0, y: height), size: size)
+            attributes.frame = CGRect(origin: CGPoint(x: x, y: height), size: size)
             height += size.height
             cachedAttributes.append(attributes)
         }

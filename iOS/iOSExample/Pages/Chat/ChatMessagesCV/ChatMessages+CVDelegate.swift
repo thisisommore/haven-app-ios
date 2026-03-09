@@ -34,4 +34,11 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
             text: messages[indexPath.item].message, width: collectionView.bounds.width
         )
     }
+
+    func collectionView(
+        _ collectionView: UICollectionView, layout: UICollectionViewLayout,
+        alignForItemAt indexPath: IndexPath
+    ) -> Align {
+        return messages[indexPath.item].isIncoming ? .left : .right
+    }
 }

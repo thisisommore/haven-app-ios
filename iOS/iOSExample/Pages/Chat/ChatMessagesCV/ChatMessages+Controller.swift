@@ -25,7 +25,8 @@ class ChatMessagesVC: UIViewController {
         Task.detached {
             print("inside task")
             let _messages = try! await self.database.read { db in
-                try ChatMessageModel.where { $0.chatId.eq(chatId) }.limit(Self.limit).fetchAll(db)
+                try ChatMessageModel.where { $0.chatId.eq(chatId) }.order { $0.timestamp.desc() }
+                    .limit(Self.limit).fetchAll(db)
             }
             await MainActor.run {
                 self.messages = _messages
