@@ -39,7 +39,6 @@ class TextCell: UICollectionViewCell {
 
 extension TextCell {
     func makeUI() {
-        translatesAutoresizingMaskIntoConstraints = false
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = ""
         label.numberOfLines = 0
