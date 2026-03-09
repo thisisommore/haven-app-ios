@@ -7,6 +7,8 @@
 
 import UIKit
 
+let SPACE_BETWEEN: CGFloat = 10
+
 enum Align {
     case left
     case right
@@ -27,7 +29,7 @@ protocol ChatMessagesCollectionViewLayoutDelegate {
 class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
 
     var cachedAttributes: [UICollectionViewLayoutAttributes] = []
-
+    var firstPrepare = true
     var height: CGFloat = 0
     override var collectionViewContentSize: CGSize {
         return CGSize(width: collectionView!.bounds.width, height: height)
@@ -53,13 +55,17 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
 
             let x = alignment == .left ? 0 : collectionView!.bounds.width - size.width
             let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
-            attributes.frame = CGRect(origin: CGPoint(x: x, y: height), size: size)
-            height += size.height
+            attributes.frame = CGRect(origin: CGPoint(x: x, y: height + SPACE_BETWEEN), size: size)
+            height += (size.height + SPACE_BETWEEN)
             cachedAttributes.append(attributes)
         }
 
-        // let last = IndexPath(item: noOfItems! - 1, section: 0)
-        // collectionView!.scrollToItem(at: last, at: .bottom, animated: false)
+        if firstPrepare {
+            firstPrepare = false
+            let last = IndexPath(item: noOfItems! - 1, section: 0)
+            collectionView!.scrollToItem(at: last, at: .bottom, animated: false)
+        }
+
     }
     override func layoutAttributesForElements(in rect: CGRect)
         -> [UICollectionViewLayoutAttributes]?
