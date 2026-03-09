@@ -692,29 +692,7 @@ struct ChatView<T: XXDKP>: View {
             } else if messages.isEmpty {
                 EmptyChatView()
             } else {
-                List(messages) { message in
-                    VStack(alignment: message.isIncoming ? .leading : .trailing, spacing: 4) {
-                        if let sender = senderByMessageId[message.id] {
-                            Text(sender.codename)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        Text(message.message)
-                            .padding(8)
-                            .background(
-                                message.isIncoming ? Color(.systemGray5) : Color.blue.opacity(0.2)
-                            )
-                            .cornerRadius(8)
-                        Text(message.timestamp, style: .time)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(
-                        maxWidth: .infinity, alignment: message.isIncoming ? .leading : .trailing
-                    )
-                    .listRowSeparator(.hidden)
-                }
-                .listStyle(.plain)
+                ChatMessages(chatId: chatId)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

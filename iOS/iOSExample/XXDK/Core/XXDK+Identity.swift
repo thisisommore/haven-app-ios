@@ -132,20 +132,6 @@ extension XXDK {
         do {
             await progress(.preparingChannelsManager)
 
-            let noti: Bindings.BindingsNotifications?
-            do {
-                noti = try BindingsStatic.loadNotificationsDummy(cmix.getID())
-            } catch {
-                AppLogger.identity.critical(
-                    "BindingsLoadNotificationsDummy failed: \(error.localizedDescription, privacy: .public)"
-                )
-                fatalError("BindingsLoadNotificationsDummy failed: \(error.localizedDescription)")
-            }
-            guard let noti else {
-                AppLogger.identity.critical("BindingsLoadNotificationsDummy returned nil")
-                fatalError("BindingsLoadNotificationsDummy returned nil")
-            }
-
             let extensionJSON = try JSONEncoder().encode([String]())
 
             if !(appStorage?.isSetupComplete ?? false) {
@@ -156,7 +142,7 @@ extension XXDK {
                         privateIdentity: privateIdentity,
                         eventModelBuilder: eventModelBuilder,
                         extensionJSON: extensionJSON,
-                        notiId: noti.getID(),
+                        notiId: notifications.getID(),
                         channelUICallbacks: channelUICallbacks
                     )
                 } catch {
@@ -200,7 +186,7 @@ extension XXDK {
                         storageTag: storageTagString,
                         eventModelBuilder: eventModelBuilder,
                         extensionJSON: extensionJSON,
-                        notiId: noti.getID(),
+                        notiId: notifications.getID(),
                         channelUICallbacks: channelUICallbacks
                     )
                 } catch {

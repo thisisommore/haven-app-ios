@@ -272,7 +272,8 @@ struct HomeView<T: XXDKP>: View {
                         navigation.path = NavigationPath()
                     }
                 }
-                if xxdk.statusPercentage == 0 {
+                if xxdk.statusPercentage == 0 && !didStartLoad {
+                    didStartLoad = true
                     Task.detached {
                         await xxdk.setUpCmix()
                         await xxdk.load(privateIdentity: nil)

@@ -35,7 +35,9 @@ func appDatabase() throws -> any DatabaseWriter {
   #if DEBUG
     migrator.eraseDatabaseOnSchemaChange = true
   #endif
-  migrator.registerMigration("Create tables") { db in
+
+  //TODO migrations in separate folder with versioning/description
+  migrator.registerMigration("v1:Create tables") { db in
     try #sql(
       """
       CREATE TABLE "chats"(
