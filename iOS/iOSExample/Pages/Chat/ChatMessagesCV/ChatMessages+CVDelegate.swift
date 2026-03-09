@@ -14,21 +14,19 @@ extension ChatMessagesVC {
     }
 }
 
-extension ChatMessagesVC: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int)
-        -> Int
-    {
-        return messages.count
-    }
-
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath)
-        -> UICollectionViewCell
-    {
-        let c =
-            collectionView.dequeueReusableCell(
-                withReuseIdentifier: TextCell.identifier, for: indexPath) as! TextCell
-        c.label.text = message(at: indexPath)
-        return c
+extension ChatMessagesVC {
+    typealias DataSource = UICollectionViewDiffableDataSource<Section, ChatMessageModel>
+    func makeDataSource() -> DataSource {  // reusing typealias
+        DataSource(
+            collectionView: cv,
+            cellProvider: { (collectionView, indexPath, item) -> UICollectionViewCell? in
+                let cell =
+                    collectionView.dequeueReusableCell(
+                        withReuseIdentifier: TextCell.identifier,
+                        for: indexPath) as! TextCell
+                cell.label.text = self.message(at: indexPath)  // from items
+                return cell
+            })
     }
 }
 

@@ -37,6 +37,9 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
         height = 0
         cachedAttributes.removeAll(keepingCapacity: true)
         let delegate = collectionView?.delegate as! ChatMessagesCollectionViewLayoutDelegate
+        if collectionView!.numberOfSections < 1 {
+            return
+        }
         let noOfItems = collectionView?.dataSource?.collectionView(
             collectionView!, numberOfItemsInSection: 0)
         if noOfItems == 0 {

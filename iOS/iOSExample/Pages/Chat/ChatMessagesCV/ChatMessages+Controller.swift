@@ -5,48 +5,72 @@
 //  Created by Om More on 07/03/26.
 //
 
+import GRDB
 import SQLiteData
 import SwiftUI
 import UIKit
 
 class ChatMessagesVC: UIViewController {
+
+    // Data
+    // DataSource
+    typealias Section = Int
+    // store this since cv.dataSource is weak
+    lazy var dataSource: DataSource = makeDataSource()
+
+    // Database
     @Dependency(\.defaultDatabase) var database
     nonisolated static let limit = 40
-    var cv: UICollectionView
+    var initDataDone = false
     var messages: [ChatMessageModel] = []
+    var cancellable: AnyDatabaseCancellable?
+    //
+
+    var cv: UICollectionView
+
     init(chatId: String) {
         print("CV:Controller:init")
 
         self.cv = UICollectionView(
             frame: .zero, collectionViewLayout: ChatMessagesCollectionViewLayout())
-        super.init(nibName: nil, bundle: nil)
-        print("task schduled")
 
-        Task.detached {
-            print("inside task")
-            let _messages = try! await self.database.read { db in
-                try ChatMessageModel.where { $0.chatId.eq(chatId) }.order { $0.timestamp.desc() }
-                    .limit(Self.limit).fetchAll(db)
+        super.init(nibName: nil, bundle: nil)
+
+        // Data obervation and initialization
+        let observation = ValueObservation.tracking { db in
+            try ChatMessageModel.where { $0.chatId.eq(chatId) }.order {
+                $0.timestamp.desc()
             }
-            await MainActor.run {
-                self.messages = _messages
-                self.cv.reloadData()
-            }
+            .limit(Self.limit).fetchAll(db)
         }
 
-        print("after task")
+        cancellable = observation.start(in: self.database, scheduling: .immediate) { error in
+            // Handle error
+        } onChange: { (_messages: [ChatMessageModel]) in
+            self.messages = _messages
+            var snapshot = NSDiffableDataSourceSnapshot<Section, ChatMessageModel>()
+            snapshot.appendSections([0])
+            snapshot.appendItems(_messages)
+            if self.initDataDone {
+                // Calculates differences and applies them
+                self.dataSource.apply(snapshot, animatingDifferences: false)
+            } else {
+                // Faster for init data
+                self.dataSource.applySnapshotUsingReloadData(snapshot)
+            }
+        }
+        //
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    deinit {
+        cancellable?.cancel()
     }
 
     override func viewDidLoad() {
         print("CV:Controller:viewDidLoad")
         super.viewDidLoad()
-        var config = UICollectionLayoutListConfiguration(appearance: .plain)
-        config.showsSeparators = false
-        cv.dataSource = self
+
+        // Collection view
         cv.delegate = self
         cv.register(TextCell.self, forCellWithReuseIdentifier: TextCell.identifier)
         cv.translatesAutoresizingMaskIntoConstraints = false
@@ -58,29 +82,20 @@ class ChatMessagesVC: UIViewController {
             cv.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             cv.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
+        //
     }
 
-    override func viewDidLayoutSubviews() {
-        print("CV:Controller:viewDidLayoutSubviews")
-        // let last = IndexPath(item: self.messages.count - 1, section: 0)
-        // cv.scrollToItem(at: last, at: .bottom, animated: false)
-    }
-
-    override func viewSafeAreaInsetsDidChange() {
-        print("CV:Controller:viewSafeAreaInsetsDidChange")
-        super.viewSafeAreaInsetsDidChange()
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
 }
 
 struct ChatMessages: UIViewControllerRepresentable {
     let chatId: String
-    func updateUIViewController(_ uiViewController: ChatMessagesVC, context: Context) {
-
-    }
+    func updateUIViewController(_ uiViewController: ChatMessagesVC, context: Context) {}
 
     func makeUIViewController(context: Context) -> ChatMessagesVC {
         ChatMessagesVC(chatId: chatId)
     }
-
 }
