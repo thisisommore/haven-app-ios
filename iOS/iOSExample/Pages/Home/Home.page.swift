@@ -200,6 +200,7 @@ struct HomeView<T: XXDKP>: View {
                         try! await xxdk.logout()
 
                         try! await database.write { db in
+                            try ChatMessageModel.delete().execute(db)
                             try MessageReactionModel.delete().execute(db)
                             try MessageSenderModel.delete().execute(db)
                             try ChatModel.delete().execute(db)
