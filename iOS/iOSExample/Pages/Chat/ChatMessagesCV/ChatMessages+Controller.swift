@@ -11,7 +11,7 @@ import UIKit
 
 class ChatMessagesVC: UIViewController {
     @Dependency(\.defaultDatabase) var database
-    static let limit = 40
+    nonisolated static let limit = 40
     var cv: UICollectionView
     var messages: [ChatMessageModel] = []
     init(chatId: String) {
