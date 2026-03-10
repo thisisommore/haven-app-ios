@@ -8,6 +8,7 @@
 import Combine
 import GRDB
 import SQLiteData
+import SnapKit
 import SwiftUI
 import UIKit
 
@@ -20,6 +21,7 @@ class ChatMessagesVC: UIViewController {
     // DataSource
     enum Message: Hashable {
         case text(ChatMessageModel)
+        case date(String)
     }
     typealias Section = Int
     typealias Item = Message
@@ -70,15 +72,13 @@ class ChatMessagesVC: UIViewController {
         // Collection view
         cv.delegate = self
         cv.register(TextCell.self, forCellWithReuseIdentifier: TextCell.identifier)
-        cv.translatesAutoresizingMaskIntoConstraints = false
+        cv.register(DateBadgeCell.self, forCellWithReuseIdentifier: DateBadgeCell.identifier)
         cv.alwaysBounceVertical = true
         view.addSubview(cv)
-        NSLayoutConstraint.activate([
-            cv.topAnchor.constraint(equalTo: view.topAnchor),
-            cv.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            cv.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            cv.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-        ])
+
+        cv.snp.makeConstraints {
+            $0.edges.equalTo(view)
+        }
         //
     }
 

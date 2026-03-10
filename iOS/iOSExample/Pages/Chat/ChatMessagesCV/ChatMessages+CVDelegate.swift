@@ -32,6 +32,13 @@ extension ChatMessagesVC {
                     cell.label.text = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
                     return cell
+                case .date(let d):
+                    let cell =
+                        collectionView.dequeueReusableCell(
+                            withReuseIdentifier: DateBadgeCell.identifier,
+                            for: indexPath) as! DateBadgeCell
+                    cell.label.text = d
+                    return cell
                 }
 
             })
@@ -53,6 +60,8 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
             return TextCell.size(
                 text: text(for: message), width: collectionView.availableWidth()
             )
+        case .date(let d):
+            return DateBadgeCell.size(text: d, width: collectionView.availableWidth())
         }
 
     }
@@ -72,6 +81,8 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         switch item {
         case .text(let message):
             return message.isIncoming ? .left : .right
+        case .date:
+            return .center
         }
     }
 

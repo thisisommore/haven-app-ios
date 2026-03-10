@@ -25,8 +25,23 @@ extension ChatMessagesVC {
             self.messages = _messages.reversed()
             var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
             snapshot.appendSections([0])
-
-            snapshot.appendItems(self.messages.map { Message.text($0) })
+            snapshot.appendItems(
+                self.messages.enumerated()
+                    .map { index, message -> [Item] in
+                        let dateChanged =
+                            index == 0
+                            || !Calendar.current.isDate(
+                                self.messages[index - 1].timestamp, inSameDayAs: message.timestamp)
+                        if dateChanged {
+                            return [
+                                .date(
+                                    message.timestamp.formatted(date: .abbreviated, time: .omitted)),
+                                .text(message),
+                            ]
+                        }
+                        return [.text(message)]
+                    }
+                    .flatMap { $0 })
             if self.initDataDone {
 
                 // Save scroll data so layout can restore it, this prevents scroll jumps when items are added/updated

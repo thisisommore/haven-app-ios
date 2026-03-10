@@ -10,6 +10,7 @@ import UIKit
 enum Align {
     case left
     case right
+    case center
 }
 
 extension UICollectionView {
@@ -67,7 +68,15 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
             let alignment = delegate.collectionView(
                 collectionView!, layout: self, alignForItemAt: indexPath)
 
-            let x = alignment == .left ? 0 : collectionView!.bounds.width - size.width
+            let x =
+                switch alignment {
+                case .left:
+                    CGFloat(0)
+                case .right:
+                    collectionView!.availableWidth() - size.width
+                case .center:
+                    (collectionView!.availableWidth() - size.width) / 2
+                }
             let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
             attributes.frame = CGRect(
                 origin: CGPoint(x: x, y: height + Self.SPACE_BETWEEN), size: size)
