@@ -42,10 +42,11 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         guard let item else {
             fatalError("No item at indexPath: \(indexPath)")
         }
+
         switch item {
         case .text(let message):
             return TextCell.size(
-                text: text(for: message), width: collectionView.bounds.width
+                text: text(for: message), width: collectionView.availableWidth()
             )
         }
 

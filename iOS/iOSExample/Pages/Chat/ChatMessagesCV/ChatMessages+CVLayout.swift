@@ -12,6 +12,11 @@ enum Align {
     case right
 }
 
+extension UICollectionView {
+    func availableWidth() -> CGFloat {
+        bounds.width - (contentInset.left + contentInset.right)
+    }
+}
 protocol ChatMessagesCollectionViewLayoutDelegate {
     func collectionView(
         _ collectionView: UICollectionView, layout: UICollectionViewLayout,
@@ -36,7 +41,8 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
 
     var backupPoint: CGPoint = .zero
     override var collectionViewContentSize: CGSize {
-        return CGSize(width: collectionView!.bounds.width, height: height)
+        return CGSize(
+            width: collectionView!.availableWidth(), height: height)
     }
 
     override func prepare() {
@@ -141,7 +147,9 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
         let change = newY - oldY
         let correctedY = proposedContentOffset.y + change
 
-        guard correctedY >= 0 && proposedContentOffset.x >= 0 else {
+        let minX = -collectionView!.adjustedContentInset.left
+        let minY = -collectionView!.adjustedContentInset.top
+        guard correctedY >= minY && proposedContentOffset.x >= minX else {
             return super.targetContentOffset(forProposedContentOffset: proposedContentOffset)
         }
         return CGPoint(x: proposedContentOffset.x, y: correctedY)

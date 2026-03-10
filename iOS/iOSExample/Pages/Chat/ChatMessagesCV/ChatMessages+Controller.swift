@@ -30,6 +30,7 @@ class ChatMessagesVC: UIViewController {
     @Dependency(\.defaultDatabase) var database
     nonisolated static let limit: Int = 40
     static let loadNewMessagesThreshold: CGFloat = 60
+    static let padding: CGFloat = 8
     var page = 1
     var initDataDone = false
     var messages: [ChatMessageModel] = []
@@ -43,7 +44,8 @@ class ChatMessagesVC: UIViewController {
         self.chatId = chatId
         self.cv = UICollectionView(
             frame: .zero, collectionViewLayout: ChatMessagesCollectionViewLayout())
-
+        self.cv.contentInset = UIEdgeInsets(
+            top: Self.padding, left: Self.padding, bottom: Self.padding, right: Self.padding)
         super.init(nibName: nil, bundle: nil)
         startObservation()
         //
