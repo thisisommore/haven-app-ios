@@ -69,4 +69,37 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
             return message.isIncoming ? .left : .right
         }
     }
+
+    func collectionView(
+        _ collectionView: UICollectionView,
+        contextMenuConfigurationForItemsAt indexPaths: [IndexPath],
+        point: CGPoint
+    ) -> UIContextMenuConfiguration? {
+        guard let indexPath = indexPaths.first else { return nil }
+        let cell = collectionView.cellForItem(at: indexPath) as? CellWithContextMenu
+        return cell?.makeContextMenu()
+    }
+
+    func collectionView(
+        _ collectionView: UICollectionView,
+        contextMenuConfiguration configuration: UIContextMenuConfiguration,
+        highlightPreviewForItemAt indexPath: IndexPath
+    ) -> UITargetedPreview? {
+        return previewForItem(at: indexPath, in: collectionView)
+    }
+
+    func collectionView(
+        _ collectionView: UICollectionView,
+        contextMenuConfiguration configuration: UIContextMenuConfiguration,
+        dismissalPreviewForItemAt indexPath: IndexPath
+    ) -> UITargetedPreview? {
+        return previewForItem(at: indexPath, in: collectionView)
+    }
+
+    private func previewForItem(at indexPath: IndexPath, in collectionView: UICollectionView)
+        -> UITargetedPreview?
+    {
+        let cell = collectionView.cellForItem(at: indexPath) as? CellWithContextMenu
+        return cell?.makePreview()
+    }
 }
