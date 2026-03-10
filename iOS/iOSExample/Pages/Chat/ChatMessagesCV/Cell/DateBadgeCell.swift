@@ -10,9 +10,9 @@ import UIKit
 class DateBadgeCell: UICollectionViewCell {
     static let identifier = String(describing: DateBadgeCell.self)
     let label = UILabel()
-    static let paddingY: CGFloat = 4
+    static let paddingT: CGFloat = 22
+    static let paddingB: CGFloat = 4
     static let paddingX: CGFloat = 8
-    static let paddingYCal = paddingY * 2
     static let paddingXCal = paddingX * 2
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -36,7 +36,7 @@ class DateBadgeCell: UICollectionViewCell {
         )
 
         let width = ceil(r.width) + paddingXCal
-        let height = r.height + paddingYCal
+        let height = r.height + paddingB + paddingT
 
         // ceil to provide extra space since it might remove all the decimals which can result in smaller space
         return CGSize(width: width, height: height)
@@ -47,7 +47,8 @@ extension DateBadgeCell {
     func makeUI() {
         contentView.addSubview(label)
         label.snp.makeConstraints {
-            $0.center.equalTo(contentView)
+            $0.centerX.equalTo(contentView)
+            $0.top.equalTo(contentView).offset(Self.paddingT)
         }
         label.text = "10 AM 2002"
         label.numberOfLines = 0
