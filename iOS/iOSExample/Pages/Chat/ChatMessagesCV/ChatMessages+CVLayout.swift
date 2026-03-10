@@ -34,7 +34,7 @@ protocol ChatMessagesCollectionViewLayoutDelegate {
 
 class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
     static let defaultSpaceBetween: CGFloat = 10
-    static let groupedSenderSpaceBetween: CGFloat = 1
+    static let groupedSenderSpaceBetween: CGFloat = 2
     var cachedAttributes: [UICollectionViewLayoutAttributes] = []
     var firstPrepare = true
     var height: CGFloat = 0
