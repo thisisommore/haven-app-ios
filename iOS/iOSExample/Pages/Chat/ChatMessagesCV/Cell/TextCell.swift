@@ -5,12 +5,14 @@
 //  Created by Om More on 07/03/26.
 //
 
+import SnapKit
 import SwiftUI
 import UIKit
 
 class TextCell: UICollectionViewCell {
     static let identifier = String(describing: TextCell.self)
     let label = UILabel()
+    let timeLabel = UILabel()
     let replyImage = UIImageView(image: UIImage(systemName: "arrowshape.turn.up.left.circle.fill"))
     let container = UIView()
     var hasCrossedReplyThreshold = false
@@ -34,93 +36,82 @@ class TextCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private static let textAttributes: [NSAttributedString.Key: Any] = [
+    private static let msgTextAttributes: [NSAttributedString.Key: Any] = [
         .font: UIFont.systemFont(ofSize: 17)
     ]
+
+    private static let timeTextAttributes: [NSAttributedString.Key: Any] = [
+        .font: UIFont.systemFont(ofSize: 8)
+    ]
+
+    static let lastWidth: CGFloat = 0
+    static var timeRecCached: CGRect = .zero
 
     static func size(text: String, width: CGFloat) -> CGSize {
         let r = text.boundingRect(
             with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
             options: .usesLineFragmentOrigin,
-            attributes: Self.textAttributes,
+            attributes: Self.msgTextAttributes,
             context: nil
         )
+        let timeR = {
+            if Self.lastWidth != width || Self.timeRecCached == .zero {
+                let timeR = "10:10pm".boundingRect(
+                    with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
+                    options: .usesLineFragmentOrigin,
+                    attributes: Self.timeTextAttributes,
+                    context: nil
+                )
+                Self.timeRecCached = timeR
+            }
+            return Self.timeRecCached
+        }()
+
+        let width = max(ceil(r.width), ceil(timeR.width)) + paddingXCal
+        let height = ceil(r.height) + ceil(timeR.height) + paddingYCal
 
         // ceil to provide extra space since it might remove all the decimals which can result in smaller space
-        return CGSize(width: ceil(r.width) + paddingXCal, height: ceil(r.height) + paddingYCal)
+        return CGSize(width: width, height: height)
     }
 }
 
 extension TextCell {
     func makeUI() {
-        label.translatesAutoresizingMaskIntoConstraints = false
-        container.translatesAutoresizingMaskIntoConstraints = false
-        replyImage.translatesAutoresizingMaskIntoConstraints = false
-        label.text = ""
-        label.numberOfLines = 0
-        container.addSubview(label)
-        replyImage.tintColor = .systemOrange
         contentView.addSubview(replyImage)
         contentView.addSubview(container)
+        container.addSubview(label)
+        container.addSubview(timeLabel)
 
-        NSLayoutConstraint.activate([
-            replyImage.leadingAnchor.constraint(
-                equalTo: contentView.leadingAnchor, constant: Self.paddingX),
-            replyImage.centerYAnchor.constraint(
-                equalTo: contentView.centerYAnchor),
-            replyImage.widthAnchor.constraint(equalToConstant: 20),
-            replyImage.heightAnchor.constraint(equalToConstant: 20),
-        ])
+        replyImage.snp.makeConstraints {
+            $0.leading.equalTo(contentView).offset(Self.paddingX)
+            $0.centerY.equalTo(contentView)
+            $0.size.equalTo(20)  // Combines width and height
+        }
+        replyImage.tintColor = .systemOrange
 
-        NSLayoutConstraint.activate([
-            container.leadingAnchor.constraint(
-                equalTo: contentView.leadingAnchor),
-            container.trailingAnchor.constraint(
-                equalTo: contentView.trailingAnchor),
-            container.topAnchor.constraint(equalTo: contentView.topAnchor),
-            container.bottomAnchor.constraint(
-                equalTo: contentView.bottomAnchor),
-        ])
-
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(
-                equalTo: container.leadingAnchor, constant: Self.paddingX),
-            label.trailingAnchor.constraint(
-                equalTo: container.trailingAnchor, constant: -Self.paddingX),
-            label.topAnchor.constraint(equalTo: container.topAnchor, constant: Self.paddingY),
-            label.bottomAnchor.constraint(
-                equalTo: container.bottomAnchor, constant: -Self.paddingY),
-        ])
-
+        container.snp.makeConstraints {
+            $0.edges.equalTo(contentView)  // Automatically pins all 4 sides
+        }
         container.backgroundColor = UIColor(Color.messageBubble)
         container.layer.cornerRadius = 16
+
+        label.snp.makeConstraints {
+            $0.leading.equalTo(container).offset(Self.paddingX)
+            $0.trailing.equalTo(container).offset(-Self.paddingX)
+            $0.top.equalTo(container).offset(Self.paddingY)
+            // We'll let timeLabel handle the vertical spacing between the two
+        }
+        label.text = ""
+        label.numberOfLines = 0
+
+        timeLabel.snp.makeConstraints {
+            $0.trailing.equalTo(container).offset(-Self.paddingX)
+            $0.top.equalTo(label.snp.bottom).offset(Self.paddingY)  // Defines the vertical stack
+            $0.bottom.equalTo(container).offset(-Self.paddingY)
+        }
+        timeLabel.textColor = .gray
+        timeLabel.font = UIFont.systemFont(ofSize: 8)
+        timeLabel.text = ""
+
     }
-}
-
-extension TextCell: CellWithContextMenu {
-    func makePreview() -> UITargetedPreview {
-        let params = UIPreviewParameters()
-        params.backgroundColor = container.backgroundColor
-
-        // Match the contentView's layer cornerRadius exactly
-        let radius = contentView.layer.cornerRadius
-        params.visiblePath = UIBezierPath(
-            roundedRect: contentView.bounds,
-            cornerRadius: radius
-        )
-
-        return UITargetedPreview(view: contentView, parameters: params)
-    }
-
-    func makeContextMenu() -> UIContextMenuConfiguration {
-        return UIContextMenuConfiguration(actionProvider: { _ in
-            UIMenu(children: [
-                UIAction(title: "Reply", image: UIImage(systemName: "arrowshape.turn.up.left")) {
-                    _ in
-                    // handle reply
-                }
-            ])
-        })
-    }
-
 }

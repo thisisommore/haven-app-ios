@@ -13,6 +13,7 @@
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A13C50842EF9890B007046D4 /* PreviewUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13C50832EF98905007046D4 /* PreviewUtils.swift */; };
+		A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1445D652F6036BA00FB3744 /* SnapKit */; };
 		A14987572EA202BC00E72C00 /* UIScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14987562EA202B800E72C00 /* UIScreen.swift */; };
 		A193D1312EF2653E00BE3590 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A193D10C2EF2653E00BE3590 /* Navigation.swift */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
@@ -69,6 +70,7 @@
 				A1A4FAC62F5B3A76006D6B39 /* SQLiteData in Frameworks */,
 				A1CDB04C2F5AFF66005F33F8 /* SQLiteData in Frameworks */,
 				1662B707BC8225B49C368183 /* Pods_iOSExample.framework in Frameworks */,
+				A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */,
 				A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */,
 				A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */,
 				A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */,
@@ -212,6 +214,7 @@
 			packageReferences = (
 				A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */,
 				A1A4FCF12F5B3C1B006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */,
+				A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */,
 			);
 			productRefGroup = 980A0D6A2B96723C004FB15A /* Products */;
 			projectDirPath = "";
@@ -548,6 +551,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
 		A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ActuallyTaylor/SwiftHTMLToMarkdown";
@@ -591,6 +602,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A1445D652F6036BA00FB3744 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
 		A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */;

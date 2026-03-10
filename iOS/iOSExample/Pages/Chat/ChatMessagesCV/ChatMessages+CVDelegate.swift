@@ -11,6 +11,10 @@ extension ChatMessagesVC {
     func text(for message: ChatMessageModel) -> String {
         return message.newRenderPlainText ?? message.message
     }
+
+    func time(for message: ChatMessageModel) -> String {
+        return message.timestamp.formatted(date: .omitted, time: .shortened)
+    }
 }
 
 extension ChatMessagesVC {
@@ -26,6 +30,7 @@ extension ChatMessagesVC {
                             withReuseIdentifier: TextCell.identifier,
                             for: indexPath) as! TextCell
                     cell.label.text = self.text(for: message)  // from items
+                    cell.timeLabel.text = self.time(for: message)  // from items
                     return cell
                 }
 
