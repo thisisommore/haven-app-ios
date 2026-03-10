@@ -11,6 +11,10 @@ import UIKit
 class TextCell: UICollectionViewCell {
     static let identifier = String(describing: TextCell.self)
     let label = UILabel()
+    static let paddingY: CGFloat = 4
+    static let paddingX: CGFloat = 8
+    static let paddingYCal = paddingY * 2
+    static let paddingXCal = paddingX * 2
     override init(frame: CGRect) {
         super.init(frame: frame)
         makeUI()
@@ -26,14 +30,14 @@ class TextCell: UICollectionViewCell {
 
     static func size(text: String, width: CGFloat) -> CGSize {
         let r = text.boundingRect(
-            with: CGSize(width: width, height: .greatestFiniteMagnitude),
+            with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
             options: .usesLineFragmentOrigin,
             attributes: Self.textAttributes,
             context: nil
         )
 
         // ceil to provide extra space since it might remove all the decimals which can result in smaller space
-        return CGSize(width: ceil(r.width), height: ceil(r.height))
+        return CGSize(width: ceil(r.width) + paddingXCal, height: ceil(r.height) + paddingYCal)
     }
 }
 
@@ -44,12 +48,16 @@ extension TextCell {
         label.numberOfLines = 0
         contentView.addSubview(label)
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            label.topAnchor.constraint(equalTo: contentView.topAnchor),
-            label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            label.leadingAnchor.constraint(
+                equalTo: contentView.leadingAnchor, constant: Self.paddingX),
+            label.trailingAnchor.constraint(
+                equalTo: contentView.trailingAnchor, constant: -Self.paddingX),
+            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Self.paddingY),
+            label.bottomAnchor.constraint(
+                equalTo: contentView.bottomAnchor, constant: -Self.paddingY),
         ])
 
         contentView.backgroundColor = UIColor(Color.messageBubble)
+        contentView.layer.cornerRadius = 16
     }
 }
