@@ -33,7 +33,8 @@ protocol ChatMessagesCollectionViewLayoutDelegate {
 }
 
 class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
-    static let SPACE_BETWEEN: CGFloat = 10
+    static let defaultSpaceBetween: CGFloat = 10
+    static let groupedSenderSpaceBetween: CGFloat = 1
     var cachedAttributes: [UICollectionViewLayoutAttributes] = []
     var firstPrepare = true
     var height: CGFloat = 0
@@ -62,6 +63,7 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
         cachedAttributes.reserveCapacity(noOfItems)
         for index in (0...(noOfItems - 1)) {
             let indexPath = index.idxPath()
+            let spacing = spacingBeforeItem(at: indexPath, dataSource: dataSource)
             let size = delegate.collectionView(
                 collectionView!, layout: self, sizeForItemAt: indexPath)
 
@@ -79,8 +81,8 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
                 }
             let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
             attributes.frame = CGRect(
-                origin: CGPoint(x: x, y: height + Self.SPACE_BETWEEN), size: size)
-            height += (size.height + Self.SPACE_BETWEEN)
+                origin: CGPoint(x: x, y: height + spacing), size: size)
+            height += (size.height + spacing)
             cachedAttributes.append(attributes)
 
             let item = dataSource.itemIdentifier(for: index.idxPath())
@@ -99,6 +101,16 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
         }
 
     }
+    private func spacingBeforeItem(
+        at indexPath: IndexPath,
+        dataSource: ChatMessagesVC.DataSource
+    ) -> CGFloat {
+        guard case .text(let message)? = dataSource.itemIdentifier(for: indexPath) else {
+            return Self.defaultSpaceBetween
+        }
+        return message.1 == nil ? Self.groupedSenderSpaceBetween : Self.defaultSpaceBetween
+    }
+
     override func layoutAttributesForElements(in rect: CGRect)
         -> [UICollectionViewLayoutAttributes]?
     {
