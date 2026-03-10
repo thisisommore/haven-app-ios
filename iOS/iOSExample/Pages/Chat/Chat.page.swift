@@ -62,7 +62,11 @@ struct ChatView<T: XXDKP>: View {
 
     var body: some View {
         ZStack {
-            ChatMessages(chatId: chatId)
+            ChatMessages(chatId: chatId) { message in
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    replyingTo = message
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom) {

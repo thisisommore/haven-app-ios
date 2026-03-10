@@ -49,8 +49,7 @@ extension TextCell: UIGestureRecognizerDelegate {
         case .ended, .cancelled:
             // If they let go while the threshold was crossed, trigger the reply!
             if hasCrossedReplyThreshold {
-                print("Trigger Reply Action!")
-                // Call your delegate or closure here to tell the ViewController to open the keyboard
+                onReply?()
             }
 
             // Spring EVERYTHING back to the original position

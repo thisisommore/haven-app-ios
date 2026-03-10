@@ -18,6 +18,7 @@ class ChatMessagesVC: UIViewController {
     // Data
     let chatId: String
     var isFetchingNextPage = true
+    var onReply: ((ChatMessageModel) -> Void)
 
     // DataSource
     enum Message: Hashable {
@@ -65,9 +66,10 @@ class ChatMessagesVC: UIViewController {
 
     var cv: UICollectionView
 
-    init(chatId: String) {
+    init(chatId: String, onReply: @escaping ((ChatMessageModel) -> Void)) {
         print("CV:Controller:init")
         self.chatId = chatId
+        self.onReply = onReply
         self.cv = UICollectionView(
             frame: .zero, collectionViewLayout: ChatMessagesCollectionViewLayout())
         self.cv.contentInset = UIEdgeInsets(
@@ -114,9 +116,13 @@ class ChatMessagesVC: UIViewController {
 
 struct ChatMessages: UIViewControllerRepresentable {
     let chatId: String
-    func updateUIViewController(_ uiViewController: ChatMessagesVC, context: Context) {}
+    var onReply: ((ChatMessageModel) -> Void)
+    func updateUIViewController(_ uiViewController: ChatMessagesVC, context: Context) {
+        uiViewController.onReply = onReply
+    }
 
     func makeUIViewController(context: Context) -> ChatMessagesVC {
-        ChatMessagesVC(chatId: chatId)
+        let vc = ChatMessagesVC(chatId: chatId, onReply: onReply)
+        return vc
     }
 }

@@ -37,8 +37,8 @@ extension TextCell: CellWithContextMenu {
         return UIContextMenuConfiguration(actionProvider: { _ in
             UIMenu(children: [
                 UIAction(title: "Reply", image: UIImage(systemName: "arrowshape.turn.up.left")) {
-                    _ in
-                    // handle reply
+                    [weak self] _ in
+                    self?.onReply?()
                 }
             ])
         })

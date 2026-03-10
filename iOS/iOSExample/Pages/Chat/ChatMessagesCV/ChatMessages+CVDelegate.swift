@@ -58,6 +58,9 @@ extension ChatMessagesVC {
                         self.bubbleShape(for: message, at: indexPath),
                         isIncoming: message.0.isIncoming
                     )
+                    cell.onReply = { [weak self] in
+                        self?.onReply?(message.0)
+                    }
                     return cell
                 case .date(let d):
                     let cell =

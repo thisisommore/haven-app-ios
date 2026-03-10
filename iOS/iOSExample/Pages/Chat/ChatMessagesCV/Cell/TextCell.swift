@@ -24,6 +24,7 @@ class TextCell: UICollectionViewCell {
     let container = UIView()
     var hasCrossedReplyThreshold = false
     let feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
+    var onReply: (() -> Void)?
     static let paddingY: CGFloat = 4
     static let paddingX: CGFloat = 8
     static let paddingYCal = paddingY * 2
@@ -43,6 +44,14 @@ class TextCell: UICollectionViewCell {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        onReply = nil
+        hasCrossedReplyThreshold = false
+        container.transform = .identity
+        replyImage.transform = .identity
     }
 
     private static let senderNameTextAttributes: [NSAttributedString.Key: Any] = [

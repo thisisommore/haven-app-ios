@@ -35,6 +35,10 @@ struct MessageForm<T: XXDKP>: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         ReplyToSenderView(messageId: replyTo.id, senderId: replyTo.senderId)
+                        Text(replyPreviewText(for: replyTo))
+                            .font(.caption2)
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
                     }
                     Spacer()
                     Button {
@@ -92,6 +96,12 @@ struct MessageForm<T: XXDKP>: View {
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: replyTo?.id)
         .background(.bottomNav).background(.ultraThinMaterial)
+    }
+
+    private func replyPreviewText(for message: ChatMessageModel) -> String {
+        let plainText = message.newRenderPlainText ?? message.message
+        let trimmed = stripParagraphTags(plainText).trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Message" : trimmed
     }
 
     private func sendMessage() {
