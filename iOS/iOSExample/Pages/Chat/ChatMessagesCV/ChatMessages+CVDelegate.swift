@@ -19,6 +19,24 @@ extension ChatMessagesVC {
     func sender(for message: MessageWithSender) -> String? {
         return message.1
     }
+
+    func bubbleShape(for message: MessageWithSender, at indexPath: IndexPath)
+        -> TextCell.BubbleShape
+    {
+        let nextMessage = dataSource.itemIdentifier(for: indexPath.next())
+        let hasSenderNext: Bool = {
+            guard let nextMessage, case .text(let nextTextMessage) = nextMessage else {
+                return false
+            }
+            return nextTextMessage.1 != nil
+        }()
+
+        let hasSender = message.1 != nil
+        if hasSender {
+            return hasSenderNext ? .single : .firstInGroup
+        }
+        return .middleInGroup
+    }
 }
 
 extension ChatMessagesVC {
@@ -36,6 +54,10 @@ extension ChatMessagesVC {
                     cell.label.text = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
                     cell.setSenderName(message.1)
+                    cell.setBubbleShape(
+                        self.bubbleShape(for: message, at: indexPath),
+                        isIncoming: message.0.isIncoming
+                    )
                     return cell
                 case .date(let d):
                     let cell =

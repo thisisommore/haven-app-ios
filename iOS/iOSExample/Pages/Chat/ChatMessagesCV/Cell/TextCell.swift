@@ -10,6 +10,12 @@ import SwiftUI
 import UIKit
 
 class TextCell: UICollectionViewCell {
+    enum BubbleShape {
+        case single
+        case firstInGroup
+        case middleInGroup
+    }
+
     static let identifier = String(describing: TextCell.self)
     let label = UILabel()
     let timeLabel = UILabel()
@@ -115,8 +121,8 @@ extension TextCell {
             $0.edges.equalTo(contentView)  // Automatically pins all 4 sides
         }
         container.backgroundColor = UIColor(Color.messageBubble)
-        container.layer.cornerRadius = 16
-
+        container.layer.cornerRadius = 12
+        container.layer.masksToBounds = true
         senderNameLabel.snp.makeConstraints {
             $0.leading.equalTo(container).offset(Self.paddingX)
             $0.top.equalTo(container).offset(Self.paddingY)
@@ -148,6 +154,7 @@ extension TextCell {
         timeLabel.text = ""
 
         setSenderName(nil)
+        setBubbleShape(.single, isIncoming: true)
     }
 
     func setSenderName(_ sender: String?) {
@@ -161,5 +168,42 @@ extension TextCell {
         senderNameLabel.isHidden = false
         messageTopToContainerConstraint?.deactivate()
         messageTopToSenderConstraint?.activate()
+    }
+
+    func setBubbleShape(_ shape: BubbleShape, isIncoming: Bool) {
+        switch shape {
+        case .single:
+            container.layer.cornerRadius = 12
+            container.layer.maskedCorners = [
+                .layerMinXMinYCorner, .layerMaxXMinYCorner,
+                .layerMinXMaxYCorner, .layerMaxXMaxYCorner,
+            ]
+        case .firstInGroup:
+            container.layer.cornerRadius = 12
+            container.layer.maskedCorners =
+                if isIncoming {
+                    [
+                        .layerMinXMinYCorner, .layerMaxXMinYCorner,
+                        .layerMaxXMaxYCorner,
+                    ]
+                } else {
+                    [
+                        .layerMinXMinYCorner, .layerMaxXMinYCorner,
+                        .layerMinXMaxYCorner,
+                    ]
+                }
+        case .middleInGroup:
+            container.layer.cornerRadius = 12
+            container.layer.maskedCorners =
+                if isIncoming {
+                    [
+                        .layerMaxXMinYCorner, .layerMaxXMaxYCorner,
+                    ]
+                } else {
+                    [
+                        .layerMinXMinYCorner, .layerMinXMaxYCorner,
+                    ]
+                }
+        }
     }
 }

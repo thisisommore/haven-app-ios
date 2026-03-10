@@ -11,3 +11,9 @@ extension Int {
         return IndexPath(item: self, section: 0)
     }
 }
+
+extension IndexPath {
+    func next() -> IndexPath {
+        return IndexPath(item: self.item + 1, section: self.section)
+    }
+}
