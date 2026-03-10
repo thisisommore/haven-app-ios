@@ -8,12 +8,16 @@
 import UIKit
 
 extension ChatMessagesVC {
-    func text(for message: ChatMessageModel) -> String {
-        return message.newRenderPlainText ?? message.message
+    func text(for message: MessageWithSender) -> String {
+        return message.0.newRenderPlainText ?? message.0.message
     }
 
-    func time(for message: ChatMessageModel) -> String {
-        return message.timestamp.formatted(date: .omitted, time: .shortened)
+    func time(for message: MessageWithSender) -> String {
+        return message.0.timestamp.formatted(date: .omitted, time: .shortened)
+    }
+
+    func sender(for message: MessageWithSender) -> String {
+        return message.1
     }
 }
 
@@ -31,6 +35,7 @@ extension ChatMessagesVC {
                             for: indexPath) as! TextCell
                     cell.label.text = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
+                    cell.senderNameLabel.text = self.sender(for: message)
                     return cell
                 case .date(let d):
                     let cell =
@@ -58,7 +63,9 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         switch item {
         case .text(let message):
             return TextCell.size(
-                text: text(for: message), width: collectionView.availableWidth()
+                text: text(for: message),
+                sender: sender(for: message),
+                width: collectionView.availableWidth(),
             )
         case .date(let d):
             return DateBadgeCell.size(text: d, width: collectionView.availableWidth())
@@ -80,7 +87,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         }
         switch item {
         case .text(let message):
-            return message.isIncoming ? .left : .right
+            return message.0.isIncoming ? .left : .right
         case .date:
             return .center
         }

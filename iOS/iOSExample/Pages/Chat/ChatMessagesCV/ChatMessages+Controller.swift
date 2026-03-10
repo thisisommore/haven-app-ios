@@ -12,6 +12,7 @@ import SnapKit
 import SwiftUI
 import UIKit
 
+typealias MessageWithSender = (ChatMessageModel, String)
 class ChatMessagesVC: UIViewController {
 
     // Data
@@ -20,8 +21,31 @@ class ChatMessagesVC: UIViewController {
 
     // DataSource
     enum Message: Hashable {
-        case text(ChatMessageModel)
+        case text(MessageWithSender)
         case date(String)
+
+        static func == (lhs: Message, rhs: Message) -> Bool {
+            switch (lhs, rhs) {
+            case (.text((let lhsMessage, let lhsSender)), .text((let rhsMessage, let rhsSender))):
+                return lhsMessage == rhsMessage && lhsSender == rhsSender
+            case (.date(let lhsDate), .date(let rhsDate)):
+                return lhsDate == rhsDate
+            default:
+                return false
+            }
+        }
+
+        func hash(into hasher: inout Hasher) {
+            switch self {
+            case .text((let message, let sender)):
+                hasher.combine(0)
+                hasher.combine(message)
+                hasher.combine(sender)
+            case .date(let date):
+                hasher.combine(1)
+                hasher.combine(date)
+            }
+        }
     }
     typealias Section = Int
     typealias Item = Message
@@ -35,7 +59,7 @@ class ChatMessagesVC: UIViewController {
     static let padding: CGFloat = 8
     var page = 1
     var initDataDone = false
-    var messages: [ChatMessageModel] = []
+    var messages: [MessageWithSender] = []
     var cancellable: AnyDatabaseCancellable?
     //
 

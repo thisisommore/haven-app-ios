@@ -11,17 +11,28 @@ import UIKit
 extension ChatMessagesVC {
     func startObservation() {
         cancellable?.cancel()
+
         // Data obervation and initialization
         let observation = ValueObservation.tracking { db in
-            try ChatMessageModel.where { $0.chatId.eq(self.chatId) }.order {
-                $0.timestamp.desc()
+            let whereC = ChatMessageModel.where { $0.chatId.eq(self.chatId) }
+            let joinC =
+                whereC.join(
+                    MessageSenderModel.all,
+                    on: { message, sender in
+                        message.senderId.eq(sender.id)
+                    }
+                ).select { message, sender in
+                    (message, sender.codename)
+                }
+            return try joinC.order { message, sender in
+                message.timestamp.desc()
             }
             .limit(Self.limit * self.page).fetchAll(db)
         }
 
         cancellable = observation.start(in: self.database, scheduling: .immediate) { error in
             // Handle error
-        } onChange: { (_messages: [ChatMessageModel]) in
+        } onChange: { (_messages: [(ChatMessageModel, String)]) in
             self.messages = _messages.reversed()
             var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
             snapshot.appendSections([0])
@@ -31,11 +42,13 @@ extension ChatMessagesVC {
                         let dateChanged =
                             index == 0
                             || !Calendar.current.isDate(
-                                self.messages[index - 1].timestamp, inSameDayAs: message.timestamp)
+                                self.messages[index - 1].0.timestamp,
+                                inSameDayAs: message.0.timestamp)
                         if dateChanged {
                             return [
                                 .date(
-                                    message.timestamp.formatted(date: .abbreviated, time: .omitted)),
+                                    message.0.timestamp.formatted(
+                                        date: .abbreviated, time: .omitted)),
                                 .text(message),
                             ]
                         }
@@ -56,7 +69,7 @@ extension ChatMessagesVC {
                     // find new index of same element
                     let newIndex = snapshot.itemIdentifiers.firstIndex(where: {
                         guard case .text(let m) = $0 else { return false }
-                        return m.internalId == message.internalId
+                        return m.0.internalId == message.0.internalId
                     })
                     let prevEleAttr = layout.layoutAttributesForItem(
                         at: IndexPath(item: layout.prevIndexForBackUpPoint, section: 0))

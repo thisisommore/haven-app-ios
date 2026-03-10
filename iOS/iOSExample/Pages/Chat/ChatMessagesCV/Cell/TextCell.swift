@@ -13,6 +13,7 @@ class TextCell: UICollectionViewCell {
     static let identifier = String(describing: TextCell.self)
     let label = UILabel()
     let timeLabel = UILabel()
+    let senderNameLabel = UILabel()
     let replyImage = UIImageView(image: UIImage(systemName: "arrowshape.turn.up.left.circle.fill"))
     let container = UIView()
     var hasCrossedReplyThreshold = false
@@ -36,6 +37,10 @@ class TextCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
+    private static let senderNameTextAttributes: [NSAttributedString.Key: Any] = [
+        .font: UIFont.systemFont(ofSize: 8)
+    ]
+
     private static let msgTextAttributes: [NSAttributedString.Key: Any] = [
         .font: UIFont.systemFont(ofSize: 17)
     ]
@@ -47,8 +52,15 @@ class TextCell: UICollectionViewCell {
     static let lastWidth: CGFloat = 0
     static var timeRecCached: CGRect = .zero
 
-    static func size(text: String, width: CGFloat) -> CGSize {
-        let r = text.boundingRect(
+    static func size(text: String, sender: String, width: CGFloat) -> CGSize {
+        let senderNameR = sender.boundingRect(
+            with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
+            options: .usesLineFragmentOrigin,
+            attributes: Self.senderNameTextAttributes,
+            context: nil
+        )
+
+        let messageR = text.boundingRect(
             with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
             options: .usesLineFragmentOrigin,
             attributes: Self.msgTextAttributes,
@@ -67,8 +79,10 @@ class TextCell: UICollectionViewCell {
             return Self.timeRecCached
         }()
 
-        let width = max(ceil(r.width), ceil(timeR.width)) + paddingXCal
-        let height = ceil(r.height) + ceil(timeR.height) + paddingYCal
+        let width =
+            max(ceil(messageR.width), ceil(timeR.width), ceil(senderNameR.width)) + paddingXCal
+        let height =
+            ceil(messageR.height) + ceil(timeR.height) + ceil(senderNameR.height) + paddingYCal
 
         // ceil to provide extra space since it might remove all the decimals which can result in smaller space
         return CGSize(width: width, height: height)
@@ -81,7 +95,7 @@ extension TextCell {
         contentView.addSubview(container)
         container.addSubview(label)
         container.addSubview(timeLabel)
-
+        container.addSubview(senderNameLabel)
         replyImage.snp.makeConstraints {
             $0.leading.equalTo(contentView).offset(Self.paddingX)
             $0.centerY.equalTo(contentView)
@@ -95,10 +109,19 @@ extension TextCell {
         container.backgroundColor = UIColor(Color.messageBubble)
         container.layer.cornerRadius = 16
 
+        senderNameLabel.snp.makeConstraints {
+            $0.leading.equalTo(container).offset(Self.paddingX)
+            $0.top.equalTo(container).offset(Self.paddingY)
+            $0.bottom.equalTo(label.snp.top)
+        }
+        senderNameLabel.textColor = .red
+        senderNameLabel.font = UIFont.systemFont(ofSize: 8)
+        senderNameLabel.text = ""
+
         label.snp.makeConstraints {
             $0.leading.equalTo(container).offset(Self.paddingX)
             $0.trailing.equalTo(container).offset(-Self.paddingX)
-            $0.top.equalTo(container).offset(Self.paddingY)
+            $0.top.equalTo(senderNameLabel.snp.bottom)
             // We'll let timeLabel handle the vertical spacing between the two
         }
         label.text = ""
