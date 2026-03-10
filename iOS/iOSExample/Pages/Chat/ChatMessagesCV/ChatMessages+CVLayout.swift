@@ -22,6 +22,8 @@ protocol ChatMessagesCollectionViewLayoutDelegate {
         _ collectionView: UICollectionView, layout: UICollectionViewLayout,
         alignForItemAt indexPath: IndexPath
     ) -> Align
+
+    func prepareDone()
 }
 
 class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
@@ -29,6 +31,10 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
     var cachedAttributes: [UICollectionViewLayoutAttributes] = []
     var firstPrepare = true
     var height: CGFloat = 0
+    var newIndexForBackUpPoint = 0
+    var prevIndexForBackUpPoint = 0
+
+    var backupPoint: CGPoint = .zero
     override var collectionViewContentSize: CGSize {
         return CGSize(width: collectionView!.bounds.width, height: height)
     }
@@ -40,14 +46,15 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
         if collectionView!.numberOfSections < 1 {
             return
         }
-        let noOfItems = collectionView?.dataSource?.collectionView(
+        let dataSource = collectionView?.dataSource as! ChatMessagesVC.DataSource
+        let noOfItems = dataSource.collectionView(
             collectionView!, numberOfItemsInSection: 0)
         if noOfItems == 0 {
             return
         }
-        cachedAttributes.reserveCapacity(noOfItems!)
-        for index in (0...(noOfItems! - 1)).reversed() {
-            let indexPath = IndexPath(item: index, section: 0)
+        cachedAttributes.reserveCapacity(noOfItems)
+        for index in (0...(noOfItems - 1)) {
+            let indexPath = index.idxPath()
             let size = delegate.collectionView(
                 collectionView!, layout: self, sizeForItemAt: indexPath)
 
@@ -60,12 +67,20 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
                 origin: CGPoint(x: x, y: height + Self.SPACE_BETWEEN), size: size)
             height += (size.height + Self.SPACE_BETWEEN)
             cachedAttributes.append(attributes)
+
+            let item = dataSource.itemIdentifier(for: index.idxPath())
+            if attributes.frame.intersects(collectionView!.bounds),
+                case .text = item
+            {
+                prevIndexForBackUpPoint = index
+            }
         }
 
         if firstPrepare {
             firstPrepare = false
-            let last = IndexPath(item: noOfItems! - 1, section: 0)
+            let last = IndexPath(item: noOfItems - 1, section: 0)
             collectionView!.scrollToItem(at: last, at: .bottom, animated: false)
+            delegate.prepareDone()
         }
 
     }
@@ -89,7 +104,6 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
             guard attributes.frame.minY <= rect.maxY else { break }
             attributesArray.append(attributes)
         }
-
         return attributesArray
     }
 
@@ -111,5 +125,25 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
         -> UICollectionViewLayoutAttributes?
     {
         return cachedAttributes[indexPath.item]
+    }
+
+    override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint)
+        -> CGPoint
+    {
+        let relocatedElementAttrs: UICollectionViewLayoutAttributes? = layoutAttributesForItem(
+            at: newIndexForBackUpPoint.idxPath())
+
+        guard let relocatedElementAttrs else {
+            return super.targetContentOffset(forProposedContentOffset: proposedContentOffset)
+        }
+        let newY = relocatedElementAttrs.frame.origin.y
+        let oldY = backupPoint.y
+        let change = newY - oldY
+        let correctedY = proposedContentOffset.y + change
+
+        guard correctedY >= 0 && proposedContentOffset.x >= 0 else {
+            return super.targetContentOffset(forProposedContentOffset: proposedContentOffset)
+        }
+        return CGPoint(x: proposedContentOffset.x, y: correctedY)
     }
 }

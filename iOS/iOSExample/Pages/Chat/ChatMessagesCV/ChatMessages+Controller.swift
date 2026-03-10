@@ -5,6 +5,7 @@
 //  Created by Om More on 07/03/26.
 //
 
+import Combine
 import GRDB
 import SQLiteData
 import SwiftUI
@@ -13,14 +14,23 @@ import UIKit
 class ChatMessagesVC: UIViewController {
 
     // Data
+    let chatId: String
+    var isFetchingNextPage = true
+
     // DataSource
+    enum Message: Hashable {
+        case text(ChatMessageModel)
+    }
     typealias Section = Int
+    typealias Item = Message
     // store this since cv.dataSource is weak
     lazy var dataSource: DataSource = makeDataSource()
 
     // Database
     @Dependency(\.defaultDatabase) var database
-    nonisolated static let limit = 40
+    nonisolated static let limit: Int = 40
+    static let loadNewMessagesThreshold: CGFloat = 60
+    var page = 1
     var initDataDone = false
     var messages: [ChatMessageModel] = []
     var cancellable: AnyDatabaseCancellable?
@@ -30,38 +40,23 @@ class ChatMessagesVC: UIViewController {
 
     init(chatId: String) {
         print("CV:Controller:init")
-
+        self.chatId = chatId
         self.cv = UICollectionView(
             frame: .zero, collectionViewLayout: ChatMessagesCollectionViewLayout())
 
         super.init(nibName: nil, bundle: nil)
-
-        // Data obervation and initialization
-        let observation = ValueObservation.tracking { db in
-            try ChatMessageModel.where { $0.chatId.eq(chatId) }.order {
-                $0.timestamp.desc()
-            }
-            .limit(Self.limit).fetchAll(db)
-        }
-
-        cancellable = observation.start(in: self.database, scheduling: .immediate) { error in
-            // Handle error
-        } onChange: { (_messages: [ChatMessageModel]) in
-            self.messages = _messages
-            var snapshot = NSDiffableDataSourceSnapshot<Section, ChatMessageModel>()
-            snapshot.appendSections([0])
-            snapshot.appendItems(_messages)
-            if self.initDataDone {
-                // Calculates differences and applies them
-                self.dataSource.apply(snapshot, animatingDifferences: false)
-            } else {
-                // Faster for init data
-                self.dataSource.applySnapshotUsingReloadData(snapshot)
-            }
-        }
+        startObservation()
         //
     }
 
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if isFetchingNextPage || !isCurrentPageFull() { return }
+        let distanceFromVisualTop = scrollView.contentOffset.y + scrollView.adjustedContentInset.top
+
+        if distanceFromVisualTop < Self.loadNewMessagesThreshold {
+            nextPage()
+        }
+    }
     deinit {
         cancellable?.cancel()
     }

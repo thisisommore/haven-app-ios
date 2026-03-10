@@ -8,24 +8,27 @@
 import UIKit
 
 extension ChatMessagesVC {
-    func message(at indexPath: IndexPath) -> String {
-        let message = messages[indexPath.item]
+    func text(for message: ChatMessageModel) -> String {
         return message.newRenderPlainText ?? message.message
     }
 }
 
 extension ChatMessagesVC {
-    typealias DataSource = UICollectionViewDiffableDataSource<Section, ChatMessageModel>
+    typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     func makeDataSource() -> DataSource {  // reusing typealias
         DataSource(
             collectionView: cv,
             cellProvider: { (collectionView, indexPath, item) -> UICollectionViewCell? in
-                let cell =
-                    collectionView.dequeueReusableCell(
-                        withReuseIdentifier: TextCell.identifier,
-                        for: indexPath) as! TextCell
-                cell.label.text = self.message(at: indexPath)  // from items
-                return cell
+                switch item {
+                case .text(let message):
+                    let cell =
+                        collectionView.dequeueReusableCell(
+                            withReuseIdentifier: TextCell.identifier,
+                            for: indexPath) as! TextCell
+                    cell.label.text = self.text(for: message)  // from items
+                    return cell
+                }
+
             })
     }
 }
@@ -35,15 +38,34 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         _ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout,
         sizeForItemAt indexPath: IndexPath
     ) -> CGSize {
-        return TextCell.size(
-            text: message(at: indexPath), width: collectionView.bounds.width
-        )
+        let item = dataSource.itemIdentifier(for: indexPath)
+        guard let item else {
+            fatalError("No item at indexPath: \(indexPath)")
+        }
+        switch item {
+        case .text(let message):
+            return TextCell.size(
+                text: text(for: message), width: collectionView.bounds.width
+            )
+        }
+
+    }
+
+    func prepareDone() {
+        self.isFetchingNextPage = false
     }
 
     func collectionView(
         _ collectionView: UICollectionView, layout: UICollectionViewLayout,
         alignForItemAt indexPath: IndexPath
     ) -> Align {
-        return messages[indexPath.item].isIncoming ? .left : .right
+        let item = dataSource.itemIdentifier(for: indexPath)
+        guard let item else {
+            fatalError("No item at indexPath: \(indexPath)")
+        }
+        switch item {
+        case .text(let message):
+            return message.isIncoming ? .left : .right
+        }
     }
 }
