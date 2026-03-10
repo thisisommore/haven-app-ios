@@ -12,7 +12,7 @@ import SnapKit
 import SwiftUI
 import UIKit
 
-typealias MessageWithSender = (ChatMessageModel, String)
+typealias MessageWithSender = (ChatMessageModel, String?)
 class ChatMessagesVC: UIViewController {
 
     // Data

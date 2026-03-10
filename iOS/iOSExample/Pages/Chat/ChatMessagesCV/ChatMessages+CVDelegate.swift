@@ -16,7 +16,7 @@ extension ChatMessagesVC {
         return message.0.timestamp.formatted(date: .omitted, time: .shortened)
     }
 
-    func sender(for message: MessageWithSender) -> String {
+    func sender(for message: MessageWithSender) -> String? {
         return message.1
     }
 }
@@ -35,7 +35,7 @@ extension ChatMessagesVC {
                             for: indexPath) as! TextCell
                     cell.label.text = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
-                    cell.senderNameLabel.text = self.sender(for: message)
+                    cell.setSenderName(message.1)
                     return cell
                 case .date(let d):
                     let cell =

@@ -44,15 +44,22 @@ extension ChatMessagesVC {
                             || !Calendar.current.isDate(
                                 self.messages[index - 1].0.timestamp,
                                 inSameDayAs: message.0.timestamp)
+                        let senderChanged =
+                            index == 0
+                            || self.messages[index - 1].0.senderId != message.0.senderId
+                            || self.messages[index - 1].1 != message.1
+                        let shouldShowSender = dateChanged || senderChanged
+                        let messageWithDisplaySender: MessageWithSender =
+                            shouldShowSender ? message : (message.0, nil)
                         if dateChanged {
                             return [
                                 .date(
                                     message.0.timestamp.formatted(
                                         date: .abbreviated, time: .omitted)),
-                                .text(message),
+                                .text(messageWithDisplaySender),
                             ]
                         }
-                        return [.text(message)]
+                        return [.text(messageWithDisplaySender)]
                     }
                     .flatMap { $0 })
             if self.initDataDone {

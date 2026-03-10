@@ -32,6 +32,8 @@ class TextCell: UICollectionViewCell {
         target: self, action: #selector(handlePan(_:)))
 
     private var originalCenter: CGPoint = .zero
+    private var messageTopToSenderConstraint: Constraint?
+    private var messageTopToContainerConstraint: Constraint?
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -52,13 +54,19 @@ class TextCell: UICollectionViewCell {
     static let lastWidth: CGFloat = 0
     static var timeRecCached: CGRect = .zero
 
-    static func size(text: String, sender: String, width: CGFloat) -> CGSize {
-        let senderNameR = sender.boundingRect(
-            with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
-            options: .usesLineFragmentOrigin,
-            attributes: Self.senderNameTextAttributes,
-            context: nil
-        )
+    static func size(text: String, sender: String?, width: CGFloat) -> CGSize {
+        let senderNameR: CGRect = {
+            guard let sender else {
+                return .zero
+            }
+            return sender.boundingRect(
+                with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
+                options: .usesLineFragmentOrigin,
+                attributes: Self.senderNameTextAttributes,
+                context: nil
+            )
+
+        }()
 
         let messageR = text.boundingRect(
             with: CGSize(width: width - paddingXCal, height: .greatestFiniteMagnitude),
@@ -112,7 +120,6 @@ extension TextCell {
         senderNameLabel.snp.makeConstraints {
             $0.leading.equalTo(container).offset(Self.paddingX)
             $0.top.equalTo(container).offset(Self.paddingY)
-            $0.bottom.equalTo(label.snp.top)
         }
         senderNameLabel.textColor = .red
         senderNameLabel.font = UIFont.systemFont(ofSize: 8)
@@ -121,9 +128,13 @@ extension TextCell {
         label.snp.makeConstraints {
             $0.leading.equalTo(container).offset(Self.paddingX)
             $0.trailing.equalTo(container).offset(-Self.paddingX)
-            $0.top.equalTo(senderNameLabel.snp.bottom)
+            messageTopToSenderConstraint = $0.top.equalTo(senderNameLabel.snp.bottom).constraint
+            messageTopToContainerConstraint =
+                $0.top.equalTo(container).offset(Self.paddingY)
+                .constraint
             // We'll let timeLabel handle the vertical spacing between the two
         }
+        messageTopToContainerConstraint?.deactivate()
         label.text = ""
         label.numberOfLines = 0
 
@@ -136,5 +147,19 @@ extension TextCell {
         timeLabel.font = UIFont.systemFont(ofSize: 8)
         timeLabel.text = ""
 
+        setSenderName(nil)
+    }
+
+    func setSenderName(_ sender: String?) {
+        guard let sender else {
+            senderNameLabel.isHidden = true
+            messageTopToSenderConstraint?.deactivate()
+            messageTopToContainerConstraint?.activate()
+            return
+        }
+        senderNameLabel.text = sender
+        senderNameLabel.isHidden = false
+        messageTopToContainerConstraint?.deactivate()
+        messageTopToSenderConstraint?.activate()
     }
 }
