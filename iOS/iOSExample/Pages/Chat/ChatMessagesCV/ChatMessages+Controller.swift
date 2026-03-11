@@ -145,16 +145,18 @@ class ChatMessagesVC: UIViewController {
         let minY = cv.contentOffset.y
 
         let oldDistanceFromBottom =
-            distanceFromBottom(minY: minY, viewSize: newViewSize, contentSize: contentSize)
-
-        let newDistanceFromBottom =
             distanceFromBottom(minY: minY, viewSize: previousViewSize, contentSize: contentSize)
 
+        let newDistanceFromBottom =
+            distanceFromBottom(minY: minY, viewSize: newViewSize, contentSize: contentSize)
+
         // When keyboard is on the bottom will shift up
-        let changeInDistanceFromBottom = newDistanceFromBottom - oldDistanceFromBottom
+        let changeInDistanceFromBottom = oldDistanceFromBottom - newDistanceFromBottom
 
         // Skip no change or positive change (when keyboard goes down)
-        if changeInDistanceFromBottom == 0 || oldDistanceFromBottom < 1 { return }
+        if changeInDistanceFromBottom == 0 || newDistanceFromBottom < 1 {
+            return
+        }
 
         // push minY up so bottom is still visible at same place
         let newMinY = minY - changeInDistanceFromBottom
