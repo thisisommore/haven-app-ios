@@ -70,6 +70,7 @@ class ChatMessagesVC: UIViewController {
     //
 
     var cv: UICollectionView
+    private var previousViewSize: CGFloat = 0
 
     init(chatId: String, onReply: @escaping ((ChatMessageModel) -> Void)) {
         print("CV:Controller:init")
@@ -108,13 +109,60 @@ class ChatMessagesVC: UIViewController {
         view.addSubview(cv)
 
         cv.snp.makeConstraints {
-            $0.edges.equalTo(view)
+            $0.top.leading.trailing.equalTo(view)
+            $0.bottom.equalTo(view.keyboardLayoutGuide.snp.top)
         }
         //
     }
 
+    func distanceFromBottom(minY: CGFloat, viewSize: CGFloat, contentSize: CGFloat) -> CGFloat {
+        let maxY = minY + viewSize
+        return contentSize - maxY
+    }
+
+    func preserveBottomOffset() {
+        // When keyboard appears we need to preserve bottom offset of scroll
+        let newViewSize = cv.bounds.height
+        defer {
+            // Update the stored height for next pass
+            previousViewSize = newViewSize
+        }
+        // If no change skip
+        guard newViewSize > 0, newViewSize != previousViewSize else { return }
+
+        let contentSize = cv.contentSize.height
+        let minY = cv.contentOffset.y
+
+        let oldDistanceFromBottom =
+            distanceFromBottom(minY: minY, viewSize: newViewSize, contentSize: contentSize)
+
+        let newDistanceFromBottom =
+            distanceFromBottom(minY: minY, viewSize: previousViewSize, contentSize: contentSize)
+
+        // When keyboard is on the bottom will shift up
+        let changeInDistanceFromBottom = newDistanceFromBottom - oldDistanceFromBottom
+
+        // Skip no change or positive change (when keyboard goes down)
+        if changeInDistanceFromBottom >= 0 { return }
+
+        // push minY up so bottom is still visible at same place
+        let newMinY = minY - changeInDistanceFromBottom
+
+        cv.setContentOffset(
+            CGPoint(x: cv.contentOffset.x, y: newMinY), animated: false)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        preserveBottomOffset()
+    }
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func scrollViewDidChangeAdjustedContentInset(_ scrollView: UIScrollView) {
+        print("scrollViewDidChangeAdjustedContentInset: \(scrollView.adjustedContentInset)")
     }
 
 }
