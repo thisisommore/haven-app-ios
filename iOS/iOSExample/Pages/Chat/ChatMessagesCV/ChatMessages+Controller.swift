@@ -154,7 +154,7 @@ class ChatMessagesVC: UIViewController {
         let changeInDistanceFromBottom = newDistanceFromBottom - oldDistanceFromBottom
 
         // Skip no change or positive change (when keyboard goes down)
-        if changeInDistanceFromBottom >= 0 { return }
+        if changeInDistanceFromBottom == 0 || oldDistanceFromBottom < 1 { return }
 
         // push minY up so bottom is still visible at same place
         let newMinY = minY - changeInDistanceFromBottom
