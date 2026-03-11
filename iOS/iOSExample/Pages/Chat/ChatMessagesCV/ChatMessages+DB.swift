@@ -6,8 +6,8 @@
 //
 
 import GRDB
-import UIKit
 import SQLiteData
+import UIKit
 
 extension ChatMessagesVC {
     enum ReplyTo: AliasName {}
@@ -74,7 +74,7 @@ extension ChatMessagesVC {
                 // get previously visible element
                 // prevIndexForBackUpPoint is last element visible in scroll view
                 let item = self.dataSource.itemIdentifier(
-                    for: IndexPath(item: layout.prevIndexForBackUpPoint, section: 0))
+                    for: layout.prevIndexForBackUpPoint.idxPath())
 
                 if case .text(let message) = item {
                     // find new index of same element
@@ -83,7 +83,7 @@ extension ChatMessagesVC {
                         return m.0.internalId == message.0.internalId
                     })
                     let prevEleAttr = layout.layoutAttributesForItem(
-                        at: IndexPath(item: layout.prevIndexForBackUpPoint, section: 0))
+                        at: layout.prevIndexForBackUpPoint.idxPath())
 
                     // store new index and prev element origin
                     if let newIndex, let prevEleAttr {

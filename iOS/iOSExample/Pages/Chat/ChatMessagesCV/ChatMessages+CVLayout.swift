@@ -95,7 +95,7 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
 
         if firstPrepare {
             firstPrepare = false
-            let last = IndexPath(item: noOfItems - 1, section: 0)
+            let last = (noOfItems - 1).idxPath()
             collectionView!.scrollToItem(at: last, at: .bottom, animated: false)
             delegate.prepareDone()
         }
