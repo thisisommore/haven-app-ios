@@ -116,13 +116,22 @@ class ChatMessagesVC: UIViewController {
         cv.register(TextCell.self, forCellWithReuseIdentifier: TextCell.identifier)
         cv.register(DateBadgeCell.self, forCellWithReuseIdentifier: DateBadgeCell.identifier)
         cv.alwaysBounceVertical = true
+        cv.keyboardDismissMode = .interactive
         view.addSubview(cv)
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        cv.addGestureRecognizer(tap)
 
         cv.snp.makeConstraints {
             $0.top.leading.trailing.equalTo(view)
             $0.bottom.equalTo(view.keyboardLayoutGuide.snp.top)
         }
         //
+    }
+
+    @objc func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     func distanceFromBottom(minY: CGFloat, viewSize: CGFloat, contentSize: CGFloat) -> CGFloat {
@@ -140,6 +149,10 @@ class ChatMessagesVC: UIViewController {
         }
         // If no change skip
         guard newViewSize > 0, newViewSize != previousViewSize else { return }
+
+        // Don't adjust offset programmatically if the user is actively dragging 
+        // (e.g., during an interactive keyboard dismiss)
+        guard !cv.isDragging && !cv.isTracking else { return }
 
         let contentSize = cv.contentSize.height
         let minY = cv.contentOffset.y
