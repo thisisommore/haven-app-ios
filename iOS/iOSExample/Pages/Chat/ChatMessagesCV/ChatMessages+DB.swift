@@ -37,7 +37,9 @@ extension ChatMessagesVC {
         cancellable = observation.start(in: self.database, scheduling: .immediate) { error in
             // Handle error
         } onChange: { (_messages: [(ChatMessageModel, String?, ChatMessageModel?, Int?)]) in
-            self.messages = _messages.reversed().map { MessageWithSender(message: $0.0, sender: $0.1, replyTo: $0.2, colorHex: $0.3) }
+            self.messages = _messages.reversed().map {
+                MessageWithSender(message: $0.0, sender: $0.1, replyTo: $0.2, colorHex: $0.3)
+            }
             var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
             snapshot.appendSections([0])
             snapshot.appendItems(
@@ -54,7 +56,11 @@ extension ChatMessagesVC {
                             || self.messages[index - 1].sender != message.sender
                         let shouldShowSender = dateChanged || senderChanged
                         let messageWithDisplaySender: MessageWithSender =
-                            shouldShowSender ? message : MessageWithSender(message: message.message, sender: nil, replyTo: message.replyTo, colorHex: message.colorHex)
+                            shouldShowSender
+                            ? message
+                            : MessageWithSender(
+                                message: message.message, sender: nil, replyTo: message.replyTo,
+                                colorHex: message.colorHex)
                         if dateChanged {
                             return [
                                 .date(
@@ -112,6 +118,21 @@ extension ChatMessagesVC {
                 self.initDataDone = true
             }
 
+            if let targetId = self.targetScrollMessageId,
+                let index = snapshot.itemIdentifiers.firstIndex(where: {
+                    if case .text(let m) = $0 {
+                        return m.message.internalId == targetId
+                    }
+                    return false
+                })
+            {
+                // Use async to ensure layout is updated before scrolling
+                DispatchQueue.main.async {
+                    self.cv.scrollToItem(
+                        at: index.idxPath(), at: .centeredVertically, animated: true)
+                }
+                self.targetScrollMessageId = nil
+            }
         }
     }
 

@@ -26,6 +26,7 @@ class TextCell: UICollectionViewCell {
     var hasCrossedReplyThreshold = false
     let feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
     var onReply: (() -> Void)?
+    var onReplyPreviewClick: (() -> Void)?
     static let paddingY: CGFloat = 4
     static let paddingX: CGFloat = 8
     static let paddingYCal = paddingY * 2
@@ -52,6 +53,7 @@ class TextCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         onReply = nil
+        onReplyPreviewClick = nil
         hasCrossedReplyThreshold = false
         container.transform = .identity
         replyImage.transform = .identity
@@ -208,6 +210,9 @@ extension TextCell {
         replyPreviewLabel.lineBreakMode = .byTruncatingTail
         replyPreviewLabel.text = ""
         replyPreviewLabel.isHidden = true
+        replyPreviewLabel.isUserInteractionEnabled = true
+        replyPreviewLabel.addGestureRecognizer(
+            UITapGestureRecognizer(target: self, action: #selector(handleReplyPreviewTap)))
 
         label.snp.makeConstraints {
             $0.leading.equalTo(container).offset(Self.paddingX)
@@ -235,6 +240,10 @@ extension TextCell {
         setSenderName(nil)
         setReplyPreview(nil)
         setBubbleShape(.single, isIncoming: true)
+    }
+
+    @objc private func handleReplyPreviewTap() {
+        onReplyPreviewClick?()
     }
 
     func setSenderName(_ sender: String?, colorHex: Int? = nil) {

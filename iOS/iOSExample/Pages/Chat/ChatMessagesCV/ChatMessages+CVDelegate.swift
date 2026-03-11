@@ -73,6 +73,9 @@ extension ChatMessagesVC {
                     cell.onReply = { [weak self] in
                         self?.onReply(message.message)
                     }
+                    cell.onReplyPreviewClick = { [weak self] in
+                        self?.scrollToMessage(message.replyTo)
+                    }
                     return cell
                 case .date(let d):
                     let cell =

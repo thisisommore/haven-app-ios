@@ -74,6 +74,7 @@ class ChatMessagesVC: UIViewController {
     var messages: [MessageWithSender] = []
     var cancellable: AnyDatabaseCancellable?
     var isNearBottom: Bool = true
+    var targetScrollMessageId: Int64?
     //
 
     var cv: UICollectionView
@@ -198,6 +199,41 @@ class ChatMessagesVC: UIViewController {
         print("scrollViewDidChangeAdjustedContentInset: \(scrollView.adjustedContentInset)")
     }
 
+    func scrollToMessage(_ msg: ChatMessageModel?) {
+        guard let msg else { return }
+
+        // Check if the message is already loaded
+        if let index = dataSource.snapshot().itemIdentifiers.firstIndex(where: {
+            if case .text(let m) = $0 {
+                return m.message.internalId == msg.internalId
+            }
+            return false
+        }) {
+            let indexPath = IndexPath(item: index, section: 0)
+            cv.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
+            return
+        }
+
+        // If not loaded, we need to find its position in the database to load enough pages
+        Task {
+            do {
+                let position = try await database.read { db in
+                    try ChatMessageModel
+                        .where { $0.chatId.eq(self.chatId) && $0.timestamp.gte(msg.timestamp) }
+                        .fetchCount(db)
+                }
+
+                let requiredPage = Int(ceil(Double(position) / Double(Self.limit)))
+                if requiredPage > self.page {
+                    self.page = requiredPage
+                    self.targetScrollMessageId = msg.internalId
+                    self.startObservation()
+                }
+            } catch {
+                print("Failed to find message position: \(error)")
+            }
+        }
+    }
 }
 
 struct ChatMessages: UIViewControllerRepresentable {
