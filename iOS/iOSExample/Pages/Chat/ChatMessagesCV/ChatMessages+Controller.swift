@@ -75,6 +75,7 @@ class ChatMessagesVC: UIViewController {
     var cancellable: AnyDatabaseCancellable?
     var isNearBottom: Bool = true
     var targetScrollMessageId: Int64?
+    var highlightMessageId: Int64?
     //
 
     var cv: UICollectionView
@@ -211,6 +212,16 @@ class ChatMessagesVC: UIViewController {
         }) {
             let indexPath = IndexPath(item: index, section: 0)
             cv.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
+            
+            self.highlightMessageId = msg.internalId
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if let cell = self.cv.cellForItem(at: indexPath) as? TextCell {
+                    if self.highlightMessageId == msg.internalId {
+                        cell.highlight()
+                        self.highlightMessageId = nil
+                    }
+                }
+            }
             return
         }
 

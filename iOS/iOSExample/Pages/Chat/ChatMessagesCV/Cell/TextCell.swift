@@ -59,6 +59,8 @@ class TextCell: UICollectionViewCell {
         replyImage.transform = .identity
         label.text = nil
         timeLabel.text = nil
+        container.layer.borderWidth = 0
+        container.layer.borderColor = nil
         setSenderName(nil)
         setReplyPreview(nil)
     }
@@ -331,6 +333,18 @@ extension TextCell {
                         .layerMinXMinYCorner, .layerMinXMaxYCorner,
                     ]
                 }
+        }
+    }
+
+    func highlight() {
+        container.layer.borderColor = UIColor.systemOrange.cgColor
+        container.layer.borderWidth = 0.7
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self else { return }
+            UIView.animate(withDuration: 0.5) {
+                self.container.layer.borderWidth = 0
+            }
         }
     }
 }

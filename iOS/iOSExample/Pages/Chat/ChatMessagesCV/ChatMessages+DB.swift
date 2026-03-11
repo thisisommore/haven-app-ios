@@ -126,10 +126,21 @@ extension ChatMessagesVC {
                     return false
                 })
             {
+                self.highlightMessageId = targetId
                 // Use async to ensure layout is updated before scrolling
                 DispatchQueue.main.async {
+                    let indexPath = index.idxPath()
                     self.cv.scrollToItem(
-                        at: index.idxPath(), at: .centeredVertically, animated: true)
+                        at: indexPath, at: .centeredVertically, animated: true)
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        if let cell = self.cv.cellForItem(at: indexPath) as? TextCell {
+                            if self.highlightMessageId == targetId {
+                                cell.highlight()
+                                self.highlightMessageId = nil
+                            }
+                        }
+                    }
                 }
                 self.targetScrollMessageId = nil
             }

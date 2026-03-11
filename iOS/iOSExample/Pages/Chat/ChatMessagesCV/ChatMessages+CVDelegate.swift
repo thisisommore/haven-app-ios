@@ -166,4 +166,20 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         let cell = collectionView.cellForItem(at: indexPath) as? CellWithContextMenu
         return cell?.makePreview()
     }
+
+    func collectionView(
+        _ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell,
+        forItemAt indexPath: IndexPath
+    ) {
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+        if case .text(let message) = item,
+            let highlightId = self.highlightMessageId,
+            message.message.internalId == highlightId
+        {
+            if let textCell = cell as? TextCell {
+                textCell.highlight()
+            }
+            self.highlightMessageId = nil
+        }
+    }
 }
