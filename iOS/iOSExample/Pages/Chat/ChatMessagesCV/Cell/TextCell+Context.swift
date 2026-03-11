@@ -26,7 +26,7 @@ extension TextCell: CellWithContextMenu {
         let radius = container.layer.cornerRadius
         params.visiblePath = UIBezierPath(
             roundedRect: contentView.bounds,
-            byRoundingCorners: rectCorners,
+            byRoundingCorners: container.rectCorners,
             cornerRadii: CGSize(width: radius, height: radius),
         )
 
