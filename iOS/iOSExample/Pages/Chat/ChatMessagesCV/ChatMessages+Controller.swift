@@ -67,6 +67,7 @@ class ChatMessagesVC: UIViewController {
     var initDataDone = false
     var messages: [MessageWithSender] = []
     var cancellable: AnyDatabaseCancellable?
+    var isNearBottom: Bool = true
     //
 
     var cv: UICollectionView
@@ -86,6 +87,15 @@ class ChatMessagesVC: UIViewController {
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // Track if the user is currently near the bottom of the chat
+        // We use a threshold (e.g., 100 points) to allow some tolerance
+        isNearBottom =
+            distanceFromBottom(
+                minY: scrollView.contentOffset.y,
+                viewSize: scrollView.bounds.height,
+                contentSize: scrollView.contentSize.height
+            ) < 1
+
         if isFetchingNextPage || !isCurrentPageFull() { return }
         let distanceFromVisualTop = scrollView.contentOffset.y + scrollView.adjustedContentInset.top
 
@@ -116,8 +126,9 @@ class ChatMessagesVC: UIViewController {
     }
 
     func distanceFromBottom(minY: CGFloat, viewSize: CGFloat, contentSize: CGFloat) -> CGFloat {
+        let insetBottom = cv.adjustedContentInset.bottom
         let maxY = minY + viewSize
-        return contentSize - maxY
+        return (contentSize - maxY) + insetBottom
     }
 
     func preserveBottomOffset() {

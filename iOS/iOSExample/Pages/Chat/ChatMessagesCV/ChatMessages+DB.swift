@@ -94,8 +94,18 @@ extension ChatMessagesVC {
                     }
                 }
 
+                let wasNearBottom = self.isNearBottom
                 // Calculates differences and applies them
                 self.dataSource.apply(snapshot, animatingDifferences: false)
+
+                // If user was near bottom, scroll to bottom to show new message
+                if wasNearBottom {
+                    let numberOfItems = self.cv.numberOfItems(inSection: 0)
+                    if numberOfItems > 0 {
+                        self.cv.scrollToItem(
+                            at: (numberOfItems - 1).idxPath(), at: .bottom, animated: true)
+                    }
+                }
             } else {
                 // Faster for init data
                 self.dataSource.applySnapshotUsingReloadData(snapshot)
