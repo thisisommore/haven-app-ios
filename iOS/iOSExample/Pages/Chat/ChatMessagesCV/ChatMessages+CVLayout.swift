@@ -97,9 +97,8 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
             firstPrepare = false
             let last = (noOfItems - 1).idxPath()
             collectionView!.scrollToItem(at: last, at: .bottom, animated: false)
-            delegate.prepareDone()
         }
-
+        delegate.prepareDone()
     }
     private func spacingBeforeItem(
         at indexPath: IndexPath,
