@@ -63,7 +63,7 @@ extension ChatMessagesVC {
                             for: indexPath) as! TextCell
                     cell.label.text = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
-                    cell.setSenderName(message.1)
+                    cell.setSenderName(message.1, colorHex: message.3)
 
                     cell.setReplyPreview(self.replyText(for: message))
                     cell.setBubbleShape(

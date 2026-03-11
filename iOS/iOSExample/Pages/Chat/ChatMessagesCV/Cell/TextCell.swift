@@ -193,7 +193,7 @@ extension TextCell {
             $0.leading.equalTo(container).offset(Self.paddingX)
             $0.top.equalTo(container).offset(Self.paddingY)
         }
-        senderNameLabel.textColor = .red
+        senderNameLabel.textColor = .label
         senderNameLabel.font = UIFont.systemFont(ofSize: 8)
         senderNameLabel.text = ""
 
@@ -237,7 +237,7 @@ extension TextCell {
         setBubbleShape(.single, isIncoming: true)
     }
 
-    func setSenderName(_ sender: String?) {
+    func setSenderName(_ sender: String?, colorHex: Int? = nil) {
         guard let sender, !sender.isEmpty else {
             senderNameLabel.text = nil
             senderNameLabel.isHidden = true
@@ -245,6 +245,9 @@ extension TextCell {
             return
         }
         senderNameLabel.text = sender
+        if let colorHex {
+            senderNameLabel.textColor = UIColor(Color(hexNumber: colorHex))
+        }
         senderNameLabel.isHidden = false
         updateConstraint()
     }
