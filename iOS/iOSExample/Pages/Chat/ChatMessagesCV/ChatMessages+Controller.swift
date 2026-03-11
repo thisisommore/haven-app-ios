@@ -12,7 +12,12 @@ import SnapKit
 import SwiftUI
 import UIKit
 
-typealias MessageWithSender = (ChatMessageModel, String?, ChatMessageModel?, Int?)
+struct MessageWithSender: Hashable {
+    let message: ChatMessageModel
+    let sender: String?
+    let replyTo: ChatMessageModel?
+    let colorHex: Int?
+}
 class ChatMessagesVC: UIViewController {
 
     // Data
@@ -28,11 +33,12 @@ class ChatMessagesVC: UIViewController {
         static func == (lhs: Message, rhs: Message) -> Bool {
             switch (lhs, rhs) {
             case (
-                .text((let lhsMessage, let lhsSender, let lhsReplyTo, _)),
-                .text((let rhsMessage, let rhsSender, let rhsReplyTo, _))
+                .text(let lhsMessage),
+                .text(let rhsMessage)
             ):
-                return lhsMessage == rhsMessage && lhsSender == rhsSender
-                    && lhsReplyTo == rhsReplyTo
+                return lhsMessage.message == rhsMessage.message
+                    && lhsMessage.sender == rhsMessage.sender
+                    && lhsMessage.replyTo == rhsMessage.replyTo
             case (.date(let lhsDate), .date(let rhsDate)):
                 return lhsDate == rhsDate
             default:
@@ -42,11 +48,11 @@ class ChatMessagesVC: UIViewController {
 
         func hash(into hasher: inout Hasher) {
             switch self {
-            case .text((let message, let sender, let replyTo, _)):
+            case .text(let messageWithSender):
                 hasher.combine(0)
-                hasher.combine(message)
-                hasher.combine(sender)
-                hasher.combine(replyTo)
+                hasher.combine(messageWithSender.message)
+                hasher.combine(messageWithSender.sender)
+                hasher.combine(messageWithSender.replyTo)
             case .date(let date):
                 hasher.combine(1)
                 hasher.combine(date)
@@ -131,7 +137,8 @@ class ChatMessagesVC: UIViewController {
     }
 
     @objc func dismissKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     func distanceFromBottom(minY: CGFloat, viewSize: CGFloat, contentSize: CGFloat) -> CGFloat {
@@ -150,7 +157,7 @@ class ChatMessagesVC: UIViewController {
         // If no change skip
         guard newViewSize > 0, newViewSize != previousViewSize else { return }
 
-        // Don't adjust offset programmatically if the user is actively dragging 
+        // Don't adjust offset programmatically if the user is actively dragging
         // (e.g., during an interactive keyboard dismiss)
         guard !cv.isDragging && !cv.isTracking else { return }
 

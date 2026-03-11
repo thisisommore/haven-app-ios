@@ -107,7 +107,7 @@ class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
         guard case .text(let message)? = dataSource.itemIdentifier(for: indexPath) else {
             return Self.defaultSpaceBetween
         }
-        return message.1 == nil ? Self.groupedSenderSpaceBetween : Self.defaultSpaceBetween
+        return message.sender == nil ? Self.groupedSenderSpaceBetween : Self.defaultSpaceBetween
     }
 
     override func layoutAttributesForElements(in rect: CGRect)

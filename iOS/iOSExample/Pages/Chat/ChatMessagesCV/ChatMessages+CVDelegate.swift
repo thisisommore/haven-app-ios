@@ -10,7 +10,7 @@ import UIKit
 
 extension ChatMessagesVC {
     func text(for message: MessageWithSender) -> String {
-        return text(for: message.0)
+        return text(for: message.message)
     }
 
     func text(for message: ChatMessageModel) -> String {
@@ -18,16 +18,16 @@ extension ChatMessagesVC {
     }
 
     func replyText(for message: MessageWithSender) -> String? {
-        guard let replyTo = message.2 else { return nil }
+        guard let replyTo = message.replyTo else { return nil }
         return text(for: replyTo)
     }
 
     func time(for message: MessageWithSender) -> String {
-        return message.0.timestamp.formatted(date: .omitted, time: .shortened)
+        return message.message.timestamp.formatted(date: .omitted, time: .shortened)
     }
 
     func sender(for message: MessageWithSender) -> String? {
-        return message.1
+        return message.sender
     }
 
     func bubbleShape(for message: MessageWithSender, at indexPath: IndexPath)
@@ -38,10 +38,10 @@ extension ChatMessagesVC {
             guard let nextMessage, case .text(let nextTextMessage) = nextMessage else {
                 return false
             }
-            return nextTextMessage.1 != nil
+            return nextTextMessage.sender != nil
         }()
 
-        let hasSender = message.1 != nil
+        let hasSender = message.sender != nil
         if hasSender {
             return hasSenderNext ? .single : .firstInGroup
         }
@@ -63,15 +63,15 @@ extension ChatMessagesVC {
                             for: indexPath) as! TextCell
                     cell.label.text = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
-                    cell.setSenderName(message.1, colorHex: message.3)
+                    cell.setSenderName(message.sender, colorHex: message.colorHex)
 
                     cell.setReplyPreview(self.replyText(for: message))
                     cell.setBubbleShape(
                         self.bubbleShape(for: message, at: indexPath),
-                        isIncoming: message.0.isIncoming
+                        isIncoming: message.message.isIncoming
                     )
                     cell.onReply = { [weak self] in
-                        self?.onReply(message.0)
+                        self?.onReply(message.message)
                     }
                     return cell
                 case .date(let d):
@@ -125,7 +125,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         }
         switch item {
         case .text(let message):
-            return message.0.isIncoming ? .left : .right
+            return message.message.isIncoming ? .left : .right
         case .date:
             return .center
         }

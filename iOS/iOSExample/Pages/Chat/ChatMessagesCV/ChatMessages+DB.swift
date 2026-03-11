@@ -37,7 +37,7 @@ extension ChatMessagesVC {
         cancellable = observation.start(in: self.database, scheduling: .immediate) { error in
             // Handle error
         } onChange: { (_messages: [(ChatMessageModel, String?, ChatMessageModel?, Int?)]) in
-            self.messages = _messages.reversed()
+            self.messages = _messages.reversed().map { MessageWithSender(message: $0.0, sender: $0.1, replyTo: $0.2, colorHex: $0.3) }
             var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
             snapshot.appendSections([0])
             snapshot.appendItems(
@@ -46,19 +46,19 @@ extension ChatMessagesVC {
                         let dateChanged =
                             index == 0
                             || !Calendar.current.isDate(
-                                self.messages[index - 1].0.timestamp,
-                                inSameDayAs: message.0.timestamp)
+                                self.messages[index - 1].message.timestamp,
+                                inSameDayAs: message.message.timestamp)
                         let senderChanged =
                             index == 0
-                            || self.messages[index - 1].0.senderId != message.0.senderId
-                            || self.messages[index - 1].1 != message.1
+                            || self.messages[index - 1].message.senderId != message.message.senderId
+                            || self.messages[index - 1].sender != message.sender
                         let shouldShowSender = dateChanged || senderChanged
                         let messageWithDisplaySender: MessageWithSender =
-                            shouldShowSender ? message : (message.0, nil, message.2, message.3)
+                            shouldShowSender ? message : MessageWithSender(message: message.message, sender: nil, replyTo: message.replyTo, colorHex: message.colorHex)
                         if dateChanged {
                             return [
                                 .date(
-                                    message.0.timestamp.formatted(
+                                    message.message.timestamp.formatted(
                                         date: .abbreviated, time: .omitted)),
                                 .text(messageWithDisplaySender),
                             ]
@@ -80,7 +80,7 @@ extension ChatMessagesVC {
                     // find new index of same element
                     let newIndex = snapshot.itemIdentifiers.firstIndex(where: {
                         guard case .text(let m) = $0 else { return false }
-                        return m.0.internalId == message.0.internalId
+                        return m.message.internalId == message.message.internalId
                     })
                     let prevEleAttr = layout.layoutAttributesForItem(
                         at: layout.prevIndexForBackUpPoint.idxPath())
