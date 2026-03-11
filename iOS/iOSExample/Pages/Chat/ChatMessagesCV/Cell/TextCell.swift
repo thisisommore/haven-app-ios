@@ -255,7 +255,11 @@ extension TextCell {
         }
         senderNameLabel.text = sender
         if let colorHex {
-            senderNameLabel.textColor = UIColor(Color(hexNumber: colorHex))
+            senderNameLabel.textColor = UIColor { traitCollection in
+                let colorScheme: ColorScheme =
+                    traitCollection.userInterfaceStyle == .dark ? .dark : .light
+                return UIColor(Color(hexNumber: colorHex).adaptive(for: colorScheme))
+            }
         }
         senderNameLabel.isHidden = false
         updateConstraint()
