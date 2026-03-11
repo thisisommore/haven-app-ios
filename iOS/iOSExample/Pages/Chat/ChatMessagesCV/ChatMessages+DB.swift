@@ -7,32 +7,36 @@
 
 import GRDB
 import UIKit
+import SQLiteData
 
 extension ChatMessagesVC {
+    enum ReplyTo: AliasName {}
     func startObservation() {
         cancellable?.cancel()
 
         // Data obervation and initialization
         let observation = ValueObservation.tracking { db in
-            let whereC = ChatMessageModel.where { $0.chatId.eq(self.chatId) }
-            let joinC =
-                whereC.join(
-                    MessageSenderModel.all,
-                    on: { message, sender in
-                        message.senderId.eq(sender.id)
-                    }
-                ).select { message, sender in
-                    (message, sender.codename)
+            try ChatMessageModel
+                .where { $0.chatId.eq(self.chatId) }
+                .join(MessageSenderModel.all) { message, sender in
+                    message.senderId.eq(sender.id)
                 }
-            return try joinC.order { message, sender in
-                message.timestamp.desc()
-            }
-            .limit(Self.limit * self.page).fetchAll(db)
+                .leftJoin(ChatMessageModel.as(ReplyTo.self).all) { message, _, reply in
+                    message.replyTo.eq(reply.id)
+                }
+                .select { message, sender, reply in
+                    (message, sender.codename, reply)  // reply is optional (LEFT JOIN)
+                }
+                .order { message, _, _ in
+                    message.timestamp.desc()
+                }
+                .limit(Self.limit * self.page)
+                .fetchAll(db)
         }
 
         cancellable = observation.start(in: self.database, scheduling: .immediate) { error in
             // Handle error
-        } onChange: { (_messages: [(ChatMessageModel, String)]) in
+        } onChange: { (_messages: [(ChatMessageModel, String?, ChatMessageModel?)]) in
             self.messages = _messages.reversed()
             var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
             snapshot.appendSections([0])
@@ -50,7 +54,7 @@ extension ChatMessagesVC {
                             || self.messages[index - 1].1 != message.1
                         let shouldShowSender = dateChanged || senderChanged
                         let messageWithDisplaySender: MessageWithSender =
-                            shouldShowSender ? message : (message.0, nil)
+                            shouldShowSender ? message : (message.0, nil, message.2)
                         if dateChanged {
                             return [
                                 .date(

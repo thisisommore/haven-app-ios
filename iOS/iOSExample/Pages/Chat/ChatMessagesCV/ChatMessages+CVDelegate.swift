@@ -5,11 +5,21 @@
 //  Created by Om More on 07/03/26.
 //
 
+import SQLiteData
 import UIKit
 
 extension ChatMessagesVC {
     func text(for message: MessageWithSender) -> String {
-        return message.0.newRenderPlainText ?? message.0.message
+        return text(for: message.0)
+    }
+
+    func text(for message: ChatMessageModel) -> String {
+        return message.newRenderPlainText ?? message.message
+    }
+
+    func replyText(for message: MessageWithSender) -> String? {
+        guard let replyTo = message.2 else { return nil }
+        return text(for: replyTo)
     }
 
     func time(for message: MessageWithSender) -> String {
@@ -54,12 +64,14 @@ extension ChatMessagesVC {
                     cell.label.text = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
                     cell.setSenderName(message.1)
+
+                    cell.setReplyPreview(self.replyText(for: message))
                     cell.setBubbleShape(
                         self.bubbleShape(for: message, at: indexPath),
                         isIncoming: message.0.isIncoming
                     )
                     cell.onReply = { [weak self] in
-                        self?.onReply?(message.0)
+                        self?.onReply(message.0)
                     }
                     return cell
                 case .date(let d):
@@ -90,6 +102,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
             return TextCell.size(
                 text: text(for: message),
                 sender: sender(for: message),
+                replyPreview: replyText(for: message),
                 width: collectionView.availableWidth(),
             )
         case .date(let d):

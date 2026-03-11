@@ -12,7 +12,7 @@ import SnapKit
 import SwiftUI
 import UIKit
 
-typealias MessageWithSender = (ChatMessageModel, String?)
+typealias MessageWithSender = (ChatMessageModel, String?, ChatMessageModel?)
 class ChatMessagesVC: UIViewController {
 
     // Data
@@ -27,8 +27,12 @@ class ChatMessagesVC: UIViewController {
 
         static func == (lhs: Message, rhs: Message) -> Bool {
             switch (lhs, rhs) {
-            case (.text((let lhsMessage, let lhsSender)), .text((let rhsMessage, let rhsSender))):
+            case (
+                .text((let lhsMessage, let lhsSender, let lhsReplyTo)),
+                .text((let rhsMessage, let rhsSender, let rhsReplyTo))
+            ):
                 return lhsMessage == rhsMessage && lhsSender == rhsSender
+                    && lhsReplyTo == rhsReplyTo
             case (.date(let lhsDate), .date(let rhsDate)):
                 return lhsDate == rhsDate
             default:
@@ -38,10 +42,11 @@ class ChatMessagesVC: UIViewController {
 
         func hash(into hasher: inout Hasher) {
             switch self {
-            case .text((let message, let sender)):
+            case .text((let message, let sender, let replyTo)):
                 hasher.combine(0)
                 hasher.combine(message)
                 hasher.combine(sender)
+                hasher.combine(replyTo)
             case .date(let date):
                 hasher.combine(1)
                 hasher.combine(date)
