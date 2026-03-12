@@ -340,7 +340,7 @@ extension TextCell {
 
     func highlight() {
         container.layer.borderColor = UIColor.systemOrange.cgColor
-        container.layer.borderWidth = 0.7
+        container.layer.borderWidth = 1.5
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             guard let self else { return }
