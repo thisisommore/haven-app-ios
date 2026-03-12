@@ -67,7 +67,7 @@ class ChatMessagesVC: UIViewController {
     // Database
     @Dependency(\.defaultDatabase) var database
     nonisolated static let limit: Int = 40
-    static let loadNewMessagesThreshold: CGFloat = 60
+    static let loadNewMessagesThreshold: CGFloat = 200
     static let padding: CGFloat = 8
     var page = 1
     var initDataDone = false
@@ -212,7 +212,7 @@ class ChatMessagesVC: UIViewController {
         }) {
             let indexPath = IndexPath(item: index, section: 0)
             cv.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
-            
+
             self.highlightMessageId = msg.internalId
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 if let cell = self.cv.cellForItem(at: indexPath) as? TextCell {
