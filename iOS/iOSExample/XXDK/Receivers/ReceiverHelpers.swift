@@ -139,7 +139,7 @@ class ReceiverHelpers {
 
         let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
         msg.newContainsMarkup = precomputedRender.containsMarkup
-        msg.newRenderKindRaw = Int(precomputedRender.kind.rawValue)
+        msg.newRenderKind = precomputedRender.kind
         msg.newRenderVersion = Int(precomputedRender.version)
         msg.newRenderPlainText = precomputedRender.plainText
         msg.newRenderPayload = precomputedRender.payloadData

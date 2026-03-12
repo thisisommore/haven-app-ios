@@ -48,8 +48,10 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
             if updateInfo.MessageIDSet, let newMessageId = updateInfo.MessageID {
                 message.id = newMessageId
             }
-            if updateInfo.StatusSet, let newStatus = updateInfo.Status {
-                message.statusRaw = Int64(newStatus)
+            if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
+                let newStatus = MessageStatus(rawValue: newStatusRaw)
+            {
+                message.status = newStatus
             }
             try database.write { db in
                 try ChatMessageModel.update(message).execute(db)

@@ -83,7 +83,7 @@ func appDatabase() throws -> any DatabaseWriter {
         "chatId" TEXT NOT NULL REFERENCES "chats"("id") ON DELETE CASCADE,
         "replyTo" TEXT,
         "newContainsMarkup" INTEGER NOT NULL DEFAULT 0,
-        "newRenderKindRaw" INTEGER NOT NULL DEFAULT 0,
+        "newRenderKind" INTEGER NOT NULL DEFAULT 0,
         "newRenderVersion" INTEGER NOT NULL DEFAULT 0,
         "newRenderPlainText" TEXT,
         "newRenderPayload" BLOB

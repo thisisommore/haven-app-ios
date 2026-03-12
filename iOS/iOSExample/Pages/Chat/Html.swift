@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import SQLiteData
 
-enum NewMessageRenderKind: Int16, Codable {
+enum NewMessageRenderKind: Int16, Codable, QueryBindable {
     case unknown = 0
     case plain = 1
     case rich = 2

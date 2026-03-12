@@ -15,7 +15,7 @@ enum MessageType: Int64 {
 }
 
 /// Message delivery status
-enum MessageStatus: Int64 {
+enum MessageStatus: Int, QueryBindable {
     case unsent = 0
     case sent = 1
     case delivered = 2
@@ -39,20 +39,15 @@ struct ChatMessageModel: Identifiable, Hashable {
     var timestamp: Date
     var isIncoming: Bool
     var isRead: Bool = false
-    var statusRaw: Int64 = MessageStatus.sent.rawValue
+    var status: MessageStatus = .sent
     var senderId: String?
     var chatId: String
     var replyTo: String?
     var newContainsMarkup: Bool = false
-    var newRenderKindRaw: Int = 0
+    var newRenderKind: NewMessageRenderKind = .unknown
     var newRenderVersion: Int = 0
     var newRenderPlainText: String?
     var newRenderPayload: Data?
-
-    var status: MessageStatus {
-        get { MessageStatus(rawValue: statusRaw) ?? .sent }
-        set { statusRaw = newValue.rawValue }
-    }
 
     init(
         message: String, isIncoming: Bool, chatId: String, senderId: String? = nil,
