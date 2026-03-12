@@ -22,15 +22,15 @@ extension TextCell: CellWithContextMenu {
         let params = UIPreviewParameters()
         params.backgroundColor = container.backgroundColor
 
-        // Match the contentView's layer cornerRadius exactly
+        // Preview only the bubble, excluding the reply preview row.
         let radius = container.layer.cornerRadius
         params.visiblePath = UIBezierPath(
-            roundedRect: contentView.bounds,
+            roundedRect: container.bounds,
             byRoundingCorners: container.rectCorners,
             cornerRadii: CGSize(width: radius, height: radius),
         )
 
-        return UITargetedPreview(view: contentView, parameters: params)
+        return UITargetedPreview(view: container, parameters: params)
     }
 
     func makeContextMenu() -> UIContextMenuConfiguration {
