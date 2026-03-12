@@ -78,14 +78,14 @@ func appDatabase() throws -> any DatabaseWriter {
         "timestamp" TEXT NOT NULL,
         "isIncoming" INTEGER NOT NULL,
         "isRead" INTEGER NOT NULL DEFAULT 0,
-        "statusRaw" INTEGER NOT NULL DEFAULT 1,
+        "status" INTEGER NOT NULL DEFAULT 1,
         "senderId" TEXT REFERENCES "messageSenders"("id"),
         "chatId" TEXT NOT NULL REFERENCES "chats"("id") ON DELETE CASCADE,
         "replyTo" TEXT,
         "newContainsMarkup" INTEGER NOT NULL DEFAULT 0,
         "newRenderKind" INTEGER NOT NULL DEFAULT 0,
         "newRenderVersion" INTEGER NOT NULL DEFAULT 0,
-        "newRenderPlainText" TEXT,
+        "newRenderPlainText" TEXT NOT NULL,
         "newRenderPayload" BLOB
       ) STRICT
       """
