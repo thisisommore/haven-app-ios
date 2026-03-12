@@ -149,6 +149,13 @@ class ChatMessagesVC: UIViewController {
         print("CV:Controller:viewDidLoad")
         super.viewDidLoad()
 
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+
         // Collection view
         cv.delegate = self
         cv.register(TextCell.self, forCellWithReuseIdentifier: TextCell.identifier)
@@ -184,6 +191,23 @@ class ChatMessagesVC: UIViewController {
     @objc func dismissKeyboard() {
         UIApplication.shared.sendAction(
             #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+
+    @objc func keyboardWillHide(_ notification: Notification) {
+        guard
+            let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey]
+                as? TimeInterval,
+            let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey]
+                as? UInt
+        else {
+            return
+        }
+        UIView.animate(
+            withDuration: duration, delay: 0,
+            options: UIView.AnimationOptions(rawValue: curve << 16)
+        ) {
+            self.view.layoutIfNeeded()
+        }
     }
 
     func distanceFromBottom(minY: CGFloat, viewSize: CGFloat, contentSize: CGFloat) -> CGFloat {

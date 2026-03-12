@@ -46,7 +46,7 @@ struct ChatMessageModel: Identifiable, Hashable {
     var newContainsMarkup: Bool = false
     var newRenderKind: NewMessageRenderKind = .unknown
     var newRenderVersion: Int = 0
-    var newRenderPlainText: String?
+    var newRenderPlainText: String
     var newRenderPayload: Data?
 
     init(

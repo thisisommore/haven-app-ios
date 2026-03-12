@@ -69,10 +69,6 @@ class TextCell: UICollectionViewCell {
         .font: UIFont.systemFont(ofSize: 8)
     ]
 
-    private static let msgTextAttributes: [NSAttributedString.Key: Any] = [
-        .font: UIFont.systemFont(ofSize: 17)
-    ]
-
     private static let timeTextAttributes: [NSAttributedString.Key: Any] = [
         .font: UIFont.systemFont(ofSize: 8)
     ]
@@ -87,19 +83,17 @@ class TextCell: UICollectionViewCell {
     static var timeRecCached: CGRect = .zero
 
     private static func textRect(
-        _ text: String,
-        width: CGFloat,
-        attributes: [NSAttributedString.Key: Any]
+        _ text: NSAttributedString,
+        width: CGFloat
     ) -> CGRect {
         return text.boundingRect(
             with: CGSize(width: width, height: .greatestFiniteMagnitude),
-            options: .usesLineFragmentOrigin,
-            attributes: attributes,
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
             context: nil
         )
     }
 
-    static func size(text: String, sender: String?, replyPreview: String? = nil, width: CGFloat)
+    static func size(text: NSAttributedString, sender: String?, replyPreview: String? = nil, width: CGFloat)
         -> CGSize
     {
         let availableWidth = width - paddingXCal
@@ -108,24 +102,21 @@ class TextCell: UICollectionViewCell {
                 return .zero
             }
             return textRect(
-                sender,
-                width: availableWidth,
-                attributes: Self.senderNameTextAttributes
+                NSAttributedString(string: sender, attributes: Self.senderNameTextAttributes),
+                width: availableWidth
             )
 
         }()
 
         let messageR = textRect(
             text,
-            width: availableWidth,
-            attributes: Self.msgTextAttributes
+            width: availableWidth
         )
         let timeR = {
             if Self.lastWidth != width || Self.timeRecCached == .zero {
                 let timeR = textRect(
-                    "10:10pm",
-                    width: availableWidth,
-                    attributes: Self.timeTextAttributes
+                    NSAttributedString(string: "10:10pm", attributes: Self.timeTextAttributes),
+                    width: availableWidth
                 )
                 Self.timeRecCached = timeR
             }
@@ -136,9 +127,8 @@ class TextCell: UICollectionViewCell {
             guard let replyPreview else { return .zero }
             guard !replyPreview.isEmpty else { return .zero }
             let textRect = textRect(
-                replyPreview,
-                width: availableWidth,
-                attributes: Self.replyTextAttributes
+                NSAttributedString(string: replyPreview, attributes: Self.replyTextAttributes),
+                width: availableWidth
             )
 
             return textRect
@@ -229,7 +219,7 @@ extension TextCell {
         }
         messageTopToSenderConstraint?.deactivate()
         messageTopToContainerConstraint?.deactivate()
-        label.text = ""
+        label.attributedText = nil
         label.numberOfLines = 0
 
         timeLabel.snp.makeConstraints {

@@ -9,17 +9,28 @@ import SQLiteData
 import UIKit
 
 extension ChatMessagesVC {
-    func text(for message: MessageWithSender) -> String {
+    func text(for message: MessageWithSender) -> NSAttributedString {
         return text(for: message.message)
     }
 
-    func text(for message: ChatMessageModel) -> String {
-        return message.newRenderPlainText ?? message.message
+    func text(for message: ChatMessageModel) -> NSAttributedString {
+        let defaultAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 17)
+        ]
+        
+        if message.newRenderKind == .rich, let payloadData = message.newRenderPayload {
+            if let payload = try? JSONDecoder().decode(NewMessageParsedPayload.self, from: payloadData) {
+                return payload.attributedString(baseFont: UIFont.systemFont(ofSize: 17))
+            }
+        }
+        
+        let plainText = message.newRenderPlainText ?? message.message
+        return NSAttributedString(string: plainText, attributes: defaultAttributes)
     }
 
     func replyText(for message: MessageWithSender) -> String? {
         guard let replyTo = message.replyTo else { return nil }
-        return text(for: replyTo)
+        return text(for: replyTo).string
     }
 
     func time(for message: MessageWithSender) -> String {
@@ -61,7 +72,7 @@ extension ChatMessagesVC {
                         collectionView.dequeueReusableCell(
                             withReuseIdentifier: TextCell.identifier,
                             for: indexPath) as! TextCell
-                    cell.label.text = self.text(for: message)  // from items
+                    cell.label.attributedText = self.text(for: message)  // from items
                     cell.timeLabel.text = self.time(for: message)  // from items
                     cell.setSenderName(message.sender, colorHex: message.colorHex)
 

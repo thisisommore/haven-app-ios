@@ -7,6 +7,7 @@
 
 import Foundation
 import SQLiteData
+import UIKit
 
 enum NewMessageRenderKind: Int16, Codable, QueryBindable {
     case unknown = 0
@@ -42,6 +43,65 @@ struct NewMessageParsedPayload: Codable, Hashable {
     var version: Int16
     var text: String
     var spans: [NewMessageSpan]
+
+    func attributedString(baseFont: UIFont) -> NSAttributedString {
+        let attributedString = NSMutableAttributedString(
+            string: text, attributes: [.font: baseFont])
+
+        for span in spans {
+            // Convert UTF-16 offsets to String.Index
+            let startIdx = String.Index(utf16Offset: span.startUTF16, in: text)
+            let endIdx = String.Index(utf16Offset: span.endUTF16, in: text)
+
+            // Convert String.Index to NSRange
+            let nsRange = NSRange(startIdx..<endIdx, in: text)
+
+            let styleBits = NewMessageStyleBits(rawValue: span.styleBits)
+
+            if styleBits.contains(.bold) {
+                if let currentFont = attributedString.attribute(
+                    .font, at: nsRange.location, effectiveRange: nil) as? UIFont
+                {
+                    let boldFont = UIFont.systemFont(ofSize: currentFont.pointSize, weight: .bold)
+                    attributedString.addAttribute(.font, value: boldFont, range: nsRange)
+                }
+            }
+
+            if styleBits.contains(.italic) {
+                if let currentFont = attributedString.attribute(
+                    .font, at: nsRange.location, effectiveRange: nil) as? UIFont
+                {
+                    if let italicDescriptor = currentFont.fontDescriptor.withSymbolicTraits(
+                        .traitItalic)
+                    {
+                        let italicFont = UIFont(
+                            descriptor: italicDescriptor, size: currentFont.pointSize)
+                        attributedString.addAttribute(.font, value: italicFont, range: nsRange)
+                    }
+                }
+            }
+
+            if styleBits.contains(.strike) {
+                attributedString.addAttribute(
+                    .strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: nsRange)
+            }
+
+            if styleBits.contains(.code) || styleBits.contains(.pre) {
+                let codeFont = UIFont.monospacedSystemFont(
+                    ofSize: baseFont.pointSize * 0.9, weight: .regular)
+                attributedString.addAttribute(.font, value: codeFont, range: nsRange)
+                attributedString.addAttribute(
+                    .backgroundColor, value: UIColor.systemGray5.withAlphaComponent(0.5),
+                    range: nsRange)
+            }
+
+            if styleBits.contains(.link), let href = span.href, let url = URL(string: href) {
+                attributedString.addAttribute(.link, value: url, range: nsRange)
+            }
+        }
+
+        return attributedString
+    }
 }
 
 struct NewMessagePrecomputedRender {
