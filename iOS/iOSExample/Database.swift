@@ -10,18 +10,7 @@ import SQLiteData
 
 func appDatabase() throws -> any DatabaseWriter {
   @Dependency(\.context) var context
-  var configuration = Configuration()
-  #if DEBUG
-    configuration.prepareDatabase { db in
-      db.trace(options: .profile) {
-        if context == .preview {
-          print("\($0.expandedDescription)")
-        } else {
-          AppLogger.app.debug("\($0.expandedDescription)")
-        }
-      }
-    }
-  #endif
+  let configuration = Configuration()
   let appSupportDir = try FileManager.default.url(
     for: .applicationSupportDirectory,
     in: .userDomainMask,
