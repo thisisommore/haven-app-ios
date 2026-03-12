@@ -39,6 +39,12 @@ extension TextCell: CellWithContextMenu {
                 UIAction(title: "Reply", image: UIImage(systemName: "arrowshape.turn.up.left")) {
                     [weak self] _ in
                     self?.onReply?()
+                },
+                UIAction(title: "Copy", image: UIImage(systemName: "doc.on.doc")) {
+                    [weak self] _ in
+                    if let text = self?.label.text {
+                        UIPasteboard.general.string = text
+                    }
                 }
             ])
         })
