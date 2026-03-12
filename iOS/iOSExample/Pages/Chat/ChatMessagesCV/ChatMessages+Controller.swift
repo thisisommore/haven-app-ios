@@ -78,6 +78,27 @@ class ChatMessagesVC: UIViewController {
     var highlightMessageId: Int64?
     //
 
+    lazy var scrollToBottomButton: UIButton = {
+        let btn = UIButton(type: .system)
+
+        let config = UIImage.SymbolConfiguration(pointSize: 16, weight: .light)
+        let image = UIImage(systemName: "chevron.down", withConfiguration: config)
+        btn.setImage(image, for: .normal)
+
+        btn.tintColor = .white
+        btn.backgroundColor = UIColor(named: "Haven")
+        btn.layer.cornerRadius = 8
+
+        btn.layer.shadowColor = UIColor.black.cgColor
+        btn.layer.shadowOpacity = 0.2
+        btn.layer.shadowOffset = CGSize(width: 0, height: 2)
+        btn.layer.shadowRadius = 4
+
+        btn.isHidden = true
+        btn.addTarget(self, action: #selector(scrollToBottomTapped), for: .touchUpInside)
+        return btn
+    }()
+
     var cv: UICollectionView
     private var previousViewSize: CGFloat = 0
 
@@ -97,12 +118,21 @@ class ChatMessagesVC: UIViewController {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         // Track if the user is currently near the bottom of the chat
         // We use a threshold (e.g., 100 points) to allow some tolerance
-        isNearBottom =
-            distanceFromBottom(
-                minY: scrollView.contentOffset.y,
-                viewSize: scrollView.bounds.height,
-                contentSize: scrollView.contentSize.height
-            ) < 1
+        let distFromBottom = distanceFromBottom(
+            minY: scrollView.contentOffset.y,
+            viewSize: scrollView.bounds.height,
+            contentSize: scrollView.contentSize.height
+        )
+        isNearBottom = distFromBottom < 1
+
+        // Show button if more than 30pt from bottom
+        let shouldShowButton = distFromBottom > 30
+        if scrollToBottomButton.isHidden == shouldShowButton {
+            UIView.animate(withDuration: 0.2) {
+                self.scrollToBottomButton.isHidden = !shouldShowButton
+                self.scrollToBottomButton.alpha = shouldShowButton ? 1.0 : 0.0
+            }
+        }
 
         if isFetchingNextPage || !isCurrentPageFull() { return }
         let distanceFromVisualTop = scrollView.contentOffset.y + scrollView.adjustedContentInset.top
@@ -135,7 +165,20 @@ class ChatMessagesVC: UIViewController {
             $0.top.leading.trailing.equalTo(view)
             $0.bottom.equalTo(view.keyboardLayoutGuide.snp.top)
         }
+
+        view.addSubview(scrollToBottomButton)
+        scrollToBottomButton.snp.makeConstraints {
+            $0.trailing.equalTo(view).offset(-20)
+            $0.bottom.equalTo(view.keyboardLayoutGuide.snp.top).offset(-20)
+            $0.width.height.equalTo(40)
+        }
         //
+    }
+
+    @objc func scrollToBottomTapped() {
+        let noOfItems = cv.numberOfItems(inSection: 0)
+        guard noOfItems >= 0 else { return }
+        cv.scrollToItem(at: (noOfItems - 1).idxPath(), at: .bottom, animated: true)
     }
 
     @objc func dismissKeyboard() {
