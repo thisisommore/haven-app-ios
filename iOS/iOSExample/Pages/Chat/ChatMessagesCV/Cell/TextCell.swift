@@ -81,6 +81,7 @@ class TextCell: UICollectionViewCell {
         .font: UIFont.systemFont(ofSize: 12, weight: .medium)
     ]
     private static let replySpacingToMessage: CGFloat = 6
+    private static let replySpacingAboveMessage: CGFloat = 10
 
     static let lastWidth: CGFloat = 0
     static var timeRecCached: CGRect = .zero
@@ -156,7 +157,8 @@ class TextCell: UICollectionViewCell {
             + ceil(senderNameR.height)
             + paddingYCal
             + ceil(replyContainerR.height)
-            + (replyContainerR == .zero ? 0 : Self.replySpacingToMessage)
+            + (replyContainerR == .zero
+                ? 0 : Self.replySpacingToMessage + Self.replySpacingAboveMessage)
 
         // ceil to provide extra space since it might remove all the decimals which can result in smaller space
         return CGSize(width: calculatedWidth, height: calculatedHeight)
@@ -173,8 +175,8 @@ extension TextCell {
         container.addSubview(senderNameLabel)
 
         replyImage.snp.makeConstraints {
-            $0.leading.equalTo(contentView).offset(Self.paddingX)
-            $0.centerY.equalTo(contentView)
+            $0.leading.equalTo(container).offset(Self.paddingX)
+            $0.centerY.equalTo(container)
             $0.size.equalTo(20)  // Combines width and height
         }
         replyImage.tintColor = .systemOrange
@@ -204,7 +206,7 @@ extension TextCell {
         replyPreviewLabel.snp.makeConstraints {
             $0.leading.equalTo(contentView).offset(Self.paddingX)
             $0.trailing.equalTo(contentView).offset(-Self.paddingX)
-            $0.top.equalTo(contentView)
+            $0.top.equalTo(contentView).offset(Self.replySpacingAboveMessage)
         }
         replyPreviewLabel.textColor = .secondaryLabel
         replyPreviewLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
