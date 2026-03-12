@@ -15,15 +15,18 @@ extension ChatMessagesVC {
 
     func text(for message: ChatMessageModel) -> NSAttributedString {
         let defaultAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 17)
+            .font: UIFont.systemFont(ofSize: 17),
+            .foregroundColor: UIColor.label,
         ]
-        
+
         if message.newRenderKind == .rich, let payloadData = message.newRenderPayload {
-            if let payload = try? JSONDecoder().decode(NewMessageParsedPayload.self, from: payloadData) {
+            if let payload = try? JSONDecoder().decode(
+                NewMessageParsedPayload.self, from: payloadData)
+            {
                 return payload.attributedString(baseFont: UIFont.systemFont(ofSize: 17))
             }
         }
-        
+
         let plainText = message.newRenderPlainText ?? message.message
         return NSAttributedString(string: plainText, attributes: defaultAttributes)
     }
@@ -86,6 +89,28 @@ extension ChatMessagesVC {
                     }
                     cell.onReplyPreviewClick = { [weak self] in
                         self?.scrollToMessage(message.replyTo)
+                    }
+                    cell.onLinkTapped = { [weak self] url in
+                        let linkString = url.absoluteString
+                        let linkPreview =
+                            linkString.count > 100
+                            ? "\(linkString.prefix(50))..."
+                            : linkString
+                        let alert = UIAlertController(
+                            title: "Leaving Haven",
+                            message:
+                                """
+                                You are about to open an external link. Haven's privacy and security protections do not apply.
+                                Link \(linkPreview)
+                                """,
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                        alert.addAction(
+                            UIAlertAction(title: "Open", style: .destructive) { _ in
+                                UIApplication.shared.open(url)
+                            })
+                        self?.present(alert, animated: true)
                     }
                     return cell
                 case .date(let d):

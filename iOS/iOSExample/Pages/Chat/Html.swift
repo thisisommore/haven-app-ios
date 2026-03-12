@@ -46,7 +46,11 @@ struct NewMessageParsedPayload: Codable, Hashable {
 
     func attributedString(baseFont: UIFont) -> NSAttributedString {
         let attributedString = NSMutableAttributedString(
-            string: text, attributes: [.font: baseFont])
+            string: text,
+            attributes: [
+                .font: baseFont,
+                .foregroundColor: UIColor.label,
+            ])
 
         for span in spans {
             // Convert UTF-16 offsets to String.Index

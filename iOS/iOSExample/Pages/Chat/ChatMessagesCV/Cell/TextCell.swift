@@ -17,7 +17,7 @@ class TextCell: UICollectionViewCell {
     }
 
     static let identifier = String(describing: TextCell.self)
-    let label = UILabel()
+    let label = UITextView()
     let timeLabel = UILabel()
     let senderNameLabel = UILabel()
     let replyPreviewLabel = UILabel()
@@ -27,6 +27,7 @@ class TextCell: UICollectionViewCell {
     let feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
     var onReply: (() -> Void)?
     var onReplyPreviewClick: (() -> Void)?
+    var onLinkTapped: ((URL) -> Void)?
     static let paddingY: CGFloat = 4
     static let paddingX: CGFloat = 8
     static let paddingYCal = paddingY * 2
@@ -54,6 +55,7 @@ class TextCell: UICollectionViewCell {
         super.prepareForReuse()
         onReply = nil
         onReplyPreviewClick = nil
+        onLinkTapped = nil
         hasCrossedReplyThreshold = false
         container.transform = .identity
         replyImage.transform = .identity
@@ -220,7 +222,14 @@ extension TextCell {
         messageTopToSenderConstraint?.deactivate()
         messageTopToContainerConstraint?.deactivate()
         label.attributedText = nil
-        label.numberOfLines = 0
+        label.isEditable = false
+        label.isScrollEnabled = false
+        label.backgroundColor = .clear
+        label.textContainerInset = .zero
+        label.textContainer.lineFragmentPadding = 0
+        label.textColor = .label
+        label.delegate = self
+        label.linkTextAttributes = [.foregroundColor: UIColor.systemBlue, .underlineStyle: NSUnderlineStyle.single.rawValue]
 
         timeLabel.snp.makeConstraints {
             $0.trailing.equalTo(container).offset(-Self.paddingX)
@@ -338,5 +347,14 @@ extension TextCell {
                 self.container.layer.borderWidth = 0
             }
         }
+    }
+}
+
+extension TextCell: UITextViewDelegate {
+    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange)
+        -> Bool
+    {
+        onLinkTapped?(URL)
+        return false
     }
 }
