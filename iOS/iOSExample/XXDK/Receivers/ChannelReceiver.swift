@@ -304,15 +304,6 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                 record = newRecord
             }
 
-            if let channelID {
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(
-                        name: .chatMessagesUpdated,
-                        object: nil,
-                        userInfo: ["chatId": channelID.base64EncodedString()]
-                    )
-                }
-            }
             return record.internalId
         } catch {
             fatalError(

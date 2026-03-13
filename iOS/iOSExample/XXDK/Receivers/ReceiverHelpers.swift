@@ -15,16 +15,6 @@ class ReceiverHelpers {
 
     private static var cachedSelfChatId: Data?
 
-    private func postChatMessageUpdate(chatId: String) {
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(
-                name: .chatMessagesUpdated,
-                object: nil,
-                userInfo: ["chatId": chatId]
-            )
-        }
-    }
-
     /// Parse identity from pubKey and codeset, returning codename and color
     static func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int)
     {
@@ -160,7 +150,6 @@ class ReceiverHelpers {
             }
         }
 
-        postChatMessageUpdate(chatId: chat.id)
         return msg
     }
 

@@ -16,7 +16,3 @@ func stripParagraphTags(_ s: String) -> String {
     }
     return s
 }
-
-extension Notification.Name {
-    static let chatMessagesUpdated = Notification.Name("chatMessagesUpdated")
-}

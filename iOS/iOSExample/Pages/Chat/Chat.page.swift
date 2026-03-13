@@ -170,13 +170,6 @@ struct ChatView<T: XXDKP>: View {
                 isMuted = xxdk.isMuted(channelId: chatId)
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .chatMessagesUpdated)) {
-            notification in
-            guard let updatedChatId = notification.userInfo?["chatId"] as? String,
-                updatedChatId == chatId
-            else { return }
-            markMessagesAsRead()
-        }
         .id("chat-\(chatId)")
         .onChange(of: showChannelOptions) { _, newValue in
             if !newValue {
@@ -184,10 +177,6 @@ struct ChatView<T: XXDKP>: View {
             }
         }
         .background(ChatBackgroundView())
-        //        .background(
-        //            NewChatBackSwipeControl(isDisabled: true)
-        //                .allowsHitTesting(false)
-        //        )
     }
 }
 
