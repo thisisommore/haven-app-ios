@@ -130,7 +130,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
             allowedContentTypes: [.json],
             allowsMultipleSelection: false
         ) { result in
-            if case let .success(urls) = result, let url = urls.first {
+            if case .success(let urls) = result, let url = urls.first {
                 selectedFileURL = url
             }
         }
@@ -172,14 +172,11 @@ struct ImportAccountSheet<T: XXDKP>: View {
             navigation.path.append(Destination.landing)
 
         } catch {
-            AppLogger.identity.error("Import failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.identity.error(
+                "Import failed: \(error.localizedDescription, privacy: .public)")
             errorMessage = error.localizedDescription
             showError = true
             isImporting = false
         }
     }
-}
-
-extension Color {
-    static let separator = Color(UIColor.separator)
 }

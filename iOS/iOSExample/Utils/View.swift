@@ -97,12 +97,27 @@ extension Color {
     }
 }
 
+extension Color {
+    static let separator = Color(UIColor.separator)
+}
+
 extension ToolbarItem {
     func hiddenSharedBackground() -> some ToolbarContent {
         if #available(iOS 26.0, macOS 26.0, *) {
             return sharedBackgroundVisibility(.hidden)
         } else {
             return self
+        }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func glassEffectIfAvailable() -> some View {
+        if #available(iOS 26.0, *) {
+            glassEffect(in: .rect(cornerRadius: 0))
+        } else {
+            self
         }
     }
 }

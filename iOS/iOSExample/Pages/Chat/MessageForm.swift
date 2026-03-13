@@ -7,17 +7,6 @@
 import SQLiteData
 import SwiftUI
 
-extension View {
-    @ViewBuilder
-    func glassEffectIfAvailable() -> some View {
-        if #available(iOS 26.0, *) {
-            glassEffect(in: .rect(cornerRadius: 0))
-        } else {
-            self
-        }
-    }
-}
-
 struct MessageForm<T: XXDKP>: View {
     @State private var abc: String = ""
     @State private var isSendingMessage: Bool = false
@@ -176,7 +165,8 @@ struct MessageForm<T: XXDKP>: View {
 
 private struct MessageFormPreviewWrapper: View {
     @FetchOne(ChatModel.where { $0.id.eq(previewChatId) }) private var chat: ChatModel?
-    @FetchAll(ChatMessageModel.order { $0.timestamp.desc() }.limit(1)) private var messages: [ChatMessageModel]
+    @FetchAll(ChatMessageModel.order { $0.timestamp.desc() }.limit(1)) private var messages:
+        [ChatMessageModel]
     var replyMode: Bool = false
 
     var body: some View {
