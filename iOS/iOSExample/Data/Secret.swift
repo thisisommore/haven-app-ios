@@ -9,140 +9,145 @@ import Combine
 import Foundation
 
 enum KeychainError: Error {
-    case noPassword
-    case unexpectedPasswordData
-    case unhandledError(status: OSStatus)
+  case noPassword
+  case unexpectedPasswordData
+  case unhandledError(status: OSStatus)
 }
 
 class AppStorage: ObservableObject {
-    @Published var isPasswordSet: Bool = false
+  @Published var isPasswordSet: Bool = false
 
-    private let serviceName = "internalPassword"
-    private let setupCompleteKey = "isSetupComplete"
+  private let serviceName = "internalPassword"
+  private let setupCompleteKey = "isSetupComplete"
 
-    private var baseQuery: [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: serviceName,
-        ]
+  private var baseQuery: [String: Any] {
+    [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: self.serviceName,
+    ]
+  }
+
+  private var searchQuery: [String: Any] {
+    var query = self.baseQuery
+    query[kSecMatchLimit as String] = kSecMatchLimitOne
+    query[kSecReturnAttributes as String] = true
+    query[kSecReturnData as String] = true
+    return query
+  }
+
+  var isSetupComplete: Bool {
+    get { UserDefaults.standard.bool(forKey: self.setupCompleteKey) }
+    set {
+      objectWillChange.send()
+      UserDefaults.standard.set(newValue, forKey: self.setupCompleteKey)
+    }
+  }
+
+  init() {
+    self.updatePasswordStatus()
+  }
+
+  /// Store password in keychain
+  func storePassword(_ password: String) throws {
+    guard let passData = password.data(using: .utf8)
+    else {
+      throw KeychainError.unexpectedPasswordData
     }
 
-    private var searchQuery: [String: Any] {
-        var query = baseQuery
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
-        query[kSecReturnAttributes as String] = true
-        query[kSecReturnData as String] = true
-        return query
+    var query = self.baseQuery
+    query[kSecValueData as String] = passData
+    query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+
+    // Delete existing item if present
+    SecItemDelete(query as CFDictionary)
+
+    // Add new item
+    let status = SecItemAdd(query as CFDictionary, nil)
+    guard status == errSecSuccess
+    else {
+      throw KeychainError.unhandledError(status: status)
     }
 
-    var isSetupComplete: Bool {
-        get { UserDefaults.standard.bool(forKey: setupCompleteKey) }
-        set {
-            objectWillChange.send()
-            UserDefaults.standard.set(newValue, forKey: setupCompleteKey)
-        }
+    self.updatePasswordStatus()
+  }
+
+  /// Retrieve password from keychain
+  func getPassword() throws -> String {
+    var item: CFTypeRef?
+    let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
+
+    guard status != errSecItemNotFound
+    else {
+      throw KeychainError.noPassword
     }
 
-    init() {
-        updatePasswordStatus()
+    guard status == errSecSuccess
+    else {
+      throw KeychainError.unhandledError(status: status)
     }
 
-    /// Store password in keychain
-    func storePassword(_ password: String) throws {
-        guard let passData = password.data(using: .utf8) else {
-            throw KeychainError.unexpectedPasswordData
-        }
-
-        var query = baseQuery
-        query[kSecValueData as String] = passData
-        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-
-        // Delete existing item if present
-        SecItemDelete(query as CFDictionary)
-
-        // Add new item
-        let status = SecItemAdd(query as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw KeychainError.unhandledError(status: status)
-        }
-
-        updatePasswordStatus()
+    guard let existingItem = item as? [String: Any],
+          let passwordData = existingItem[kSecValueData as String] as? Data,
+          let password = String(data: passwordData, encoding: .utf8)
+    else {
+      throw KeychainError.unexpectedPasswordData
     }
 
-    /// Retrieve password from keychain
-    func getPassword() throws -> String {
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
+    return password
+  }
 
-        guard status != errSecItemNotFound else {
-            throw KeychainError.noPassword
-        }
+  /// Check if password is set in keychain
+  func checkPasswordExists() -> Bool {
+    var item: CFTypeRef?
+    let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
 
-        guard status == errSecSuccess else {
-            throw KeychainError.unhandledError(status: status)
-        }
+    return status == errSecSuccess
+  }
 
-        guard let existingItem = item as? [String: Any],
-              let passwordData = existingItem[kSecValueData as String] as? Data,
-              let password = String(data: passwordData, encoding: .utf8)
-        else {
-            throw KeychainError.unexpectedPasswordData
-        }
+  /// Delete password from keychain
+  func deletePassword() throws {
+    let status = SecItemDelete(baseQuery as CFDictionary)
 
-        return password
+    guard status == errSecSuccess || status == errSecItemNotFound
+    else {
+      throw KeychainError.unhandledError(status: status)
     }
 
-    /// Check if password is set in keychain
-    func checkPasswordExists() -> Bool {
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
+    self.updatePasswordStatus()
+  }
 
-        return status == errSecSuccess
+  /// Clear all data (keychain + UserDefaults) for logout/reset
+  func clearAll() {
+    // Clear keychain
+    self.clearKeychain()
+
+    // Clear UserDefaults
+    if let bundleId = Bundle.main.bundleIdentifier {
+      UserDefaults.standard.removePersistentDomain(forName: bundleId)
     }
+    UserDefaults.standard.synchronize()
 
-    /// Delete password from keychain
-    func deletePassword() throws {
-        let status = SecItemDelete(baseQuery as CFDictionary)
+    self.updatePasswordStatus()
+  }
 
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError.unhandledError(status: status)
-        }
+  /// Clear all keychain items
+  private func clearKeychain() {
+    let secClasses = [
+      kSecClassGenericPassword,
+      kSecClassInternetPassword,
+      kSecClassCertificate,
+      kSecClassKey,
+      kSecClassIdentity,
+    ]
 
-        updatePasswordStatus()
+    for secClass in secClasses {
+      let query: [String: Any] = [kSecClass as String: secClass]
+      SecItemDelete(query as CFDictionary)
     }
+  }
 
-    /// Clear all data (keychain + UserDefaults) for logout/reset
-    func clearAll() {
-        // Clear keychain
-        clearKeychain()
-
-        // Clear UserDefaults
-        if let bundleId = Bundle.main.bundleIdentifier {
-            UserDefaults.standard.removePersistentDomain(forName: bundleId)
-        }
-        UserDefaults.standard.synchronize()
-
-        updatePasswordStatus()
-    }
-
-    /// Clear all keychain items
-    private func clearKeychain() {
-        let secClasses = [
-            kSecClassGenericPassword,
-            kSecClassInternetPassword,
-            kSecClassCertificate,
-            kSecClassKey,
-            kSecClassIdentity,
-        ]
-
-        for secClass in secClasses {
-            let query: [String: Any] = [kSecClass as String: secClass]
-            SecItemDelete(query as CFDictionary)
-        }
-    }
-
-    /// Update the published isPasswordSet property
-    private func updatePasswordStatus() {
-        isPasswordSet = checkPasswordExists()
-    }
+  /// Update the published isPasswordSet property
+  private func updatePasswordStatus() {
+    self.isPasswordSet = self.checkPasswordExists()
+  }
 }

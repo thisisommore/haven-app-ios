@@ -24,7 +24,7 @@ func appDatabase() throws -> any DatabaseWriter {
     migrator.eraseDatabaseOnSchemaChange = true
   #endif
 
-  //TODO migrations in separate folder with versioning/description
+  // TODO: migrations in separate folder with versioning/description
   migrator.registerMigration("v1:Create tables") { db in
     try #sql(
       """

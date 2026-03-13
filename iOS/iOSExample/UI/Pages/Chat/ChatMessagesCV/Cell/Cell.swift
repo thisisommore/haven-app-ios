@@ -6,8 +6,9 @@
 //
 
 import UIKit
-protocol CellWithContextMenu: UICollectionViewCell {
-    func makePreview() -> UITargetedPreview
 
-    func makeContextMenu() -> UIContextMenuConfiguration
+protocol CellWithContextMenu: UICollectionViewCell {
+  func makePreview() -> UITargetedPreview
+
+  func makeContextMenu() -> UIContextMenuConfiguration
 }

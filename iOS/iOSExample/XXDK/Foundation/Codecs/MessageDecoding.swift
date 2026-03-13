@@ -13,29 +13,29 @@ import Foundation
 /// - Parameter data: The input data that is expected to be zlib-compressed.
 /// - Returns: The decompressed payload, or `nil` if decompression fails.
 func decompressZlib(_ data: Data) -> Data? {
-    // Skip zlib header (2 bytes)
-    let headerSize = 2
-    guard data.count > headerSize else { return nil }
+  // Skip zlib header (2 bytes)
+  let headerSize = 2
+  guard data.count > headerSize else { return nil }
 
-    // Use a larger buffer to handle various compression ratios
-    let bufferSize = max(data.count * 4, 1024)
-    let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
-    defer { buffer.deallocate() }
+  // Use a larger buffer to handle various compression ratios
+  let bufferSize = max(data.count * 4, 1024)
+  let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+  defer { buffer.deallocate() }
 
-    let result = data.subdata(in: headerSize ..< data.count).withUnsafeBytes { bytes in
-        guard let baseAddress = bytes.baseAddress else { return 0 }
-        return compression_decode_buffer(
-            buffer, bufferSize,
-            baseAddress.bindMemory(to: UInt8.self, capacity: 1),
-            data.count - headerSize,
-            nil,
-            COMPRESSION_ZLIB
-        )
-    }
+  let result = data.subdata(in: headerSize ..< data.count).withUnsafeBytes { bytes in
+    guard let baseAddress = bytes.baseAddress else { return 0 }
+    return compression_decode_buffer(
+      buffer, bufferSize,
+      baseAddress.bindMemory(to: UInt8.self, capacity: 1),
+      data.count - headerSize,
+      nil,
+      COMPRESSION_ZLIB
+    )
+  }
 
-    guard result > 0 else { return nil }
+  guard result > 0 else { return nil }
 
-    return Data(bytes: buffer, count: result)
+  return Data(bytes: buffer, count: result)
 }
 
 /// Decode a message that may be base64-wrapped, optionally UTF-8 directly,
@@ -43,24 +43,25 @@ func decompressZlib(_ data: Data) -> Data? {
 /// - Parameter b64: Base64-encoded string.
 /// - Returns: The decoded UTF-8 string if successful, otherwise `nil`.
 func decodeMessage(_ b64: String) -> String? {
-    // Convert base64 to Data
-    guard let data = Data(base64Encoded: b64) else {
-        return nil
-    }
-
-    // Try direct UTF-8 decoding first
-    if let utf8String = String(data: data, encoding: .utf8) {
-        return utf8String
-    }
-
-    // Check if it looks like zlib/deflate (starts with 0x78)
-    if data.count > 0, data[0] == 0x78 {
-        if let decompressed = decompressZlib(data),
-           let utf8String = String(data: decompressed, encoding: .utf8)
-        {
-            return utf8String
-        }
-    }
-
+  // Convert base64 to Data
+  guard let data = Data(base64Encoded: b64)
+  else {
     return nil
+  }
+
+  // Try direct UTF-8 decoding first
+  if let utf8String = String(data: data, encoding: .utf8) {
+    return utf8String
+  }
+
+  // Check if it looks like zlib/deflate (starts with 0x78)
+  if data.count > 0, data[0] == 0x78 {
+    if let decompressed = decompressZlib(data),
+       let utf8String = String(data: decompressed, encoding: .utf8)
+    {
+      return utf8String
+    }
+  }
+
+  return nil
 }

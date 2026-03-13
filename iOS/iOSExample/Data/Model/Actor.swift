@@ -9,17 +9,17 @@ import Foundation
 import SQLiteData
 
 actor DatabaseActor {
-    let database: any DatabaseWriter
+  let database: any DatabaseWriter
 
-    init(database: any DatabaseWriter) {
-        self.database = database
-    }
+  init(database: any DatabaseWriter) {
+    self.database = database
+  }
 
-    func read<T: Sendable>(_ block: @Sendable (Database) throws -> T) throws -> T {
-        try database.read(block)
-    }
+  func read<T: Sendable>(_ block: @Sendable (Database) throws -> T) throws -> T {
+    try self.database.read(block)
+  }
 
-    func write<T: Sendable>(_ block: @Sendable (Database) throws -> T) throws -> T {
-        try database.write(block)
-    }
+  func write<T: Sendable>(_ block: @Sendable (Database) throws -> T) throws -> T {
+    try self.database.write(block)
+  }
 }
