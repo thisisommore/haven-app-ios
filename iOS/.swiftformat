@@ -1,2 +1,3 @@
 # Require explicit self for Logger methods
---selfrequired info,debug,warning,error,fault,critical,notice,trace
+--indent 2
+--self insert
