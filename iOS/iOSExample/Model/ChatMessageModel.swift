@@ -33,13 +33,13 @@ enum MessageStatus: Int, QueryBindable {
 
 @Table("chatMessages")
 struct ChatMessageModel: Identifiable, Hashable {
-    var id: String
-    var internalId: Int64
+    var id: Int64
+    var externalId: String
     var message: String
     var timestamp: Date
     var isIncoming: Bool
     var isRead: Bool = false
-    var status: MessageStatus = .sent
+    var status: MessageStatus = .unsent
     var senderId: String?
     var chatId: String
     var replyTo: String?
@@ -51,12 +51,12 @@ struct ChatMessageModel: Identifiable, Hashable {
 
     init(
         message: String, isIncoming: Bool, chatId: String, senderId: String? = nil,
-        id: String, internalId: Int64, replyTo: String? = nil,
+        id: Int64, externalId: String, replyTo: String? = nil,
         timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3),
-        isRead: Bool = false
+        isRead: Bool = false, status: Int64
     ) {
         self.id = id
-        self.internalId = internalId
+        self.externalId = externalId
         self.message = message
         self.timestamp = Date(timeIntervalSince1970: Double(timestamp) * 1e-6 * 1e-3)
         self.isIncoming = isIncoming
@@ -65,5 +65,8 @@ struct ChatMessageModel: Identifiable, Hashable {
         self.chatId = chatId
         self.replyTo = replyTo
         newRenderPlainText = message
+        if let parsedStatus = MessageStatus(rawValue: Int(status)) {
+            self.status = parsedStatus
+        }
     }
 }

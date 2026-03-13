@@ -34,7 +34,7 @@ struct MessageForm<T: XXDKP>: View {
             if let replyTo {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        ReplyToSenderView(messageId: replyTo.id, senderId: replyTo.senderId)
+                        ReplyToSenderView(messageId: replyTo.externalId, senderId: replyTo.senderId)
                         Text(replyPreviewText(for: replyTo))
                             .font(.caption2)
                             .foregroundStyle(.primary)
@@ -123,7 +123,7 @@ struct MessageForm<T: XXDKP>: View {
                                 msg: trimmed,
                                 toPubKey: pubKey,
                                 partnerToken: token,
-                                replyToMessageIdB64: replyTo.id
+                                replyToMessageIdB64: replyTo.externalId
                             )
                         }
                     } else {
@@ -143,7 +143,7 @@ struct MessageForm<T: XXDKP>: View {
                         xxdk.sendReply(
                             msg: trimmed,
                             channelId: chat.id,
-                            replyToMessageIdB64: replyTo.id
+                            replyToMessageIdB64: replyTo.externalId
                         )
                     }
                 } else {

@@ -36,12 +36,92 @@ struct ReceivedMessage: Identifiable {
 }
 
 class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
-    .BindingsDmCallbacksProtocol
+        .BindingsDmCallbacksProtocol
 {
+    func updateSentStatus(
+        _ uuid: Int64, messageID: Data?, timestamp: Int64, roundID: Int64, status: Int64
+    ) {
+        let messageIDB64 = messageID?.base64EncodedString() ?? "nil"
+        AppLogger.messaging.info(
+            "func updateSentStatus(uuid: \(uuid, privacy: .public), messageID: \(messageIDB64, privacy: .public), timestamp: \(timestamp, privacy: .public), roundID: \(roundID, privacy: .public), status: \(status, privacy: .public))"
+        )
+
+        guard let parsedStatus = MessageStatus(rawValue: Int(status)) else {
+            AppLogger.messaging.error(
+                "updateSentStatus invalid status=\(status, privacy: .public) uuid=\(uuid, privacy: .public)"
+            )
+            return
+        }
+
+        do {
+            try database.write { db in
+                var message = try ChatMessageModel.where { $0.id.eq(uuid) }.fetchOne(db)
+                if message == nil, let messageID {
+                    let messageIDB64 = messageID.base64EncodedString()
+                    message = try ChatMessageModel.where { $0.externalId.eq(messageIDB64) }
+                        .fetchOne(db)
+                }
+
+                guard var message else { return }
+
+                if parsedStatus == .failed {
+                    try ChatMessageModel.delete(message).execute(db)
+                } else {
+                    message.status = parsedStatus
+                    try ChatMessageModel.update(message).execute(db)
+                }
+            }
+        } catch {
+            AppLogger.messaging.error(
+                "updateSentStatus db operation failed: \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
+
+    func eventUpdate(_ eventType: Int64, jsonData: Data?) {
+        guard let jsonData else {
+            AppLogger.messaging.error(
+                "DM event update payload is nil for eventType \(eventType, privacy: .public)"
+            )
+            return
+        }
+
+        do {
+            switch eventType {
+            case 1000:
+                let parsed = try Parser.decode(DmNotificationUpdateJSON.self, from: jsonData)
+                AppLogger.messaging.info(
+                    "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
+                )
+            case 2000:
+                let parsed = try Parser.decode(DmBlockedUserJSON.self, from: jsonData)
+                AppLogger.messaging.info(
+                    "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
+                )
+            case 3000:
+                let parsed = try Parser.decode(DmMessageReceivedJSON.self, from: jsonData)
+                AppLogger.messaging.info(
+                    "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
+                )
+            case 4000:
+                let parsed = try Parser.decode(DmMessageDeletedJSON.self, from: jsonData)
+                AppLogger.messaging.info(
+                    "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
+                )
+            default:
+                AppLogger.messaging.debug(
+                    "DM event update has unknown eventType \(eventType, privacy: .public)"
+                )
+            }
+        } catch {
+            AppLogger.messaging.error(
+                "DM event update parse failed for eventType \(eventType, privacy: .public): \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
+
     @Dependency(\.defaultDatabase) var database
     private let receiverHelpers = ReceiverHelpers()
-
-    func eventUpdate(_: Int64, jsonData _: Data?) {}
 
     func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
         return true
@@ -56,11 +136,18 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     }
 
     func receive(
-        _ messageID: Data?, nickname _: String?, text: Data?, partnerKey: Data?, senderKey: Data?,
-        dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, mType _: Int64,
-        status _: Int64
+        _ messageID: Data?, nickname: String?, text: Data?, partnerKey: Data?, senderKey: Data?,
+        dmToken: Int32, codeset: Int, timestamp: Int64, roundId: Int64, mType: Int64,
+        status: Int64
     ) -> Int64 {
         // Ensure UI updates happen on main thread
+        let messageIDB64 = messageID?.base64EncodedString() ?? "nil"
+        let textB64 = text?.base64EncodedString() ?? "nil"
+        let partnerKeyB64 = partnerKey?.base64EncodedString() ?? "nil"
+        let senderKeyB64 = senderKey?.base64EncodedString() ?? "nil"
+        AppLogger.messaging.info(
+            "func receive(messageID: \(messageIDB64, privacy: .public), nickname: \(nickname ?? "nil", privacy: .public), text: \(textB64, privacy: .public), partnerKey: \(partnerKeyB64, privacy: .public), senderKey: \(senderKeyB64, privacy: .public), dmToken: \(dmToken, privacy: .public), codeset: \(codeset, privacy: .public), timestamp: \(timestamp, privacy: .public), roundId: \(roundId, privacy: .public), mType: \(mType, privacy: .public), status: \(status, privacy: .public))"
+        )
 
         guard let messageID else { fatalError("no msg id") }
         guard let text else { fatalError("no text") }
@@ -78,15 +165,14 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             fatalError("\(error)")
         }
 
-        let internalId = InternalIdGenerator.shared.next()
-        persistIncoming(
+        let m = try! persistIncoming(
             message: decodedMessage, codename: codename, partnerKey: partnerKey,
             senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color,
-            internalId: internalId, timestamp: timestamp
+            timestamp: timestamp, status: status
         )
         // Note: this should be a UUID in your database so
         // you can uniquely identify the message.
-        return internalId
+        return m.id
     }
 
     func receiveReaction(
@@ -102,9 +188,13 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     func receiveReply(
         _ messageID: Data?, reactionTo _: Data?, nickname _: String?, text: String?,
         partnerKey: Data?, senderKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64,
-        roundId _: Int64, status _: Int64
+        roundId _: Int64, status: Int64
     ) -> Int64 {
         guard let messageID else { fatalError("no msg id") }
+        let replyTextB64 = text ?? ""
+        guard let decodedReply = decodeMessage(replyTextB64) else {
+            fatalError("decode failed")
+        }
 
         let codename: String
         let color: Int
@@ -116,20 +206,33 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             fatalError("\(error)")
         }
 
-        let internalId = InternalIdGenerator.shared.next()
-        persistIncoming(
-            message: text ?? "empty text", codename: codename, partnerKey: partnerKey,
+        let m = try! persistIncoming(
+            message: decodedReply, codename: codename, partnerKey: partnerKey,
             senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color,
-            internalId: internalId, timestamp: timestamp
+            timestamp: timestamp, status: status
         )
-        return internalId
+        return m.id
     }
 
     func receiveText(
-        _ messageID: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?,
-        dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, status _: Int64
+        _ messageID: Data?, nickname: String?, text: String?, partnerKey: Data?, senderKey: Data?,
+        dmToken: Int32, codeset: Int, timestamp: Int64, roundId: Int64, status: Int64
     ) -> Int64 {
+        // if roundId == 0 {
+        //     return InternalIdGenerator.shared.next()
+        // }
+        let messageIDB64 = messageID?.base64EncodedString() ?? "nil"
+        let partnerKeyB64 = partnerKey?.base64EncodedString() ?? "nil"
+        let senderKeyB64 = senderKey?.base64EncodedString() ?? "nil"
+        AppLogger.messaging.info(
+            "func receiveText(messageID: \(messageIDB64, privacy: .public), nickname: \(nickname ?? "nil", privacy: .public), text: \(text ?? "nil", privacy: .public), partnerKey: \(partnerKeyB64, privacy: .public), senderKey: \(senderKeyB64, privacy: .public), dmToken: \(dmToken, privacy: .public), codeset: \(codeset, privacy: .public), timestamp: \(timestamp, privacy: .public), roundId: \(roundId, privacy: .public), status: \(status, privacy: .public))"
+        )
+
         guard let messageID else { fatalError("no msg id") }
+        let messageTextB64 = text ?? ""
+        guard let decodedText = decodeMessage(messageTextB64) else {
+            fatalError("decode failed")
+        }
 
         let codename: String
         let color: Int
@@ -141,48 +244,41 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
             fatalError("\(error)")
         }
 
-        let internalId = InternalIdGenerator.shared.next()
-        persistIncoming(
-            message: text ?? "empty text", codename: codename, partnerKey: partnerKey,
+        let m = try! persistIncoming(
+            message: decodedText, codename: codename, partnerKey: partnerKey,
             senderKey: senderKey, dmToken: dmToken, messageId: messageID, color: color,
-            internalId: internalId, timestamp: timestamp
+            timestamp: timestamp, status: status
         )
-        return internalId
+        return m.id
     }
-
-    func updateSentStatus(
-        _: Int64, messageID _: Data?, timestamp _: Int64, roundID _: Int64, status _: Int64
-    ) {}
 
     private func persistIncoming(
         message: String, codename: String?, partnerKey: Data?, senderKey: Data?, dmToken: Int32,
-        messageId: Data, color: Int, internalId _: Int64, timestamp: Int64
-    ) {
+        messageId: Data, color: Int, timestamp: Int64, status: Int64
+    ) throws -> ChatMessageModel {
         guard let partnerKey else { fatalError("partner key is not available") }
         let name =
             (codename?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap {
                 $0.isEmpty ? nil : $0
             } ?? "Unknown"
 
-        Task { @MainActor in
-            do {
-                let chat = try fetchOrCreateDMChat(
-                    codename: name, pubKey: partnerKey, dmToken: dmToken,
-                    color: color
-                )
+        let chat = try fetchOrCreateDMChat(
+            codename: name, pubKey: partnerKey, dmToken: dmToken,
+            color: color
+        )
 
-                _ = try receiverHelpers.persistIncomingMessage(
-                    chat: chat,
-                    text: message,
-                    messageId: messageId.base64EncodedString(),
-                    senderPubKey: senderKey,
-                    senderCodename: name,
-                    dmToken: dmToken,
-                    color: color,
-                    timestamp: timestamp
-                )
-            } catch {}
-        }
+        return try! receiverHelpers.persistIncomingMessage(
+            chat: chat,
+            text: message,
+            messageId: messageId.base64EncodedString(),
+            senderPubKey: senderKey,
+            senderCodename: name,
+            dmToken: dmToken,
+            color: color,
+            timestamp: timestamp,
+            status: status
+        )
+
     }
 
     private func fetchOrCreateDMChat(

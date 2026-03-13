@@ -273,17 +273,17 @@ class ChatMessagesVC: UIViewController {
         // Check if the message is already loaded
         if let index = dataSource.snapshot().itemIdentifiers.firstIndex(where: {
             if case .text(let m) = $0 {
-                return m.message.internalId == msg.internalId
+                return m.message.id == msg.id
             }
             return false
         }) {
             let indexPath = IndexPath(item: index, section: 0)
             cv.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
 
-            self.highlightMessageId = msg.internalId
+            self.highlightMessageId = msg.id
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 if let cell = self.cv.cellForItem(at: indexPath) as? TextCell {
-                    if self.highlightMessageId == msg.internalId {
+                    if self.highlightMessageId == msg.id {
                         cell.highlight()
                         self.highlightMessageId = nil
                     }
@@ -304,7 +304,7 @@ class ChatMessagesVC: UIViewController {
                 let requiredPage = Int(ceil(Double(position) / Double(Self.limit)))
                 if requiredPage > self.page {
                     self.page = requiredPage
-                    self.targetScrollMessageId = msg.internalId
+                    self.targetScrollMessageId = msg.id
                     self.startObservation()
                 }
             } catch {

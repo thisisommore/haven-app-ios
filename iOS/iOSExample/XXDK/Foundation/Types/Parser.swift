@@ -36,7 +36,7 @@ struct IsReadyInfoJSON: Decodable {
         } else if let i = try? container.decode(Int.self, forKey: .HowClose) {
             HowClose = Double(i)
         } else if let s = try? container.decode(String.self, forKey: .HowClose),
-                  let d = Double(s)
+            let d = Double(s)
         {
             HowClose = d
         } else {
@@ -171,6 +171,7 @@ struct CMixCoreParams: Codable {
     var DebugTag: String
     var BlacklistedNodes: [String: Bool]? = nil
     var Critical: Bool
+    var RpcMinTimeout: Int
 }
 
 // MARK: - Universal Parser
@@ -190,3 +191,40 @@ enum Parser {
         try encoder.encode(value)
     }
 }
+
+struct DmNotificationUpdateJSON: Decodable {
+    let notificationFilter: DmNotificationFilterJSON
+    let changed: [DmNotificationStateJSON]
+    let deleted: [Data]
+}
+
+struct DmNotificationFilterJSON: Decodable {
+    let identifier: Data
+    let myID: Data?
+    let tags: [String]
+    let publicKeys: [String: Data]
+    let allowedTypes: [String: DmEmptyJSONObject]
+}
+
+struct DmNotificationStateJSON: Decodable {
+    let pubKey: Data
+    let level: Int
+}
+
+struct DmBlockedUserJSON: Decodable {
+    let user: Data
+    let blocked: Bool
+}
+
+struct DmMessageReceivedJSON: Decodable {
+    let uuid: UInt64
+    let pubKey: Data
+    let messageUpdate: Bool
+    let conversationUpdate: Bool
+}
+
+struct DmMessageDeletedJSON: Decodable {
+    let messageID: Data
+}
+
+struct DmEmptyJSONObject: Decodable {}

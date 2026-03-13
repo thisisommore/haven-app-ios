@@ -29,24 +29,40 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
     // MARK: - Helper Methods
 
     func update(
-        fromMessageID _: Data?,
-        messageUpdateInfoJSON _: Data?,
-        ret0_ _: UnsafeMutablePointer<Int64>?
-    ) throws {}
+        fromMessageID messageID: Data?,
+        messageUpdateInfoJSON updateInfoJSON: Data?,
+        ret0_ ret0: UnsafeMutablePointer<Int64>?
+    ) throws {
+        let parsedUpdateInfo = try updateInfoJSON.map {
+            try Parser.decode(MessageUpdateInfoJSON.self, from: $0)
+        }
+        let updateInfoDescription = parsedUpdateInfo.map { self.describe($0) } ?? "nil"
+        let ret0Description = String(describing: ret0)
+        AppLogger.messaging.info(
+            "func update(fromMessageID: \(self.short(messageID), privacy: .public), messageUpdateInfoJSON: \(updateInfoDescription, privacy: .public), ret0_: \(ret0Description, privacy: .public))"
+        )
+    }
 
     func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
         guard let messageUpdateInfoJSON else {
+            AppLogger.messaging.info(
+                "func update(fromUUID: \(uuid, privacy: .public), messageUpdateInfoJSON: nil)"
+            )
             return
         }
 
         let updateInfo = try Parser.decode(MessageUpdateInfoJSON.self, from: messageUpdateInfoJSON)
-        var message = try database.read {
+        let updateInfoDescription = self.describe(updateInfo)
+        AppLogger.messaging.info(
+            "func update(fromUUID: \(uuid, privacy: .public), messageUpdateInfoJSON: \(updateInfoDescription, privacy: .public))"
+        )
+        let message = try database.read {
             db in
-            try ChatMessageModel.where { $0.internalId.eq(uuid) }.fetchOne(db)
+            try ChatMessageModel.where { $0.id.eq(uuid) }.fetchOne(db)
         }
         if var message {
             if updateInfo.MessageIDSet, let newMessageId = updateInfo.MessageID {
-                message.id = newMessageId
+                message.externalId = newMessageId
             }
             if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
                 let newStatus = MessageStatus(rawValue: newStatusRaw)
@@ -63,6 +79,18 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         guard let data else { return "nil" }
         let b64 = data.base64EncodedString()
         return b64.count > 16 ? String(b64.prefix(16)) + "…" : b64
+    }
+
+    private func describe(_ updateInfo: MessageUpdateInfoJSON) -> String {
+        let messageID = updateInfo.MessageID ?? "nil"
+        let timestamp = updateInfo.Timestamp.map(String.init) ?? "nil"
+        let roundID = updateInfo.RoundID.map(String.init) ?? "nil"
+        let pinned = updateInfo.Pinned.map(String.init) ?? "nil"
+        let hidden = updateInfo.Hidden.map(String.init) ?? "nil"
+        let status = updateInfo.Status.map(String.init) ?? "nil"
+
+        return
+            "MessageUpdateInfoJSON(MessageID: \(messageID), MessageIDSet: \(updateInfo.MessageIDSet), Timestamp: \(timestamp), TimestampSet: \(updateInfo.TimestampSet), RoundID: \(roundID), RoundIDSet: \(updateInfo.RoundIDSet), Pinned: \(pinned), PinnedSet: \(updateInfo.PinnedSet), Hidden: \(hidden), HiddenSet: \(updateInfo.HiddenSet), Status: \(status), StatusSet: \(updateInfo.StatusSet))"
     }
 
     // Fetch existing Chat by channelId or create a new one
@@ -97,7 +125,8 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         timestamp: Int64,
         dmToken: Int32? = nil,
         color: Int,
-        nickname: String? = nil
+        nickname: String? = nil,
+        status: Int64
     ) -> Int64 {
         print(
             "PM: channelId=\(channelId) channelName=\(channelName) text=\(text) senderCodename=\(senderCodename ?? "nil") senderPubKey=\(short(senderPubKey)) messageIdB64=\(messageIdB64 ?? "nil") replyTo=\(replyTo ?? "nil") timestamp=\(timestamp) dmToken=\(dmToken.map { String($0) } ?? "nil") color=\(color) nickname=\(nickname ?? "nil")"
@@ -122,10 +151,11 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                 dmToken: dmToken ?? 0,
                 color: color,
                 replyTo: replyTo,
-                timestamp: timestamp
+                timestamp: timestamp,
+                status: status
             )
 
-            return msg.internalId
+            return msg.id
         } catch {
             AppLogger.storage.critical(
                 "persist msg error: \(error.localizedDescription, privacy: .public)")
@@ -148,12 +178,16 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         dmToken: Int32,
         codeset: Int,
         timestamp: Int64,
-        lease _: Int64,
-        roundID _: Int64,
-        messageType _: Int64,
-        status _: Int64,
-        hidden _: Bool
+        lease: Int64,
+        roundID: Int64,
+        messageType: Int64,
+        status: Int64,
+        hidden: Bool
     ) -> Int64 {
+        AppLogger.messaging.info(
+            "func receiveMessage(_: \(self.short(channelID), privacy: .public), messageID: \(self.short(messageID), privacy: .public), nickname: \(nickname ?? "nil", privacy: .public), text: \(text ?? "nil", privacy: .public), pubKey: \(self.short(pubKey), privacy: .public), dmToken: \(dmToken, privacy: .public), codeset: \(codeset, privacy: .public), timestamp: \(timestamp, privacy: .public), lease: \(lease, privacy: .public), roundID: \(roundID, privacy: .public), messageType: \(messageType, privacy: .public), status: \(status, privacy: .public), hidden: \(hidden, privacy: .public))"
+        )
+
         let messageIdB64 = messageID?.base64EncodedString()
         let messageTextB64 = text ?? ""
 
@@ -173,7 +207,8 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                     timestamp: timestamp,
                     dmToken: dmToken,
                     color: color,
-                    nickname: nickname
+                    nickname: nickname,
+                    status: status
                 )
             }
             return 0
@@ -319,7 +354,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         lease _: Int64,
         roundID _: Int64,
         messageType _: Int64,
-        status _: Int64,
+        status: Int64,
         hidden _: Bool
     ) -> Int64 {
         let messageIdB64 = messageID?.base64EncodedString()
@@ -347,7 +382,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
                 replyTo: reactionTo.base64EncodedString(),
                 timestamp: timestamp,
                 dmToken: dmToken, color: color,
-                nickname: nickname
+                nickname: nickname, status: status
             )
         }
         return 0
@@ -362,7 +397,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
 
         if let sender = try? database.read({ db in
             try ChatMessageModel
-                .where { $0.id.eq(messageIdB64) }
+                .where { $0.externalId.eq(messageIdB64) }
                 .join(MessageSenderModel.all) { $0.senderId.eq($1.id) }
                 .select { _, sender in sender }
                 .fetchOne(db)
@@ -404,7 +439,7 @@ final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
         do {
             // First, try to find and delete a ChatMessage
             let messages = try database.read { db in
-                try ChatMessageModel.where { $0.id.eq(messageIdB64) }.fetchAll(db)
+                try ChatMessageModel.where { $0.externalId.eq(messageIdB64) }.fetchAll(db)
             }
 
             if !messages.isEmpty {

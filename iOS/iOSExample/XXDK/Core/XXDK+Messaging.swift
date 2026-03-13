@@ -29,7 +29,8 @@ extension XXDK {
                     try MessageReactionModel.insert { reaction }.execute(db)
                 }
             } catch {
-                AppLogger.messaging.error("persistReaction failed: \(error.localizedDescription, privacy: .public)")
+                AppLogger.messaging.error(
+                    "persistReaction failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -41,7 +42,7 @@ extension XXDK {
         }
         let channelIdData =
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-                ?? Data()
+            ?? Data()
         guard let encodedMsg = encodeMessage("<p>\(msg)</p>") else {
             AppLogger.messaging.error("sendDM(channel): failed to encode message")
             return
@@ -55,8 +56,10 @@ extension XXDK {
                 pingsJSON: nil
             )
         } catch {
-            AppLogger.messaging.error("sendDM(channel) failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.messaging.error(
+                "sendDM(channel) failed: \(error.localizedDescription, privacy: .public)")
         }
+
     }
 
     // Send a reply to a specific message in a channel
@@ -66,7 +69,7 @@ extension XXDK {
         }
         let channelIdData =
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-                ?? Data()
+            ?? Data()
         guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
         else {
             return
@@ -86,10 +89,12 @@ extension XXDK {
             )
             if let report {
                 if let mid = report.messageID {
-                } else {}
+                } else {
+                }
             }
         } catch {
-            AppLogger.messaging.error("sendReply(channel) failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.messaging.error(
+                "sendReply(channel) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -106,7 +111,7 @@ extension XXDK {
         }
         let channelIdData =
             Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-                ?? Data()
+            ?? Data()
         guard let targetMessageId = Data(base64Encoded: toMessageIdB64) else {
             return
         }
@@ -127,7 +132,8 @@ extension XXDK {
                 )
             }
         } catch {
-            AppLogger.messaging.error("sendReaction(channel) failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.messaging.error(
+                "sendReaction(channel) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -136,11 +142,15 @@ extension XXDK {
             AppLogger.messaging.critical("DM not there")
             fatalError("DM not there")
         }
+        guard let encodedMsg = encodeMessage("<p>\(msg)</p>") else {
+            AppLogger.messaging.error("sendDM(DM): failed to encode message")
+            return
+        }
         do {
             let report = try DM.sendText(
                 toPubKey,
                 partnerToken: partnerToken,
-                message: msg,
+                message: encodedMsg,
                 leaseTimeMS: 0,
                 cmixParamsJSON: "".data
             )
@@ -157,7 +167,8 @@ extension XXDK {
                 }()
             }
         } catch {
-            AppLogger.messaging.error("Unable to send: \(error.localizedDescription, privacy: .public)")
+            AppLogger.messaging.error(
+                "Unable to send: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -204,7 +215,8 @@ extension XXDK {
                 AppLogger.messaging.warning("DM sendReply returned no messageID")
             }
         } catch {
-            AppLogger.messaging.critical("Unable to send reply: \(error.localizedDescription, privacy: .public)")
+            AppLogger.messaging.critical(
+                "Unable to send reply: \(error.localizedDescription, privacy: .public)")
             fatalError("Unable to send reply: " + error.localizedDescription)
         }
     }
@@ -240,7 +252,8 @@ extension XXDK {
                 )
             }
         } catch {
-            AppLogger.messaging.critical("Unable to send reaction: \(error.localizedDescription, privacy: .public)")
+            AppLogger.messaging.critical(
+                "Unable to send reaction: \(error.localizedDescription, privacy: .public)")
             fatalError("Unable to send reaction: " + error.localizedDescription)
         }
     }
@@ -257,9 +270,11 @@ extension XXDK {
         }
 
         do {
-            try channelsManager.deleteMessage(channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
+            try channelsManager.deleteMessage(
+                channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data)
         } catch {
-            AppLogger.messaging.error("deleteMessage failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.messaging.error(
+                "deleteMessage failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

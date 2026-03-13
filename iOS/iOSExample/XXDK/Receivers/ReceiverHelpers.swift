@@ -106,10 +106,11 @@ class ReceiverHelpers {
         sender: MessageSenderModel?,
         text: String,
         messageId: String,
-        internalId: Int64,
+        id: Int64,
         senderPubKey: Data?,
         replyTo: String? = nil,
-        timestamp: Int64? = nil
+        timestamp: Int64? = nil,
+        status: Int64
     ) throws -> ChatMessageModel {
         let isIncoming = !isSenderSelf(senderPubKey: senderPubKey)
 
@@ -120,10 +121,11 @@ class ReceiverHelpers {
                 isIncoming: isIncoming,
                 chatId: chat.id,
                 senderId: sender?.id,
-                id: messageId,
-                internalId: internalId,
+                id: id,
+                externalId: messageId,
                 replyTo: replyTo,
-                timestamp: timestamp
+                timestamp: timestamp,
+                status: status
             )
         } else {
             msg = ChatMessageModel(
@@ -131,9 +133,10 @@ class ReceiverHelpers {
                 isIncoming: isIncoming,
                 chatId: chat.id,
                 senderId: sender?.id,
-                id: messageId,
-                internalId: internalId,
-                replyTo: replyTo
+                id: id,
+                externalId: messageId,
+                replyTo: replyTo,
+                status: status
             )
         }
 
@@ -172,7 +175,8 @@ class ReceiverHelpers {
         dmToken: Int32,
         color: Int,
         replyTo: String? = nil,
-        timestamp: Int64? = nil
+        timestamp: Int64? = nil,
+        status: Int64
     ) throws -> ChatMessageModel {
         var sender: MessageSenderModel? = nil
         if let senderCodename, let senderPubKey {
@@ -185,16 +189,17 @@ class ReceiverHelpers {
             )
         }
 
-        let internalId = InternalIdGenerator.shared.next()
+        let id = InternalIdGenerator.shared.next()
         return try insertMessage(
             chat: chat,
             sender: sender,
             text: text,
             messageId: messageId,
-            internalId: internalId,
+            id: id,
             senderPubKey: senderPubKey,
             replyTo: replyTo,
-            timestamp: timestamp
+            timestamp: timestamp,
+            status: status
         )
     }
 }

@@ -26,6 +26,7 @@ extension XXDK {
             fatalError("no secret manager")
         }
         let secret = try! appStorage.getPassword().data
+
         let defaultParamsJSON = Bindings.BindingsGetDefaultCMixParams()
         var params = try! Parser.decode(CMixParamsJSON.self, from: defaultParamsJSON ?? Data())
 
@@ -37,9 +38,11 @@ extension XXDK {
             }
             await progress(.settingUpCmix)
             do {
-                try BindingsStatic.newCmix(ndf: downloadedNdf, stateDir: stateDir.path, secret: secret, backup: "")
+                try BindingsStatic.newCmix(
+                    ndf: downloadedNdf, stateDir: stateDir.path, secret: secret, backup: "")
             } catch {
-                AppLogger.network.critical("could not create new Cmix: \(error.localizedDescription, privacy: .public)")
+                AppLogger.network.critical(
+                    "could not create new Cmix: \(error.localizedDescription, privacy: .public)")
                 fatalError("could not create new Cmix: " + error.localizedDescription)
             }
         }
@@ -47,9 +50,11 @@ extension XXDK {
         await progress(.loadingCmix)
         let loadedCmix: Bindings.BindingsCmix?
         do {
-            loadedCmix = try BindingsStatic.loadCmix(stateDir: stateDir.path, secret: secret, paramsJSON: cmixParamsJSON)
+            loadedCmix = try BindingsStatic.loadCmix(
+                stateDir: stateDir.path, secret: secret, paramsJSON: cmixParamsJSON)
         } catch {
-            AppLogger.network.critical("could not load Cmix: \(error.localizedDescription, privacy: .public)")
+            AppLogger.network.critical(
+                "could not load Cmix: \(error.localizedDescription, privacy: .public)")
             fatalError("could not load Cmix: " + error.localizedDescription)
         }
         await MainActor.run {
@@ -70,11 +75,13 @@ extension XXDK {
             try cmix.startNetworkFollower(50000)
             cmix.wait(forNetwork: 10 * 60 * 1000)
         } catch {
-            AppLogger.network.critical("cannot start network: \(error.localizedDescription, privacy: .public)")
+            AppLogger.network.critical(
+                "cannot start network: \(error.localizedDescription, privacy: .public)")
             fatalError("cannot start network: " + error.localizedDescription)
         }
 
         await progress(.networkFollowerComplete)
+
     }
 
     // downloadNdf uses the mainnet URL to download and verify the
@@ -84,7 +91,8 @@ extension XXDK {
         do {
             certString = try String(contentsOfFile: certFilePath)
         } catch {
-            AppLogger.network.critical("Missing network certificate: \(error.localizedDescription, privacy: .public)")
+            AppLogger.network.critical(
+                "Missing network certificate: \(error.localizedDescription, privacy: .public)")
             fatalError(
                 "Missing network certificate, please include a mainnet, testnet,"
                     + "or localnet certificate in the Resources folder: "
@@ -93,13 +101,17 @@ extension XXDK {
         }
 
         do {
-            guard let ndf = try BindingsStatic.downloadAndVerifySignedNdf(url: url, cert: certString) else {
+            guard
+                let ndf = try BindingsStatic.downloadAndVerifySignedNdf(url: url, cert: certString)
+            else {
                 AppLogger.network.critical("DownloadAndVerifySignedNdfWithUrl returned nil")
                 fatalError("DownloadAndVerifySignedNdfWithUrl returned nil")
             }
             return ndf
         } catch {
-            AppLogger.network.critical("DownloadAndVerifySignedNdfWithUrl failed: \(error.localizedDescription, privacy: .public)")
+            AppLogger.network.critical(
+                "DownloadAndVerifySignedNdfWithUrl failed: \(error.localizedDescription, privacy: .public)"
+            )
             fatalError("DownloadAndVerifySignedNdfWithUrl failed: " + error.localizedDescription)
         }
     }

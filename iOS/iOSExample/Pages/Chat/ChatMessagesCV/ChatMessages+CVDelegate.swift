@@ -210,7 +210,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
         if case .text(let message) = item,
             let highlightId = self.highlightMessageId,
-            message.message.internalId == highlightId
+            message.message.id == highlightId
         {
             if let textCell = cell as? TextCell {
                 textCell.highlight()

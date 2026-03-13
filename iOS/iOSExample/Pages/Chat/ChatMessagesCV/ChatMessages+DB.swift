@@ -17,12 +17,16 @@ extension ChatMessagesVC {
         // Data obervation and initialization
         let observation = ValueObservation.tracking { db in
             try ChatMessageModel
-                .where { $0.chatId.eq(self.chatId) }
+                .where {
+                    $0.chatId.eq(self.chatId)
+                        && ($0.status.eq(MessageStatus.delivered)
+                            || $0.status.eq(MessageStatus.sent))
+                }
                 .join(MessageSenderModel.all) { message, sender in
                     message.senderId.eq(sender.id)
                 }
                 .leftJoin(ChatMessageModel.as(ReplyTo.self).all) { message, _, reply in
-                    message.replyTo.eq(reply.id)
+                    message.replyTo.eq(reply.externalId)
                 }
                 .select { message, sender, reply in
                     (message, sender.codename, reply, sender.color)  // reply is optional (LEFT JOIN)
@@ -86,7 +90,7 @@ extension ChatMessagesVC {
                     // find new index of same element
                     let newIndex = snapshot.itemIdentifiers.firstIndex(where: {
                         guard case .text(let m) = $0 else { return false }
-                        return m.message.internalId == message.message.internalId
+                        return m.message.id == message.message.id
                     })
                     let prevEleAttr = layout.layoutAttributesForItem(
                         at: layout.prevIndexForBackUpPoint.idxPath())
@@ -121,7 +125,7 @@ extension ChatMessagesVC {
             if let targetId = self.targetScrollMessageId,
                 let index = snapshot.itemIdentifiers.firstIndex(where: {
                     if case .text(let m) = $0 {
-                        return m.message.internalId == targetId
+                        return m.message.id == targetId
                     }
                     return false
                 })
@@ -132,7 +136,7 @@ extension ChatMessagesVC {
                     let indexPath = index.idxPath()
                     self.cv.scrollToItem(
                         at: indexPath, at: .centeredVertically, animated: true)
-                    
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         if let cell = self.cv.cellForItem(at: indexPath) as? TextCell {
                             if self.highlightMessageId == targetId {
