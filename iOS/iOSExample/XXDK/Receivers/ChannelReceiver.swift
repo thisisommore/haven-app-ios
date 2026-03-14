@@ -8,23 +8,13 @@ extension Notification.Name {
   static let userMuteStatusChanged = Notification.Name("userMuteStatusChanged")
 }
 
-final class ChannelEventModelBuilder: NSObject, BindingsEventModelBuilderProtocol {
-  private var r: ChannelEventModel
-
-  init(model: ChannelEventModel) {
-    self.r = model
-    super.init()
-  }
-
-  func build(_: String?) -> (any BindingsEventModelProtocol)? {
-    return self.r
-  }
-}
-
-final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
+final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, BindingsEventModelBuilderProtocol {
   // Optional SwiftData container for persisting chats/messages
   @Dependency(\.defaultDatabase) private var database
   private let receiverHelpers = ReceiverHelpers()
+  func build(_: String?) -> BindingsEventModelProtocol? {
+    return self
+  }
 
   // MARK: - Helper Methods
 

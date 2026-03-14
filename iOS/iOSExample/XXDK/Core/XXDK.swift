@@ -26,9 +26,7 @@ final class XXDK: XXDKP {
   var cmix: Bindings.BindingsCmix?
   var DM: BindingsDMClientWrapper?
   var dmReceiver = DMReceiver()
-  var eventModelBuilder = ChannelEventModelBuilder(
-    model: ChannelEventModel()
-  )
+  var eventModelBuilder = ChannelEventModelBuilder()
   var channelsManager: BindingsChannelsManagerWrapper?
   var channelUICallbacks: ChannelUICallbacks
   var appStorage: AppStorage?

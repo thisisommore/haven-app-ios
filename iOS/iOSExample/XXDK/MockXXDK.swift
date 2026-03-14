@@ -22,7 +22,7 @@ final class XXDKMock: XXDKP {
   @Published var statusPercentage: Double = 0
   func setStates(appStorage _: AppStorage) {
     // Retain container and inject into receivers/callbacks
-    self.eventModelBuilder = ChannelEventModelBuilder(model: ChannelEventModel())
+    self.eventModelBuilder = ChannelEventModelBuilder()
   }
 
   func sendDM(msg _: String, toPubKey _: Data, partnerToken _: Int32) {}
