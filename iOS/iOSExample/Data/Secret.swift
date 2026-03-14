@@ -88,7 +88,7 @@ class AppStorage: ObservableObject {
 
     guard let existingItem = item as? [String: Any],
           let passwordData = existingItem[kSecValueData as String] as? Data,
-          let password = String(data: passwordData, encoding: .utf8)
+          let password = try? passwordData.utf8()
     else {
       throw KeychainError.unexpectedPasswordData
     }

@@ -58,21 +58,21 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
       if let pretty = try? JSONSerialization.data(
         withJSONObject: jsonObject, options: [.prettyPrinted]
       ),
-        let prettyStr = String(data: pretty, encoding: .utf8)
+        let prettyStr = try? pretty.utf8()
       {
         return prettyStr
       }
     }
 
     // 2) If that failed, try to interpret the data as a UTF-8 string that is base64 of JSON
-    if let asString = String(data: data, encoding: .utf8) {
+    if let asString = try? data.utf8() {
       // Attempt base64 decode
       if let b64Data = Data(base64Encoded: asString) {
         if let jsonObject = try? JSONSerialization.jsonObject(with: b64Data, options: []),
            let pretty = try? JSONSerialization.data(
              withJSONObject: jsonObject, options: [.prettyPrinted]
            ),
-           let prettyStr = String(data: pretty, encoding: .utf8)
+           let prettyStr = try? pretty.utf8()
         {
           return prettyStr
         }
@@ -83,7 +83,7 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
          let pretty = try? JSONSerialization.data(
            withJSONObject: jsonObject, options: [.prettyPrinted]
          ),
-         let prettyStr = String(data: pretty, encoding: .utf8)
+         let prettyStr = try? pretty.utf8()
       {
         return prettyStr
       }

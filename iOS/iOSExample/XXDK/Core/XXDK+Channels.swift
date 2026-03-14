@@ -215,7 +215,7 @@ extension XXDK {
     let result = try channelsManager.exportChannelAdminKey(
       channelIdData, encryptionPassword: encryptionPassword
     )
-    return String(data: result, encoding: .utf8) ?? ""
+    return try result.utf8()
   }
 
   /// Import an admin key for a channel

@@ -21,7 +21,7 @@ struct TextFileDocument: FileDocument {
 
   init(configuration: ReadConfiguration) throws {
     if let data = configuration.file.regularFileContents {
-      self.text = String(data: data, encoding: .utf8) ?? ""
+      self.text = try data.utf8()
     } else {
       self.text = ""
     }

@@ -25,6 +25,7 @@ enum XXDKError: LocalizedError {
   case pubkeyRequired
   case loadNotificationsDummyFailed(String)
   case loadChannelsManagerFailed(String)
+  case invalidUTF8
   case custom(String)
 
   var errorDescription: String? {
@@ -45,6 +46,7 @@ enum XXDKError: LocalizedError {
     case let .loadNotificationsDummyFailed(msg):
       return "could not load notifications dummy: \(msg)"
     case let .loadChannelsManagerFailed(msg): return "could not load channels manager: \(msg)"
+    case .invalidUTF8: return "invalid UTF-8"
     case let .custom(msg): return msg
     }
   }

@@ -142,7 +142,7 @@ enum BindingsStatic {
   /// Cmix
   static func newCmix(ndf: Data, stateDir: String, secret: Data, backup: String) throws {
     var err: NSError?
-    Bindings.BindingsNewCmix(ndf.utf8, stateDir, secret, backup, &err)
+    try Bindings.BindingsNewCmix(ndf.utf8(), stateDir, secret, backup, &err)
     if let err { throw err }
   }
 

@@ -74,7 +74,11 @@ extension StringProtocol {
 }
 
 extension DataProtocol {
-  var utf8: String {
-    String(decoding: self, as: UTF8.self)
+  func utf8() throws -> String {
+    let result = String(bytes: self, encoding: .utf8)
+    guard let result else {
+      throw XXDKError.invalidUTF8
+    }
+    return result
   }
 }

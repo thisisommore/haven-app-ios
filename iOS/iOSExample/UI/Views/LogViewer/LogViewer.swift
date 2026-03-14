@@ -40,7 +40,7 @@ class LogViewer: ObservableObject {
         // This is dumb but we're processing each line,
         // stripping off the OSLOG prefix up to the first tab (\t)
         // then adding it to the buffer
-        let str = String(data: data, encoding: String.Encoding.utf8) ?? "empty data"
+        let str = (try? data.utf8()) ?? "empty data"
         let lines = str.split(separator: "\n")
         for line in lines {
           let idx = line.firstIndex(of: "\t")

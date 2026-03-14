@@ -191,7 +191,7 @@ extension XXDK {
           AppLogger.identity.critical("storageTagListener or its data is nil")
           fatalError("storageTagListener or its data is nil")
         }
-        let storageTagString = storageTagData.utf8
+        let storageTagString = try storageTagData.utf8()
         let cm: Bindings.BindingsChannelsManager?
         do {
           cm = try BindingsStatic.loadChannelsManager(

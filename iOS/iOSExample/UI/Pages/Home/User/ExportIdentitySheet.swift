@@ -138,7 +138,7 @@ struct ExportIdentitySheet<T: XXDKP>: View {
   private func exportToFile() {
     do {
       let data = try xxdk.exportIdentity(password: self.encryptionPassword)
-      self.exportedText = String(data: data, encoding: .utf8) ?? ""
+      self.exportedText = try data.utf8()
       self.errorMessage = nil
       self.showFileExporter = true
     } catch {
@@ -149,7 +149,7 @@ struct ExportIdentitySheet<T: XXDKP>: View {
   private func copyToClipboard() {
     do {
       let data = try xxdk.exportIdentity(password: self.encryptionPassword)
-      UIPasteboard.general.string = String(data: data, encoding: .utf8) ?? ""
+      UIPasteboard.general.string = try data.utf8()
       self.errorMessage = nil
       self.onSuccess("Copied to Clipboard")
       self.dismiss()
