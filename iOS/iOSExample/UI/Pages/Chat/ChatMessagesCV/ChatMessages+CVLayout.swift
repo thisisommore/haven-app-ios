@@ -93,8 +93,7 @@ final class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
 
       let item = dataSource.itemIdentifier(for: index.idxPath())
       if attributes.frame.intersects(collectionView!.bounds),
-         case .text = item
-      {
+         case .text = item {
         self.prevIndexForBackUpPoint = index
       }
     }
@@ -119,8 +118,7 @@ final class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
   }
 
   override func layoutAttributesForElements(in rect: CGRect)
-    -> [UICollectionViewLayoutAttributes]?
-  {
+    -> [UICollectionViewLayoutAttributes]? {
     var attributesArray = [UICollectionViewLayoutAttributes]()
 
     guard let lastIndex = cachedAttributes.indices.last,
@@ -156,14 +154,12 @@ final class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
   }
 
   override func layoutAttributesForItem(at indexPath: IndexPath)
-    -> UICollectionViewLayoutAttributes?
-  {
+    -> UICollectionViewLayoutAttributes? {
     return self.cachedAttributes[indexPath.item]
   }
 
   override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint)
-    -> CGPoint
-  {
+    -> CGPoint {
     let relocatedElementAttrs: UICollectionViewLayoutAttributes? = self.layoutAttributesForItem(
       at: self.newIndexForBackUpPoint.idxPath()
     )

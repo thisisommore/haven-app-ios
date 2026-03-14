@@ -277,8 +277,7 @@ struct ChatBackgroundPickerView<T: XXDKP>: View {
   private var imagePicker: some View {
     VStack(spacing: 16) {
       if let data = settings.customImageData,
-         let uiImage = UIImage(data: data)
-      {
+         let uiImage = UIImage(data: data) {
         Image(uiImage: uiImage)
           .resizable()
           .aspectRatio(contentMode: .fill)
@@ -359,8 +358,7 @@ struct ChatBackgroundView: View {
 
       case .customImage:
         if let data = settings.customImageData,
-           let uiImage = UIImage(data: data)
-        {
+           let uiImage = UIImage(data: data) {
           Image(uiImage: uiImage)
             .resizable()
             .aspectRatio(contentMode: .fill)

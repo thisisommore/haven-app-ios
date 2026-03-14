@@ -144,8 +144,7 @@ struct QRCodeView: View {
 
   private func presentActivityVC(_ activityVC: UIActivityViewController) {
     if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-       let rootVC = windowScene.windows.first?.rootViewController
-    {
+       let rootVC = windowScene.windows.first?.rootViewController {
       var topVC = rootVC
       while let presented = topVC.presentedViewController {
         topVC = presented

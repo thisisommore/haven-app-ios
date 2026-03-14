@@ -170,8 +170,7 @@ struct ChannelInviteLinkPreview<T: XXDKP>: View {
 
       // Try matching by channelId first
       if let channel = try? xxdk.getChannelFromURL(url: link.url),
-         let channelId = channel.ChannelID
-      {
+         let channelId = channel.ChannelID {
         if let existingChat = allChats.first(where: { $0.id == channelId }) {
           self.isAlreadyJoined = true
           self.existingChatId = existingChat.id

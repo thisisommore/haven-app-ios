@@ -164,8 +164,7 @@ struct ChatView<T: XXDKP>: View {
     .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) {
       notification in
       if let channelID = notification.userInfo?["channelID"] as? String,
-         channelID == chatId
-      {
+         channelID == chatId {
         guard self.isChannel else { return }
         self.isMuted = self.xxdk.isMuted(channelId: self.chatId)
       }

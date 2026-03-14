@@ -93,8 +93,7 @@ extension XXDK {
         pingsJSON: nil
       )
       if let report {
-        if let mid = report.messageID
-        {} else {}
+        if let mid = report.messageID {} else {}
       }
     } catch {
       AppLogger.messaging.error(

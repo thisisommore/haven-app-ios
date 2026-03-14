@@ -220,8 +220,7 @@ extension XXDK {
 
   /// Import an admin key for a channel
   func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
-    throws
-  {
+    throws {
     guard let channelsManager
     else {
       throw XXDKError.channelManagerNotInitialized

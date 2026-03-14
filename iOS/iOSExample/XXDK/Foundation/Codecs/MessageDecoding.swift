@@ -57,8 +57,7 @@ func decodeMessage(_ b64: String) -> String? {
   // Check if it looks like zlib/deflate (starts with 0x78)
   if data.count > 0, data[0] == 0x78 {
     if let decompressed = decompressZlib(data),
-       let utf8String = try? decompressed.utf8()
-    {
+       let utf8String = try? decompressed.utf8() {
       return utf8String
     }
   }

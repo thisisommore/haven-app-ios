@@ -53,13 +53,11 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
 
     // 1) Try raw JSON bytes first
     if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
-       JSONSerialization.isValidJSONObject(jsonObject) == false || true
-    { // allow any JSON object
+       JSONSerialization.isValidJSONObject(jsonObject) == false || true { // allow any JSON object
       if let pretty = try? JSONSerialization.data(
         withJSONObject: jsonObject, options: [.prettyPrinted]
       ),
-        let prettyStr = try? pretty.utf8()
-      {
+        let prettyStr = try? pretty.utf8() {
         return prettyStr
       }
     }
@@ -72,8 +70,7 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
            let pretty = try? JSONSerialization.data(
              withJSONObject: jsonObject, options: [.prettyPrinted]
            ),
-           let prettyStr = try? pretty.utf8()
-        {
+           let prettyStr = try? pretty.utf8() {
           return prettyStr
         }
       }
@@ -83,8 +80,7 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
          let pretty = try? JSONSerialization.data(
            withJSONObject: jsonObject, options: [.prettyPrinted]
          ),
-         let prettyStr = try? pretty.utf8()
-      {
+         let prettyStr = try? pretty.utf8() {
         return prettyStr
       }
     }

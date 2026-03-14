@@ -100,8 +100,7 @@ final class ChatBackgroundSettings: ObservableObject {
 
   private init() {
     if let typeRaw = UserDefaults.standard.string(forKey: typeKey),
-       let type = ChatBackgroundType(rawValue: typeRaw)
-    {
+       let type = ChatBackgroundType(rawValue: typeRaw) {
       self.backgroundType = type
     } else {
       self.backgroundType = .solidColor

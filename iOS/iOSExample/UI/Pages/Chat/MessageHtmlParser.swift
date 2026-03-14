@@ -549,8 +549,7 @@ private struct NewMessageHTMLParserState {
         self.skipSpaces(in: rawAttributes, index: &index)
 
         if index < rawAttributes.endIndex,
-           rawAttributes[index] == "\"" || rawAttributes[index] == "'"
-        {
+           rawAttributes[index] == "\"" || rawAttributes[index] == "'" {
           let quote = rawAttributes[index]
           index = rawAttributes.index(after: index)
           let valueStart = index
@@ -621,8 +620,7 @@ enum NewMessageHTMLEntityDecoder {
     while index < raw.endIndex {
       if raw[index] == "&",
          let semicolon = raw[index...].firstIndex(of: ";"),
-         raw.distance(from: index, to: semicolon) <= 16
-      {
+         raw.distance(from: index, to: semicolon) <= 16 {
         let entityStart = raw.index(after: index)
         let entity = String(raw[entityStart ..< semicolon])
 

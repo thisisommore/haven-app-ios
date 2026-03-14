@@ -100,8 +100,7 @@ final class TextCell: UICollectionViewCell {
   static func size(
     text: NSAttributedString, sender: String?, replyPreview: String? = nil, width: CGFloat
   )
-    -> CGSize
-  {
+    -> CGSize {
     let availableWidth = width - self.paddingXCal
     let senderNameR: CGRect = {
       guard let sender
@@ -360,8 +359,7 @@ extension TextCell {
 
 extension TextCell: UITextViewDelegate {
   func textView(_: UITextView, shouldInteractWith URL: URL, in _: NSRange)
-    -> Bool
-  {
+    -> Bool {
     self.onLinkTapped?(URL)
     return false
   }

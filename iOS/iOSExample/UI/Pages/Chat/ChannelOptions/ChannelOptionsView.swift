@@ -392,8 +392,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         notification in
         guard let channelId = chat?.id else { return }
         if let notificationChannelID = notification.userInfo?["channelID"] as? String,
-           notificationChannelID == channelId
-        {
+           notificationChannelID == channelId {
           do {
             self.mutedUsers = try self.xxdk.getMutedUsers(channelId: channelId)
           } catch {

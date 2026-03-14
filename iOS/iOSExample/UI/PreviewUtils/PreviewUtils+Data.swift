@@ -14,8 +14,7 @@ private typealias PreviewMessageFactory = (
 ) -> ChatMessageModel
 
 private func makePreviewIncomingMessageFactory(chatId: String, senderId: String)
-  -> PreviewMessageFactory
-{
+  -> PreviewMessageFactory {
   { message, externalId, replyTo in
     ChatMessageModel(
       message: message,

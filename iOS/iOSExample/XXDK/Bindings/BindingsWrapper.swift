@@ -147,8 +147,7 @@ enum BindingsStatic {
   }
 
   static func loadCmix(stateDir: String, secret: Data, paramsJSON: Data) throws -> Bindings
-    .BindingsCmix?
-  {
+    .BindingsCmix? {
     var err: NSError?
     let result = Bindings.BindingsLoadCmix(stateDir, secret, paramsJSON, &err)
     if let err { throw err }
@@ -224,8 +223,7 @@ final class BindingsChannelsManagerWrapper {
   }
 
   func getShareURL(_ cmixId: Int, host: String, maxUses: Int, channelIdBytes: Data) throws
-    -> ShareURLJSON?
-  {
+    -> ShareURLJSON? {
     let data = try inner.getShareURL(
       cmixId, host: host, maxUses: maxUses, channelIdBytes: channelIdBytes
     )
@@ -308,8 +306,7 @@ final class BindingsChannelsManagerWrapper {
   }
 
   func deleteMessage(_ channelIdData: Data, targetMessageIdBytes: Data, cmixParamsJSON: Data)
-    throws
-  {
+    throws {
     try self.inner.deleteMessage(
       channelIdData, targetMessageIdBytes: targetMessageIdBytes,
       cmixParamsJSON: cmixParamsJSON

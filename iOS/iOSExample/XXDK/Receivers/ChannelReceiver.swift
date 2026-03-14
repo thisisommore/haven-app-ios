@@ -56,8 +56,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         message.externalId = newMessageId
       }
       if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
-         let newStatus = MessageStatus(rawValue: newStatusRaw)
-      {
+         let newStatus = MessageStatus(rawValue: newStatusRaw) {
         message.status = newStatus
       }
       try self.database.write { db in
@@ -269,8 +268,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
       let record: MessageReactionModel
       if var canonical = sameSenderReactions.first(where: { $0.id == reactionMessageId })
-        ?? sameSenderReactions.first
-      {
+        ?? sameSenderReactions.first {
         if canonical.id != reactionMessageId {
           canonical.id = reactionMessageId
         }

@@ -60,8 +60,7 @@ struct MessageForm<T: XXDKP>: View {
           .padding(.trailing, 8)
 
         if !self.abc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-          && !self.isSendingMessage
-        {
+          && !self.isSendingMessage {
           Button(action: self.sendMessage) {
             Image(systemName: "chevron.right")
               .padding(.vertical, 4)

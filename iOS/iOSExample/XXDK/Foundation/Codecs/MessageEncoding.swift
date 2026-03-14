@@ -94,6 +94,5 @@ func encodeAny(message: String = "Hello, World!") {
 
   // Test round-trip
   if let encodedCompressed = encodeMessage(message, compress: true),
-     let decoded = decodeMessage(encodedCompressed)
-  {}
+     let decoded = decodeMessage(encodedCompressed) {}
 }

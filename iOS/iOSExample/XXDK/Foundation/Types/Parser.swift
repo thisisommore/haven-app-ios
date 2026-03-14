@@ -36,8 +36,7 @@ struct IsReadyInfoJSON: Decodable {
     } else if let i = try? container.decode(Int.self, forKey: .HowClose) {
       self.HowClose = Double(i)
     } else if let s = try? container.decode(String.self, forKey: .HowClose),
-              let d = Double(s)
-    {
+              let d = Double(s) {
       self.HowClose = d
     } else {
       throw DecodingError.dataCorruptedError(

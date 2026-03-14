@@ -135,8 +135,7 @@ extension ChatMessagesVC {
              return m.message.id == targetId
            }
            return false
-         })
-      {
+         }) {
         self.highlightMessageId = targetId
         // Use async to ensure layout is updated before scrolling
         DispatchQueue.main.async {

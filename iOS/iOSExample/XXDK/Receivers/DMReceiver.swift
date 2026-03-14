@@ -23,8 +23,7 @@ struct ReceivedMessage: Identifiable {
 }
 
 final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
-  .BindingsDmCallbacksProtocol, Bindings.BindingsDMReceiverBuilderProtocol
-{
+  .BindingsDmCallbacksProtocol, Bindings.BindingsDMReceiverBuilderProtocol {
   func build(_: String?) -> (any BindingsDMReceiverProtocol)? {
     return self
   }

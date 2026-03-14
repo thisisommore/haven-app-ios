@@ -63,8 +63,7 @@ struct HomeView<T: XXDKP>: View {
           try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.nickname
         }),
         !nickname.isEmpty,
-        nickname.localizedCaseInsensitiveContains(searchText)
-      {
+        nickname.localizedCaseInsensitiveContains(searchText) {
         return true
       }
       return false
@@ -80,8 +79,7 @@ struct HomeView<T: XXDKP>: View {
     }
     .onChange(of: self.selectedChat.chatId) { _, newValue in
       if let chatId = newValue,
-         let chat = chats.first(where: { $0.id == chatId })
-      {
+         let chat = chats.first(where: { $0.id == chatId }) {
         self.selectedChat.chatTitle = chat.name
       }
     }

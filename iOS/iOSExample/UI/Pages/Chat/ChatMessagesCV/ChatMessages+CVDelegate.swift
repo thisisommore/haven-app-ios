@@ -45,8 +45,7 @@ extension ChatMessagesVC {
   }
 
   private func bubbleShape(for message: MessageWithSender, at indexPath: IndexPath)
-    -> TextCell.BubbleShape
-  {
+    -> TextCell.BubbleShape {
     let nextMessage = dataSource.itemIdentifier(for: indexPath.next())
     let hasSenderNext: Bool = {
       guard let nextMessage, case let .text(nextTextMessage) = nextMessage
@@ -202,8 +201,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
   }
 
   private func previewForItem(at indexPath: IndexPath, in collectionView: UICollectionView)
-    -> UITargetedPreview?
-  {
+    -> UITargetedPreview? {
     let cell = collectionView.cellForItem(at: indexPath) as? CellWithContextMenu
     return cell?.makePreview()
   }
@@ -215,8 +213,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
     guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
     if case let .text(message) = item,
        let highlightId = highlightMessageId,
-       message.message.id == highlightId
-    {
+       message.message.id == highlightId {
       if let textCell = cell as? TextCell {
         textCell.highlight()
       }
