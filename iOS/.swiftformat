@@ -1,4 +1,3 @@
-# Require explicit self for Logger methods
 --indent 2
 --self insert
 --disable wrapMultilineStatementBraces
