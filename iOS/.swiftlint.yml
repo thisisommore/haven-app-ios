@@ -5,7 +5,6 @@ disabled_rules:
   - force_try
   - force_cast
   - identifier_name
-  - shorthand_operator
   - cyclomatic_complexity
   - function_body_length
   - large_tuple
