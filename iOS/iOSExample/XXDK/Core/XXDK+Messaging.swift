@@ -94,8 +94,7 @@ extension XXDK {
       )
       if let report {
         if let mid = report.messageID
-        {}
-        else {}
+        {} else {}
       }
     } catch {
       AppLogger.messaging.error(

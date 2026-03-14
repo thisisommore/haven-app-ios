@@ -21,5 +21,4 @@ disabled_rules:
   - class_delegate_protocol
   - non_optional_string_data_conversion
   - inclusive_language
-  - statement_position
   - todo
