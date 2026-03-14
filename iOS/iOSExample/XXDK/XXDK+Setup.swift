@@ -18,10 +18,6 @@ extension XXDK {
 
     await progress(.loadingIdentity)
 
-    // Notifications
-
-    // Identity
-
     // Use provided private identity if available or use from ekv
     // Identity is usually provided for new user
     let privateIdentity: Data
@@ -29,9 +25,6 @@ extension XXDK {
       do {
         try cmix.ekvSet("MyPrivateIdentity", value: _privateIdentity)
       } catch {
-        AppLogger.identity.error(
-          "could not set ekv: \(error.localizedDescription, privacy: .public)"
-        )
         fatalError("could not set ekv: " + error.localizedDescription)
       }
       privateIdentity = _privateIdentity
@@ -39,9 +32,6 @@ extension XXDK {
       do {
         privateIdentity = try cmix.ekvGet("MyPrivateIdentity")
       } catch {
-        AppLogger.identity.error(
-          "could not get ekv: \(error.localizedDescription, privacy: .public)"
-        )
         fatalError("could not set ekv: " + error.localizedDescription)
       }
     }
@@ -50,9 +40,6 @@ extension XXDK {
     do {
       publicIdentity = try BindingsStatic.getPublicChannelIdentityFromPrivate(privateIdentity)
     } catch {
-      AppLogger.identity.error(
-        "could not derive public identity: \(error.localizedDescription, privacy: .public)"
-      )
       fatalError("could not derive public identity: " + error.localizedDescription)
     }
     if let identity = publicIdentity {
@@ -71,14 +58,10 @@ extension XXDK {
     do {
       notifications = try BindingsStatic.loadNotifications(cmix.getID())
     } catch {
-      AppLogger.identity.error(
-        "could not load notifications: \(error.localizedDescription, privacy: .public)"
-      )
       fatalError("could not load notifications: " + error.localizedDescription)
     }
     guard let notifications
     else {
-      AppLogger.identity.error("could not load notifications: returned nil")
       fatalError("could not load notifications: returned nil")
     }
 
@@ -99,14 +82,10 @@ extension XXDK {
           dmReceiver: dmReceiver
         )
       else {
-        AppLogger.identity.error("could not load dm client: returned nil")
         fatalError("could not load dm client: returned nil")
       }
       _dm = DirectMessage(DM: BindingsDMClientWrapper(dmClient))
     } catch {
-      AppLogger.identity.error(
-        "could not load dm client: \(error.localizedDescription, privacy: .public)"
-      )
       fatalError("could not load dm client: " + error.localizedDescription)
     }
 
@@ -117,7 +96,6 @@ extension XXDK {
     do {
       guard let kv = cmix.getRemoteKV()
       else {
-        AppLogger.identity.error("getRemoteKV returned nil")
         fatalError("getRemoteKV returned nil")
       }
       remoteKV = kv
@@ -128,9 +106,6 @@ extension XXDK {
         localEvents: true
       )
     } catch {
-      AppLogger.identity.error(
-        "failed to set storageTagListener: \(error.localizedDescription, privacy: .public)"
-      )
       fatalError("failed to set storageTagListener \(error)")
     }
 
@@ -153,9 +128,6 @@ extension XXDK {
             channelUICallbacks: channelUICallbacks
           )
         } catch {
-          AppLogger.identity.error(
-            "BindingsNewChannelsManager failed: \(error.localizedDescription, privacy: .public)"
-          )
           fatalError("BindingsNewChannelsManager failed: \(error.localizedDescription)")
         }
         guard let cm
@@ -176,9 +148,6 @@ extension XXDK {
         let entryData = try Parser.encode(entry)
         guard let remoteKV, let storageTagListener
         else {
-          AppLogger.identity.error(
-            "remoteKV/channelsManager/storageTagListener is nil"
-          )
           fatalError("remoteKV/channelsManager/storageTagListener is nil")
         }
         try remoteKV.set("channels-storage-tag", objectJSON: entryData)
@@ -187,7 +156,6 @@ extension XXDK {
       } else {
         guard let storageTagListener, let storageTagData = storageTagListener.data
         else {
-          AppLogger.identity.error("storageTagListener or its data is nil")
           fatalError("storageTagListener or its data is nil")
         }
         let storageTagString = try storageTagData.utf8()
@@ -202,14 +170,10 @@ extension XXDK {
             channelUICallbacks: channelUICallbacks
           )
         } catch {
-          AppLogger.identity.error(
-            "BindingsLoadChannelsManager failed: \(error.localizedDescription, privacy: .public)"
-          )
           fatalError("BindingsLoadChannelsManager failed: \(error.localizedDescription)")
         }
         guard let cm
         else {
-          AppLogger.identity.error("BindingsLoadChannelsManager returned nil")
           fatalError("BindingsLoadChannelsManager returned nil")
         }
         _channels = Channel(channelsManager: BindingsChannelsManagerWrapper(cm), cmixId: cmix.getID())
@@ -237,7 +201,6 @@ extension XXDK {
 
     guard let codename, let dm
     else {
-      AppLogger.identity.error("codename/DM/modelContainer not there")
       fatalError("codename/DM/modelContainer not there")
     }
     if !codename.isEmpty {
