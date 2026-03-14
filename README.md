@@ -115,3 +115,20 @@ Running
 ```
 swiftformat .
 ```
+
+## Linting
+
+SwiftLint is used to format Swift files
+https://github.com/realm/SwiftLint
+
+Installing
+
+```bash
+brew install swiftlint
+```
+
+Running
+
+```
+swiftlint .
+```
