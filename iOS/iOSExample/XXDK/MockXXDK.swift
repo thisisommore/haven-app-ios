@@ -170,7 +170,7 @@ final class XXDKMock: XXDKP {
   }
 
   var cmix: Bindings.BindingsCmix?
-  private var channelsManager: BindingsChannelsManagerWrapper?
+  var channelsManager: BindingsChannelsManagerWrapper?
   private var eventModelBuilder: ChannelEventModelBuilder?
   private var remoteKV: Bindings.BindingsRemoteKV?
   private var storageTagListener: RemoteKVKeyChangeListener?
@@ -182,7 +182,7 @@ final class XXDKMock: XXDKP {
 
   private var ndf: Data?
   var DM: BindingsDMClientWrapper?
-  private var dmReceiver: DMReceiver = .init()
+  var dmReceiver: DMReceiver = .init()
 
   /// Mock implementation of generateIdentities
   /// - Parameter amountOfIdentities: Number of identities to generate

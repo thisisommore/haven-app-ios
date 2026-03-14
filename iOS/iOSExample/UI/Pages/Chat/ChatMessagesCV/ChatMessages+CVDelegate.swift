@@ -9,11 +9,11 @@ import SQLiteData
 import UIKit
 
 extension ChatMessagesVC {
-  func text(for message: MessageWithSender) -> NSAttributedString {
+  private func text(for message: MessageWithSender) -> NSAttributedString {
     return self.text(for: message.message)
   }
 
-  func text(for message: ChatMessageModel) -> NSAttributedString {
+  private func text(for message: ChatMessageModel) -> NSAttributedString {
     let defaultAttributes: [NSAttributedString.Key: Any] = [
       .font: UIFont.systemFont(ofSize: 17),
       .foregroundColor: UIColor.label,
@@ -31,20 +31,20 @@ extension ChatMessagesVC {
     return NSAttributedString(string: plainText, attributes: defaultAttributes)
   }
 
-  func replyText(for message: MessageWithSender) -> String? {
+  private func replyText(for message: MessageWithSender) -> String? {
     guard let replyTo = message.replyTo else { return nil }
     return self.text(for: replyTo).string
   }
 
-  func time(for message: MessageWithSender) -> String {
+  private func time(for message: MessageWithSender) -> String {
     return message.message.timestamp.formatted(date: .omitted, time: .shortened)
   }
 
-  func sender(for message: MessageWithSender) -> String? {
+  private func sender(for message: MessageWithSender) -> String? {
     return message.sender
   }
 
-  func bubbleShape(for message: MessageWithSender, at indexPath: IndexPath)
+  private func bubbleShape(for message: MessageWithSender, at indexPath: IndexPath)
     -> TextCell.BubbleShape
   {
     let nextMessage = dataSource.itemIdentifier(for: indexPath.next())

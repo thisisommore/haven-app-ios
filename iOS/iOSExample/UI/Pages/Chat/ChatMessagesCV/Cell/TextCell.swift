@@ -19,8 +19,8 @@ final class TextCell: UICollectionViewCell {
   static let identifier = String(describing: TextCell.self)
   let label = UITextView()
   let timeLabel = UILabel()
-  let senderNameLabel = UILabel()
-  let replyPreviewLabel = UILabel()
+  private let senderNameLabel = UILabel()
+  private let replyPreviewLabel = UILabel()
   let replyImage = UIImageView(image: UIImage(systemName: "arrowshape.turn.up.left.circle.fill"))
   let container = UIView()
   var hasCrossedReplyThreshold = false
@@ -28,10 +28,10 @@ final class TextCell: UICollectionViewCell {
   var onReply: (() -> Void)?
   var onReplyPreviewClick: (() -> Void)?
   var onLinkTapped: ((URL) -> Void)?
-  static let paddingY: CGFloat = 4
-  static let paddingX: CGFloat = 8
-  static let paddingYCal = paddingY * 2
-  static let paddingXCal = paddingX * 2
+  private static let paddingY: CGFloat = 4
+  private static let paddingX: CGFloat = 8
+  private static let paddingYCal = paddingY * 2
+  private static let paddingXCal = paddingX * 2
   override init(frame: CGRect) {
     super.init(frame: frame)
     makeUI()
@@ -83,8 +83,8 @@ final class TextCell: UICollectionViewCell {
   private static let replySpacingToMessage: CGFloat = 6
   private static let replySpacingAboveMessage: CGFloat = 10
 
-  static let lastWidth: CGFloat = 0
-  static var timeRecCached: CGRect = .zero
+  private static let lastWidth: CGFloat = 0
+  private static var timeRecCached: CGRect = .zero
 
   private static func textRect(
     _ text: NSAttributedString,
@@ -161,7 +161,7 @@ final class TextCell: UICollectionViewCell {
 }
 
 extension TextCell {
-  func makeUI() {
+  private func makeUI() {
     contentView.addSubview(self.replyImage)
     contentView.addSubview(self.container)
     contentView.addSubview(self.replyPreviewLabel)

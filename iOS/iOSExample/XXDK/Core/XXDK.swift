@@ -17,21 +17,21 @@ final class XXDK: XXDKP {
   @Published var codename: String?
   @Published var codeset: Int = 0
   @Dependency(\.defaultDatabase) var database
-  private var downloadedNdf: Data?
-  private var nsLock = NSLock()
-  private var stateDir: URL
+  var downloadedNdf: Data?
+  var nsLock = NSLock()
+  var stateDir: URL
 
-  private var storageTagListener: RemoteKVKeyChangeListener?
-  private var remoteKV: Bindings.BindingsRemoteKV?
-  private var cmix: Bindings.BindingsCmix?
+  var storageTagListener: RemoteKVKeyChangeListener?
+  var remoteKV: Bindings.BindingsRemoteKV?
+  var cmix: Bindings.BindingsCmix?
   var DM: BindingsDMClientWrapper?
-  private var dmReceiver = DMReceiver()
-  private var eventModelBuilder = ChannelEventModelBuilder(
+  var dmReceiver = DMReceiver()
+  var eventModelBuilder = ChannelEventModelBuilder(
     model: ChannelEventModel()
   )
-  private var channelsManager: BindingsChannelsManagerWrapper?
-  private var channelUICallbacks: ChannelUICallbacks
-  private var appStorage: AppStorage?
+  var channelsManager: BindingsChannelsManagerWrapper?
+  var channelUICallbacks: ChannelUICallbacks
+  var appStorage: AppStorage?
 
   // MARK: - Init
 
@@ -48,7 +48,7 @@ final class XXDK: XXDKP {
   }
 
   /// Creates (or recreates) the xxAppState directory and returns its path.
-  static func setupStateDirectories() throws -> URL {
+  private static func setupStateDirectories() throws -> URL {
     let baseDir = try FileManager.default.url(
       for: .documentDirectory,
       in: .userDomainMask,

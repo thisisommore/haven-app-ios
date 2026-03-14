@@ -15,7 +15,7 @@ enum KeychainError: Error {
 }
 
 final class AppStorage: ObservableObject {
-  @Published var isPasswordSet: Bool = false
+  @Published private(set) var isPasswordSet: Bool = false
 
   private let serviceName = "internalPassword"
   private let setupCompleteKey = "isSetupComplete"

@@ -93,7 +93,7 @@ extension XXDK {
 
   /// downloadNdf uses the mainnet URL to download and verify the
   /// network definition file for the xx network.
-  func downloadNDF(url: String, certFilePath: String) -> Data {
+  private func downloadNDF(url: String, certFilePath: String) -> Data {
     let certString: String
     do {
       certString = try String(contentsOfFile: certFilePath)

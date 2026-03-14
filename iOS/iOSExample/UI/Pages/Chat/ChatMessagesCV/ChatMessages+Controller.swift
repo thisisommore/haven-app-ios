@@ -63,7 +63,7 @@ final class ChatMessagesVC: UIViewController {
   typealias Section = Int
   typealias Item = Message
   /// store this since cv.dataSource is weak
-  lazy var dataSource: DataSource = makeDataSource()
+  private(set) lazy var dataSource: DataSource = makeDataSource()
 
   // Database
   @Dependency(\.defaultDatabase) var database
@@ -74,7 +74,7 @@ final class ChatMessagesVC: UIViewController {
   var initDataDone = false
   var messages: [MessageWithSender] = []
   var cancellable: AnyDatabaseCancellable?
-  var isNearBottom: Bool = true
+  private(set) var isNearBottom: Bool = true
   var targetScrollMessageId: Int64?
   var highlightMessageId: Int64?
   //
@@ -100,7 +100,7 @@ final class ChatMessagesVC: UIViewController {
     return btn
   }()
 
-  var cv: UICollectionView
+  private(set) var cv: UICollectionView
   private var previousViewSize: CGFloat = 0
 
   init(chatId: String, onReply: @escaping ((ChatMessageModel) -> Void)) {

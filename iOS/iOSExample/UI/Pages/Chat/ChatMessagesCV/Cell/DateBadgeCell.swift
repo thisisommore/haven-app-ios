@@ -11,12 +11,12 @@ final class DateBadgeCell: UICollectionViewCell {
   static let identifier = String(describing: DateBadgeCell.self)
   private let container = UIView()
   let label = UILabel()
-  static let paddingT: CGFloat = 22
-  static let paddingB: CGFloat = 4
-  static let innerPaddingX: CGFloat = 12
-  static let innerPaddingY: CGFloat = 4
-  static let innerPaddingXCal = innerPaddingX * 2
-  static let innerPaddingYCal = innerPaddingY * 2
+  private static let paddingT: CGFloat = 22
+  private static let paddingB: CGFloat = 4
+  private static let innerPaddingX: CGFloat = 12
+  private static let innerPaddingY: CGFloat = 4
+  private static let innerPaddingXCal = innerPaddingX * 2
+  private static let innerPaddingYCal = innerPaddingY * 2
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -48,7 +48,7 @@ final class DateBadgeCell: UICollectionViewCell {
 }
 
 extension DateBadgeCell {
-  func makeUI() {
+  private func makeUI() {
     contentView.addSubview(self.container)
     self.container.addSubview(self.label)
 

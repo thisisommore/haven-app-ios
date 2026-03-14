@@ -40,7 +40,7 @@ final class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
   private var firstPrepare = true
   private var height: CGFloat = 0
   var newIndexForBackUpPoint = 0
-  var prevIndexForBackUpPoint = 0
+  private(set) var prevIndexForBackUpPoint = 0
 
   var backupPoint: CGPoint = .zero
   override var collectionViewContentSize: CGSize {

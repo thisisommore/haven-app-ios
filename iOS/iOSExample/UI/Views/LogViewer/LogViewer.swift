@@ -16,7 +16,7 @@ struct LogMessage: Identifiable {
 /// function
 @MainActor
 final class LogViewer: ObservableObject {
-  @Published var Messages: [LogMessage] = [LogMessage(Msg: "LogMessages")]
+  @Published private(set) var Messages: [LogMessage] = [LogMessage(Msg: "LogMessages")]
   private var size: Int
   private var count: UInt = 1
 
@@ -78,7 +78,7 @@ final class LogViewer: ObservableObject {
 final class OpenFileCloner: ObservableObject {
   private var input: Pipe
   private var origOut: Pipe
-  var Output: Pipe
+  private(set) var Output: Pipe
 
   init(fd: Int32) {
     self.input = Pipe()

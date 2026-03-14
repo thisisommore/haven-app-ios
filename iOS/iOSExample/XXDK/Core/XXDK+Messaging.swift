@@ -10,7 +10,7 @@ import SwiftData
 
 extension XXDK {
   /// Persist a reaction to SwiftData
-  func persistReaction(
+  private func persistReaction(
     messageIdB64: String,
     emoji: String,
     targetMessageId: String,
