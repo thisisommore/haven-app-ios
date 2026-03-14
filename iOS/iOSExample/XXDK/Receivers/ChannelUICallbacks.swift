@@ -75,8 +75,8 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
         }
       }
       // 3) If it's already UTF-8 JSON string, pretty print it by reparsing
-      if let strData = asString.data(using: .utf8),
-         let jsonObject = try? JSONSerialization.jsonObject(with: strData, options: []),
+      let strData = asString.data
+      if let jsonObject = try? JSONSerialization.jsonObject(with: strData, options: []),
          let pretty = try? JSONSerialization.data(
            withJSONObject: jsonObject, options: [.prettyPrinted]
          ),

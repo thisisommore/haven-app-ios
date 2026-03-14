@@ -69,8 +69,7 @@ extension XXDK {
     }
 
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-        ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
 
     do {
       try channelsManager.leaveChannel(channelIdData)
@@ -91,7 +90,7 @@ extension XXDK {
     }
 
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
 
     guard
       let shareURL = try channelsManager.getShareURL(
@@ -142,8 +141,7 @@ extension XXDK {
     }
 
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-        ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
 
     do {
       try channelsManager.enableDirectMessages(channelIdData)
@@ -160,8 +158,7 @@ extension XXDK {
     }
 
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-        ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
 
     do {
       try channelsManager.disableDirectMessages(channelIdData)
@@ -178,8 +175,7 @@ extension XXDK {
     }
 
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-        ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
 
     return try channelsManager.areDMsEnabled(channelIdData)
   }
@@ -191,7 +187,7 @@ extension XXDK {
       return false
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
 
     do {
       return try channelsManager.isChannelAdmin(channelIdData)
@@ -210,7 +206,7 @@ extension XXDK {
       throw XXDKError.channelManagerNotInitialized
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
 
     let result = try channelsManager.exportChannelAdminKey(
       channelIdData, encryptionPassword: encryptionPassword
@@ -226,8 +222,8 @@ extension XXDK {
       throw XXDKError.channelManagerNotInitialized
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
-    let privateKeyData = privateKey.data(using: .utf8) ?? Data()
+    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
+    let privateKeyData = privateKey.data
 
     try channelsManager.importChannelAdminKey(
       channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKeyData
@@ -241,7 +237,7 @@ extension XXDK {
       throw XXDKError.channelManagerNotInitialized
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
 
     let resultData = try channelsManager.getMutedUsers(channelIdData)
 
@@ -260,7 +256,7 @@ extension XXDK {
       throw XXDKError.channelManagerNotInitialized
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
 
     try channelsManager.muteUser(
       channelIdData, mutedUserPubKeyBytes: pubKey, undoAction: !mute,
@@ -275,7 +271,7 @@ extension XXDK {
       return false
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
 
     do {
       return try channelsManager.muted(channelIdData)

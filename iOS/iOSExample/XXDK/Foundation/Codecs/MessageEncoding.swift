@@ -73,7 +73,7 @@ private func calculateAdler32(_ data: Data) -> UInt32 {
 /// - Parameter compress: Whether to apply zlib compression before base64 encoding. Default is true.
 /// - Returns: The base64-encoded string if successful, otherwise `nil`.
 func encodeMessage(_ message: String, compress: Bool = true) -> String? {
-  guard let utf8Data = message.data(using: .utf8) else { return nil }
+  let utf8Data = message.data
 
   let dataToEncode: Data
   if compress {

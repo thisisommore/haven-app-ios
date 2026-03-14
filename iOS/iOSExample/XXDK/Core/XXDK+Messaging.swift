@@ -43,8 +43,7 @@ extension XXDK {
       fatalError("sendDM(channel): Channels Manager not initialized")
     }
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-        ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
     guard let encodedMsg = encodeMessage("<p>\(msg)</p>")
     else {
       AppLogger.messaging.error("sendDM(channel): failed to encode message")
@@ -72,8 +71,7 @@ extension XXDK {
       fatalError("sendReply(channel): Channels Manager not initialized")
     }
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-        ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
     guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
     else {
       return
@@ -115,8 +113,7 @@ extension XXDK {
       )
     }
     let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data(using: .utf8)
-        ?? Data()
+      Data(base64Encoded: channelId) ?? channelId.data
     guard let targetMessageId = Data(base64Encoded: toMessageIdB64)
     else {
       return
@@ -280,7 +277,7 @@ extension XXDK {
       return
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data(using: .utf8) ?? Data()
+    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
     guard let messageIdData = Data(base64Encoded: messageId)
     else {
       return

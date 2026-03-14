@@ -8,7 +8,7 @@ import Bindings
 import Kronos
 import OSLog
 
-private let base64Null = "null".data(using: .utf8)!.base64EncodedString()
+private let base64Null = "null".data.base64EncodedString()
 
 final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRemoteCallbackProtocol {
   private let key: String

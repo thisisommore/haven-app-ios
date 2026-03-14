@@ -49,10 +49,7 @@ final class AppStorage: ObservableObject {
 
   /// Store password in keychain
   func storePassword(_ password: String) throws {
-    guard let passData = password.data(using: .utf8)
-    else {
-      throw KeychainError.unexpectedPasswordData
-    }
+    let passData = password.data
 
     var query = self.baseQuery
     query[kSecValueData as String] = passData

@@ -28,6 +28,6 @@ struct TextFileDocument: FileDocument {
   }
 
   func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
-    FileWrapper(regularFileWithContents: self.text.data(using: .utf8) ?? Data())
+    FileWrapper(regularFileWithContents: self.text.data)
   }
 }
