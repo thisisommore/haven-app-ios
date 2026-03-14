@@ -43,8 +43,7 @@ struct Root: View {
     NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
       NavigationStack(path: self.$navigation.path) {
         HomeView<XXDK>()
-          .navigationDestination(for: Destination.self) {
-            destination in
+          .navigationDestination(for: Destination.self) { destination in
             destination.destinationView()
           }
       }
@@ -57,8 +56,7 @@ struct Root: View {
   private var setupIncompleteView: some View {
     NavigationStack(path: self.$navigation.path) {
       EmptyView()
-        .navigationDestination(for: Destination.self) {
-          destination in
+        .navigationDestination(for: Destination.self) { destination in
           destination.destinationView()
         }
         .onAppear {

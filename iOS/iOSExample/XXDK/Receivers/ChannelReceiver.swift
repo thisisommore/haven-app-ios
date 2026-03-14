@@ -47,8 +47,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     AppLogger.messaging.info(
       "func update(fromUUID: \(uuid, privacy: .public), messageUpdateInfoJSON: \(updateInfoDescription, privacy: .public))"
     )
-    let message = try database.read {
-      db in
+    let message = try database.read { db in
       try ChatMessageModel.where { $0.id.eq(uuid) }.fetchOne(db)
     }
     if var message {
@@ -96,8 +95,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       return existing
     }
     let newChat = ChatModel(channelId: channelId, name: channelName)
-    try database.write {
-      db in
+    try database.write { db in
       try ChatModel.insert { newChat }.execute(db)
     }
     return newChat

@@ -111,8 +111,7 @@ struct NewChatView<T: XXDKP>: View {
           }
         )
       }
-      .sheet(isPresented: self.$showConfirmationSheet) {
-        [inviteLink, channelData] in
+      .sheet(isPresented: self.$showConfirmationSheet) { [inviteLink, channelData] in
         JoinChannelConfirmationView(
           channelName: channelData?.Name ?? "",
           channelURL: inviteLink,

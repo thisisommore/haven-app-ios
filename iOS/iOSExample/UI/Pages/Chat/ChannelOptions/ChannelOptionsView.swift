@@ -388,8 +388,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
           .transition(.move(edge: .bottom).combined(with: .opacity))
         }
       }
-      .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) {
-        notification in
+      .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
         guard let channelId = chat?.id else { return }
         if let notificationChannelID = notification.userInfo?["channelID"] as? String,
            notificationChannelID == channelId {

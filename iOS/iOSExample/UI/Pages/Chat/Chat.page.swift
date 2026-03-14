@@ -161,8 +161,7 @@ struct ChatView<T: XXDKP>: View {
       // Mark all incoming messages as read
       self.markMessagesAsRead()
     }
-    .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) {
-      notification in
+    .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
       if let channelID = notification.userInfo?["channelID"] as? String,
          channelID == chatId {
         guard self.isChannel else { return }
