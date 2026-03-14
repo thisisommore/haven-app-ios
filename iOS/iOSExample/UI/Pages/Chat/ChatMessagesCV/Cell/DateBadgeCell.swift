@@ -7,9 +7,9 @@
 
 import UIKit
 
-class DateBadgeCell: UICollectionViewCell {
+final class DateBadgeCell: UICollectionViewCell {
   static let identifier = String(describing: DateBadgeCell.self)
-  let container = UIView()
+  private let container = UIView()
   let label = UILabel()
   static let paddingT: CGFloat = 22
   static let paddingB: CGFloat = 4

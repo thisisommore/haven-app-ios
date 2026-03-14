@@ -15,7 +15,7 @@ struct LogMessage: Identifiable {
 /// LogViewer observes messages to stdout and stderr and sends them to your callback
 /// function
 @MainActor
-class LogViewer: ObservableObject {
+final class LogViewer: ObservableObject {
   @Published var Messages: [LogMessage] = [LogMessage(Msg: "LogMessages")]
   private var size: Int
   private var count: UInt = 1
@@ -75,7 +75,7 @@ class LogViewer: ObservableObject {
 /// copy all writes to the original `fd`. The original `fd` can be used
 /// to write to it if needed.
 @MainActor
-class OpenFileCloner: ObservableObject {
+final class OpenFileCloner: ObservableObject {
   private var input: Pipe
   private var origOut: Pipe
   var Output: Pipe

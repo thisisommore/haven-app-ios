@@ -11,7 +11,7 @@ import Kronos
 import SQLiteData
 import SwiftUI
 
-class XXDKMock: XXDKP {
+final class XXDKMock: XXDKP {
   func importChannelAdminKey(
     channelId _: String, encryptionPassword _: String, privateKey _: String
   ) throws {}
@@ -170,19 +170,19 @@ class XXDKMock: XXDKP {
   }
 
   var cmix: Bindings.BindingsCmix?
-  var channelsManager: BindingsChannelsManagerWrapper?
-  var eventModelBuilder: ChannelEventModelBuilder?
-  var remoteKV: Bindings.BindingsRemoteKV?
-  var storageTagListener: RemoteKVKeyChangeListener?
+  private var channelsManager: BindingsChannelsManagerWrapper?
+  private var eventModelBuilder: ChannelEventModelBuilder?
+  private var remoteKV: Bindings.BindingsRemoteKV?
+  private var storageTagListener: RemoteKVKeyChangeListener?
   private let channelUICallbacks: ChannelUICallbacks
 
   init() {
     self.channelUICallbacks = ChannelUICallbacks()
   }
 
-  var ndf: Data?
+  private var ndf: Data?
   var DM: BindingsDMClientWrapper?
-  var dmReceiver: DMReceiver = .init()
+  private var dmReceiver: DMReceiver = .init()
 
   /// Mock implementation of generateIdentities
   /// - Parameter amountOfIdentities: Number of identities to generate

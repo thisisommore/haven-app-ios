@@ -9,7 +9,7 @@ import SnapKit
 import SwiftUI
 import UIKit
 
-class TextCell: UICollectionViewCell {
+final class TextCell: UICollectionViewCell {
   enum BubbleShape {
     case single
     case firstInGroup

@@ -17,8 +17,6 @@ protocol XXDKP: ObservableObject, AnyObject {
   var codename: String? { get }
   var codeset: Int { get }
   var DM: BindingsDMClientWrapper? { get set }
-  var dmReceiver: DMReceiver { get set }
-  var cmix: Bindings.BindingsCmix? { get set }
   func load(privateIdentity _privateIdentity: Data?) async
   func setUpCmix() async
   func startNetworkFollower() async

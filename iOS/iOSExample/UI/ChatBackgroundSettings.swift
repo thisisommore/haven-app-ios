@@ -68,7 +68,7 @@ struct SolidBackgroundColor: Codable, Identifiable, Equatable {
   ]
 }
 
-class ChatBackgroundSettings: ObservableObject {
+final class ChatBackgroundSettings: ObservableObject {
   static let shared = ChatBackgroundSettings()
 
   private let typeKey = "chatBackgroundType"
@@ -98,7 +98,7 @@ class ChatBackgroundSettings: ObservableObject {
       ?? SolidBackgroundColor.presets[0]
   }
 
-  init() {
+  private init() {
     if let typeRaw = UserDefaults.standard.string(forKey: typeKey),
        let type = ChatBackgroundType(rawValue: typeRaw)
     {

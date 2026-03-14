@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-class AppNavigationPath: Observable, ObservableObject {
+final class AppNavigationPath: Observable, ObservableObject {
   @Published var path = NavigationPath()
 }
 
 /// Holds selected chat info for split view detail column
-class SelectedChat: ObservableObject {
+final class SelectedChat: ObservableObject {
   @Published var chatId: String?
   @Published var chatTitle: String = ""
 

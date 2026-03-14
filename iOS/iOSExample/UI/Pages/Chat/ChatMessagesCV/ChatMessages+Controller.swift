@@ -19,7 +19,7 @@ struct MessageWithSender: Hashable {
   let colorHex: Int?
 }
 
-class ChatMessagesVC: UIViewController {
+final class ChatMessagesVC: UIViewController {
   // Data
   let chatId: String
   var isFetchingNextPage = true
@@ -68,8 +68,8 @@ class ChatMessagesVC: UIViewController {
   // Database
   @Dependency(\.defaultDatabase) var database
   nonisolated static let limit: Int = 40
-  static let loadNewMessagesThreshold: CGFloat = 200
-  static let padding: CGFloat = 8
+  private static let loadNewMessagesThreshold: CGFloat = 200
+  private static let padding: CGFloat = 8
   var page = 1
   var initDataDone = false
   var messages: [MessageWithSender] = []
@@ -79,7 +79,7 @@ class ChatMessagesVC: UIViewController {
   var highlightMessageId: Int64?
   //
 
-  lazy var scrollToBottomButton: UIButton = {
+  private lazy var scrollToBottomButton: UIButton = {
     let btn = UIButton(type: .system)
 
     let config = UIImage.SymbolConfiguration(pointSize: 16, weight: .light)
@@ -186,19 +186,19 @@ class ChatMessagesVC: UIViewController {
     //
   }
 
-  @objc func scrollToBottomTapped() {
+  @objc private func scrollToBottomTapped() {
     let noOfItems = self.cv.numberOfItems(inSection: 0)
     guard noOfItems >= 0 else { return }
     self.cv.scrollToItem(at: (noOfItems - 1).idxPath(), at: .bottom, animated: true)
   }
 
-  @objc func dismissKeyboard() {
+  @objc private func dismissKeyboard() {
     UIApplication.shared.sendAction(
       #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
     )
   }
 
-  @objc func keyboardWillHide(_ notification: Notification) {
+  @objc private func keyboardWillHide(_ notification: Notification) {
     guard
       let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey]
       as? TimeInterval,
@@ -215,13 +215,13 @@ class ChatMessagesVC: UIViewController {
     }
   }
 
-  func distanceFromBottom(minY: CGFloat, viewSize: CGFloat, contentSize: CGFloat) -> CGFloat {
+  private func distanceFromBottom(minY: CGFloat, viewSize: CGFloat, contentSize: CGFloat) -> CGFloat {
     let insetBottom = self.cv.adjustedContentInset.bottom
     let maxY = minY + viewSize
     return (contentSize - maxY) + insetBottom
   }
 
-  func preserveBottomOffset() {
+  private func preserveBottomOffset() {
     // When keyboard appears we need to preserve bottom offset of scroll
     let newViewSize = self.cv.bounds.height
     defer {

@@ -33,12 +33,12 @@ protocol ChatMessagesCollectionViewLayoutDelegate {
   func prepareDone()
 }
 
-class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
+final class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
   static let defaultSpaceBetween: CGFloat = 10
   static let groupedSenderSpaceBetween: CGFloat = 4
-  var cachedAttributes: [UICollectionViewLayoutAttributes] = []
-  var firstPrepare = true
-  var height: CGFloat = 0
+  private var cachedAttributes: [UICollectionViewLayoutAttributes] = []
+  private var firstPrepare = true
+  private var height: CGFloat = 0
   var newIndexForBackUpPoint = 0
   var prevIndexForBackUpPoint = 0
 

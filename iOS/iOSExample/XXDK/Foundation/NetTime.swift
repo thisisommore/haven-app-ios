@@ -7,7 +7,7 @@
 import Bindings
 import Kronos
 
-class NetTime: NSObject, Bindings.BindingsTimeSourceProtocol {
+final class NetTime: NSObject, Bindings.BindingsTimeSourceProtocol {
   override init() {
     super.init()
     Kronos.Clock.sync()

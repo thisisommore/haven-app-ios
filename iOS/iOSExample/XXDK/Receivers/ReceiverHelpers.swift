@@ -10,8 +10,8 @@ import Foundation
 import SQLiteData
 import SwiftData
 
-class ReceiverHelpers {
-  @Dependency(\.defaultDatabase) var database
+final class ReceiverHelpers {
+  @Dependency(\.defaultDatabase) private var database
 
   private static var cachedSelfChatId: Data?
 

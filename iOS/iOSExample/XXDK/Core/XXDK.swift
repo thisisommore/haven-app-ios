@@ -11,27 +11,27 @@ import Kronos
 import SQLiteData
 import SwiftUI
 
-class XXDK: XXDKP {
+final class XXDK: XXDKP {
   @Published var status: String = "..."
   @Published var statusPercentage: Double = 0
   @Published var codename: String?
   @Published var codeset: Int = 0
   @Dependency(\.defaultDatabase) var database
-  var downloadedNdf: Data?
-  var nsLock = NSLock()
-  var stateDir: URL
+  private var downloadedNdf: Data?
+  private var nsLock = NSLock()
+  private var stateDir: URL
 
-  var storageTagListener: RemoteKVKeyChangeListener?
-  var remoteKV: Bindings.BindingsRemoteKV?
-  var cmix: Bindings.BindingsCmix?
+  private var storageTagListener: RemoteKVKeyChangeListener?
+  private var remoteKV: Bindings.BindingsRemoteKV?
+  private var cmix: Bindings.BindingsCmix?
   var DM: BindingsDMClientWrapper?
-  var dmReceiver = DMReceiver()
-  var eventModelBuilder = ChannelEventModelBuilder(
+  private var dmReceiver = DMReceiver()
+  private var eventModelBuilder = ChannelEventModelBuilder(
     model: ChannelEventModel()
   )
-  var channelsManager: BindingsChannelsManagerWrapper?
-  var channelUICallbacks: ChannelUICallbacks
-  var appStorage: AppStorage?
+  private var channelsManager: BindingsChannelsManagerWrapper?
+  private var channelUICallbacks: ChannelUICallbacks
+  private var appStorage: AppStorage?
 
   // MARK: - Init
 

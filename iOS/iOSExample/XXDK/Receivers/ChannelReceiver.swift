@@ -23,7 +23,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelBuilderProtoco
 
 final class ChannelEventModel: NSObject, BindingsEventModelProtocol {
   // Optional SwiftData container for persisting chats/messages
-  @Dependency(\.defaultDatabase) var database
+  @Dependency(\.defaultDatabase) private var database
   private let receiverHelpers = ReceiverHelpers()
 
   // MARK: - Helper Methods

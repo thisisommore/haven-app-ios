@@ -11,7 +11,7 @@ import OSLog
 private let base64Null = "null".data(using: .utf8)!.base64EncodedString()
 
 final class RemoteKVKeyChangeListener: NSObject, Bindings.BindingsKeyChangedByRemoteCallbackProtocol {
-  let key: String
+  private let key: String
   var data: Data?
   private var handle: Int = 0
   private let log = Logger(

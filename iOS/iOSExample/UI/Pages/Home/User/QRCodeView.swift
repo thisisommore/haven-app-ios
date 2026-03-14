@@ -341,8 +341,8 @@ struct CameraPreviewView: UIViewControllerRepresentable {
 
   func updateUIViewController(_: UIViewController, context _: Context) {}
 
-  class Coordinator: NSObject, CameraViewControllerDelegate {
-    let onCodeFound: (String) -> Void
+  final class Coordinator: NSObject, CameraViewControllerDelegate {
+    private let onCodeFound: (String) -> Void
 
     init(onCodeFound: @escaping (String) -> Void) {
       self.onCodeFound = onCodeFound
@@ -358,7 +358,7 @@ protocol CameraViewControllerDelegate: AnyObject {
   func didFindCode(_ code: String)
 }
 
-class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+final class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
   weak var delegate: CameraViewControllerDelegate?
   private var captureSession: AVCaptureSession?
   private var previewLayer: AVCaptureVideoPreviewLayer?

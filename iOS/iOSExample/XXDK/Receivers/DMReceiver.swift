@@ -9,7 +9,7 @@ import Bindings
 import SQLiteData
 import SwiftData
 
-class DMReceiverBuilder: NSObject, Bindings.BindingsDMReceiverBuilderProtocol {
+final class DMReceiverBuilder: NSObject, Bindings.BindingsDMReceiverBuilderProtocol {
   private var r: DMReceiver
 
   init(receiver: DMReceiver) {
@@ -35,7 +35,7 @@ struct ReceivedMessage: Identifiable {
   var id = UUID()
 }
 
-class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
+final class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
   .BindingsDmCallbacksProtocol
 {
   func updateSentStatus(
@@ -122,7 +122,7 @@ class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtoco
     }
   }
 
-  @Dependency(\.defaultDatabase) var database
+  @Dependency(\.defaultDatabase) private var database
   private let receiverHelpers = ReceiverHelpers()
 
   func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
