@@ -107,7 +107,7 @@ struct MessageForm<T: XXDKP>: View {
         if let pubKey = Data(base64Encoded: chat.id) {
           if let replyTo {
             Task {
-              self.xxdk.sendReply(
+              self.xxdk.dm!.sendReply(
                 msg: trimmed,
                 toPubKey: pubKey,
                 partnerToken: token,
@@ -116,7 +116,7 @@ struct MessageForm<T: XXDKP>: View {
             }
           } else {
             Task {
-              self.xxdk.sendDM(
+              self.xxdk.dm!.sendDM(
                 msg: trimmed,
                 toPubKey: pubKey,
                 partnerToken: token
@@ -128,7 +128,7 @@ struct MessageForm<T: XXDKP>: View {
         // Channel chat: send via Channels Manager using channelId (stored in id)
         if let replyTo {
           Task {
-            self.xxdk.sendReply(
+            self.xxdk.channel.msg.sendReply(
               msg: trimmed,
               channelId: chat.id,
               replyToMessageIdB64: replyTo.externalId
@@ -136,7 +136,7 @@ struct MessageForm<T: XXDKP>: View {
           }
         } else {
           Task {
-            self.xxdk.sendDM(
+            self.xxdk.channel.msg.sendDM(
               msg: trimmed,
               channelId: chat.id
             )

@@ -105,7 +105,7 @@ struct HomeView<T: XXDKP>: View {
                   self.activeSheet = .exportIdentity
                 },
                 onShareQR: {
-                  guard let dm = xxdk.DM,
+                  guard let dm = xxdk.dm,
                         let pubKey = dm.getPublicKey(),
                         !pubKey.isEmpty
                   else {
@@ -160,7 +160,7 @@ struct HomeView<T: XXDKP>: View {
               },
               onShowMyQR: {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                  guard let dm = xxdk.DM, let pubKey = dm.getPublicKey()
+                  guard let dm = xxdk.dm, let pubKey = dm.getPublicKey()
                   else {
                     return
                   }
@@ -381,8 +381,11 @@ struct HomeView<T: XXDKP>: View {
 
   private func loadCurrentNickname() {
     do {
-      let nickname = try xxdk.getDMNickname()
-      self.currentNickname = nickname.isEmpty ? nil : nickname
+      if let nickname = try xxdk.dm?.getNickname() {
+        self.currentNickname = nickname.isEmpty ? nil : nickname
+      } else {
+        self.currentNickname = nil
+      }
     } catch {
       self.currentNickname = nil
     }

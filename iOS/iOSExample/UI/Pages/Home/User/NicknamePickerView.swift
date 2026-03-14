@@ -188,7 +188,7 @@ struct NicknamePickerView<T: XXDKP>: View {
 
   private func loadCurrentNickname() {
     do {
-      let currentNickname = try xxdk.getDMNickname()
+      let currentNickname = try xxdk.dm!.getNickname()
       self.nickname = currentNickname
     } catch {
       // No nickname set, leave empty
@@ -201,7 +201,7 @@ struct NicknamePickerView<T: XXDKP>: View {
     self.errorMessage = nil
 
     do {
-      try self.xxdk.setDMNickname(self.nickname)
+      try self.xxdk.dm!.setNickname(self.nickname)
       self.dismiss()
     } catch {
       self.errorMessage = "Failed to save: \(error.localizedDescription)"

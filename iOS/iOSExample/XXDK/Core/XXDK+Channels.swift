@@ -5,8 +5,49 @@
 
 import Bindings
 import Foundation
+import SQLiteData
 
-extension XXDK {
+protocol ChannelsP {
+  var msg: ChannelsMessagingP { get }
+  func joinChannelFromURL(_ url: String) async throws -> ChannelJSON
+  func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON
+  func createChannel(
+    name: String,
+    description: String,
+    privacyLevel: PrivacyLevel,
+    enableDms: Bool
+  ) async throws -> ChannelJSON
+  func leaveChannel(channelId: String) throws
+  func getShareURL(channelId: String, host: String) throws -> ShareURLJSON
+  func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel
+  func getChannelFromURL(url: String) throws -> ChannelJSON
+  func decodePrivateURL(url: String, password: String) throws -> String
+  func getPrivateChannelFromURL(url: String, password: String) throws -> ChannelJSON
+  func enableDirectMessages(channelId: String) throws
+  func disableDirectMessages(channelId: String) throws
+  func areDMsEnabled(channelId: String) throws -> Bool
+  func isChannelAdmin(channelId: String) -> Bool
+  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
+  func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
+    throws
+  func getMutedUsers(channelId: String) throws -> [Data]
+  func muteUser(channelId: String, pubKey: Data, mute: Bool) throws
+  func isMuted(channelId: String) -> Bool
+  func getChannelNickname(channelId: String) throws -> String
+  func setChannelNickname(channelId: String, nickname: String) throws
+}
+
+class Channel: ChannelsP {
+  @Dependency(\.defaultDatabase) private var database
+  private let channelsManager: BindingsChannelsManagerWrapper?
+  private let cmixId: Int
+  let msg: ChannelsMessagingP
+  init(channelsManager: BindingsChannelsManagerWrapper, cmixId: Int) {
+    self.channelsManager = channelsManager
+    self.cmixId = cmixId
+    self.msg = ChannelsMessaging(channelsManager: channelsManager)
+  }
+
   /// Join a channel using a URL (public share link)
   func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
     let prettyPrint = try BindingsStatic.decodePublicURL(url)
@@ -84,17 +125,13 @@ extension XXDK {
     else {
       throw XXDKError.channelManagerNotInitialized
     }
-    guard let cmix
-    else {
-      throw XXDKError.cmixNotInitialized
-    }
 
     let channelIdData =
       Data(base64Encoded: channelId) ?? channelId.data
 
     guard
       let shareURL = try channelsManager.getShareURL(
-        cmix.getID(), host: host, maxUses: 0, channelIdBytes: channelIdData
+        cmixId, host: host, maxUses: 0, channelIdBytes: channelIdData
       )
     else {
       throw XXDKError.channelJsonNil

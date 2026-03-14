@@ -159,7 +159,7 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
     }
 
     do {
-      try self.xxdk.importChannelAdminKey(
+      try self.xxdk.channel.importChannelAdminKey(
         channelId: self.channelId, encryptionPassword: self.decryptionPassword, privateKey: importedKeyContent
       )
       self.errorMessage = nil

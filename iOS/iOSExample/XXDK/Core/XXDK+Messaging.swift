@@ -6,9 +6,45 @@
 import Bindings
 import Foundation
 import SQLiteData
-import SwiftData
 
-extension XXDK {
+protocol DirectMessageP {
+  func getPublicKey() -> Data?
+  func sendDM(msg: String, toPubKey: Data, partnerToken: Int32)
+  func sendReply(msg: String, toPubKey: Data, partnerToken: Int32, replyToMessageIdB64: String)
+  func sendReaction(
+    emoji: String,
+    toMessageIdB64: String,
+    toPubKey: Data,
+    partnerToken: Int32
+  )
+  func getToken() -> Int64
+  func getNickname() throws -> String
+  func setNickname(_ nickname: String) throws
+}
+
+class DirectMessage: DirectMessageP {
+  @Dependency(\.defaultDatabase) var database
+  private let DM: BindingsDMClientWrapper
+  init(DM: BindingsDMClientWrapper) {
+    self.DM = DM
+  }
+
+  func getToken() -> Int64 {
+    self.DM.getToken()
+  }
+
+  func getPublicKey() -> Data? {
+    self.DM.getPublicKey()
+  }
+
+  func getNickname() throws -> String {
+    try self.DM.getNickname()
+  }
+
+  func setNickname(_ nickname: String) throws {
+    try self.DM.setNickname(nickname)
+  }
+
   /// Persist a reaction to SwiftData
   private func persistReaction(
     messageIdB64: String,
@@ -25,7 +61,7 @@ extension XXDK {
           emoji: emoji,
           isMe: isMe
         )
-        try database.write { db in
+        try self.database.write { db in
           try MessageReactionModel.insert { reaction }.execute(db)
         }
       } catch {
@@ -36,117 +72,7 @@ extension XXDK {
     }
   }
 
-  /// Send a message to a channel by Channel ID (base64-encoded)
-  func sendDM(msg: String, channelId: String) {
-    guard let channelsManager
-    else {
-      fatalError("sendDM(channel): Channels Manager not initialized")
-    }
-    let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data
-    guard let encodedMsg = encodeMessage("<p>\(msg)</p>")
-    else {
-      AppLogger.messaging.error("sendDM(channel): failed to encode message")
-      return
-    }
-    do {
-      try channelsManager.sendMessage(
-        channelIdData,
-        message: encodedMsg,
-        validUntilMS: 30000,
-        cmixParamsJSON: "".data,
-        pingsJSON: nil
-      )
-    } catch {
-      AppLogger.messaging.error(
-        "sendDM(channel) failed: \(error.localizedDescription, privacy: .public)"
-      )
-    }
-  }
-
-  /// Send a reply to a specific message in a channel
-  func sendReply(msg: String, channelId: String, replyToMessageIdB64: String) {
-    guard let channelsManager
-    else {
-      fatalError("sendReply(channel): Channels Manager not initialized")
-    }
-    let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data
-    guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
-    else {
-      return
-    }
-    guard let encodedMsg = encodeMessage("<p>\(msg)</p>")
-    else {
-      AppLogger.messaging.error("sendReply(channel): failed to encode message")
-      return
-    }
-    do {
-      let report = try channelsManager.sendReply(
-        channelIdData,
-        message: encodedMsg,
-        messageToReactTo: replyToMessageId,
-        validUntilMS: 30000,
-        cmixParamsJSON: "".data,
-        pingsJSON: nil
-      )
-      if let report {
-        if let mid = report.messageID {} else {}
-      }
-    } catch {
-      AppLogger.messaging.error(
-        "sendReply(channel) failed: \(error.localizedDescription, privacy: .public)"
-      )
-    }
-  }
-
-  /// Send a reaction to a specific message in a channel
-  func sendReaction(
-    emoji: String,
-    toMessageIdB64: String,
-    inChannelId channelId: String
-  ) {
-    guard let channelsManager
-    else {
-      fatalError(
-        "sendReaction(channel): Channels Manager not initialized"
-      )
-    }
-    let channelIdData =
-      Data(base64Encoded: channelId) ?? channelId.data
-    guard let targetMessageId = Data(base64Encoded: toMessageIdB64)
-    else {
-      return
-    }
-    do {
-      let report = try channelsManager.sendReaction(
-        channelIdData,
-        reaction: emoji,
-        messageToReactTo: targetMessageId,
-        validUntilMS: Bindings.BindingsValidForeverBindings,
-        cmixParamsJSON: "".data
-      )
-      if let report, let messageID = report.messageID {
-        self.persistReaction(
-          messageIdB64: messageID.base64EncodedString(),
-          emoji: emoji,
-          targetMessageId: toMessageIdB64,
-          isMe: true
-        )
-      }
-    } catch {
-      AppLogger.messaging.error(
-        "sendReaction(channel) failed: \(error.localizedDescription, privacy: .public)"
-      )
-    }
-  }
-
   func sendDM(msg: String, toPubKey: Data, partnerToken: Int32) {
-    guard let DM
-    else {
-      AppLogger.messaging.error("DM not there")
-      fatalError("DM not there")
-    }
     guard let encodedMsg = encodeMessage("<p>\(msg)</p>")
     else {
       AppLogger.messaging.error("sendDM(DM): failed to encode message")
@@ -186,11 +112,6 @@ extension XXDK {
     partnerToken: Int32,
     replyToMessageIdB64: String
   ) {
-    guard let DM
-    else {
-      AppLogger.messaging.error("DM not there")
-      fatalError("DM not there")
-    }
     guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
     else {
       return
@@ -237,11 +158,6 @@ extension XXDK {
     toPubKey: Data,
     partnerToken: Int32
   ) {
-    guard let DM
-    else {
-      AppLogger.messaging.error("DM not there")
-      fatalError("DM not there")
-    }
     guard let targetMessageId = Data(base64Encoded: toMessageIdB64)
     else {
       return
@@ -267,30 +183,6 @@ extension XXDK {
         "Unable to send reaction: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("Unable to send reaction: " + error.localizedDescription)
-    }
-  }
-
-  /// Delete a message from a channel (admin or message owner only)
-  func deleteMessage(channelId: String, messageId: String) {
-    guard let channelsManager
-    else {
-      return
-    }
-
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
-    guard let messageIdData = Data(base64Encoded: messageId)
-    else {
-      return
-    }
-
-    do {
-      try channelsManager.deleteMessage(
-        channelIdData, targetMessageIdBytes: messageIdData, cmixParamsJSON: "".data
-      )
-    } catch {
-      AppLogger.messaging.error(
-        "deleteMessage failed: \(error.localizedDescription, privacy: .public)"
-      )
     }
   }
 }

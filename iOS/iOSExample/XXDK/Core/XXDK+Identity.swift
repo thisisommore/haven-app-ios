@@ -102,7 +102,7 @@ extension XXDK {
         AppLogger.identity.error("could not load dm client: returned nil")
         fatalError("could not load dm client: returned nil")
       }
-      DM = BindingsDMClientWrapper(dmClient)
+      _dm = DirectMessage(DM: BindingsDMClientWrapper(dmClient))
     } catch {
       AppLogger.identity.error(
         "could not load dm client: \(error.localizedDescription, privacy: .public)"
@@ -163,9 +163,10 @@ extension XXDK {
           AppLogger.identity.error("BindingsNewChannelsManager returned nil")
           fatalError("BindingsNewChannelsManager returned nil")
         }
-        channelsManager = BindingsChannelsManagerWrapper(cm)
+        let channelsManager = BindingsChannelsManagerWrapper(cm)
+        _channels = Channel(channelsManager: channelsManager, cmixId: cmix.getID())
         let timestamp = ISO8601DateFormatter().string(from: Date())
-        let storageTagDataJson = try Parser.encode(channelsManager!.getStorageTag())
+        let storageTagDataJson = try Parser.encode(channelsManager.getStorageTag())
         let storageTagData = storageTagDataJson.base64EncodedString()
         let entry = RemoteKVEntry(
           Version: 0,
@@ -173,7 +174,7 @@ extension XXDK {
           Timestamp: timestamp
         )
         let entryData = try Parser.encode(entry)
-        guard let remoteKV, let channelsManager, let storageTagListener
+        guard let remoteKV, let storageTagListener
         else {
           AppLogger.identity.error(
             "remoteKV/channelsManager/storageTagListener is nil"
@@ -211,7 +212,7 @@ extension XXDK {
           AppLogger.identity.error("BindingsLoadChannelsManager returned nil")
           fatalError("BindingsLoadChannelsManager returned nil")
         }
-        channelsManager = BindingsChannelsManagerWrapper(cm)
+        _channels = Channel(channelsManager: BindingsChannelsManagerWrapper(cm), cmixId: cmix.getID())
       }
 
       if appStorage?.isSetupComplete ?? false {
@@ -234,13 +235,13 @@ extension XXDK {
       fatalError("err \(error)")
     }
 
-    guard let codename, let DM
+    guard let codename, let dm
     else {
       AppLogger.identity.error("codename/DM/modelContainer not there")
       fatalError("codename/DM/modelContainer not there")
     }
     if !codename.isEmpty {
-      guard let selfPubKeyData = DM.getPublicKey()
+      guard let selfPubKeyData = dm.getPublicKey()
       else {
         AppLogger.identity.error("self pub key data is nil")
         fatalError("self pub key data is nil")
@@ -251,7 +252,7 @@ extension XXDK {
           try ChatModel.where { $0.id.eq(selfPubKeyB64) }.fetchAll(db)
         }
         if existing.isEmpty {
-          let token64 = DM.getToken()
+          let token64 = dm.getToken()
           let tokenU32 = UInt32(truncatingIfNeeded: token64)
           let selfToken = Int32(bitPattern: tokenU32)
           let chat = ChatModel(
@@ -271,7 +272,7 @@ extension XXDK {
       }
     }
     do {
-      let cd = try await joinChannelFromURL(XX_IOS_CHAT)
+      let cd = try await channel.joinChannelFromURL(XX_IOS_CHAT)
       let channelId = cd.ChannelID ?? "xxIOS"
       let existingChannel = try await database.read { db in
         try ChatModel.where { $0.id.eq(channelId) }.fetchAll(db)

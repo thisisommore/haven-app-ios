@@ -12,6 +12,12 @@ import SQLiteData
 import SwiftUI
 
 final class XXDKMock: XXDKP {
+  var channel: Channel {
+    fatalError("mock")
+  }
+
+  var dm: DirectMessage?
+
   func importChannelAdminKey(
     channelId _: String, encryptionPassword _: String, privateKey _: String
   ) throws {}

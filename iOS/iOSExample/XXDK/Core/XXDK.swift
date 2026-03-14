@@ -17,15 +17,29 @@ final class XXDK: XXDKP {
   @Published var codename: String?
   @Published var codeset: Int = 0
   @Dependency(\.defaultDatabase) var database
+  var _channels: Channel?
+  var channel: Channel {
+    if let _channels {
+      return _channels
+    }
+    fatalError("Channels is not defined")
+  }
+
+  var _dm: DirectMessage?
+  var dm: DirectMessage? {
+    if let _dm {
+      return _dm
+    }
+    return nil
+  }
+
   var downloadedNdf: Data?
   var stateDir: URL
 
   var storageTagListener: RemoteKVKeyChangeListener?
   var remoteKV: Bindings.BindingsRemoteKV?
   var cmix: Bindings.BindingsCmix?
-  var DM: BindingsDMClientWrapper?
   var eventModelBuilder = ChannelEventModelBuilder()
-  var channelsManager: BindingsChannelsManagerWrapper?
   var channelUICallbacks: ChannelUICallbacks
   var appStorage: AppStorage?
 
@@ -96,8 +110,8 @@ final class XXDK: XXDKP {
     }
 
     // 4. Nil all binding objects
-    self.channelsManager = nil
-    self.DM = nil
+    self._channels = nil
+    self._dm = nil
     self.cmix = nil
     self.remoteKV = nil
     self.storageTagListener = nil
@@ -120,21 +134,5 @@ final class XXDK: XXDKP {
       self.status = "..."
       self.statusPercentage = 0
     }
-  }
-
-  func getDMNickname() throws -> String {
-    guard let DM
-    else {
-      throw XXDKError.dmClientNotInitialized
-    }
-    return try DM.getNickname()
-  }
-
-  func setDMNickname(_ nickname: String) throws {
-    guard let DM
-    else {
-      throw XXDKError.dmClientNotInitialized
-    }
-    try DM.setNickname(nickname)
   }
 }

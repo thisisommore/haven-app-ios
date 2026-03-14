@@ -131,7 +131,7 @@ struct ChatView<T: XXDKP>: View {
       ChannelOptionsView<T>(chat: self.chat) {
         Task {
           do {
-            try self.xxdk.leaveChannel(channelId: self.chatId)
+            try self.xxdk.channel.leaveChannel(channelId: self.chatId)
             let chatsToDelete =
               try? await database.read { db in
                 try ChatModel.where { $0.id.eq(self.chatId) }.fetchAll(db)
@@ -157,7 +157,7 @@ struct ChatView<T: XXDKP>: View {
     }
     .onAppear {
       self.isAdmin = self.chat?.isAdmin ?? false
-      self.isMuted = self.isChannel ? self.xxdk.isMuted(channelId: self.chatId) : false
+      self.isMuted = self.isChannel ? self.xxdk.channel.isMuted(channelId: self.chatId) : false
       // Mark all incoming messages as read
       self.markMessagesAsRead()
     }
@@ -165,7 +165,7 @@ struct ChatView<T: XXDKP>: View {
       if let channelID = notification.userInfo?["channelID"] as? String,
          channelID == chatId {
         guard self.isChannel else { return }
-        self.isMuted = self.xxdk.isMuted(channelId: self.chatId)
+        self.isMuted = self.xxdk.channel.isMuted(channelId: self.chatId)
       }
     }
     .id("chat-\(self.chatId)")

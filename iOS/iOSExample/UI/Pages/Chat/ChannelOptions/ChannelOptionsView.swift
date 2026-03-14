@@ -96,9 +96,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 guard let channelId = chat?.id else { return }
                 do {
                   if newValue {
-                    try self.xxdk.enableDirectMessages(channelId: channelId)
+                    try self.xxdk.channel.enableDirectMessages(channelId: channelId)
                   } else {
-                    try self.xxdk.disableDirectMessages(channelId: channelId)
+                    try self.xxdk.channel.disableDirectMessages(channelId: channelId)
                   }
                 } catch {
                   AppLogger.channels.error(
@@ -152,7 +152,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
           self.refreshAdminStatus()
           guard let channelId = chat?.id else { return }
           do {
-            self.isDMEnabled = try self.xxdk.areDMsEnabled(channelId: channelId)
+            self.isDMEnabled = try self.xxdk.channel.areDMsEnabled(channelId: channelId)
           } catch {
             AppLogger.channels.error(
               "Failed to fetch DM status: \(error.localizedDescription, privacy: .public)"
@@ -160,7 +160,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
             self.isDMEnabled = false
           }
           do {
-            let shareData = try xxdk.getShareURL(
+            let shareData = try xxdk.channel.getShareURL(
               channelId: channelId, host: "https://xxnetwork.com/join"
             )
             self.shareURL = shareData.url
@@ -171,14 +171,14 @@ struct ChannelOptionsView<T: XXDKP>: View {
             )
           }
           do {
-            self.mutedUsers = try self.xxdk.getMutedUsers(channelId: channelId)
+            self.mutedUsers = try self.xxdk.channel.getMutedUsers(channelId: channelId)
           } catch {
             AppLogger.channels.error(
               "Failed to fetch muted users: \(error.localizedDescription, privacy: .public)"
             )
           }
           do {
-            self.channelNickname = try self.xxdk.getChannelNickname(channelId: channelId)
+            self.channelNickname = try self.xxdk.channel.getChannelNickname(channelId: channelId)
           } catch {
             AppLogger.channels.error(
               "Failed to fetch channel nickname: \(error.localizedDescription, privacy: .public)"
@@ -216,10 +216,10 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 MutedUserRow(pubKey: pubKey) {
                   guard let channelId = chat?.id else { return }
                   do {
-                    try self.xxdk.muteUser(
+                    try self.xxdk.channel.muteUser(
                       channelId: channelId, pubKey: pubKey, mute: false
                     )
-                    self.mutedUsers = try self.xxdk.getMutedUsers(channelId: channelId)
+                    self.mutedUsers = try self.xxdk.channel.getMutedUsers(channelId: channelId)
                     withAnimation(.spring(response: 0.3)) {
                       self.toastMessage = "User unmuted"
                     }
@@ -393,7 +393,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         if let notificationChannelID = notification.userInfo?["channelID"] as? String,
            notificationChannelID == channelId {
           do {
-            self.mutedUsers = try self.xxdk.getMutedUsers(channelId: channelId)
+            self.mutedUsers = try self.xxdk.channel.getMutedUsers(channelId: channelId)
           } catch {
             AppLogger.channels.error(
               "Failed to refresh muted users: \(error.localizedDescription, privacy: .public)"
@@ -411,7 +411,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
   private func saveNickname() {
     guard let channelId = chat?.id else { return }
     do {
-      try self.xxdk.setChannelNickname(channelId: channelId, nickname: self.channelNickname)
+      try self.xxdk.channel.setChannelNickname(channelId: channelId, nickname: self.channelNickname)
       withAnimation(.spring(response: 0.3)) {
         self.toastMessage = "Nickname saved"
       }

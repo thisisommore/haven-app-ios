@@ -54,7 +54,7 @@ struct NewChatView<T: XXDKP>: View {
                 do {
                   // Check privacy level first
                   let privacyLevel =
-                    try xxdk.getChannelPrivacyLevel(
+                    try xxdk.channel.getChannelPrivacyLevel(
                       url: trimmed
                     )
 
@@ -65,7 +65,7 @@ struct NewChatView<T: XXDKP>: View {
                     self.errorMessage = nil
                   } else {
                     // Public channel - proceed directly
-                    let channel = try xxdk.getChannelFromURL(
+                    let channel = try xxdk.channel.getChannelFromURL(
                       url: trimmed
                     )
                     self.channelData = channel
@@ -87,12 +87,12 @@ struct NewChatView<T: XXDKP>: View {
           url: self.inviteLink,
           onConfirm: { password in
             do {
-              let pp = try xxdk.decodePrivateURL(
+              let pp = try xxdk.channel.decodePrivateURL(
                 url: self.inviteLink,
                 password: password
               )
               self.prettyPrint = pp
-              let channel = try xxdk.getPrivateChannelFromURL(
+              let channel = try xxdk.channel.getPrivateChannelFromURL(
                 url: self.inviteLink,
                 password: password
               )
@@ -144,9 +144,9 @@ struct NewChatView<T: XXDKP>: View {
       let joinedChannel: ChannelJSON
       // Use prettyPrint if available (private channel), otherwise decode from URL (public channel)
       if let prettyPrint {
-        joinedChannel = try await self.xxdk.joinChannel(prettyPrint)
+        joinedChannel = try await self.xxdk.channel.joinChannel(prettyPrint)
       } else {
-        joinedChannel = try await self.xxdk.joinChannelFromURL(url)
+        joinedChannel = try await self.xxdk.channel.joinChannelFromURL(url)
       }
 
       // Create and save the chat to the database
@@ -157,9 +157,9 @@ struct NewChatView<T: XXDKP>: View {
 
       // Enable or disable direct messages based on toggle
       if enableDM {
-        try self.xxdk.enableDirectMessages(channelId: channelId)
+        try self.xxdk.channel.enableDirectMessages(channelId: channelId)
       } else {
-        try self.xxdk.disableDirectMessages(channelId: channelId)
+        try self.xxdk.channel.disableDirectMessages(channelId: channelId)
       }
 
       let newChat = ChatModel(

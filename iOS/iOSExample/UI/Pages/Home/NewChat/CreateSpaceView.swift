@@ -91,7 +91,7 @@ struct CreateSpaceView<T: XXDKP>: View {
 
     Task {
       do {
-        let channel = try await xxdk.createChannel(
+        let channel = try await xxdk.channel.createChannel(
           name: self.name,
           description: self.description,
           privacyLevel: privacyLevel,

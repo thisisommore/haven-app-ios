@@ -144,7 +144,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
 
   private func exportToFile() {
     do {
-      let key = try xxdk.exportChannelAdminKey(
+      let key = try xxdk.channel.exportChannelAdminKey(
         channelId: self.channelId, encryptionPassword: self.encryptionPassword
       )
       self.document = TextFileDocument(text: key)
@@ -157,7 +157,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
 
   private func copyToClipboard() {
     do {
-      let key = try xxdk.exportChannelAdminKey(
+      let key = try xxdk.channel.exportChannelAdminKey(
         channelId: self.channelId, encryptionPassword: self.encryptionPassword
       )
       UIPasteboard.general.string = key
