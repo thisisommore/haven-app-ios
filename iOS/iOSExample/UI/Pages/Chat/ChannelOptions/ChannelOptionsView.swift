@@ -11,7 +11,7 @@ import SwiftUI
 struct ChannelOptionsView<T: XXDKP>: View {
   var chat: ChatModel?
   let onLeaveChannel: () -> Void
-  var onDeleteChat: (() -> Void)? = nil
+  var onDeleteChat: (() -> Void)?
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var xxdk: T
   @Dependency(\.defaultDatabase) var database

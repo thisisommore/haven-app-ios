@@ -22,7 +22,7 @@ struct ChatView<T: XXDKP>: View {
   }
 
   @Environment(\.dismiss) private var dismiss
-  @State private var replyingTo: ChatMessageModel? = nil
+  @State private var replyingTo: ChatMessageModel?
   @State private var showChannelOptions: Bool = false
   @State private var isAdmin: Bool = false
   @State private var isMuted: Bool = false

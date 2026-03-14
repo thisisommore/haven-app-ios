@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct VisibleMessagePreferenceKey: PreferenceKey {
-  static var defaultValue: Date? = nil
+  static var defaultValue: Date?
   static func reduce(value: inout Date?, nextValue: () -> Date?) {
     // Keep the earliest (topmost) visible message date
     if let next = nextValue() {

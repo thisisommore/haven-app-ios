@@ -10,7 +10,7 @@ import SwiftUI
 
 struct Reactions: View {
   let reactions: [MessageReactionModel]
-  var onRequestShowAll: (() -> Void)? = nil
+  var onRequestShowAll: (() -> Void)?
   @State private var showReactors = false
   @State private var selectedEmoji: String?
 

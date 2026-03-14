@@ -246,7 +246,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         pubKey: pubKey, codeset: codeset
       )
 
-      var sender: MessageSenderModel? = nil
+      var sender: MessageSenderModel?
       if let pubKey {
         sender = try self.receiverHelpers.upsertSender(
           pubKey: pubKey,

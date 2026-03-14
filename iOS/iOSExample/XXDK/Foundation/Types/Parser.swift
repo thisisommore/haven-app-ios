@@ -69,7 +69,7 @@ struct RoundsListJSON: Decodable {
 struct ChannelSendReportJSON: Decodable {
   let messageID: Data?
   let ephId: Int64?
-  var roundsList: RoundsListJSON? = nil
+  var roundsList: RoundsListJSON?
 }
 
 struct ModelMessageJSON: Codable {
@@ -168,7 +168,7 @@ struct CMixCoreParams: Codable {
   var RetryDelay: Int
   var SendTimeout: Int
   var DebugTag: String
-  var BlacklistedNodes: [String: Bool]? = nil
+  var BlacklistedNodes: [String: Bool]?
   var Critical: Bool
   var RpcMinTimeout: Int
 }

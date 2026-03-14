@@ -166,7 +166,7 @@ final class ReceiverHelpers {
     timestamp: Int64? = nil,
     status: Int64
   ) throws -> ChatMessageModel {
-    var sender: MessageSenderModel? = nil
+    var sender: MessageSenderModel?
     if let senderCodename, let senderPubKey {
       sender = try self.upsertSender(
         pubKey: senderPubKey,

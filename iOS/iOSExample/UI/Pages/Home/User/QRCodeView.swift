@@ -157,7 +157,7 @@ struct QRCodeView: View {
 struct QRScannerView: View {
   @Environment(\.dismiss) private var dismiss
   let onCodeScanned: (String) -> Void
-  var onShowMyQR: (() -> Void)? = nil
+  var onShowMyQR: (() -> Void)?
   @State private var isScanning = true
   @State private var showSuccess = false
   @State private var torchOn = false
