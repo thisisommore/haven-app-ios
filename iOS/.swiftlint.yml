@@ -14,6 +14,5 @@ disabled_rules:
   - trailing_comma
   - multiple_closures_with_trailing_closure
   - file_length
-  - non_optional_string_data_conversion
   - inclusive_language
   - todo
