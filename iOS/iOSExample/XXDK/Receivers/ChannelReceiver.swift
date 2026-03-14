@@ -11,7 +11,7 @@ extension Notification.Name {
 final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, BindingsEventModelBuilderProtocol {
   // Optional SwiftData container for persisting chats/messages
   @Dependency(\.defaultDatabase) private var database
-  private let receiverHelpers = ReceiverHelpers()
+  private let receiverHelpers = ReceiverHelpers.shared
   func build(_: String?) -> BindingsEventModelProtocol? {
     return self
   }

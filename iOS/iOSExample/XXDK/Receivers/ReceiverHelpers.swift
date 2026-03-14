@@ -11,6 +11,8 @@ import SQLiteData
 import SwiftData
 
 final class ReceiverHelpers {
+  static let shared = ReceiverHelpers()
+  private init() {}
   @Dependency(\.defaultDatabase) private var database
 
   private static var cachedSelfChatId: Data?

@@ -18,7 +18,6 @@ final class XXDK: XXDKP {
   @Published var codeset: Int = 0
   @Dependency(\.defaultDatabase) var database
   var downloadedNdf: Data?
-  var nsLock = NSLock()
   var stateDir: URL
 
   var storageTagListener: RemoteKVKeyChangeListener?

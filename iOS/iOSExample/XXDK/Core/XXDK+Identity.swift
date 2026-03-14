@@ -9,9 +9,6 @@ import SQLiteData
 
 extension XXDK {
   func load(privateIdentity _privateIdentity: Data?) async {
-    lockTask()
-    defer { unlockTask() }
-
     // Cmix
     guard let cmix
     else {

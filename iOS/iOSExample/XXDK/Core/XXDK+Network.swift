@@ -8,8 +8,6 @@ import Foundation
 
 extension XXDK {
   func downloadNdf() async {
-    lockTask()
-    defer { unlockTask() }
     await progress(.downloadingNDF)
 
     downloadedNdf = self.downloadNDF(
@@ -19,9 +17,6 @@ extension XXDK {
   }
 
   func setUpCmix() async {
-    lockTask()
-    defer { unlockTask() }
-
     guard let appStorage
     else {
       fatalError("no secret manager")
@@ -69,8 +64,6 @@ extension XXDK {
   }
 
   func startNetworkFollower() async {
-    lockTask()
-    defer { unlockTask() }
     guard let cmix
     else {
       AppLogger.network.error("cmix is not available")

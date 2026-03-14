@@ -40,12 +40,4 @@ extension XXDK {
       notif.notificationOccurred(.success)
     }
   }
-
-  func lockTask() {
-    nsLock.lock()
-  }
-
-  func unlockTask() {
-    nsLock.unlock()
-  }
 }

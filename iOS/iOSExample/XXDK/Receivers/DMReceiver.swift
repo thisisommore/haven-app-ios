@@ -95,7 +95,7 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
   }
 
   @Dependency(\.defaultDatabase) private var database
-  private let receiverHelpers = ReceiverHelpers()
+  private let receiverHelpers = ReceiverHelpers.shared
 
   func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
     return true
