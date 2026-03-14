@@ -92,12 +92,13 @@ extension XXDK {
     // Receivers
 
     do {
+      let dmReceiver = DMReceiverBuilder()
       guard
         let dmClient = try BindingsStatic.newDMClient(
           cmixId: cmix.getID(),
           notifications: notifications,
           privateIdentity: privateIdentity,
-          receiverBuilder: DMReceiverBuilder(receiver: dmReceiver),
+          receiverBuilder: dmReceiver,
           dmReceiver: dmReceiver
         )
       else {

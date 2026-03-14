@@ -182,7 +182,6 @@ final class XXDKMock: XXDKP {
 
   private var ndf: Data?
   var DM: BindingsDMClientWrapper?
-  var dmReceiver: DMReceiver = .init()
 
   /// Mock implementation of generateIdentities
   /// - Parameter amountOfIdentities: Number of identities to generate

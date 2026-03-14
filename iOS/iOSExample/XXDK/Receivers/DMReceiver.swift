@@ -9,19 +9,6 @@ import Bindings
 import SQLiteData
 import SwiftData
 
-final class DMReceiverBuilder: NSObject, Bindings.BindingsDMReceiverBuilderProtocol {
-  private var r: DMReceiver
-
-  init(receiver: DMReceiver) {
-    self.r = receiver
-    super.init()
-  }
-
-  func build(_: String?) -> (any BindingsDMReceiverProtocol)? {
-    return self.r
-  }
-}
-
 // DMReceiver's are callbacks for message processing. These include
 // message reception and retrieval of specific data to process a message.
 // DmCallbacks are events that signify the UI should be updated
@@ -35,9 +22,13 @@ struct ReceivedMessage: Identifiable {
   var id = UUID()
 }
 
-final class DMReceiver: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
-  .BindingsDmCallbacksProtocol
+final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
+  .BindingsDmCallbacksProtocol, Bindings.BindingsDMReceiverBuilderProtocol
 {
+  func build(_: String?) -> (any BindingsDMReceiverProtocol)? {
+    return self
+  }
+
   func updateSentStatus(
     _ uuid: Int64, messageID: Data?, timestamp: Int64, roundID: Int64, status: Int64
   ) {
