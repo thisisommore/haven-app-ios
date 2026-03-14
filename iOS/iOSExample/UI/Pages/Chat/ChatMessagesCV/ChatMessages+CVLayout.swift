@@ -19,7 +19,7 @@ extension UICollectionView {
   }
 }
 
-protocol ChatMessagesCollectionViewLayoutDelegate {
+protocol ChatMessagesCollectionViewLayoutDelegate: AnyObject {
   func collectionView(
     _ collectionView: UICollectionView, layout: UICollectionViewLayout,
     sizeForItemAt indexPath: IndexPath
