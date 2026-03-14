@@ -144,7 +144,7 @@ extension XXDK {
   func sendDM(msg: String, toPubKey: Data, partnerToken: Int32) {
     guard let DM
     else {
-      AppLogger.messaging.critical("DM not there")
+      AppLogger.messaging.error("DM not there")
       fatalError("DM not there")
     }
     guard let encodedMsg = encodeMessage("<p>\(msg)</p>")
@@ -188,7 +188,7 @@ extension XXDK {
   ) {
     guard let DM
     else {
-      AppLogger.messaging.critical("DM not there")
+      AppLogger.messaging.error("DM not there")
       fatalError("DM not there")
     }
     guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
@@ -223,7 +223,7 @@ extension XXDK {
         AppLogger.messaging.warning("DM sendReply returned no messageID")
       }
     } catch {
-      AppLogger.messaging.critical(
+      AppLogger.messaging.error(
         "Unable to send reply: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("Unable to send reply: " + error.localizedDescription)
@@ -239,7 +239,7 @@ extension XXDK {
   ) {
     guard let DM
     else {
-      AppLogger.messaging.critical("DM not there")
+      AppLogger.messaging.error("DM not there")
       fatalError("DM not there")
     }
     guard let targetMessageId = Data(base64Encoded: toMessageIdB64)
@@ -263,7 +263,7 @@ extension XXDK {
         )
       }
     } catch {
-      AppLogger.messaging.critical(
+      AppLogger.messaging.error(
         "Unable to send reaction: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("Unable to send reaction: " + error.localizedDescription)

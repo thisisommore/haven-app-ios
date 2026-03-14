@@ -31,10 +31,7 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
   func updateSentStatus(
     _ uuid: Int64, messageID: Data?, timestamp: Int64, roundID: Int64, status: Int64
   ) {
-    let messageIDB64 = messageID?.base64EncodedString() ?? "nil"
-    AppLogger.messaging.info(
-      "func updateSentStatus(uuid: \(uuid, privacy: .public), messageID: \(messageIDB64, privacy: .public), timestamp: \(timestamp, privacy: .public), roundID: \(roundID, privacy: .public), status: \(status, privacy: .public))"
-    )
+    _ = (timestamp, roundID)
 
     guard let parsedStatus = MessageStatus(rawValue: Int(status))
     else {
@@ -81,29 +78,14 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     do {
       switch eventType {
       case 1000:
-        let parsed = try Parser.decode(DmNotificationUpdateJSON.self, from: jsonData)
-        AppLogger.messaging.info(
-          "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
-        )
+        _ = try Parser.decode(DmNotificationUpdateJSON.self, from: jsonData)
       case 2000:
-        let parsed = try Parser.decode(DmBlockedUserJSON.self, from: jsonData)
-        AppLogger.messaging.info(
-          "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
-        )
+        _ = try Parser.decode(DmBlockedUserJSON.self, from: jsonData)
       case 3000:
-        let parsed = try Parser.decode(DmMessageReceivedJSON.self, from: jsonData)
-        AppLogger.messaging.info(
-          "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
-        )
+        _ = try Parser.decode(DmMessageReceivedJSON.self, from: jsonData)
       case 4000:
-        let parsed = try Parser.decode(DmMessageDeletedJSON.self, from: jsonData)
-        AppLogger.messaging.info(
-          "DM event parsed type=\(eventType, privacy: .public) payload=\(String(describing: parsed), privacy: .public)"
-        )
-      default:
-        AppLogger.messaging.debug(
-          "DM event update has unknown eventType \(eventType, privacy: .public)"
-        )
+        _ = try Parser.decode(DmMessageDeletedJSON.self, from: jsonData)
+      default: break
       }
     } catch {
       AppLogger.messaging.error(
@@ -133,13 +115,7 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     status: Int64
   ) -> Int64 {
     // Ensure UI updates happen on main thread
-    let messageIDB64 = messageID?.base64EncodedString() ?? "nil"
-    let textB64 = text?.base64EncodedString() ?? "nil"
-    let partnerKeyB64 = partnerKey?.base64EncodedString() ?? "nil"
-    let senderKeyB64 = senderKey?.base64EncodedString() ?? "nil"
-    AppLogger.messaging.info(
-      "func receive(messageID: \(messageIDB64, privacy: .public), nickname: \(nickname ?? "nil", privacy: .public), text: \(textB64, privacy: .public), partnerKey: \(partnerKeyB64, privacy: .public), senderKey: \(senderKeyB64, privacy: .public), dmToken: \(dmToken, privacy: .public), codeset: \(codeset, privacy: .public), timestamp: \(timestamp, privacy: .public), roundId: \(roundId, privacy: .public), mType: \(mType, privacy: .public), status: \(status, privacy: .public))"
-    )
+    _ = (nickname, roundId, mType)
 
     guard let messageID else { fatalError("no msg id") }
     guard let text else { fatalError("no text") }
@@ -215,12 +191,7 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     // if roundId == 0 {
     //     return InternalIdGenerator.shared.next()
     // }
-    let messageIDB64 = messageID?.base64EncodedString() ?? "nil"
-    let partnerKeyB64 = partnerKey?.base64EncodedString() ?? "nil"
-    let senderKeyB64 = senderKey?.base64EncodedString() ?? "nil"
-    AppLogger.messaging.info(
-      "func receiveText(messageID: \(messageIDB64, privacy: .public), nickname: \(nickname ?? "nil", privacy: .public), text: \(text ?? "nil", privacy: .public), partnerKey: \(partnerKeyB64, privacy: .public), senderKey: \(senderKeyB64, privacy: .public), dmToken: \(dmToken, privacy: .public), codeset: \(codeset, privacy: .public), timestamp: \(timestamp, privacy: .public), roundId: \(roundId, privacy: .public), status: \(status, privacy: .public))"
-    )
+    _ = (nickname, roundId)
 
     guard let messageID else { fatalError("no msg id") }
     let messageTextB64 = text ?? ""

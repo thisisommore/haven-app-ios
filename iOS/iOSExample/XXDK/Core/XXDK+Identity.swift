@@ -15,7 +15,7 @@ extension XXDK {
     // Cmix
     guard let cmix
     else {
-      AppLogger.identity.critical("cmix is not available")
+      AppLogger.identity.error("cmix is not available")
       fatalError("cmix is not available")
     }
 
@@ -32,7 +32,7 @@ extension XXDK {
       do {
         try cmix.ekvSet("MyPrivateIdentity", value: _privateIdentity)
       } catch {
-        AppLogger.identity.critical(
+        AppLogger.identity.error(
           "could not set ekv: \(error.localizedDescription, privacy: .public)"
         )
         fatalError("could not set ekv: " + error.localizedDescription)
@@ -42,7 +42,7 @@ extension XXDK {
       do {
         privateIdentity = try cmix.ekvGet("MyPrivateIdentity")
       } catch {
-        AppLogger.identity.critical(
+        AppLogger.identity.error(
           "could not get ekv: \(error.localizedDescription, privacy: .public)"
         )
         fatalError("could not set ekv: " + error.localizedDescription)
@@ -53,7 +53,7 @@ extension XXDK {
     do {
       publicIdentity = try BindingsStatic.getPublicChannelIdentityFromPrivate(privateIdentity)
     } catch {
-      AppLogger.identity.critical(
+      AppLogger.identity.error(
         "could not derive public identity: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("could not derive public identity: " + error.localizedDescription)
@@ -74,14 +74,14 @@ extension XXDK {
     do {
       notifications = try BindingsStatic.loadNotifications(cmix.getID())
     } catch {
-      AppLogger.identity.critical(
+      AppLogger.identity.error(
         "could not load notifications: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("could not load notifications: " + error.localizedDescription)
     }
     guard let notifications
     else {
-      AppLogger.identity.critical("could not load notifications: returned nil")
+      AppLogger.identity.error("could not load notifications: returned nil")
       fatalError("could not load notifications: returned nil")
     }
 
@@ -102,12 +102,12 @@ extension XXDK {
           dmReceiver: dmReceiver
         )
       else {
-        AppLogger.identity.critical("could not load dm client: returned nil")
+        AppLogger.identity.error("could not load dm client: returned nil")
         fatalError("could not load dm client: returned nil")
       }
       DM = BindingsDMClientWrapper(dmClient)
     } catch {
-      AppLogger.identity.critical(
+      AppLogger.identity.error(
         "could not load dm client: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("could not load dm client: " + error.localizedDescription)
@@ -120,7 +120,7 @@ extension XXDK {
     do {
       guard let kv = cmix.getRemoteKV()
       else {
-        AppLogger.identity.critical("getRemoteKV returned nil")
+        AppLogger.identity.error("getRemoteKV returned nil")
         fatalError("getRemoteKV returned nil")
       }
       remoteKV = kv
@@ -131,7 +131,7 @@ extension XXDK {
         localEvents: true
       )
     } catch {
-      AppLogger.identity.critical(
+      AppLogger.identity.error(
         "failed to set storageTagListener: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("failed to set storageTagListener \(error)")
@@ -156,14 +156,14 @@ extension XXDK {
             channelUICallbacks: channelUICallbacks
           )
         } catch {
-          AppLogger.identity.critical(
+          AppLogger.identity.error(
             "BindingsNewChannelsManager failed: \(error.localizedDescription, privacy: .public)"
           )
           fatalError("BindingsNewChannelsManager failed: \(error.localizedDescription)")
         }
         guard let cm
         else {
-          AppLogger.identity.critical("BindingsNewChannelsManager returned nil")
+          AppLogger.identity.error("BindingsNewChannelsManager returned nil")
           fatalError("BindingsNewChannelsManager returned nil")
         }
         channelsManager = BindingsChannelsManagerWrapper(cm)
@@ -178,7 +178,7 @@ extension XXDK {
         let entryData = try Parser.encode(entry)
         guard let remoteKV, let channelsManager, let storageTagListener
         else {
-          AppLogger.identity.critical(
+          AppLogger.identity.error(
             "remoteKV/channelsManager/storageTagListener is nil"
           )
           fatalError("remoteKV/channelsManager/storageTagListener is nil")
@@ -189,7 +189,7 @@ extension XXDK {
       } else {
         guard let storageTagListener, let storageTagData = storageTagListener.data
         else {
-          AppLogger.identity.critical("storageTagListener or its data is nil")
+          AppLogger.identity.error("storageTagListener or its data is nil")
           fatalError("storageTagListener or its data is nil")
         }
         let storageTagString = try storageTagData.utf8()
@@ -204,14 +204,14 @@ extension XXDK {
             channelUICallbacks: channelUICallbacks
           )
         } catch {
-          AppLogger.identity.critical(
+          AppLogger.identity.error(
             "BindingsLoadChannelsManager failed: \(error.localizedDescription, privacy: .public)"
           )
           fatalError("BindingsLoadChannelsManager failed: \(error.localizedDescription)")
         }
         guard let cm
         else {
-          AppLogger.identity.critical("BindingsLoadChannelsManager returned nil")
+          AppLogger.identity.error("BindingsLoadChannelsManager returned nil")
           fatalError("BindingsLoadChannelsManager returned nil")
         }
         channelsManager = BindingsChannelsManagerWrapper(cm)
@@ -239,13 +239,13 @@ extension XXDK {
 
     guard let codename, let DM
     else {
-      AppLogger.identity.critical("codename/DM/modelContainer not there")
+      AppLogger.identity.error("codename/DM/modelContainer not there")
       fatalError("codename/DM/modelContainer not there")
     }
     if !codename.isEmpty {
       guard let selfPubKeyData = DM.getPublicKey()
       else {
-        AppLogger.identity.critical("self pub key data is nil")
+        AppLogger.identity.error("self pub key data is nil")
         fatalError("self pub key data is nil")
       }
       let selfPubKeyB64 = selfPubKeyData.base64EncodedString()

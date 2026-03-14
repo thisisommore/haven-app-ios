@@ -44,7 +44,7 @@ extension XXDK {
           ndf: downloadedNdf, stateDir: stateDir.path, secret: secret, backup: ""
         )
       } catch {
-        AppLogger.network.critical(
+        AppLogger.network.error(
           "could not create new Cmix: \(error.localizedDescription, privacy: .public)"
         )
         fatalError("could not create new Cmix: " + error.localizedDescription)
@@ -58,7 +58,7 @@ extension XXDK {
         stateDir: stateDir.path, secret: secret, paramsJSON: cmixParamsJSON
       )
     } catch {
-      AppLogger.network.critical(
+      AppLogger.network.error(
         "could not load Cmix: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("could not load Cmix: " + error.localizedDescription)
@@ -73,7 +73,7 @@ extension XXDK {
     defer { unlockTask() }
     guard let cmix
     else {
-      AppLogger.network.critical("cmix is not available")
+      AppLogger.network.error("cmix is not available")
       fatalError("cmix is not available")
     }
     await progress(.startingNetworkFollower)
@@ -82,7 +82,7 @@ extension XXDK {
       try cmix.startNetworkFollower(50000)
       cmix.wait(forNetwork: 10 * 60 * 1000)
     } catch {
-      AppLogger.network.critical(
+      AppLogger.network.error(
         "cannot start network: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("cannot start network: " + error.localizedDescription)
@@ -98,7 +98,7 @@ extension XXDK {
     do {
       certString = try String(contentsOfFile: certFilePath)
     } catch {
-      AppLogger.network.critical(
+      AppLogger.network.error(
         "Missing network certificate: \(error.localizedDescription, privacy: .public)"
       )
       fatalError(
@@ -112,12 +112,12 @@ extension XXDK {
       guard
         let ndf = try BindingsStatic.downloadAndVerifySignedNdf(url: url, cert: certString)
       else {
-        AppLogger.network.critical("DownloadAndVerifySignedNdfWithUrl returned nil")
+        AppLogger.network.error("DownloadAndVerifySignedNdfWithUrl returned nil")
         fatalError("DownloadAndVerifySignedNdfWithUrl returned nil")
       }
       return ndf
     } catch {
-      AppLogger.network.critical(
+      AppLogger.network.error(
         "DownloadAndVerifySignedNdfWithUrl failed: \(error.localizedDescription, privacy: .public)"
       )
       fatalError("DownloadAndVerifySignedNdfWithUrl failed: " + error.localizedDescription)

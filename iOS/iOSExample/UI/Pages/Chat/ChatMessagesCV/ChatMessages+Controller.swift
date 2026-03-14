@@ -104,7 +104,6 @@ final class ChatMessagesVC: UIViewController {
   private var previousViewSize: CGFloat = 0
 
   init(chatId: String, onReply: @escaping ((ChatMessageModel) -> Void)) {
-    print("CV:Controller:init")
     self.chatId = chatId
     self.onReply = onReply
     self.cv = UICollectionView(
@@ -150,7 +149,6 @@ final class ChatMessagesVC: UIViewController {
   }
 
   override func viewDidLoad() {
-    print("CV:Controller:viewDidLoad")
     super.viewDidLoad()
 
     NotificationCenter.default.addObserver(
@@ -270,10 +268,6 @@ final class ChatMessagesVC: UIViewController {
     fatalError("init(coder:) has not been implemented")
   }
 
-  func scrollViewDidChangeAdjustedContentInset(_ scrollView: UIScrollView) {
-    print("scrollViewDidChangeAdjustedContentInset: \(scrollView.adjustedContentInset)")
-  }
-
   func scrollToMessage(_ msg: ChatMessageModel?) {
     guard let msg else { return }
 
@@ -314,8 +308,10 @@ final class ChatMessagesVC: UIViewController {
           self.targetScrollMessageId = msg.id
           self.startObservation()
         }
-      } catch {
-        print("Failed to find message position: \(error)")
+      } catch let err {
+        AppLogger.chat.error(
+          "Failed to find message position: \(err.localizedDescription, privacy: .public)"
+        )
       }
     }
   }

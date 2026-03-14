@@ -55,7 +55,6 @@ final class XXDK: XXDKP {
     do {
       let dir = baseDir.appendingPathComponent("xxAppState")
       if !FileManager.default.fileExists(atPath: dir.path) {
-        AppLogger.xxdk.info("Creating state directory: \(dir.path)")
         try FileManager.default.createDirectory(
           at: dir,
           withIntermediateDirectories: true

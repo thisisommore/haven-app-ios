@@ -23,30 +23,18 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     messageUpdateInfoJSON updateInfoJSON: Data?,
     ret0_ ret0: UnsafeMutablePointer<Int64>?
   ) throws {
-    let parsedUpdateInfo = try updateInfoJSON.map {
+    _ = messageID
+    _ = ret0
+    _ = try updateInfoJSON.map {
       try Parser.decode(MessageUpdateInfoJSON.self, from: $0)
     }
-    let updateInfoDescription = parsedUpdateInfo.map { self.describe($0) } ?? "nil"
-    let ret0Description = String(describing: ret0)
-    AppLogger.messaging.info(
-      "func update(fromMessageID: \(self.short(messageID), privacy: .public), messageUpdateInfoJSON: \(updateInfoDescription, privacy: .public), ret0_: \(ret0Description, privacy: .public))"
-    )
   }
 
   func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
     guard let messageUpdateInfoJSON
-    else {
-      AppLogger.messaging.info(
-        "func update(fromUUID: \(uuid, privacy: .public), messageUpdateInfoJSON: nil)"
-      )
-      return
-    }
+    else { return }
 
     let updateInfo = try Parser.decode(MessageUpdateInfoJSON.self, from: messageUpdateInfoJSON)
-    let updateInfoDescription = self.describe(updateInfo)
-    AppLogger.messaging.info(
-      "func update(fromUUID: \(uuid, privacy: .public), messageUpdateInfoJSON: \(updateInfoDescription, privacy: .public))"
-    )
     let message = try database.read { db in
       try ChatMessageModel.where { $0.id.eq(uuid) }.fetchOne(db)
     }
@@ -116,9 +104,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     nickname: String? = nil,
     status: Int64
   ) -> Int64 {
-    print(
-      "PM: channelId=\(channelId) channelName=\(channelName) text=\(text) senderCodename=\(senderCodename ?? "nil") senderPubKey=\(self.short(senderPubKey)) messageIdB64=\(messageIdB64 ?? "nil") replyTo=\(replyTo ?? "nil") timestamp=\(timestamp) dmToken=\(dmToken.map { String($0) } ?? "nil") color=\(color) nickname=\(nickname ?? "nil")"
-    )
     do {
       let chat = try fetchOrCreateChannelChat(
         channelId: channelId,
@@ -146,7 +131,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
       return msg.id
     } catch {
-      AppLogger.storage.critical(
+      AppLogger.storage.error(
         "persist msg error: \(error.localizedDescription, privacy: .public)"
       )
       fatalError(
@@ -174,9 +159,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     status: Int64,
     hidden: Bool
   ) -> Int64 {
-    AppLogger.messaging.info(
-      "func receiveMessage(_: \(self.short(channelID), privacy: .public), messageID: \(self.short(messageID), privacy: .public), nickname: \(nickname ?? "nil", privacy: .public), text: \(text ?? "nil", privacy: .public), pubKey: \(self.short(pubKey), privacy: .public), dmToken: \(dmToken, privacy: .public), codeset: \(codeset, privacy: .public), timestamp: \(timestamp, privacy: .public), lease: \(lease, privacy: .public), roundID: \(roundID, privacy: .public), messageType: \(messageType, privacy: .public), status: \(status, privacy: .public), hidden: \(hidden, privacy: .public))"
-    )
+    _ = (lease, roundID, messageType, hidden)
 
     let messageIdB64 = messageID?.base64EncodedString()
     let messageTextB64 = text ?? ""
