@@ -32,16 +32,16 @@ struct HighlightedText: View {
       // Add non-highlighted part
       if currentIndex < range.lowerBound {
         result =
-          result
+          (result
             + Text(self.text[currentIndex ..< range.lowerBound])
-            .foregroundColor(self.baseColor)
+            .foregroundColor(self.baseColor))
       }
       // Add highlighted part with bold styling
       result =
-        result
+        (result
           + Text(self.text[range])
           .foregroundColor(self.highlightColor)
-          .bold()
+          .bold())
 
       currentIndex = range.upperBound
     }
@@ -49,9 +49,9 @@ struct HighlightedText: View {
     // Add remaining text
     if currentIndex < self.text.endIndex {
       result =
-        result
+        (result
           + Text(self.text[currentIndex...])
-          .foregroundColor(self.baseColor)
+          .foregroundColor(self.baseColor))
     }
 
     return result
