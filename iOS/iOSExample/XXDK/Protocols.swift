@@ -11,6 +11,13 @@ import Kronos
 import SQLiteData
 import SwiftData
 
+struct GeneratedIdentity {
+  let privateIdentity: Data
+  let codename: String
+  let codeset: Int
+  let pubkey: String
+}
+
 protocol XXDKP: ObservableObject, AnyObject {
   associatedtype ChannelType: ChannelsP
   associatedtype DirectMessageType: DirectMessageP
