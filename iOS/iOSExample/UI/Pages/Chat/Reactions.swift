@@ -148,11 +148,13 @@ struct ReactorsSheet: View {
   }
 
   private func senderCodename(for reaction: MessageReactionModel) -> String {
-    guard let senderId = reaction.senderId,
-          let sender = try? database.read({ db in
-            try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)
-          })
-    else { return reaction.isMe ? "You" : "Unknown" }
+    if reaction.isMe {
+      return "You"
+    }
+    guard let sender = try? database.read({ db in
+      try MessageSenderModel.where { $0.id.eq(reaction.senderId) }.fetchOne(db)
+    })
+    else { return "Unknown" }
     return sender.codename
   }
 }

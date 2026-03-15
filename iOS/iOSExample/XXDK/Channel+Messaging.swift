@@ -30,7 +30,7 @@ class ChannelsMessaging: ChannelsMessagingP {
     messageIdB64: String,
     emoji: String,
     targetMessageId: String,
-    isMe: Bool = true
+    senderId: UUID
   ) {
     Task {
       do {
@@ -39,7 +39,7 @@ class ChannelsMessaging: ChannelsMessagingP {
           externalId: messageIdB64,
           targetMessageId: targetMessageId,
           emoji: emoji,
-          isMe: isMe
+          senderId: senderId
         )
         try self.database.write { db in
           try MessageReactionModel.insert { reaction }.execute(db)
@@ -133,7 +133,7 @@ class ChannelsMessaging: ChannelsMessagingP {
           messageIdB64: messageID.base64EncodedString(),
           emoji: emoji,
           targetMessageId: toMessageIdB64,
-          isMe: true
+          senderId: UUID.selfId
         )
       }
     } catch {

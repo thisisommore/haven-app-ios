@@ -1,26 +1,19 @@
 import Foundation
 import SQLiteData
 
+extension UUID {
+  static let selfId = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+}
+
 @Table("messageReactions")
 struct MessageReactionModel: Identifiable, Hashable {
   var id: Int64
   var externalId: String
   var targetMessageId: String
   var emoji: String
-  var timestamp: Date
-  var isMe: Bool = false
-  var senderId: UUID?
-
-  init(
-    id: Int64, externalId: String, targetMessageId: String, emoji: String,
-    senderId: UUID? = nil, isMe: Bool = false
-  ) {
-    self.id = id
-    self.externalId = externalId
-    self.targetMessageId = targetMessageId
-    self.emoji = emoji
-    self.timestamp = Date()
-    self.isMe = isMe
-    self.senderId = senderId
+  var timestamp: Date = .init()
+  var senderId: UUID
+  var isMe: Bool {
+    self.senderId == UUID.selfId
   }
 }

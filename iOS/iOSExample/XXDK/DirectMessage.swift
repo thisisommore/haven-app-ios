@@ -49,8 +49,7 @@ class DirectMessage: DirectMessageP {
   private func persistReaction(
     messageIdB64: String,
     emoji: String,
-    targetMessageId: String,
-    isMe: Bool = true
+    targetMessageId: String
   ) {
     Task {
       do {
@@ -59,7 +58,7 @@ class DirectMessage: DirectMessageP {
           externalId: messageIdB64,
           targetMessageId: targetMessageId,
           emoji: emoji,
-          isMe: isMe
+          senderId: UUID.selfId
         )
         try self.database.write { db in
           try MessageReactionModel.insert { reaction }.execute(db)
@@ -172,8 +171,7 @@ class DirectMessage: DirectMessageP {
         self.persistReaction(
           messageIdB64: messageID.base64EncodedString(),
           emoji: emoji,
-          targetMessageId: toMessageIdB64,
-          isMe: true
+          targetMessageId: toMessageIdB64
         )
       }
     } catch {

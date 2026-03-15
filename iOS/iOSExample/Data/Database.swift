@@ -101,8 +101,7 @@ func appDatabase() throws -> any DatabaseWriter {
         "targetMessageId" TEXT NOT NULL,
         "emoji" TEXT NOT NULL,
         "timestamp" TEXT NOT NULL,
-        "isMe" INTEGER NOT NULL DEFAULT 0,
-        "senderId" TEXT REFERENCES "messageSenders"("id")
+        "senderId" TEXT NOT NULL REFERENCES "messageSenders"("id")
       ) STRICT
       """
     )

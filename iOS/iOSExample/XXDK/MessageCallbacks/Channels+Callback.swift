@@ -206,6 +206,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     status _: Int64,
     hidden _: Bool
   ) -> Int64 {
+    guard let pubKey else { fatalError("no pub key") }
     let reactionText = reaction ?? ""
     let targetMessageIdB64 = reactionTo?.base64EncodedString()
 
@@ -227,23 +228,20 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         pubKey: pubKey, codeset: codeset
       )
 
-      var sender: MessageSenderModel?
-      if let pubKey {
-        sender = try self.receiverHelpers.upsertSender(
-          pubKey: pubKey,
-          codename: codename,
-          nickname: nickname,
-          dmToken: dmToken,
-          color: color
-        )
-      }
+      let sender = try self.receiverHelpers.upsertSender(
+        pubKey: pubKey,
+        codename: codename,
+        nickname: nickname,
+        dmToken: dmToken,
+        color: color
+      )
 
       // De-duplicate by message target + emoji + sender.
       // If a duplicate exists, update its id instead of creating another row.
       let sameSenderReactions = try database.read { db in
         try MessageReactionModel.where {
           $0.targetMessageId.eq(targetId) && $0.emoji.eq(reactionText)
-            && $0.senderId.eq(sender?.id)
+            && $0.senderId.eq(sender.id)
         }.fetchAll(db)
       }
 
@@ -253,9 +251,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         if canonical.externalId != reactionMessageId {
           canonical.externalId = reactionMessageId
         }
-        if canonical.senderId == nil, let sender {
-          canonical.senderId = sender.id
-        }
+
         // If duplicates already exist, keep one canonical row.
         for duplicate in sameSenderReactions where duplicate.id != canonical.id {
           try database.write { db in
@@ -270,7 +266,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
           externalId: reactionMessageId,
           targetMessageId: targetId,
           emoji: reactionText,
-          senderId: sender?.id
+          senderId: sender.id
         )
         try self.database.write { db in
           try MessageReactionModel.insert { newRecord }.execute(db)
