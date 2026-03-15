@@ -165,6 +165,7 @@ struct MessageBubble<T: XXDKP>: View {
   let mockSender = MessageSenderModel(
     pubkey: Data(),
     codename: "PreviewUser",
+    nickname: nil,
     dmToken: 123,
     color: 0x0B421F
   )

@@ -14,7 +14,7 @@ struct MessageSenderModel {
 
   var color: Int
   init(
-    pubkey: Data, codename: String, nickname: String? = nil, dmToken: Int32 = 0,
+    pubkey: Data, codename: String, nickname: String?, dmToken: Int32 = 0,
     color: Int
   ) {
     self.pubkey = pubkey
