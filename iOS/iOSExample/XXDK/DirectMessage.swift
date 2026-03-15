@@ -1,5 +1,5 @@
 //
-//  XXDK+Messaging.swift
+//  DirectMessage.swift
 //  iOSExample
 //
 
@@ -55,8 +55,8 @@ class DirectMessage: DirectMessageP {
     Task {
       do {
         let reaction = MessageReactionModel(
-          id: messageIdB64,
-          internalId: InternalIdGenerator.shared.next(),
+          id: InternalIdGenerator.shared.next(),
+          externalId: messageIdB64,
           targetMessageId: targetMessageId,
           emoji: emoji,
           isMe: isMe

@@ -3,8 +3,8 @@ import SQLiteData
 
 @Table("messageReactions")
 struct MessageReactionModel: Identifiable, Hashable {
-  var id: String
-  var internalId: Int64
+  var id: Int64
+  var externalId: String
   var targetMessageId: String
   var emoji: String
   var timestamp: Date
@@ -12,11 +12,11 @@ struct MessageReactionModel: Identifiable, Hashable {
   var senderId: String?
 
   init(
-    id: String, internalId: Int64, targetMessageId: String, emoji: String,
+    id: Int64, externalId: String, targetMessageId: String, emoji: String,
     senderId: String? = nil, isMe: Bool = false
   ) {
     self.id = id
-    self.internalId = internalId
+    self.externalId = externalId
     self.targetMessageId = targetMessageId
     self.emoji = emoji
     self.timestamp = Date()

@@ -61,7 +61,7 @@ func appDatabase() throws -> any DatabaseWriter {
       """
       CREATE TABLE "chatMessages"(
         "id" INTEGER NOT NULL PRIMARY KEY,
-        "externalId" TEXT NOT NULL,
+        "externalId" TEXT NOT NULL UNIQUE,
         "message" TEXT NOT NULL,
         "timestamp" TEXT NOT NULL,
         "isIncoming" INTEGER NOT NULL,
@@ -83,8 +83,8 @@ func appDatabase() throws -> any DatabaseWriter {
     try #sql(
       """
       CREATE TABLE "messageReactions"(
-        "id" TEXT NOT NULL PRIMARY KEY,
-        "internalId" INTEGER NOT NULL,
+        "id" INTEGER NOT NULL PRIMARY KEY,
+        "externalId" TEXT NOT NULL UNIQUE,
         "targetMessageId" TEXT NOT NULL,
         "emoji" TEXT NOT NULL,
         "timestamp" TEXT NOT NULL,

@@ -1,5 +1,5 @@
 //
-//  XXDK+ChannelsMessaging.swift
+//  Channel+Messaging.swift
 //  iOSExample
 //
 
@@ -35,8 +35,8 @@ class ChannelsMessaging: ChannelsMessagingP {
     Task {
       do {
         let reaction = MessageReactionModel(
-          id: messageIdB64,
-          internalId: InternalIdGenerator.shared.next(),
+          id: InternalIdGenerator.shared.next(),
+          externalId: messageIdB64,
           targetMessageId: targetMessageId,
           emoji: emoji,
           isMe: isMe

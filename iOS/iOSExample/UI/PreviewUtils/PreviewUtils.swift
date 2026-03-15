@@ -38,8 +38,8 @@ extension View {
 
         try MessageReactionModel.insert {
           MessageReactionModel(
-            id: "wow",
-            internalId: InternalIdGenerator.shared.next(),
+            id: InternalIdGenerator.shared.next(),
+            externalId: "wow",
             targetMessageId: "4TDppExKKwB/pAvRNkCn9pGDi8IGPIGhJSKdouDoCqE=",
             emoji: "💚",
             senderId: mockSender.id

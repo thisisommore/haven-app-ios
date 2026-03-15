@@ -248,10 +248,10 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       }
 
       let record: MessageReactionModel
-      if var canonical = sameSenderReactions.first(where: { $0.id == reactionMessageId })
+      if var canonical = sameSenderReactions.first(where: { $0.externalId == reactionMessageId })
         ?? sameSenderReactions.first {
-        if canonical.id != reactionMessageId {
-          canonical.id = reactionMessageId
+        if canonical.externalId != reactionMessageId {
+          canonical.externalId = reactionMessageId
         }
         if canonical.senderId == nil, let sender {
           canonical.senderId = sender.id
@@ -264,10 +264,10 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         }
         record = canonical
       } else {
-        let internalId = InternalIdGenerator.shared.next()
+        let id = InternalIdGenerator.shared.next()
         let newRecord = MessageReactionModel(
-          id: reactionMessageId,
-          internalId: internalId,
+          id: id,
+          externalId: reactionMessageId,
           targetMessageId: targetId,
           emoji: reactionText,
           senderId: sender?.id
@@ -278,30 +278,10 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         record = newRecord
       }
 
-      return record.internalId
+      return record.id
     } catch {
       fatalError(
         "failed to store message reaction \(error.localizedDescription)"
-      )
-    }
-  }
-
-  func deleteReaction(messageId: String, emoji: String) {
-    do {
-      let reactions = try database.read { db in
-        try MessageReactionModel.where {
-          $0.id.eq(messageId) && $0.emoji.eq(emoji)
-        }.fetchAll(db)
-      }
-
-      for reaction in reactions {
-        try self.database.write { db in
-          try MessageReactionModel.delete(reaction).execute(db)
-        }
-      }
-    } catch {
-      AppLogger.storage.error(
-        "EventModel: Failed to delete reaction: \(error.localizedDescription, privacy: .public)"
       )
     }
   }
@@ -380,7 +360,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     // Check MessageReaction - if message not found, check if it's a reaction
     if let sender = try? database.read({ db in
       try MessageReactionModel
-        .where { $0.id.eq(messageIdB64) }
+        .where { $0.externalId.eq(messageIdB64) }
         .join(MessageSenderModel.all) { $0.senderId.eq($1.id) }
         .select { _, sender in sender }
         .fetchOne(db)
@@ -421,7 +401,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
       // If no message found, check for reactions
       let reactions = try database.read { db in
-        try MessageReactionModel.where { $0.id.eq(messageIdB64) }.fetchAll(db)
+        try MessageReactionModel.where { $0.externalId.eq(messageIdB64) }.fetchAll(db)
       }
 
       if !reactions.isEmpty {
