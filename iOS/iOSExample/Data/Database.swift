@@ -94,18 +94,6 @@ func appDatabase() throws -> any DatabaseWriter {
       """
     )
     .execute(db)
-
-    try #sql(
-      """
-      CREATE TABLE "generatedIdentities"(
-        "privateIdentity" BLOB NOT NULL,
-        "codename" TEXT NOT NULL,
-        "codeset" INTEGER NOT NULL,
-        "pubkey" TEXT NOT NULL
-      ) STRICT
-      """
-    )
-    .execute(db)
   }
   try migrator.migrate(database)
   return database
