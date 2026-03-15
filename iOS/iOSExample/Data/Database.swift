@@ -46,11 +46,11 @@ func appDatabase() throws -> any DatabaseWriter {
         "pubKey" BLOB UNIQUE,
         "channelDescription" TEXT,
         "dmToken" INTEGER,
-        "color" INTEGER NOT NULL DEFAULT 15299665,
-        "isAdmin" INTEGER NOT NULL DEFAULT 0,
-        "isSecret" INTEGER NOT NULL DEFAULT 0,
+        "color" INTEGER NOT NULL,
+        "isAdmin" INTEGER NOT NULL,
+        "isSecret" INTEGER NOT NULL,
         "joinedAt" TEXT NOT NULL,
-        "unreadCount" INTEGER NOT NULL DEFAULT 0
+        "unreadCount" INTEGER NOT NULL
       ) STRICT
       """
     )
@@ -78,14 +78,14 @@ func appDatabase() throws -> any DatabaseWriter {
         "message" TEXT NOT NULL,
         "timestamp" TEXT NOT NULL,
         "isIncoming" INTEGER NOT NULL,
-        "isRead" INTEGER NOT NULL DEFAULT 0,
-        "status" INTEGER NOT NULL DEFAULT 1,
+        "isRead" INTEGER NOT NULL,
+        "status" INTEGER NOT NULL,
         "senderId" TEXT REFERENCES "messageSenders"("id"),
         "chatId" TEXT NOT NULL REFERENCES "chats"("id") ON DELETE CASCADE,
         "replyTo" TEXT,
-        "newContainsMarkup" INTEGER NOT NULL DEFAULT 0,
-        "newRenderKind" INTEGER NOT NULL DEFAULT 0,
-        "newRenderVersion" INTEGER NOT NULL DEFAULT 0,
+        "newContainsMarkup" INTEGER NOT NULL,
+        "newRenderKind" INTEGER NOT NULL,
+        "newRenderVersion" INTEGER NOT NULL,
         "newRenderPlainText" TEXT NOT NULL,
         "newRenderPayload" BLOB
       ) STRICT
