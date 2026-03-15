@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct EmptyChatSelectionView: View {
+struct NoChatSelectedView: View {
   var body: some View {
     VStack {
       Spacer()
@@ -19,5 +19,5 @@ struct EmptyChatSelectionView: View {
 }
 
 #Preview {
-  EmptyChatSelectionView()
+  NoChatSelectedView()
 }

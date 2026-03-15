@@ -97,7 +97,7 @@ struct Root: View {
       )
       .id(chatId)
     } else if self.horizontalSizeClass == .regular {
-      EmptyChatSelectionView()
+      NoChatSelectedView()
     }
   }
 }
