@@ -16,30 +16,25 @@ enum KeychainError: Error {
 
 final class AppStorage: ObservableObject {
   @Published private(set) var isPasswordSet: Bool = false
+  private static let setupCompleteKey = "isSetupComplete"
+  private static let baseQuery: [String: Any] = [
+    kSecClass as String: kSecClassGenericPassword,
+    kSecAttrService as String: "internalPassword",
+  ]
 
-  private let serviceName = "internalPassword"
-  private let setupCompleteKey = "isSetupComplete"
-
-  private var baseQuery: [String: Any] {
-    [
-      kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: self.serviceName,
-    ]
-  }
-
-  private var searchQuery: [String: Any] {
-    var query = self.baseQuery
+  private static var searchQuery: [String: Any] = {
+    var query = AppStorage.baseQuery
     query[kSecMatchLimit as String] = kSecMatchLimitOne
     query[kSecReturnAttributes as String] = true
     query[kSecReturnData as String] = true
     return query
-  }
+  }()
 
   var isSetupComplete: Bool {
-    get { UserDefaults.standard.bool(forKey: self.setupCompleteKey) }
+    get { UserDefaults.standard.bool(forKey: Self.setupCompleteKey) }
     set {
       objectWillChange.send()
-      UserDefaults.standard.set(newValue, forKey: self.setupCompleteKey)
+      UserDefaults.standard.set(newValue, forKey: Self.setupCompleteKey)
     }
   }
 
@@ -49,14 +44,12 @@ final class AppStorage: ObservableObject {
 
   /// Store password in keychain
   func storePassword(_ password: String) throws {
-    let passData = password.data
-
-    var query = self.baseQuery
-    query[kSecValueData as String] = passData
-    query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+    var query = Self.baseQuery
 
     // Delete existing item if present
     SecItemDelete(query as CFDictionary)
+    query[kSecValueData as String] = password.data
+    query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
 
     // Add new item
     let status = SecItemAdd(query as CFDictionary, nil)
@@ -71,7 +64,7 @@ final class AppStorage: ObservableObject {
   /// Retrieve password from keychain
   func getPassword() throws -> String {
     var item: CFTypeRef?
-    let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
+    let status = SecItemCopyMatching(Self.searchQuery as CFDictionary, &item)
 
     guard status != errSecItemNotFound
     else {
@@ -93,17 +86,9 @@ final class AppStorage: ObservableObject {
     return password
   }
 
-  /// Check if password is set in keychain
-  func checkPasswordExists() -> Bool {
-    var item: CFTypeRef?
-    let status = SecItemCopyMatching(searchQuery as CFDictionary, &item)
-
-    return status == errSecSuccess
-  }
-
   /// Delete password from keychain
   func deletePassword() throws {
-    let status = SecItemDelete(baseQuery as CFDictionary)
+    let status = SecItemDelete(Self.baseQuery as CFDictionary)
 
     guard status == errSecSuccess || status == errSecItemNotFound
     else {
@@ -122,7 +107,6 @@ final class AppStorage: ObservableObject {
     if let bundleId = Bundle.main.bundleIdentifier {
       UserDefaults.standard.removePersistentDomain(forName: bundleId)
     }
-    UserDefaults.standard.synchronize()
 
     self.updatePasswordStatus()
   }
@@ -145,6 +129,12 @@ final class AppStorage: ObservableObject {
 
   /// Update the published isPasswordSet property
   private func updatePasswordStatus() {
-    self.isPasswordSet = self.checkPasswordExists()
+    var query = AppStorage.baseQuery
+    query[kSecMatchLimit as String] = kSecMatchLimitOne
+    let status = SecItemCopyMatching(query as CFDictionary, nil)
+    let exist = status == errSecSuccess
+    if self.isPasswordSet != exist {
+      self.isPasswordSet = exist
+    }
   }
 }
