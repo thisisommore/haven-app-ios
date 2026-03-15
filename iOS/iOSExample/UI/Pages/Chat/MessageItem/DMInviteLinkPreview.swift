@@ -137,12 +137,11 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
   }
 
   private func checkIfAlreadyAdded() {
-    let chatId = self.link.pubKey.base64EncodedString()
     do {
-      let allChats = try database.read { db in
-        try ChatModel.all.fetchAll(db)
+      let existingChat = try database.read { db in
+        try ChatModel.where { $0.pubKey.eq(self.link.pubKey) }.fetchOne(db)
       }
-      if let existingChat = allChats.first(where: { $0.id == chatId }) {
+      if let existingChat {
         self.isAlreadyAdded = true
         self.isSelfChat = existingChat.name == "<self>"
       }
@@ -153,8 +152,11 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
 
   private func openChat() {
     guard !self.isSelfChat else { return }
-    let chatId = self.link.pubKey.base64EncodedString()
-    self.selectedChat.select(id: chatId, title: self.userName)
+    let existingChat = try? self.database.read { db in
+      try ChatModel.where { $0.pubKey.eq(self.link.pubKey) }.fetchOne(db)
+    }
+    guard let existingChat else { return }
+    self.selectedChat.select(id: existingChat.id, title: self.userName)
   }
 
   private func addUser() {

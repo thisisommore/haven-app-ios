@@ -5,6 +5,7 @@
 //  Created by Om More on 29/09/25.
 //
 
+import Foundation
 import SwiftUI
 
 final class AppNavigationPath: Observable, ObservableObject {
@@ -13,10 +14,10 @@ final class AppNavigationPath: Observable, ObservableObject {
 
 /// Holds selected chat info for split view detail column
 final class SelectedChat: ObservableObject {
-  @Published var chatId: String?
+  @Published var chatId: UUID?
   @Published var chatTitle: String = ""
 
-  func select(id: String, title: String) {
+  func select(id: UUID, title: String) {
     self.chatId = id
     self.chatTitle = title
   }
@@ -36,7 +37,7 @@ enum Destination: Hashable {
   case landing
   case codenameGenerator
   case password
-  case chat(chatId: String, chatTitle: String) // add whatever "props" you need
+  case chat(chatId: UUID, chatTitle: String) // add whatever "props" you need
   case logViewer
 }
 

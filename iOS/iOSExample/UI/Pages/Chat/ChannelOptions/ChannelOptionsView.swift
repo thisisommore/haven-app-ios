@@ -33,6 +33,10 @@ struct ChannelOptionsView<T: XXDKP>: View {
     self.chat?.dmToken != nil
   }
 
+  private var channelId: String? {
+    self.chat?.channelId
+  }
+
   var body: some View {
     NavigationView {
       List {
@@ -93,7 +97,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
             Toggle("Direct Messages", isOn: self.$isDMEnabled)
               .tint(.haven)
               .onChange(of: self.isDMEnabled) { oldValue, newValue in
-                guard let channelId = chat?.id else { return }
+                guard let channelId = self.channelId else { return }
                 do {
                   if newValue {
                     try self.xxdk.channel.enableDirectMessages(channelId: channelId)
@@ -150,7 +154,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
         .onAppear {
           self.refreshAdminStatus()
-          guard let channelId = chat?.id else { return }
+          guard let channelId = self.channelId else { return }
           do {
             self.isDMEnabled = try self.xxdk.channel.areDMsEnabled(channelId: channelId)
           } catch {
@@ -187,7 +191,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
 
         // Admin section - only visible for channel admins (not for DMs)
-        if !self.isDM, self.chat?.id != nil, self.isAdmin {
+        if !self.isDM, self.channelId != nil, self.isAdmin {
           Section(header: Text("Admin")) {
             Button {
               self.showExportKeySheet = true
@@ -206,7 +210,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
 
         // Muted Users section - only visible for admins (not for DMs)
-        if !self.isDM, self.chat?.id != nil, self.isAdmin {
+        if !self.isDM, self.channelId != nil, self.isAdmin {
           Section(header: Text("Muted Users")) {
             if self.mutedUsers.isEmpty {
               Text("No muted users")
@@ -214,7 +218,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
             } else {
               ForEach(self.mutedUsers, id: \.self) { pubKey in
                 MutedUserRow(pubKey: pubKey) {
-                  guard let channelId = chat?.id else { return }
+                  guard let channelId = self.channelId else { return }
                   do {
                     try self.xxdk.channel.muteUser(
                       channelId: channelId, pubKey: pubKey, mute: false
@@ -240,7 +244,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
 
         // Import key section - only visible for non-admins and not for DMs
-        if !self.isDM, self.chat?.id != nil, !self.isAdmin {
+        if !self.isDM, self.channelId != nil, !self.isAdmin {
           Section {
             Button {
               self.showImportKeySheet = true
@@ -323,7 +327,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
       }
       .sheet(isPresented: self.$showExportKeySheet) {
         ExportChannelKeySheet(
-          channelId: self.chat?.id ?? "",
+          channelId: self.channelId ?? "",
           channelName: self.chat?.name ?? "Unknown",
           xxdk: self.xxdk,
           onSuccess: { message in
@@ -340,7 +344,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
       }
       .sheet(isPresented: self.$showImportKeySheet) {
         ImportChannelKeySheet(
-          channelId: self.chat?.id ?? "",
+          channelId: self.channelId ?? "",
           channelName: self.chat?.name ?? "Unknown",
           xxdk: self.xxdk,
           onSuccess: { message in
@@ -389,7 +393,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
       }
       .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
-        guard let channelId = chat?.id else { return }
+        guard let channelId = self.channelId else { return }
         if let notificationChannelID = notification.userInfo?["channelID"] as? String,
            notificationChannelID == channelId {
           do {
@@ -409,7 +413,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
   }
 
   private func saveNickname() {
-    guard let channelId = chat?.id else { return }
+    guard let channelId = self.channelId else { return }
     do {
       try self.xxdk.channel.setChannelNickname(channelId: channelId, nickname: self.channelNickname)
       withAnimation(.spring(response: 0.3)) {

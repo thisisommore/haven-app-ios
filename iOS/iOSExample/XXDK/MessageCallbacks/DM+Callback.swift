@@ -250,9 +250,8 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     codename: String, pubKey: Data?, dmToken: Int32?, color: Int
   ) throws -> ChatModel {
     if let pubKey {
-      let pubKeyB64 = pubKey.base64EncodedString()
       if let existingByKey = try database.read({ db in
-        try ChatModel.where { $0.id.eq(pubKeyB64) }.fetchOne(db)
+        try ChatModel.where { $0.pubKey.eq(pubKey) }.fetchOne(db)
       }) {
         return existingByKey
       } else {

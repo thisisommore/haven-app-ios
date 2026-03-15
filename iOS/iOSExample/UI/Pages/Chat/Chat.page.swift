@@ -9,7 +9,7 @@ import SQLiteData
 import SwiftUI
 
 struct ChatView<T: XXDKP>: View {
-  let chatId: String
+  let chatId: UUID
   let chatTitle: String
 
   @EnvironmentObject var selectedChat: SelectedChat
@@ -54,7 +54,7 @@ struct ChatView<T: XXDKP>: View {
     }
   }
 
-  init(chatId: String, chatTitle: String) {
+  init(chatId: UUID, chatTitle: String) {
     self.chatId = chatId
     self.chatTitle = chatTitle
     _chat = FetchOne(ChatModel.where { $0.id.eq(chatId) })
@@ -131,7 +131,8 @@ struct ChatView<T: XXDKP>: View {
       ChannelOptionsView<T>(chat: self.chat) {
         Task {
           do {
-            try self.xxdk.channel.leaveChannel(channelId: self.chatId)
+            guard let channelId = self.chat?.channelId else { return }
+            try self.xxdk.channel.leaveChannel(channelId: channelId)
             let chatsToDelete =
               try? await database.read { db in
                 try ChatModel.where { $0.id.eq(self.chatId) }.fetchAll(db)
@@ -157,18 +158,22 @@ struct ChatView<T: XXDKP>: View {
     }
     .onAppear {
       self.isAdmin = self.chat?.isAdmin ?? false
-      self.isMuted = self.isChannel ? self.xxdk.channel.isMuted(channelId: self.chatId) : false
+      if self.isChannel, let channelId = self.chat?.channelId {
+        self.isMuted = self.xxdk.channel.isMuted(channelId: channelId)
+      } else {
+        self.isMuted = false
+      }
       // Mark all incoming messages as read
       self.markMessagesAsRead()
     }
     .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
       if let channelID = notification.userInfo?["channelID"] as? String,
-         channelID == chatId {
-        guard self.isChannel else { return }
-        self.isMuted = self.xxdk.channel.isMuted(channelId: self.chatId)
+         channelID == self.chat?.channelId {
+        guard self.isChannel, let channelId = self.chat?.channelId else { return }
+        self.isMuted = self.xxdk.channel.isMuted(channelId: channelId)
       }
     }
-    .id("chat-\(self.chatId)")
+    .id("chat-\(self.chatId.uuidString)")
     .onChange(of: self.showChannelOptions) { _, newValue in
       if !newValue {
         self.isAdmin = self.chat?.isAdmin ?? false

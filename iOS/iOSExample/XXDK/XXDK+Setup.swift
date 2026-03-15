@@ -209,10 +209,9 @@ extension XXDK {
         AppLogger.identity.error("self pub key data is nil")
         fatalError("self pub key data is nil")
       }
-      let selfPubKeyB64 = selfPubKeyData.base64EncodedString()
       do {
         let existing = try await database.read { db in
-          try ChatModel.where { $0.id.eq(selfPubKeyB64) }.fetchAll(db)
+          try ChatModel.where { $0.pubKey.eq(selfPubKeyData) }.fetchAll(db)
         }
         if existing.isEmpty {
           let token64 = dm.getToken()
@@ -238,7 +237,7 @@ extension XXDK {
       let cd = try await channel.joinChannelFromURL(XX_IOS_CHAT)
       let channelId = cd.ChannelID ?? "xxIOS"
       let existingChannel = try await database.read { db in
-        try ChatModel.where { $0.id.eq(channelId) }.fetchAll(db)
+        try ChatModel.where { $0.channelId.eq(channelId) }.fetchAll(db)
       }
       if existingChannel.isEmpty {
         let channelChat = ChatModel(channelId: channelId, name: cd.Name)

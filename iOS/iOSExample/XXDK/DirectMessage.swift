@@ -87,11 +87,10 @@ class DirectMessage: DirectMessageP {
         cmixParamsJSON: "".data
       )
 
-      if let report, let mid = report.messageID {
-        let chatId = toPubKey.base64EncodedString()
+      if let report, report.messageID != nil {
         let _: String = {
           if let found = try? database.read({ db in
-            try ChatModel.where { $0.id.eq(chatId) }.fetchOne(db)
+            try ChatModel.where { $0.pubKey.eq(toPubKey) }.fetchOne(db)
           }) {
             return found.name
           }
@@ -130,11 +129,10 @@ class DirectMessage: DirectMessageP {
         leaseTimeMS: 0,
         cmixParamsJSON: "".data
       )
-      if let report, let mid = report.messageID {
-        let chatId = toPubKey.base64EncodedString()
+      if let report, report.messageID != nil {
         let _: String = {
           if let found = try? database.read({ db in
-            try ChatModel.where { $0.id.eq(chatId) }.fetchOne(db)
+            try ChatModel.where { $0.pubKey.eq(toPubKey) }.fetchOne(db)
           }) {
             return found.name
           }

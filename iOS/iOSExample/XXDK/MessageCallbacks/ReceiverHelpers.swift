@@ -38,7 +38,7 @@ final class ReceiverHelpers {
       if let selfChat = try? database.read({ db in
         try ChatModel.where { $0.name.eq("<self>") }.fetchOne(db)
       }) {
-        Self.cachedSelfChatId = Data(base64Encoded: selfChat.id)
+        Self.cachedSelfChatId = selfChat.pubKey
       }
     }
 

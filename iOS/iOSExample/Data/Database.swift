@@ -10,7 +10,18 @@ import SQLiteData
 
 func appDatabase() throws -> any DatabaseWriter {
   @Dependency(\.context) var context
-  let configuration = Configuration()
+  var configuration = Configuration()
+  #if DEBUG
+    configuration.prepareDatabase { db in
+      db.trace(options: .profile) {
+        if context == .preview {
+          print("\($0.expandedDescription)")
+        } else {
+          AppLogger.storage.debug("\($0.expandedDescription)")
+        }
+      }
+    }
+  #endif
   let appSupportDir = try FileManager.default.url(
     for: .applicationSupportDirectory,
     in: .userDomainMask,
@@ -31,6 +42,8 @@ func appDatabase() throws -> any DatabaseWriter {
       CREATE TABLE "chats"(
         "id" TEXT NOT NULL PRIMARY KEY,
         "name" TEXT NOT NULL,
+        "channelId" TEXT UNIQUE,
+        "pubKey" BLOB UNIQUE,
         "channelDescription" TEXT,
         "dmToken" INTEGER,
         "color" INTEGER NOT NULL DEFAULT 15299665,

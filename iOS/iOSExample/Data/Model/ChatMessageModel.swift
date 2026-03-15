@@ -42,7 +42,7 @@ struct ChatMessageModel: Identifiable, Hashable {
   var isRead: Bool = false
   var status: MessageStatus
   var senderId: UUID?
-  var chatId: String
+  var chatId: UUID
   var replyTo: String?
   var newContainsMarkup: Bool = false
   var newRenderKind: NewMessageRenderKind = .unknown
@@ -51,7 +51,7 @@ struct ChatMessageModel: Identifiable, Hashable {
   var newRenderPayload: Data?
 
   init(
-    message: String, isIncoming: Bool, chatId: String, senderId: UUID? = nil,
+    message: String, isIncoming: Bool, chatId: UUID, senderId: UUID? = nil,
     id: Int64, externalId: String, replyTo: String? = nil,
     timestamp: Date,
     isRead: Bool = false, status: MessageStatus?

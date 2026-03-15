@@ -76,7 +76,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     channelName: String
   ) throws -> ChatModel {
     let existing = try database.read { db in
-      try ChatModel.where { $0.id.eq(channelId) }.fetchOne(db)
+      try ChatModel.where { $0.channelId.eq(channelId) }.fetchOne(db)
     }
 
     if let existing {

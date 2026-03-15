@@ -21,7 +21,7 @@ struct MessageWithSender: Hashable {
 
 final class ChatMessagesVC: UIViewController {
   // Data
-  let chatId: String
+  let chatId: UUID
   var isFetchingNextPage = true
   var onReply: (ChatMessageModel) -> Void
 
@@ -103,7 +103,7 @@ final class ChatMessagesVC: UIViewController {
   private(set) var cv: UICollectionView
   private var previousViewSize: CGFloat = 0
 
-  init(chatId: String, onReply: @escaping ((ChatMessageModel) -> Void)) {
+  init(chatId: UUID, onReply: @escaping ((ChatMessageModel) -> Void)) {
     self.chatId = chatId
     self.onReply = onReply
     self.cv = UICollectionView(
@@ -318,7 +318,7 @@ final class ChatMessagesVC: UIViewController {
 }
 
 struct ChatMessages: UIViewControllerRepresentable {
-  let chatId: String
+  let chatId: UUID
   var onReply: (ChatMessageModel) -> Void
   func updateUIViewController(_ uiViewController: ChatMessagesVC, context _: Context) {
     uiViewController.onReply = self.onReply

@@ -123,7 +123,8 @@ struct DeepLinkHandler: ViewModifier {
         switch host {
         case "chat":
           let pathComponents = url.pathComponents.filter { $0 != "/" }
-          if let chatId = pathComponents.first {
+          if let chatIdRaw = pathComponents.first,
+             let chatId = UUID(uuidString: chatIdRaw) {
             self.selectedChat.select(id: chatId, title: "")
           }
         case "dm":
@@ -195,14 +196,25 @@ struct DeepLinkHandler: ViewModifier {
     }
     color = Int(colorStr, radix: 16) ?? 0xE97451
 
-    let newChat = ChatModel(
-      pubKey: pubKey,
-      name: name,
-      dmToken: token,
-      color: color
-    )
-
     Task {
+      let existingChat = try? await self.database.read { db in
+        try ChatModel.where { $0.pubKey.eq(pubKey) }.fetchOne(db)
+      }
+
+      await MainActor.run {
+        if let existingChat {
+          self.selectedChat.select(id: existingChat.id, title: existingChat.name)
+          return
+        }
+      }
+
+      let newChat = ChatModel(
+        pubKey: pubKey,
+        name: name,
+        dmToken: token,
+        color: color
+      )
+
       try! await self.database.write { db in
         try ChatModel.insert { newChat }.execute(db)
       }

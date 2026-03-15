@@ -9,7 +9,8 @@ import Foundation
 import SQLiteData
 import SwiftUI
 
-let previewChatId = "previewChatId"
+let previewChatId = UUID()
+let previewChannelId = "previewChatId"
 let greenColorInt = 0x0B421F
 
 extension View {
@@ -20,7 +21,8 @@ extension View {
       }
       @Dependency(\.defaultDatabase) var database
 
-      let chat = ChatModel(channelId: previewChatId, name: "Mayur")
+      var chat = ChatModel(channelId: previewChannelId, name: "Mayur")
+      chat.id = previewChatId
       let mockSender = MessageSenderModel(
         pubkey: Data(), codename: "Mayur", dmToken: 0,
         color: greenColorInt
