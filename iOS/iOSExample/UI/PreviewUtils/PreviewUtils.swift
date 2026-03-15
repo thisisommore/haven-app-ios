@@ -59,7 +59,7 @@ extension View {
               id: InternalIdGenerator.shared.next(),
               externalId: name,
               replyTo: nil,
-              timestamp: 1,
+              timestamp: Date(),
               status: 2
             )
           }.execute(db)

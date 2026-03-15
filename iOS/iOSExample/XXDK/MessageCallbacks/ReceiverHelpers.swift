@@ -112,7 +112,7 @@ final class ReceiverHelpers {
         id: id,
         externalId: messageId,
         replyTo: replyTo,
-        timestamp: timestamp,
+        timestamp: Date(timeIntervalSince1970: Double(timestamp) * 1e-6 * 1e-3),
         status: status
       )
     } else {
@@ -124,6 +124,7 @@ final class ReceiverHelpers {
         id: id,
         externalId: messageId,
         replyTo: replyTo,
+        timestamp: Date(),
         status: status
       )
     }

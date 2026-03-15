@@ -24,6 +24,7 @@ private func makePreviewIncomingMessageFactory(chatId: String, senderId: UUID)
       id: InternalIdGenerator.shared.next(),
       externalId: externalId ?? UUID().uuidString,
       replyTo: replyTo,
+      timestamp: Date(),
       status: 2
     )
   }
@@ -38,6 +39,7 @@ private func makePreviewIncomingMessageWithoutSenderFactory(chatId: String) -> P
       id: InternalIdGenerator.shared.next(),
       externalId: externalId ?? UUID().uuidString,
       replyTo: replyTo,
+      timestamp: Date(),
       status: 2
     )
   }
@@ -52,6 +54,7 @@ private func makePreviewOutgoingMessageFactory(chatId: String) -> PreviewMessage
       id: InternalIdGenerator.shared.next(),
       externalId: externalId ?? UUID().uuidString,
       replyTo: replyTo,
+      timestamp: Date(),
       status: 2
     )
   }

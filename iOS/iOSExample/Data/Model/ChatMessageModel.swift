@@ -52,13 +52,13 @@ struct ChatMessageModel: Identifiable, Hashable {
   init(
     message: String, isIncoming: Bool, chatId: String, senderId: UUID? = nil,
     id: Int64, externalId: String, replyTo: String? = nil,
-    timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3),
+    timestamp: Date,
     isRead: Bool = false, status: Int64
   ) {
     self.id = id
     self.externalId = externalId
     self.message = message
-    self.timestamp = Date(timeIntervalSince1970: Double(timestamp) * 1e-6 * 1e-3)
+    self.timestamp = timestamp
     self.isIncoming = isIncoming
     self.isRead = isRead
     self.senderId = senderId
