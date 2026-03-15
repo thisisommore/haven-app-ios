@@ -7,13 +7,6 @@
 import Foundation
 import SQLiteData
 
-/// Message type enum matching channel message types
-enum MessageType: Int64 {
-  case text = 1
-  case reply = 2
-  case reaction = 3
-}
-
 /// Message delivery status
 enum MessageStatus: Int, QueryBindable {
   case unsent = 0
