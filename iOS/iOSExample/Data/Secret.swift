@@ -15,6 +15,14 @@ enum KeychainError: Error {
 }
 
 final class AppStorage: ObservableObject {
+  var isSetupComplete: Bool {
+    get { UserDefaults.standard.bool(forKey: Self.setupCompleteKey) }
+    set {
+      objectWillChange.send()
+      UserDefaults.standard.set(newValue, forKey: Self.setupCompleteKey)
+    }
+  }
+
   @Published private(set) var isPasswordSet: Bool = false
   private static let setupCompleteKey = "isSetupComplete"
   private static let baseQuery: [String: Any] = [
@@ -29,14 +37,6 @@ final class AppStorage: ObservableObject {
     query[kSecReturnData as String] = true
     return query
   }()
-
-  var isSetupComplete: Bool {
-    get { UserDefaults.standard.bool(forKey: Self.setupCompleteKey) }
-    set {
-      objectWillChange.send()
-      UserDefaults.standard.set(newValue, forKey: Self.setupCompleteKey)
-    }
-  }
 
   init() {
     self.updatePasswordStatus()
