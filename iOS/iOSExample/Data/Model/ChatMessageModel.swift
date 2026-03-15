@@ -29,6 +29,14 @@ enum MessageStatus: Int, QueryBindable {
     case .failed: return "failed"
     }
   }
+
+  /// Int64 since we receive that from network
+  init?(_ rawValue: Int64) {
+    guard let s = MessageStatus(rawValue: Int(rawValue)) else {
+      return nil
+    }
+    self = s
+  }
 }
 
 @Table("chatMessages")
@@ -39,7 +47,7 @@ struct ChatMessageModel: Identifiable, Hashable {
   var timestamp: Date
   var isIncoming: Bool
   var isRead: Bool = false
-  var status: MessageStatus = .unsent
+  var status: MessageStatus
   var senderId: UUID?
   var chatId: String
   var replyTo: String?
@@ -53,7 +61,7 @@ struct ChatMessageModel: Identifiable, Hashable {
     message: String, isIncoming: Bool, chatId: String, senderId: UUID? = nil,
     id: Int64, externalId: String, replyTo: String? = nil,
     timestamp: Date,
-    isRead: Bool = false, status: Int64
+    isRead: Bool = false, status: MessageStatus?
   ) {
     self.id = id
     self.externalId = externalId
@@ -65,8 +73,6 @@ struct ChatMessageModel: Identifiable, Hashable {
     self.chatId = chatId
     self.replyTo = replyTo
     self.newRenderPlainText = message
-    if let parsedStatus = MessageStatus(rawValue: Int(status)) {
-      self.status = parsedStatus
-    }
+    self.status = status ?? .unsent
   }
 }

@@ -60,7 +60,7 @@ extension View {
               externalId: name,
               replyTo: nil,
               timestamp: Date(),
-              status: 2
+              status: .delivered
             )
           }.execute(db)
         }
