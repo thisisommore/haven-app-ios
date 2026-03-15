@@ -2,3 +2,4 @@
 --self insert
 --disable wrapMultilineStatementBraces
 --disable docComments
+--disable redundantMemberwiseInit
