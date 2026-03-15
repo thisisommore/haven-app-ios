@@ -2,7 +2,7 @@ import Foundation
 import SQLiteData
 
 @Table("messageSenders")
-struct MessageSenderModel: Encodable {
+struct MessageSenderModel {
   var id: UUID
   var pubkey: Data
   /// codename
@@ -23,19 +23,5 @@ struct MessageSenderModel: Encodable {
     self.nickname = nickname
     self.dmToken = dmToken
     self.color = color
-  }
-
-  enum CodingKeys: String, CodingKey {
-    case id, pubkey, codename, nickname, dmToken, color
-  }
-
-  func encode(to encoder: any Encoder) throws {
-    var c = encoder.container(keyedBy: CodingKeys.self)
-    try c.encode(self.id, forKey: .id)
-    try c.encode(self.pubkey, forKey: .pubkey)
-    try c.encode(self.dmToken, forKey: .dmToken)
-    try c.encode(self.codename, forKey: .codename)
-    try c.encode(self.nickname, forKey: .nickname)
-    try c.encode(self.color, forKey: .color)
   }
 }
