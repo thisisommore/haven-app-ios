@@ -40,7 +40,7 @@ struct ChatMessageModel: Identifiable, Hashable {
   var isIncoming: Bool
   var isRead: Bool = false
   var status: MessageStatus = .unsent
-  var senderId: String?
+  var senderId: UUID?
   var chatId: String
   var replyTo: String?
   var newContainsMarkup: Bool = false
@@ -50,7 +50,7 @@ struct ChatMessageModel: Identifiable, Hashable {
   var newRenderPayload: Data?
 
   init(
-    message: String, isIncoming: Bool, chatId: String, senderId: String? = nil,
+    message: String, isIncoming: Bool, chatId: String, senderId: UUID? = nil,
     id: Int64, externalId: String, replyTo: String? = nil,
     timestamp: Int64 = Int64(Date().timeIntervalSince1970 * 1e+6 * 1e+3),
     isRead: Bool = false, status: Int64

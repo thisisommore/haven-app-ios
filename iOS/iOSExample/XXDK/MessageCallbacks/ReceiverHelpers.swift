@@ -61,10 +61,8 @@ final class ReceiverHelpers {
     dmToken: Int32,
     color: Int
   ) throws -> MessageSenderModel {
-    let senderId = pubKey.base64EncodedString()
-
     if let existing = try database.read({ db in
-      try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)
+      try MessageSenderModel.where { $0.pubkey.eq(pubKey) }.fetchOne(db)
     }) {
       var updated = existing
       updated.dmToken = dmToken
@@ -78,7 +76,6 @@ final class ReceiverHelpers {
     }
 
     let sender = MessageSenderModel(
-      id: senderId,
       pubkey: pubKey,
       codename: codename,
       nickname: nickname,

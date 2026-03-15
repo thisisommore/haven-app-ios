@@ -163,7 +163,6 @@ struct MessageBubble<T: XXDKP>: View {
 
 #Preview {
   let mockSender = MessageSenderModel(
-    id: "mock-sender-1",
     pubkey: Data(),
     codename: "PreviewUser",
     dmToken: 123,

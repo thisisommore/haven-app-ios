@@ -187,7 +187,7 @@ private struct MessageFormPreviewWrapper: View {
 
 private struct ReplyToSenderView: View {
   let messageId: String
-  let senderId: String?
+  let senderId: UUID?
   @Dependency(\.defaultDatabase) var database
   @State private var senderCodename: String?
 

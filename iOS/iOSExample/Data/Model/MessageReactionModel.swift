@@ -9,11 +9,11 @@ struct MessageReactionModel: Identifiable, Hashable {
   var emoji: String
   var timestamp: Date
   var isMe: Bool = false
-  var senderId: String?
+  var senderId: UUID?
 
   init(
     id: Int64, externalId: String, targetMessageId: String, emoji: String,
-    senderId: String? = nil, isMe: Bool = false
+    senderId: UUID? = nil, isMe: Bool = false
   ) {
     self.id = id
     self.externalId = externalId

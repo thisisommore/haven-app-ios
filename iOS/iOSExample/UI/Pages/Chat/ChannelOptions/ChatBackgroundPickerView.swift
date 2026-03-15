@@ -77,7 +77,6 @@ struct ChatBackgroundPickerView<T: XXDKP>: View {
               text: "<p>Love this background 👋</p>",
               isIncoming: true,
               sender: MessageSenderModel(
-                id: "preview-sender",
                 pubkey: Data(),
                 codename: "juniorFunkyAntiquity",
                 nickname: nil,

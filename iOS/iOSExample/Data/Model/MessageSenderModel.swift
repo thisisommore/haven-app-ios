@@ -3,7 +3,7 @@ import SQLiteData
 
 @Table("messageSenders")
 struct MessageSenderModel: Encodable {
-  var id: String
+  var id: UUID
   var pubkey: Data
   /// codename
   var codename: String
@@ -14,10 +14,10 @@ struct MessageSenderModel: Encodable {
 
   var color: Int
   init(
-    id: String, pubkey: Data, codename: String, nickname: String? = nil, dmToken: Int32 = 0,
+    pubkey: Data, codename: String, nickname: String? = nil, dmToken: Int32 = 0,
     color: Int
   ) {
-    self.id = id
+    self.id = UUID()
     self.pubkey = pubkey
     self.codename = codename
     self.nickname = nickname

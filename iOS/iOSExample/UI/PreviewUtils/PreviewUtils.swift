@@ -22,7 +22,7 @@ extension View {
 
       let chat = ChatModel(channelId: previewChatId, name: "Mayur")
       let mockSender = MessageSenderModel(
-        id: "mock-sender-id", pubkey: Data(), codename: "Mayur", dmToken: 0,
+        pubkey: Data(), codename: "Mayur", dmToken: 0,
         color: greenColorInt
       )
 
