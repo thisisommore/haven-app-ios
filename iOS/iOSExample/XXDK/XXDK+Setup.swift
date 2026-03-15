@@ -1,5 +1,5 @@
 //
-//  XXDK+Identity.swift
+//  XXDK+Setup.swift
 //  iOSExample
 //
 

@@ -1,5 +1,5 @@
 //
-//  XXDK+Channels.swift
+//  Channel.swift
 //  iOSExample
 //
 

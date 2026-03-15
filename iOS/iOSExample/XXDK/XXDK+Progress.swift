@@ -1,5 +1,5 @@
 //
-//  XXDK+Utils.swift
+//  XXDK+Progress.swift
 //  iOSExample
 //
 

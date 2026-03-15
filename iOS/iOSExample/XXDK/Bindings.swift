@@ -1,5 +1,5 @@
 //
-//  BindingsWrapper.swift
+//  Bindings.swift
 //  iOSExample
 //
 //  Swift-style wrappers for C/ObjC bindings that use NSError pointers.
