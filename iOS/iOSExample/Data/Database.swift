@@ -28,7 +28,7 @@ func appDatabase() throws -> any DatabaseWriter {
     appropriateFor: nil,
     create: true
   )
-  let dbPath = appSupportDir.appendingPathComponent("SQLiteData.db").path
+  let dbPath = appSupportDir.appending(component: "SQLiteData.db").path
   let database = try defaultDatabase(path: dbPath, configuration: configuration)
   var migrator = DatabaseMigrator()
   #if DEBUG
