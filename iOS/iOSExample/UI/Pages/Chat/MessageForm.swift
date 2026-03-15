@@ -87,7 +87,7 @@ struct MessageForm<T: XXDKP>: View {
   }
 
   private func replyPreviewText(for message: ChatMessageModel) -> String {
-    let plainText = message.newRenderPlainText ?? message.message
+    let plainText = message.message
     let trimmed = stripParagraphTags(plainText).trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmed.isEmpty ? "Message" : trimmed
   }

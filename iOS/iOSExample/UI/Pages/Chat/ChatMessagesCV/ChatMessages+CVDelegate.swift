@@ -19,16 +19,13 @@ extension ChatMessagesVC {
       .foregroundColor: UIColor.label,
     ]
 
-    if message.newRenderKind == .rich, let payloadData = message.newRenderPayload {
-      if let payload = try? JSONDecoder().decode(
-        NewMessageParsedPayload.self, from: payloadData
-      ) {
-        return payload.attributedString(baseFont: UIFont.systemFont(ofSize: 17))
-      }
+    let displayText: String
+    if message.isPlain {
+      displayText = stripParagraphTags(message.message)
+    } else {
+      displayText = message.message
     }
-
-    let plainText = message.newRenderPlainText ?? message.message
-    return NSAttributedString(string: plainText, attributes: defaultAttributes)
+    return NSAttributedString(string: displayText, attributes: defaultAttributes)
   }
 
   private func replyText(for message: MessageWithSender) -> String? {

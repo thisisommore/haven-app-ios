@@ -56,11 +56,7 @@ extension DatabaseMigrator {
           "senderId" TEXT REFERENCES "messageSenders"("id"),
           "chatId" TEXT NOT NULL REFERENCES "chats"("id") ON DELETE CASCADE,
           "replyTo" TEXT,
-          "newContainsMarkup" INTEGER NOT NULL,
-          "newRenderKind" INTEGER NOT NULL,
-          "newRenderVersion" INTEGER NOT NULL,
-          "newRenderPlainText" TEXT NOT NULL,
-          "newRenderPayload" BLOB
+          "isPlain" INTEGER NOT NULL
         ) STRICT
         """
       )

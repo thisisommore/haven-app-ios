@@ -129,12 +129,7 @@ final class ReceiverHelpers {
       )
     }
 
-    let precomputedRender = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
-    msg.newContainsMarkup = precomputedRender.containsMarkup
-    msg.newRenderKind = precomputedRender.kind
-    msg.newRenderVersion = Int(precomputedRender.version)
-    msg.newRenderPlainText = precomputedRender.plainText
-    msg.newRenderPayload = precomputedRender.payloadData
+    msg.isPlain = NewMessageHTMLPrecomputer.precompute(rawHTML: text)
     try self.database.write { db in
       try ChatMessageModel.update(msg).execute(db)
     }

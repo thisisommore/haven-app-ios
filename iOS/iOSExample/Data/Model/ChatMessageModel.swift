@@ -44,11 +44,7 @@ struct ChatMessageModel: Identifiable, Hashable {
   var senderId: UUID?
   var chatId: UUID
   var replyTo: String?
-  var newContainsMarkup: Bool = false
-  var newRenderKind: NewMessageRenderKind = .unknown
-  var newRenderVersion: Int = 0
-  var newRenderPlainText: String
-  var newRenderPayload: Data?
+  var isPlain: Bool = false
 
   init(
     message: String, isIncoming: Bool, chatId: UUID, senderId: UUID? = nil,
@@ -65,7 +61,6 @@ struct ChatMessageModel: Identifiable, Hashable {
     self.senderId = senderId
     self.chatId = chatId
     self.replyTo = replyTo
-    self.newRenderPlainText = message
     self.status = status ?? .unsent
   }
 }
