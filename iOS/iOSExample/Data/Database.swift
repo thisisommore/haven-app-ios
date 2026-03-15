@@ -35,78 +35,7 @@ func appDatabase() throws -> any DatabaseWriter {
     migrator.eraseDatabaseOnSchemaChange = true
   #endif
 
-  // TODO: migrations in separate folder with versioning/description
-  migrator.registerMigration("v1:Create tables") { db in
-    try #sql(
-      """
-      CREATE TABLE "chats"(
-        "id" TEXT NOT NULL PRIMARY KEY,
-        "name" TEXT NOT NULL,
-        "channelId" TEXT UNIQUE,
-        "pubKey" BLOB UNIQUE,
-        "channelDescription" TEXT,
-        "dmToken" INTEGER,
-        "color" INTEGER NOT NULL,
-        "isAdmin" INTEGER NOT NULL,
-        "isSecret" INTEGER NOT NULL,
-        "joinedAt" TEXT NOT NULL,
-        "unreadCount" INTEGER NOT NULL
-      ) STRICT
-      """
-    )
-    .execute(db)
-
-    try #sql(
-      """
-      CREATE TABLE "messageSenders"(
-        "id" TEXT NOT NULL PRIMARY KEY,
-        "pubkey" BLOB NOT NULL,
-        "codename" TEXT NOT NULL,
-        "nickname" TEXT,
-        "dmToken" INTEGER,
-        "color" INTEGER NOT NULL
-      ) STRICT
-      """
-    )
-    .execute(db)
-
-    try #sql(
-      """
-      CREATE TABLE "chatMessages"(
-        "id" INTEGER NOT NULL PRIMARY KEY,
-        "externalId" TEXT NOT NULL UNIQUE,
-        "message" TEXT NOT NULL,
-        "timestamp" TEXT NOT NULL,
-        "isIncoming" INTEGER NOT NULL,
-        "isRead" INTEGER NOT NULL,
-        "status" INTEGER NOT NULL,
-        "senderId" TEXT REFERENCES "messageSenders"("id"),
-        "chatId" TEXT NOT NULL REFERENCES "chats"("id") ON DELETE CASCADE,
-        "replyTo" TEXT,
-        "newContainsMarkup" INTEGER NOT NULL,
-        "newRenderKind" INTEGER NOT NULL,
-        "newRenderVersion" INTEGER NOT NULL,
-        "newRenderPlainText" TEXT NOT NULL,
-        "newRenderPayload" BLOB
-      ) STRICT
-      """
-    )
-    .execute(db)
-
-    try #sql(
-      """
-      CREATE TABLE "messageReactions"(
-        "id" INTEGER NOT NULL PRIMARY KEY,
-        "externalId" TEXT NOT NULL UNIQUE,
-        "targetMessageId" TEXT NOT NULL,
-        "emoji" TEXT NOT NULL,
-        "timestamp" TEXT NOT NULL,
-        "senderId" TEXT NOT NULL REFERENCES "messageSenders"("id")
-      ) STRICT
-      """
-    )
-    .execute(db)
-  }
+  migrator.v1()
   try migrator.migrate(database)
   return database
 }
