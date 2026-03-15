@@ -10,11 +10,11 @@ struct MessageSenderModel {
   /// User-set nickname (optional)
   var nickname: String?
   /// DM token for direct messaging (optional - nil means DM is disabled)
-  var dmToken: Int32
+  var dmToken: Int32?
 
   var color: Int
   init(
-    pubkey: Data, codename: String, nickname: String?, dmToken: Int32 = 0,
+    pubkey: Data, codename: String, nickname: String?, dmToken: Int32?,
     color: Int
   ) {
     self.pubkey = pubkey

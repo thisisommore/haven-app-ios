@@ -80,7 +80,7 @@ struct ChatBackgroundPickerView<T: XXDKP>: View {
                 pubkey: Data(),
                 codename: "juniorFunkyAntiquity",
                 nickname: nil,
-                dmToken: 0,
+                dmToken: nil,
                 color: 0xFF9800
               ),
               timestamp: "11:52",

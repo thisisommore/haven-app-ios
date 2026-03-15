@@ -63,7 +63,7 @@ func appDatabase() throws -> any DatabaseWriter {
         "pubkey" BLOB NOT NULL,
         "codename" TEXT NOT NULL,
         "nickname" TEXT,
-        "dmToken" INTEGER NOT NULL DEFAULT 0,
+        "dmToken" INTEGER,
         "color" INTEGER NOT NULL
       ) STRICT
       """

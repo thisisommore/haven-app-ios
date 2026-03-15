@@ -50,9 +50,9 @@ struct MessageContextMenu: View {
     // DM button (only for incoming messages with DM token)
     if self.isIncoming,
        let sender = sender,
-       sender.dmToken != 0 {
+       let dmToken = sender.dmToken {
       Button {
-        self.onDM?(sender.codename, sender.dmToken, sender.pubkey, sender.color)
+        self.onDM?(sender.codename, dmToken, sender.pubkey, sender.color)
       } label: {
         Label("Send DM", systemImage: "message")
       }
