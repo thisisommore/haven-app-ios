@@ -185,7 +185,6 @@ struct ChatView<T: XXDKP>: View {
         self.isAdmin = self.chat?.isAdmin ?? false
       }
     }
-    .background(ChatBackgroundView())
   }
 }
 

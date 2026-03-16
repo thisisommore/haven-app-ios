@@ -20,7 +20,6 @@ struct ChannelOptionsView<T: XXDKP>: View {
   @State private var sharePassword: String?
   @State private var showExportKeySheet: Bool = false
   @State private var showImportKeySheet: Bool = false
-  @State private var showBackgroundPicker: Bool = false
   @State private var toastMessage: String?
   @State private var isAdmin: Bool = false
   @State private var mutedUsers: [Data] = []
@@ -262,24 +261,6 @@ struct ChannelOptionsView<T: XXDKP>: View {
           }
         }
 
-        // Chat Background section
-        Section(header: Text("Appearance")) {
-          Button {
-            self.showBackgroundPicker = true
-          } label: {
-            HStack {
-              Image(systemName: "paintbrush.fill")
-                .foregroundColor(.haven)
-              Text("Chat Background")
-              Spacer()
-              Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            }
-          }
-          .tint(.primary)
-        }
-
         Section {
           Button(role: .destructive) {
             if self.isDM {
@@ -366,9 +347,6 @@ struct ChannelOptionsView<T: XXDKP>: View {
             }
           }
         )
-      }
-      .sheet(isPresented: self.$showBackgroundPicker) {
-        ChatBackgroundPickerView<T>()
       }
       .overlay {
         if let toastMessage {
