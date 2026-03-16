@@ -39,7 +39,6 @@ struct MessageForm<T: XXDKP>: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color(.systemGray6))
         .transition(.move(edge: .bottom).combined(with: .opacity))
       }
 
@@ -82,7 +81,6 @@ struct MessageForm<T: XXDKP>: View {
       )
     }
     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: self.replyTo?.id)
-    .background(.bottomNav).background(.ultraThinMaterial)
   }
 
   private func replyPreviewText(for message: ChatMessageModel) -> String {
