@@ -15,6 +15,7 @@ struct ChatView<T: XXDKP>: View {
   @EnvironmentObject var selectedChat: SelectedChat
   @Dependency(\.defaultDatabase) var database
   @FetchOne private var chat: ChatModel?
+  @FetchOne private var firstMessage: ChatMessageModel?
 
   private var isChannel: Bool {
     guard let chat else { return false }
@@ -58,6 +59,7 @@ struct ChatView<T: XXDKP>: View {
     self.chatId = chatId
     self.chatTitle = chatTitle
     _chat = FetchOne(ChatModel.where { $0.id.eq(chatId) })
+    _firstMessage = FetchOne(ChatMessageModel.where { $0.chatId.eq(chatId) })
   }
 
   var body: some View {
@@ -66,6 +68,9 @@ struct ChatView<T: XXDKP>: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
           self.replyingTo = message
         }
+      }
+      if self.firstMessage == nil {
+        EmptyChatView()
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
