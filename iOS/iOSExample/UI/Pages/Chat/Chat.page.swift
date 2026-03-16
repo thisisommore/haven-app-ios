@@ -109,7 +109,7 @@ struct ChatView<T: XXDKP>: View {
         } label: {
           HStack(spacing: 2) {
             Image(systemName: "chevron.left")
-            Text("Back")
+            Text("back")
           }
           .font(.headline)
           .foregroundStyle(.haven)
