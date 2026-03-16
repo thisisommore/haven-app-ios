@@ -233,7 +233,10 @@ extension TextCell {
     self.label.textColor = .label
     self.label.delegate = self
     self.label.linkTextAttributes = [
-      .foregroundColor: UIColor.systemBlue, .underlineStyle: NSUnderlineStyle.single.rawValue,
+      .foregroundColor: UIColor.systemOrange,
+      .underlineStyle: NSUnderlineStyle.single.rawValue,
+      .underlineColor: UIColor.systemOrange,
+      .backgroundColor: UIColor.systemOrange.withAlphaComponent(0.15),
     ]
 
     self.timeLabel.snp.makeConstraints {

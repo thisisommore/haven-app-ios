@@ -14,18 +14,11 @@ extension ChatMessagesVC {
   }
 
   private func text(for message: ChatMessageModel) -> NSAttributedString {
-    let defaultAttributes: [NSAttributedString.Key: Any] = [
-      .font: UIFont.systemFont(ofSize: 17),
-      .foregroundColor: UIColor.label,
-    ]
-
-    let displayText: String
-    if message.isPlain {
-      displayText = stripParagraphTags(message.message)
-    } else {
-      displayText = message.message
+    if !message.isPlain {
+      return message.message.html
     }
-    return NSAttributedString(string: displayText, attributes: defaultAttributes)
+
+    return stripParagraphTags(message.message).attr
   }
 
   private func replyText(for message: MessageWithSender) -> String? {
