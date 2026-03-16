@@ -77,6 +77,7 @@ struct HomeView<T: XXDKP>: View {
           .tag(chat.id)
       }
     }
+    .scrollContentBackground(.hidden)
     .background(Color.appBackground)
     .onChange(of: self.selectedChat.chatId) { _, newValue in
       if let chatId = newValue,
