@@ -74,7 +74,7 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .safeAreaInset(edge: .bottom) {
+    .safeAreaInset(edge: .bottom, spacing: 0) {
       if self.isMuted {
         HStack {
           Image(systemName: "speaker.slash.fill")
@@ -93,6 +93,7 @@ struct ChatView<T: XXDKP>: View {
             self.replyingTo = nil
           }
         )
+        .padding(.vertical, 4)
       }
     }
     .navigationBarTitleDisplayMode(.inline)

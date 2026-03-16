@@ -76,7 +76,7 @@ struct MessageForm<T: XXDKP>: View {
         }
       }
       .padding(.horizontal, 8)
-      .padding(.top, 10)
+      .padding(.vertical, 4)
       .animation(
         .spring(response: 0.3, dampingFraction: 0.7),
         value: self.abc.isEmpty
