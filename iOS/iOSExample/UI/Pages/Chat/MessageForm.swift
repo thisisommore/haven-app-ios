@@ -49,6 +49,7 @@ struct MessageForm<T: XXDKP>: View {
           text: self.$abc,
           axis: .vertical
         ).lineLimit(1 ... 10)
+          .tint(.haven)
           .onSubmit {
             self.sendMessage()
           }
