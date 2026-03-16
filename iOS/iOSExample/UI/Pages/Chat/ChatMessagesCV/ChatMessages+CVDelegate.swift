@@ -14,11 +14,10 @@ extension ChatMessagesVC {
   }
 
   private func text(for message: ChatMessageModel) -> NSAttributedString {
-    if !message.isPlain {
-      return message.message.html
-    }
-
-    return stripParagraphTags(message.message).attr
+    let tagStripped = stripParagraphTags(message.message)
+    return message.isPlain ?
+      tagStripped.attr :
+      tagStripped.markdown
   }
 
   private func replyText(for message: MessageWithSender) -> String? {

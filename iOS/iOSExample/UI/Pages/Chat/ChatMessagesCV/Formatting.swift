@@ -31,57 +31,35 @@ extension String {
     ]
 
     /// Converts a string containing HTML tags to an NSAttributedString, removing trailing newlines and adjusting the font.
-    var html: NSAttributedString {
-        guard let data = self.data(using: .utf8) else {
-            return NSAttributedString(string: self)
-        }
-
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue,
-        ]
-
+    var markdown: NSAttributedString {
         do {
-            let attributedString = try NSMutableAttributedString(
-                data: data,
-                options: options,
-                documentAttributes: nil
-            )
+            let attrStr = try NSMutableAttributedString(markdown: self)
+            let fullRange = NSRange(location: 0, length: attrStr.length)
 
-            // 1. Strip out the unnecessary trailing newlines
-            while attributedString.string.hasSuffix("\n") {
-                attributedString.deleteCharacters(in: NSRange(attributedString.length - 1))
-            }
+            let defaultFont = Self.defaultAttributes[.font] as? UIFont ?? UIFont.systemFont(ofSize: Self.fontSize)
 
-            // 2. Strip out the unnecessary leading newlines
-            while attributedString.string.hasPrefix("\n") {
-                attributedString.deleteCharacters(in: NSRange.first)
-            }
-
-            // 3. Update the font natively without CSS
-            let fullRange = NSRange(location: 0, length: attributedString.length)
-            let baseFont = UIFont.systemFont(ofSize: 17)
-
-            attributedString.beginEditing()
-
-            attributedString.enumerateAttribute(.font, in: fullRange, options: []) { value, range, _ in
-                guard let oldFont = value as? UIFont else { return }
-
-                let traits = oldFont.fontDescriptor.symbolicTraits
-                if let newDescriptor = baseFont.fontDescriptor.withSymbolicTraits(traits) {
-                    let newFont = UIFont(descriptor: newDescriptor, size: baseFont.pointSize)
-                    attributedString.addAttribute(.font, value: newFont, range: range)
-                    attributedString.addAttribute(.foregroundColor, value: UIColor.label, range: range)
+            attrStr.enumerateAttribute(.font, in: fullRange, options: .longestEffectiveRangeNotRequired) { value, range, _ in
+                if let currentFont = value as? UIFont {
+                    let traits = currentFont.fontDescriptor.symbolicTraits
+                    if traits.isEmpty {
+                        attrStr.addAttribute(.font, value: defaultFont, range: range)
+                    } else if let descriptor = defaultFont.fontDescriptor.withSymbolicTraits(traits) {
+                        let newFont = UIFont(descriptor: descriptor, size: defaultFont.pointSize)
+                        attrStr.addAttribute(.font, value: newFont, range: range)
+                    }
                 } else {
-                    attributedString.addAttributes(Self.defaultAttributes, range: range)
+                    attrStr.addAttribute(.font, value: defaultFont, range: range)
                 }
             }
-            attributedString.endEditing()
 
-            return attributedString
+            for (key, value) in Self.defaultAttributes where key != .font {
+                attrStr.addAttribute(key, value: value, range: fullRange)
+            }
+
+            return attrStr
         } catch {
             print("Error converting HTML to NSAttributedString: \(error.localizedDescription)")
-            return NSAttributedString(string: self)
+            return NSAttributedString(string: self, attributes: Self.defaultAttributes)
         }
     }
 
