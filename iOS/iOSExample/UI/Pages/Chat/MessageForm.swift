@@ -57,7 +57,6 @@ struct MessageForm<T: XXDKP>: View {
           .background(.formBG.opacity(0.1))
           .background(.ultraThinMaterial)
           .clipShape(RoundedRectangle(cornerRadius: 40))
-          .padding(.trailing, 8)
 
         if !self.abc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
           && !self.isSendingMessage {
@@ -66,7 +65,6 @@ struct MessageForm<T: XXDKP>: View {
               .padding(.vertical, 4)
           }.tint(.haven)
             .buttonStyle(.borderedProminent)
-            .padding(.trailing, 6)
             .buttonBorderShape(.circle)
             .transition(.scale.combined(with: .opacity))
         }
