@@ -155,6 +155,7 @@ final class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
 
   override func layoutAttributesForItem(at indexPath: IndexPath)
     -> UICollectionViewLayoutAttributes? {
+    guard indexPath.item < self.cachedAttributes.count else { return nil }
     return self.cachedAttributes[indexPath.item]
   }
 
