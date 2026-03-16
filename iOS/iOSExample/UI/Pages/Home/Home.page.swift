@@ -77,6 +77,7 @@ struct HomeView<T: XXDKP>: View {
           .tag(chat.id)
       }
     }
+    .background(Color.appBackground)
     .onChange(of: self.selectedChat.chatId) { _, newValue in
       if let chatId = newValue,
          let chat = chats.first(where: { $0.id == chatId }) {

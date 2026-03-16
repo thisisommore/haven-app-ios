@@ -74,6 +74,7 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color.appBackground)
     .safeAreaInset(edge: .bottom, spacing: 0) {
       if self.isMuted {
         HStack {

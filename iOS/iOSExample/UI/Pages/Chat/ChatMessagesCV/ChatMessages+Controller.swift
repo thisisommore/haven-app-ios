@@ -151,6 +151,9 @@ final class ChatMessagesVC: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    let appBackground = UIColor(Color.appBackground)
+    self.cv.backgroundColor = appBackground
+
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(self.keyboardWillHide),
