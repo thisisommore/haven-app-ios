@@ -115,7 +115,7 @@ extension ChatMessagesVC {
         self.dataSource.apply(snapshot, animatingDifferences: false)
 
         // If user was near bottom, scroll to bottom to show new message
-        if wasNearBottom {
+        if wasNearBottom, !self.cv.isTracking, !self.cv.isDragging, !self.cv.isDecelerating {
           let numberOfItems = self.cv.numberOfItems(inSection: 0)
           if numberOfItems > 0 {
             self.cv.scrollToItem(
