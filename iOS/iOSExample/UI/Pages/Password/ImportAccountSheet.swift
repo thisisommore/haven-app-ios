@@ -15,6 +15,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
   @Environment(AppStorage.self) var appStorage
 
   @Binding var importPassword: String
+  let ndfTask: Task<Data, Never>?
   @State private var selectedFileURL: URL?
   @State private var showFilePicker = false
   @State private var isImporting = false
@@ -156,14 +157,28 @@ struct ImportAccountSheet<T: XXDKP>: View {
       // Use the import password as the app password
       try self.appStorage.storePassword(self.importPassword)
 
-      Task.detached {
+      Task {
         // Initialize Cmix before loading identity
-        await self.xxdk.setUpCmix()
+        guard let ndfTask = self.ndfTask
+        else {
+          self.errorMessage = "NDF is still loading. Please try again."
+          self.showError = true
+          self.isImporting = false
+          return
+        }
+        let ndf = await ndfTask.value
+        await self.xxdk.newCmix(downloadedNdf: ndf)
 
         // Start network follower to ensure connectivity before load blocks
         await self.xxdk.startNetworkFollower()
 
-        await self.xxdk.load(privateIdentity: identity)
+        await self.xxdk.setupClients(privateIdentity: identity) {
+          do {
+            try self.xxdk.savePrivateIdentity(privateIdentity: identity)
+          } catch {
+            fatalError("failed to save private identity in cmix ekv: \(error.localizedDescription)")
+          }
+        }
       }
 
       // Navigate immediately

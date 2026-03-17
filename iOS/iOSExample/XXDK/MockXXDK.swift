@@ -129,14 +129,25 @@ final class XXDKMock: XXDKP {
     )
   }
 
-  func downloadNdf() async {
-    // Mock: no-op
+  func downloadNdf() async -> Data {
+    withAnimation {
+      self.statusPercentage = 5
+      self.status = "Downloading NDF"
+    }
+    return Data("mock-ndf".utf8)
   }
 
-  func setUpCmix() async {
+  func newCmix(downloadedNdf _: Data) async {
     withAnimation {
       self.statusPercentage = 10
       self.status = "Setting cmix"
+    }
+  }
+
+  func loadCmix() async {
+    withAnimation {
+      self.statusPercentage = 10
+      self.status = "Loading cmix"
     }
   }
 
@@ -147,7 +158,7 @@ final class XXDKMock: XXDKP {
     }
   }
 
-  func load(privateIdentity _: Data?) async {
+  func loadClients(privateIdentity _: Data) async {
     do {
       try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
       withAnimation {
@@ -174,6 +185,17 @@ final class XXDKMock: XXDKP {
     } catch {
       fatalError("error in load fake sleep: \(error)")
     }
+  }
+
+  func setupClients(privateIdentity: Data, successCallback: () -> Void) async {
+    await self.loadClients(privateIdentity: privateIdentity)
+    successCallback()
+  }
+
+  func savePrivateIdentity(privateIdentity _: Data) throws {}
+
+  func loadSavedPrivateIdentity() throws -> Data {
+    "mock-private-identity".data
   }
 
   var cmix: Bindings.BindingsCmix?

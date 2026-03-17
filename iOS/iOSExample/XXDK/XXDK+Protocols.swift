@@ -27,10 +27,14 @@ protocol XXDKP: Observable, AnyObject {
   var codeset: Int { get }
   var channel: ChannelType { get }
   var dm: DirectMessageType? { get }
-  func load(privateIdentity _privateIdentity: Data?) async
-  func setUpCmix() async
+  func newCmix(downloadedNdf: Data) async
+  func loadCmix() async
   func startNetworkFollower() async
-  func downloadNdf() async
+  func downloadNdf() async -> Data
+  func loadClients(privateIdentity: Data) async
+  func setupClients(privateIdentity: Data, successCallback: () -> Void) async
+  func savePrivateIdentity(privateIdentity: Data) throws
+  func loadSavedPrivateIdentity() throws -> Data
   func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity]
   func setStates(appStorage: AppStorage)
   func exportIdentity(password: String) throws -> Data

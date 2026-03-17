@@ -281,8 +281,9 @@ struct HomeView<T: XXDKP>: View {
           if self.xxdk.statusPercentage == 0 && !self.didStartLoad {
             self.didStartLoad = true
             Task.detached {
-              await self.xxdk.setUpCmix()
-              await self.xxdk.load(privateIdentity: nil)
+              await self.xxdk.loadCmix()
+              let privateIdentity = try! self.xxdk.loadSavedPrivateIdentity()
+              await self.xxdk.loadClients(privateIdentity: privateIdentity)
               await self.xxdk.startNetworkFollower()
             }
           }

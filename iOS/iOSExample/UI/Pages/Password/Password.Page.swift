@@ -7,6 +7,7 @@ struct PasswordCreationView<T: XXDKP>: View {
   @State private var confirm: String = ""
   @State private var attemptedSubmit: Bool = false
   @State private var isLoading = false
+  @State private var ndfTask: Task<Data, Never>?
   @FocusState private var focusedField: PasswordField?
   @State private var showImportSheet: Bool = false
   @State private var importPassword: String = ""
@@ -54,14 +55,19 @@ struct PasswordCreationView<T: XXDKP>: View {
       strengthColor: self.strengthColor,
       statusText: self.xxdk.status,
       onSubmit: self.handleSubmit,
-      onImportTapped: { self.showImportSheet = true },
-      onAppear: self.handleAppear
+      onImportTapped: {
+        self.showImportSheet = true
+      },
+      onAppear: self.handleAppear,
+      ndfTask: self.ndfTask
     )
   }
 
   private func handleAppear() {
-    Task.detached {
-      await self.xxdk.downloadNdf()
+    if self.ndfTask == nil {
+      self.ndfTask = Task {
+        await self.xxdk.downloadNdf()
+      }
     }
   }
 
@@ -71,9 +77,12 @@ struct PasswordCreationView<T: XXDKP>: View {
 
     try! self.appStorage.storePassword(self.password)
     self.isLoading = true
+    let ndfTask = self.ndfTask ?? Task { await self.xxdk.downloadNdf() }
+    self.ndfTask = ndfTask
 
     Task.detached {
-      await self.xxdk.setUpCmix()
+      let ndf = await ndfTask.value
+      await self.xxdk.newCmix(downloadedNdf: ndf)
 
       await MainActor.run {
         self.password = ""

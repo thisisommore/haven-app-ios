@@ -47,6 +47,7 @@ struct PasswordCreationUI<T: XXDKP>: View {
   var onSubmit: () -> Void
   var onImportTapped: () -> Void
   var onAppear: () -> Void
+  var ndfTask: Task<Data, Never>?
 
   var body: some View {
     ScrollView {
@@ -153,7 +154,10 @@ struct PasswordCreationUI<T: XXDKP>: View {
     .ignoresSafeArea(.keyboard, edges: .bottom)
     .privacySensitive()
     .sheet(isPresented: self.$showImportSheet) {
-      ImportAccountSheet<T>(importPassword: self.$importPassword)
+      ImportAccountSheet<T>(
+        importPassword: self.$importPassword,
+        ndfTask: self.ndfTask
+      )
     }
   }
 

@@ -132,7 +132,13 @@ struct CodenameGeneratorView<T: XXDKP>: View {
     let success = UINotificationFeedbackGenerator()
     success.notificationOccurred(.success)
     Task {
-      await self.xxdk.load(privateIdentity: identity.privateIdentity)
+      await self.xxdk.setupClients(privateIdentity: identity.privateIdentity) {
+        do {
+          try self.xxdk.savePrivateIdentity(privateIdentity: identity.privateIdentity)
+        } catch {
+          fatalError("failed to save private identity in cmix ekv: \(error.localizedDescription)")
+        }
+      }
     }
     self.navigation.path.append(Destination.landing)
   }

@@ -34,7 +34,6 @@ final class XXDK: XXDKP {
     return nil
   }
 
-  var downloadedNdf: Data?
   var stateDir: URL
 
   var storageTagListener: RemoteKVKeyChangeListener?
@@ -139,16 +138,41 @@ extension XXDK {
     }
   }
 
-  func downloadNdf() async {
+  func downloadNdf() async -> Data {
     await progress(.downloadingNDF)
 
-    self.downloadedNdf = self.downloadNDF(
+    return self.downloadNDF(
       url: MAINNET_URL,
       certFilePath: MAINNET_CERT
     )
   }
 
-  func setUpCmix() async {
+  func newCmix(downloadedNdf: Data) async {
+    guard let appStorage
+    else {
+      fatalError("no secret manager")
+    }
+    let secret = try! appStorage.getPassword().data
+
+    let defaultParamsJSON = Bindings.BindingsGetDefaultCMixParams()
+    var params = try! Parser.decode(CMixParamsJSON.self, from: defaultParamsJSON ?? Data())
+
+    params.Network.EnableImmediateSending = true
+    await progress(.settingUpCmix)
+    do {
+      try BindingsStatic.newCmix(
+        ndf: downloadedNdf, stateDir: self.stateDir.path, secret: secret, backup: ""
+      )
+    } catch {
+      AppLogger.network.error(
+        "could not create new Cmix: \(error.localizedDescription, privacy: .public)"
+      )
+      fatalError("could not create new Cmix: " + error.localizedDescription)
+    }
+    await self.loadCmix()
+  }
+
+  func loadCmix() async {
     guard let appStorage
     else {
       fatalError("no secret manager")
@@ -160,23 +184,6 @@ extension XXDK {
 
     params.Network.EnableImmediateSending = true
     let cmixParamsJSON = try! Parser.encode(params)
-    if !(appStorage.isSetupComplete) {
-      guard let downloadedNdf
-      else {
-        fatalError("no ndf downloaded yet")
-      }
-      await progress(.settingUpCmix)
-      do {
-        try BindingsStatic.newCmix(
-          ndf: downloadedNdf, stateDir: self.stateDir.path, secret: secret, backup: ""
-        )
-      } catch {
-        AppLogger.network.error(
-          "could not create new Cmix: \(error.localizedDescription, privacy: .public)"
-        )
-        fatalError("could not create new Cmix: " + error.localizedDescription)
-      }
-    }
 
     await progress(.loadingCmix)
     let loadedCmix: Bindings.BindingsCmix?
