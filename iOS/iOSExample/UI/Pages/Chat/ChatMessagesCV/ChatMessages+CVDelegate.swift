@@ -66,7 +66,10 @@ extension ChatMessagesVC {
               for: indexPath
             ) as! TextCell
           cell.label.attributedText = self.text(for: message) // from items
-          cell.timeLabel.text = self.time(for: message) // from items
+          cell.setTime(
+            self.time(for: message),
+            showsClockIcon: message.message.status == .unsent
+          ) // from items
           cell.setSenderName(message.sender, colorHex: message.colorHex)
 
           cell.setReplyPreview(self.replyText(for: message))
@@ -135,7 +138,8 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         text: self.text(for: message),
         sender: self.sender(for: message),
         replyPreview: self.replyText(for: message),
-        width: collectionView.availableWidth()
+        width: collectionView.availableWidth(),
+        showsClockIcon: message.message.status == .unsent
       )
     case let .date(d):
       return DateBadgeCell.size(text: d, width: collectionView.availableWidth())

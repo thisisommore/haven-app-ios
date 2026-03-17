@@ -19,7 +19,8 @@ extension ChatMessagesVC {
       try ChatMessageModel
         .where {
           $0.chatId.eq(self.chatId)
-            && ($0.status.eq(MessageStatus.delivered)
+            && ($0.status.eq(MessageStatus.unsent)
+              || $0.status.eq(MessageStatus.delivered)
               || $0.status.eq(MessageStatus.sent))
         }
         .join(MessageSenderModel.all) { message, sender in

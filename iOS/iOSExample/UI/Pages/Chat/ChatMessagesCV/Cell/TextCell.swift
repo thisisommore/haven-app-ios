@@ -62,7 +62,7 @@ final class TextCell: UICollectionViewCell {
     self.container.transform = .identity
     self.replyImage.transform = .identity
     self.label.text = nil
-    self.timeLabel.text = nil
+    self.setTime(nil)
     self.container.layer.borderWidth = 0
     self.container.layer.borderColor = nil
     setSenderName(nil)
@@ -76,6 +76,15 @@ final class TextCell: UICollectionViewCell {
   private static let timeTextAttributes: [NSAttributedString.Key: Any] = [
     .font: UIFont.systemFont(ofSize: 8),
   ]
+  private static let timeIconName = "clock"
+  private static let timeIconSpacing: CGFloat = 2
+  private static let timeIconWidth: CGFloat = {
+    guard let image = UIImage(systemName: TextCell.timeIconName) else {
+      return 0
+    }
+    let iconHeight = UIFont.systemFont(ofSize: 8).pointSize
+    return image.size.width * (iconHeight / max(image.size.height, 1)) + TextCell.timeIconSpacing
+  }()
 
   private static let replyTextAttributes: [NSAttributedString.Key: Any] = [
     .font: UIFont.systemFont(ofSize: 12, weight: .medium),
@@ -98,7 +107,8 @@ final class TextCell: UICollectionViewCell {
   }
 
   static func size(
-    text: NSAttributedString, sender: String?, replyPreview: String? = nil, width: CGFloat
+    text: NSAttributedString, sender: String?, replyPreview: String? = nil, width: CGFloat,
+    showsClockIcon: Bool = false
   )
     -> CGSize {
     let availableWidth = width - self.paddingXCal
@@ -126,7 +136,11 @@ final class TextCell: UICollectionViewCell {
         )
         Self.timeRecCached = timeR
       }
-      return Self.timeRecCached
+      var timeR = Self.timeRecCached
+      if showsClockIcon {
+        timeR.size.width += Self.timeIconWidth
+      }
+      return timeR
     }()
 
     let replyContainerR: CGRect = {
@@ -246,7 +260,7 @@ extension TextCell {
     }
     self.timeLabel.textColor = .gray
     self.timeLabel.font = UIFont.systemFont(ofSize: 8)
-    self.timeLabel.text = ""
+    self.setTime(nil)
 
     self.setSenderName(nil)
     self.setReplyPreview(nil)
@@ -308,6 +322,52 @@ extension TextCell {
     } else {
       self.messageTopToContainerConstraint?.activate()
     }
+  }
+
+  func setTime(_ text: String?, showsClockIcon: Bool = false) {
+    guard let text, !text.isEmpty
+    else {
+      self.timeLabel.attributedText = nil
+      return
+    }
+    self.timeLabel.attributedText = self.makeAttributedTimeText(text, showsClockIcon: showsClockIcon)
+  }
+
+  private func makeAttributedTimeText(_ text: String, showsClockIcon: Bool) -> NSAttributedString {
+    let font = self.timeLabel.font ?? UIFont.systemFont(ofSize: 8)
+    let color = self.timeLabel.textColor ?? .gray
+    let attributes: [NSAttributedString.Key: Any] = [
+      .font: font,
+      .foregroundColor: color,
+    ]
+    let attributedText = NSMutableAttributedString(string: text, attributes: attributes)
+
+    guard showsClockIcon else {
+      return attributedText
+    }
+    attributedText.append(NSAttributedString(string: " ", attributes: attributes))
+
+    guard let iconImage = UIImage(systemName: Self.timeIconName)?
+      .withTintColor(color, renderingMode: .alwaysOriginal)
+    else {
+      return attributedText
+    }
+
+    let attachment = NSTextAttachment()
+    attachment.image = iconImage
+    // Scale icon to match text size.
+    let iconHeight = font.pointSize
+    // Keep original symbol aspect ratio after scaling.
+    let iconWidth = iconImage.size.width * (iconHeight / iconImage.size.height)
+    attachment.bounds = CGRect(
+      x: 0,
+      // Shift icon to vertically align with the text's cap-height.
+      y: (font.capHeight - iconHeight) / 2,
+      width: iconWidth,
+      height: iconHeight
+    )
+    attributedText.append(NSAttributedString(attachment: attachment))
+    return attributedText
   }
 
   func setBubbleShape(_ shape: BubbleShape, isIncoming: Bool) {
