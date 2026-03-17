@@ -128,7 +128,7 @@ struct ChatRowView<T: XXDKP>: View {
               .lineLimit(1)
               .truncationMode(.tail)
           }
-        } else {
+        } else if self.chat.name != "<self>" {
           Text("No messages yet")
             .font(.system(size: 12))
             .foregroundStyle(Color(uiColor: .secondaryLabel))
