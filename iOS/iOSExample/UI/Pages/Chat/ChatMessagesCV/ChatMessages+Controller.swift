@@ -79,9 +79,12 @@ final class ChatMessagesVC: UIViewController {
   var highlightMessageId: Int64?
   //
 
+  // Flag to check if scrollToBottomButton can be shown,
+  // useful when new message appear at button and automatic scroll
+  // to bottom is trigged
+  var tempButtonDisable = true
   private lazy var scrollToBottomButton: UIButton = {
     let btn = UIButton(type: .system)
-
     let config = UIImage.SymbolConfiguration(pointSize: 16, weight: .light)
     let image = UIImage(systemName: "chevron.down", withConfiguration: config)
     btn.setImage(image, for: .normal)
@@ -129,7 +132,7 @@ final class ChatMessagesVC: UIViewController {
 
     // Show button if more than 30pt from bottom
     let shouldShowButton = distFromBottom > 30
-    if self.scrollToBottomButton.isHidden == shouldShowButton {
+    if self.scrollToBottomButton.isHidden == shouldShowButton && !self.tempButtonDisable {
       UIView.animate(withDuration: 0.2) {
         self.scrollToBottomButton.isHidden = !shouldShowButton
         self.scrollToBottomButton.alpha = shouldShowButton ? 1.0 : 0.0
@@ -191,6 +194,16 @@ final class ChatMessagesVC: UIViewController {
     let noOfItems = self.cv.numberOfItems(inSection: 0)
     guard noOfItems >= 0 else { return }
     self.cv.scrollToItem(at: (noOfItems - 1).idxPath(), at: .bottom, animated: true)
+  }
+
+  func withScrollToButtomDisabled(_ block: (_ enable: @escaping () -> Void) -> Void) {
+    // hide button if currently visible
+    self.scrollToBottomButton.isHidden = true
+    self.tempButtonDisable = true
+    block {
+      self.scrollToBottomButton.isHidden = false
+      self.tempButtonDisable = false
+    }
   }
 
   @objc private func dismissKeyboard() {
