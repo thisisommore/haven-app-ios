@@ -13,7 +13,7 @@ struct MessageForm<T: XXDKP>: View {
   var chat: ChatModel?
   var replyTo: ChatMessageModel?
   var onCancelReply: (() -> Void)?
-  @Environment(T.self) private var xxdk
+  @EnvironmentObject private var xxdk: T
   @State private var showSendButton: Bool = false
   @Namespace private var namespace
 

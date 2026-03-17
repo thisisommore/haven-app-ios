@@ -11,7 +11,7 @@ import SwiftUI
 struct NewChatView<T: XXDKP>: View {
   @Environment(\.dismiss) var dismiss
   @State private var showConfirmationSheet: Bool = false
-  @Environment(T.self) var xxdk
+  @EnvironmentObject var xxdk: T
   @Dependency(\.defaultDatabase) var database
   @State private var inviteLink: String = ""
   @State private var channelData: ChannelJSON?

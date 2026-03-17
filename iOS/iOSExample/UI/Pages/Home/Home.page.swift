@@ -33,13 +33,13 @@ struct HomeView<T: XXDKP>: View {
   @State private var didNormalizeNavigation = false
   @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
 
-  @Environment(T.self) var xxdk
+  @EnvironmentObject var xxdk: T
   @State private var didStartLoad = false
   @Dependency(\.defaultDatabase) var database
-  @Environment(AppStorage.self) private var appStorage
-  @Environment(AppNavigationPath.self) private var navigation
+  @EnvironmentObject private var appStorage: AppStorage
+  @EnvironmentObject private var navigation: AppNavigationPath
   @Environment(\.isSplitView) private var isSplitView
-  @Environment(SelectedChat.self) private var selectedChat
+  @EnvironmentObject private var selectedChat: SelectedChat
 
   @State private var showTooltip = false
 
@@ -71,8 +71,6 @@ struct HomeView<T: XXDKP>: View {
   }
 
   var body: some View {
-    @Bindable var selectedChat = self.selectedChat
-
     let chatList = List(selection: $selectedChat.chatId) {
       ForEach(self.filteredChats) { chat in
         ChatRowView<T>(chat: chat)

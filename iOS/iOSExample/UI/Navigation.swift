@@ -8,16 +8,14 @@
 import Foundation
 import SwiftUI
 
-@Observable
-final class AppNavigationPath {
-  var path = NavigationPath()
+final class AppNavigationPath: Observable, ObservableObject {
+  @Published var path = NavigationPath()
 }
 
 /// Holds selected chat info for split view detail column
-@Observable
-final class SelectedChat {
-  var chatId: UUID?
-  var chatTitle: String = ""
+final class SelectedChat: ObservableObject {
+  @Published var chatId: UUID?
+  @Published var chatTitle: String = ""
 
   func select(id: UUID, title: String) {
     self.chatId = id

@@ -11,13 +11,12 @@ import Kronos
 import SQLiteData
 import SwiftUI
 
-@Observable
 final class XXDK: XXDKP {
-  var status: String = "..."
-  var statusPercentage: Double = 0
-  var codename: String?
-  var codeset: Int = 0
-  @ObservationIgnored @Dependency(\.defaultDatabase) var database
+  @Published var status: String = "..."
+  @Published var statusPercentage: Double = 0
+  @Published var codename: String?
+  @Published var codeset: Int = 0
+  @Dependency(\.defaultDatabase) var database
   var _channels: Channel?
   var channel: Channel {
     if let _channels {

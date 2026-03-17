@@ -5,6 +5,7 @@
 //  Created by Om More on 18/10/25.
 //
 
+import Combine
 import Foundation
 
 enum KeychainError: Error {
@@ -13,16 +14,16 @@ enum KeychainError: Error {
   case unhandledError(status: OSStatus)
 }
 
-@Observable
-final class AppStorage {
+final class AppStorage: ObservableObject {
   var isSetupComplete: Bool {
     get { UserDefaults.standard.bool(forKey: Self.setupCompleteKey) }
     set {
+      objectWillChange.send()
       UserDefaults.standard.set(newValue, forKey: Self.setupCompleteKey)
     }
   }
 
-  private(set) var isPasswordSet: Bool = false
+  @Published private(set) var isPasswordSet: Bool = false
   private static let setupCompleteKey = "isSetupComplete"
   private static let baseQuery: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,

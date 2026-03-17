@@ -10,9 +10,9 @@ import SwiftUI
 
 struct ImportAccountSheet<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
-  @Environment(AppNavigationPath.self) var navigation
-  @Environment(T.self) var xxdk
-  @Environment(AppStorage.self) var appStorage
+  @EnvironmentObject var navigation: AppNavigationPath
+  @EnvironmentObject var xxdk: T
+  @EnvironmentObject var appStorage: AppStorage
 
   @Binding var importPassword: String
   let ndfTask: Task<Data, Never>?

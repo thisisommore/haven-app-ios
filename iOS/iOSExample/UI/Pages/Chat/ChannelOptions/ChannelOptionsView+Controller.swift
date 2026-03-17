@@ -6,6 +6,7 @@
 //
 
 import SQLiteData
+import Observation
 import SwiftUI
 
 @MainActor

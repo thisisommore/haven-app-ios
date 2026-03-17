@@ -76,8 +76,8 @@ struct DMInviteLinkPreview<T: XXDKP>: View {
   let isIncoming: Bool
   let timestamp: String
 
-  @Environment(T.self) var xxdk
-  @Environment(SelectedChat.self) var selectedChat
+  @EnvironmentObject var xxdk: T
+  @EnvironmentObject var selectedChat: SelectedChat
   @Dependency(\.defaultDatabase) var database
 
   @State private var isLoading = false

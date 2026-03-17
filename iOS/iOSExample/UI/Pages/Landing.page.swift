@@ -10,8 +10,8 @@ import SwiftUI
 struct LandingPage<T: XXDKP>: View {
   @State private var moveUp: Bool = false
   @State private var showProgress: Bool = false
-  @Environment(T.self) var xxdk
-  @Environment(AppStorage.self) private var appStorage
+  @EnvironmentObject var xxdk: T
+  @EnvironmentObject private var appStorage: AppStorage
   @State private var isLoadingDone = false
   var body: some View {
     VStack(spacing: 12) {
