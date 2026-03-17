@@ -8,6 +8,7 @@ struct UserMenuButton: UIViewRepresentable {
   let onExport: () -> Void
   let onShareQR: () -> Void
   let onLogout: () -> Void
+  private static let userIconSize = CGSize(width: 32, height: 32)
 
   private var displayName: String {
     if let nickname, !nickname.isEmpty {
@@ -20,10 +21,10 @@ struct UserMenuButton: UIViewRepresentable {
     let button = UIButton(type: .system)
     button.showsMenuAsPrimaryAction = true
     button.tintColor = UIColor(named: "Haven")
-
-    let config = UIImage.SymbolConfiguration(pointSize: 22, weight: .regular)
-    let image = UIImage(systemName: "person.circle", withConfiguration: config)
-    button.setImage(image, for: .normal)
+    Self.updateUserIcon(for: button)
+    button.registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (button: UIButton, _) in
+      Self.updateUserIcon(for: button)
+    }
 
     return button
   }
@@ -73,6 +74,29 @@ struct UserMenuButton: UIViewRepresentable {
 
     button.menu = UIMenu(children: [nameMenu, actionsMenu])
   }
+
+  private static func updateUserIcon(for button: UIButton) {
+    let image = self.resizedImage(
+      named: "user-icon",
+      size: self.userIconSize,
+      compatibleWith: button.traitCollection
+    )
+    button.setImage(image, for: .normal)
+  }
+
+  private static func resizedImage(
+    named name: String,
+    size: CGSize,
+    compatibleWith traitCollection: UITraitCollection?
+  ) -> UIImage? {
+    guard let image = UIImage(named: name, in: .main, compatibleWith: traitCollection) else {
+      return nil
+    }
+    let renderer = UIGraphicsImageRenderer(size: size)
+    return renderer.image { _ in
+      image.draw(in: CGRect(origin: .zero, size: size))
+    }.withRenderingMode(.alwaysOriginal)
+  }
 }
 
 struct PlusMenuButton: UIViewRepresentable {
@@ -83,10 +107,12 @@ struct PlusMenuButton: UIViewRepresentable {
   func makeUIView(context _: Context) -> UIButton {
     let button = UIButton(type: .system)
     button.showsMenuAsPrimaryAction = true
-    button.tintColor = UIColor(named: "Haven")
+    button.tintColor = .systemGray
 
     let config = UIImage.SymbolConfiguration(pointSize: 22, weight: .regular)
-    let image = UIImage(systemName: "plus", withConfiguration: config)
+    let image = UIImage(systemName: "plus", withConfiguration: config)?.withTintColor(
+      .systemGray, renderingMode: .alwaysOriginal
+    )
     button.setImage(image, for: .normal)
 
     return button
