@@ -84,7 +84,7 @@ extension XXDK {
 
   // MARK: - Model Container Setup
 
-  func setStates(appStorage: AppStorage) {
+  func setAppStorage(_ appStorage: AppStorage) {
     self.appStorage = appStorage
   }
 

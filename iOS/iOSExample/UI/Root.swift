@@ -28,7 +28,7 @@ struct Root: View {
       }
     }
     .onAppear {
-      self.xxdk.setStates(appStorage: self.appStorage)
+      self.xxdk.setAppStorage(self.appStorage)
     }
     .onChange(of: self.appStorage.isSetupComplete) { _, newValue in
       if newValue {
@@ -64,7 +64,7 @@ struct Root: View {
             return
           }
           self.didRunOnboardingReset = true
-          self.xxdk.setStates(appStorage: self.appStorage)
+          self.xxdk.setAppStorage(self.appStorage)
 
           Task {
             do {

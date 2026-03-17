@@ -26,7 +26,7 @@ final class XXDKMock: XXDKP {
 
   @Published var status: String = "Initiating"
   @Published var statusPercentage: Double = 0
-  func setStates(appStorage _: AppStorage) {
+  func setAppStorage(_: AppStorage) {
     // Retain container and inject into receivers/callbacks
     self.eventModelBuilder = ChannelEventModelBuilder()
   }

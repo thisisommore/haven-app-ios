@@ -36,7 +36,7 @@ protocol XXDKP: ObservableObject, AnyObject {
   func savePrivateIdentity(privateIdentity: Data) throws
   func loadSavedPrivateIdentity() throws -> Data
   func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity]
-  func setStates(appStorage: AppStorage)
+  func setAppStorage(_: AppStorage)
   func exportIdentity(password: String) throws -> Data
   func importIdentity(password: String, data: Data) throws -> Data
   func logout() async throws
