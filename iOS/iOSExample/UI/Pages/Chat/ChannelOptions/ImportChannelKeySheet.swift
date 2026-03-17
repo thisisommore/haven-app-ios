@@ -27,6 +27,25 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
     self.isPasswordValid && self.importedKeyContent != nil
   }
 
+  private func importKey() {
+    guard let importedKeyContent
+    else {
+      self.errorMessage = "No key file selected"
+      return
+    }
+
+    do {
+      try self.xxdk.channel.importChannelAdminKey(
+        channelId: self.channelId, encryptionPassword: self.decryptionPassword, privateKey: importedKeyContent
+      )
+      self.errorMessage = nil
+      self.onSuccess("Key Imported Successfully")
+      self.dismiss()
+    } catch {
+      self.errorMessage = "Import failed: \(error.localizedDescription)"
+    }
+  }
+
   var body: some View {
     NavigationView {
       VStack(spacing: 24) {
@@ -148,25 +167,6 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
           self.errorMessage = "Failed to select file: \(error.localizedDescription)"
         }
       }
-    }
-  }
-
-  private func importKey() {
-    guard let importedKeyContent
-    else {
-      self.errorMessage = "No key file selected"
-      return
-    }
-
-    do {
-      try self.xxdk.channel.importChannelAdminKey(
-        channelId: self.channelId, encryptionPassword: self.decryptionPassword, privateKey: importedKeyContent
-      )
-      self.errorMessage = nil
-      self.onSuccess("Key Imported Successfully")
-      self.dismiss()
-    } catch {
-      self.errorMessage = "Import failed: \(error.localizedDescription)"
     }
   }
 }

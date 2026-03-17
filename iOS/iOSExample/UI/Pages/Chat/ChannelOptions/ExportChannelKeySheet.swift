@@ -23,6 +23,33 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
     !self.encryptionPassword.isEmpty
   }
 
+  private func exportToFile() {
+    do {
+      let key = try xxdk.channel.exportChannelAdminKey(
+        channelId: self.channelId, encryptionPassword: self.encryptionPassword
+      )
+      self.document = TextFileDocument(text: key)
+      self.errorMessage = nil
+      self.showFileExporter = true
+    } catch {
+      self.errorMessage = "Failed to export key: \(error.localizedDescription)"
+    }
+  }
+
+  private func copyToClipboard() {
+    do {
+      let key = try xxdk.channel.exportChannelAdminKey(
+        channelId: self.channelId, encryptionPassword: self.encryptionPassword
+      )
+      UIPasteboard.general.string = key
+      self.errorMessage = nil
+      self.onSuccess("Copied to Clipboard")
+      self.dismiss()
+    } catch {
+      self.errorMessage = "Failed to export key: \(error.localizedDescription)"
+    }
+  }
+
   var body: some View {
     NavigationView {
       VStack(spacing: 24) {
@@ -139,33 +166,6 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
           self.errorMessage = "Failed to save: \(error.localizedDescription)"
         }
       }
-    }
-  }
-
-  private func exportToFile() {
-    do {
-      let key = try xxdk.channel.exportChannelAdminKey(
-        channelId: self.channelId, encryptionPassword: self.encryptionPassword
-      )
-      self.document = TextFileDocument(text: key)
-      self.errorMessage = nil
-      self.showFileExporter = true
-    } catch {
-      self.errorMessage = "Failed to export key: \(error.localizedDescription)"
-    }
-  }
-
-  private func copyToClipboard() {
-    do {
-      let key = try xxdk.channel.exportChannelAdminKey(
-        channelId: self.channelId, encryptionPassword: self.encryptionPassword
-      )
-      UIPasteboard.general.string = key
-      self.errorMessage = nil
-      self.onSuccess("Copied to Clipboard")
-      self.dismiss()
-    } catch {
-      self.errorMessage = "Failed to export key: \(error.localizedDescription)"
     }
   }
 }
