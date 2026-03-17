@@ -186,6 +186,10 @@ struct ChatView<T: XXDKP>: View {
         self.isAdmin = self.chat?.isAdmin ?? false
       }
     }
+    .onChange(of: self.chat?.unreadCount) { _, newValue in
+      guard let newValue, newValue > 0 else { return }
+      self.markMessagesAsRead()
+    }
   }
 }
 
