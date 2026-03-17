@@ -201,7 +201,6 @@ final class ChatMessagesVC: UIViewController {
     self.scrollToBottomButton.isHidden = true
     self.tempButtonDisable = true
     block {
-      self.scrollToBottomButton.isHidden = false
       self.tempButtonDisable = false
     }
   }
