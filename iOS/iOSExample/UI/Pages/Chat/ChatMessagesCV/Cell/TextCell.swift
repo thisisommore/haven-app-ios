@@ -32,6 +32,7 @@ final class TextCell: UICollectionViewCell {
   private static let paddingX: CGFloat = 8
   private static let paddingYCal = paddingY * 2
   private static let paddingXCal = paddingX * 2
+  private static let maxMessageWidthRatio: CGFloat = 0.76
   override init(frame: CGRect) {
     super.init(frame: frame)
     makeUI()
@@ -70,7 +71,7 @@ final class TextCell: UICollectionViewCell {
   }
 
   private static let senderNameTextAttributes: [NSAttributedString.Key: Any] = [
-    .font: UIFont.systemFont(ofSize: 8),
+    .font: UIFont.systemFont(ofSize: 12),
   ]
 
   private static let timeTextAttributes: [NSAttributedString.Key: Any] = [
@@ -106,19 +107,30 @@ final class TextCell: UICollectionViewCell {
     )
   }
 
+  static func formattedSenderName(sender: String?, nickname: String?) -> String? {
+    guard let sender, !sender.isEmpty else { return nil }
+    let trimmedNickname = nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let trimmedNickname, !trimmedNickname.isEmpty else {
+      return sender
+    }
+    return "\(sender) aka \(trimmedNickname)"
+  }
+
   static func size(
-    text: NSAttributedString, sender: String?, replyPreview: String? = nil, width: CGFloat,
+    text: NSAttributedString, sender: String?, senderNickname: String? = nil,
+    replyPreview: String? = nil, width: CGFloat,
     showsClockIcon: Bool = false
   )
     -> CGSize {
-    let availableWidth = width - self.paddingXCal
+    let maxBubbleWidth = width * Self.maxMessageWidthRatio
+    let availableWidth = max(maxBubbleWidth - self.paddingXCal, 0)
     let senderNameR: CGRect = {
-      guard let sender
+      guard let senderName = self.formattedSenderName(sender: sender, nickname: senderNickname)
       else {
         return .zero
       }
       return self.textRect(
-        NSAttributedString(string: sender, attributes: Self.senderNameTextAttributes),
+        NSAttributedString(string: senderName, attributes: Self.senderNameTextAttributes),
         width: availableWidth
       )
 
@@ -169,7 +181,7 @@ final class TextCell: UICollectionViewCell {
           ? 0 : Self.replySpacingToMessage + Self.replySpacingAboveMessage)
 
     // ceil to provide extra space since it might remove all the decimals which can result in smaller space
-    return CGSize(width: calculatedWidth, height: calculatedHeight)
+    return CGSize(width: min(calculatedWidth, maxBubbleWidth), height: calculatedHeight)
   }
 }
 
@@ -208,7 +220,7 @@ extension TextCell {
       $0.top.equalTo(self.container).offset(Self.paddingY)
     }
     self.senderNameLabel.textColor = .label
-    self.senderNameLabel.font = UIFont.systemFont(ofSize: 8)
+    self.senderNameLabel.font = UIFont.systemFont(ofSize: 12)
     self.senderNameLabel.text = ""
 
     self.replyPreviewLabel.snp.makeConstraints {
@@ -271,15 +283,15 @@ extension TextCell {
     self.onReplyPreviewClick?()
   }
 
-  func setSenderName(_ sender: String?, colorHex: Int? = nil) {
-    guard let sender, !sender.isEmpty
+  func setSenderName(_ sender: String?, nickname: String? = nil, colorHex: Int? = nil) {
+    guard let senderName = Self.formattedSenderName(sender: sender, nickname: nickname)
     else {
       self.senderNameLabel.text = nil
       self.senderNameLabel.isHidden = true
       self.updateConstraint()
       return
     }
-    self.senderNameLabel.text = sender
+    self.senderNameLabel.text = senderName
     if let colorHex {
       self.senderNameLabel.textColor = UIColor { traitCollection in
         let colorScheme: ColorScheme =

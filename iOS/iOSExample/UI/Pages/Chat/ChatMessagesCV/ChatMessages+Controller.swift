@@ -15,6 +15,7 @@ import UIKit
 struct MessageWithSender: Hashable {
   let message: ChatMessageModel
   let sender: String?
+  let senderNickname: String?
   let replyTo: ChatMessageModel?
   let colorHex: Int?
 }
@@ -38,6 +39,7 @@ final class ChatMessagesVC: UIViewController {
       ):
         return lhsMessage.message == rhsMessage.message
           && lhsMessage.sender == rhsMessage.sender
+          && lhsMessage.senderNickname == rhsMessage.senderNickname
           && lhsMessage.replyTo == rhsMessage.replyTo
       case let (.date(lhsDate), .date(rhsDate)):
         return lhsDate == rhsDate
@@ -52,6 +54,7 @@ final class ChatMessagesVC: UIViewController {
         hasher.combine(0)
         hasher.combine(messageWithSender.message)
         hasher.combine(messageWithSender.sender)
+        hasher.combine(messageWithSender.senderNickname)
         hasher.combine(messageWithSender.replyTo)
       case let .date(date):
         hasher.combine(1)

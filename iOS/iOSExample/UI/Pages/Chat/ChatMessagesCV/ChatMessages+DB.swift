@@ -30,7 +30,7 @@ extension ChatMessagesVC {
           message.replyTo.eq(reply.externalId)
         }
         .select { message, sender, reply in
-          (message, sender.codename, reply, sender.color) // reply is optional (LEFT JOIN)
+          (message, sender.codename, sender.nickname, reply, sender.color) // reply is optional (LEFT JOIN)
         }
         .order { message, _, _ in
           message.timestamp.desc()
@@ -41,9 +41,11 @@ extension ChatMessagesVC {
 
     cancellable = observation.start(in: database, scheduling: .immediate) { _ in
       // Handle error
-    } onChange: { (_messages: [(ChatMessageModel, String?, ChatMessageModel?, Int?)]) in
+    } onChange: { (_messages: [(ChatMessageModel, String?, String?, ChatMessageModel?, Int?)]) in
       self.messages = _messages.reversed().map {
-        MessageWithSender(message: $0.0, sender: $0.1, replyTo: $0.2, colorHex: $0.3)
+        MessageWithSender(
+          message: $0.0, sender: $0.1, senderNickname: $0.2, replyTo: $0.3, colorHex: $0.4
+        )
       }
       var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
       snapshot.appendSections([0])
@@ -65,7 +67,7 @@ extension ChatMessagesVC {
               shouldShowSender
                 ? message
                 : MessageWithSender(
-                  message: message.message, sender: nil, replyTo: message.replyTo,
+                  message: message.message, sender: nil, senderNickname: nil, replyTo: message.replyTo,
                   colorHex: message.colorHex
                 )
             if dateChanged {

@@ -70,7 +70,11 @@ extension ChatMessagesVC {
             self.time(for: message),
             showsClockIcon: message.message.status == .unsent
           ) // from items
-          cell.setSenderName(message.sender, colorHex: message.colorHex)
+          cell.setSenderName(
+            message.sender,
+            nickname: message.senderNickname,
+            colorHex: message.colorHex
+          )
 
           cell.setReplyPreview(self.replyText(for: message))
           cell.setBubbleShape(
@@ -137,8 +141,9 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
       return TextCell.size(
         text: self.text(for: message),
         sender: self.sender(for: message),
+        senderNickname: message.senderNickname,
         replyPreview: self.replyText(for: message),
-        width: collectionView.availableWidth(),
+        width: collectionView.bounds.width,
         showsClockIcon: message.message.status == .unsent
       )
     case let .date(d):
