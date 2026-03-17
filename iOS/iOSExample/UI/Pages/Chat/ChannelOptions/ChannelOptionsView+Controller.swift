@@ -5,8 +5,8 @@
 //  Created by Om More
 //
 
-import SQLiteData
 import Observation
+import SQLiteData
 import SwiftUI
 
 @MainActor
@@ -132,8 +132,7 @@ final class ChannelOptionsController {
   ) {
     guard let channelId else { return }
     if let notificationChannelID = notification.userInfo?["channelID"] as? String,
-      notificationChannelID == channelId
-    {
+       notificationChannelID == channelId {
       do {
         self.mutedUsers = try xxdk.channel.getMutedUsers(channelId: channelId)
       } catch {
