@@ -15,17 +15,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var xxdk: T
   @Dependency(\.defaultDatabase) var database
-  @State private var isDMEnabled: Bool = false
-  @State private var shareURL: String?
-  @State private var sharePassword: String?
-  @State private var showExportKeySheet: Bool = false
-  @State private var showImportKeySheet: Bool = false
-  @State private var toastMessage: String?
-  @State private var isAdmin: Bool = false
-  @State private var mutedUsers: [Data] = []
-  @State private var showLeaveConfirmation: Bool = false
-  @State private var showDeleteConfirmation: Bool = false
-  @State private var channelNickname: String = ""
+  @State private var controller = ChannelOptionsController()
   @FocusState private var isNicknameFocused: Bool
 
   private var isDM: Bool {
@@ -64,23 +54,21 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
               HStack {
-                TextField("Enter nickname (max 24 chars)", text: self.$channelNickname)
+                TextField("Enter nickname (max 24 chars)", text: self.$controller.channelNickname)
                   .focused(self.$isNicknameFocused)
-                  .onChange(of: self.channelNickname) { _, newValue in
-                    if newValue.count > 24 {
-                      self.channelNickname = String(newValue.prefix(24))
-                    }
+                  .onChange(of: self.controller.channelNickname) { _, newValue in
+                    self.controller.updateChannelNickname(newValue)
                   }
                 if self.isNicknameFocused {
                   Button("Save") {
-                    self.saveNickname()
+                    self.controller.saveNickname(channelId: self.channelId, xxdk: self.xxdk)
                     self.isNicknameFocused = false
                   }
                   .font(.caption)
                   .foregroundColor(.haven)
                 }
               }
-              if self.channelNickname.count > 10 {
+              if self.controller.channelNickname.count > 10 {
                 HStack(spacing: 6) {
                   Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.orange)
@@ -93,26 +81,16 @@ struct ChannelOptionsView<T: XXDKP>: View {
           }
 
           if !self.isDM {
-            Toggle("Direct Messages", isOn: self.$isDMEnabled)
+            Toggle("Direct Messages", isOn: self.$controller.isDMEnabled)
               .tint(.haven)
-              .onChange(of: self.isDMEnabled) { oldValue, newValue in
-                guard let channelId = self.channelId else { return }
-                do {
-                  if newValue {
-                    try self.xxdk.channel.enableDirectMessages(channelId: channelId)
-                  } else {
-                    try self.xxdk.channel.disableDirectMessages(channelId: channelId)
-                  }
-                } catch {
-                  AppLogger.channels.error(
-                    "Failed to toggle DM: \(error.localizedDescription, privacy: .public)"
-                  )
-                  self.isDMEnabled = oldValue
-                }
+              .onChange(of: self.controller.isDMEnabled) { oldValue, newValue in
+                self.controller.toggleDirectMessages(
+                  oldValue: oldValue, newValue: newValue, channelId: self.channelId, xxdk: self.xxdk
+                )
               }
           }
 
-          if !self.isDM, let urlString = shareURL, let url = URL(string: urlString) {
+          if !self.isDM, let urlString = self.controller.shareURL, let url = URL(string: urlString) {
             ShareLink(item: url) {
               HStack {
                 Text(verbatim: urlString)
@@ -124,7 +102,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
             }
             .tint(.haven)
 
-            if let sharePassword, !sharePassword.isEmpty {
+            if let sharePassword = self.controller.sharePassword, !sharePassword.isEmpty {
               HStack {
                 VStack(alignment: .leading, spacing: 4) {
                   HStack(spacing: 6) {
@@ -141,7 +119,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
                 Spacer()
                 Button {
                   UIPasteboard.general.string = sharePassword
-                  self.toastMessage = "Password copied"
+                  self.controller.handlePasswordCopied()
                 } label: {
                   Image(systemName: "doc.on.doc")
                     .foregroundColor(.haven)
@@ -152,48 +130,14 @@ struct ChannelOptionsView<T: XXDKP>: View {
           }
         }
         .onAppear {
-          self.refreshAdminStatus()
-          guard let channelId = self.channelId else { return }
-          do {
-            self.isDMEnabled = try self.xxdk.channel.areDMsEnabled(channelId: channelId)
-          } catch {
-            AppLogger.channels.error(
-              "Failed to fetch DM status: \(error.localizedDescription, privacy: .public)"
-            )
-            self.isDMEnabled = false
-          }
-          do {
-            let shareData = try xxdk.channel.getShareURL(
-              channelId: channelId, host: "https://xxnetwork.com/join"
-            )
-            self.shareURL = shareData.url
-            self.sharePassword = shareData.password
-          } catch {
-            AppLogger.channels.error(
-              "Failed to fetch share URL: \(error.localizedDescription, privacy: .public)"
-            )
-          }
-          do {
-            self.mutedUsers = try self.xxdk.channel.getMutedUsers(channelId: channelId)
-          } catch {
-            AppLogger.channels.error(
-              "Failed to fetch muted users: \(error.localizedDescription, privacy: .public)"
-            )
-          }
-          do {
-            self.channelNickname = try self.xxdk.channel.getChannelNickname(channelId: channelId)
-          } catch {
-            AppLogger.channels.error(
-              "Failed to fetch channel nickname: \(error.localizedDescription, privacy: .public)"
-            )
-          }
+          self.controller.onAppear(chat: self.chat, channelId: self.channelId, xxdk: self.xxdk)
         }
 
         // Admin section - only visible for channel admins (not for DMs)
-        if !self.isDM, self.channelId != nil, self.isAdmin {
+        if !self.isDM, self.channelId != nil, self.controller.isAdmin {
           Section(header: Text("Admin")) {
             Button {
-              self.showExportKeySheet = true
+              self.controller.showExportKeySheet = true
             } label: {
               HStack {
                 Image(systemName: "key.fill")
@@ -209,33 +153,17 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
 
         // Muted Users section - only visible for admins (not for DMs)
-        if !self.isDM, self.channelId != nil, self.isAdmin {
+        if !self.isDM, self.channelId != nil, self.controller.isAdmin {
           Section(header: Text("Muted Users")) {
-            if self.mutedUsers.isEmpty {
+            if self.controller.mutedUsers.isEmpty {
               Text("No muted users")
                 .foregroundColor(.secondary)
             } else {
-              ForEach(self.mutedUsers, id: \.self) { pubKey in
+              ForEach(self.controller.mutedUsers, id: \.self) { pubKey in
                 MutedUserRow(pubKey: pubKey) {
-                  guard let channelId = self.channelId else { return }
-                  do {
-                    try self.xxdk.channel.muteUser(
-                      channelId: channelId, pubKey: pubKey, mute: false
-                    )
-                    self.mutedUsers = try self.xxdk.channel.getMutedUsers(channelId: channelId)
-                    withAnimation(.spring(response: 0.3)) {
-                      self.toastMessage = "User unmuted"
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                      withAnimation {
-                        self.toastMessage = nil
-                      }
-                    }
-                  } catch {
-                    AppLogger.channels.error(
-                      "Failed to unmute user: \(error.localizedDescription, privacy: .public)"
-                    )
-                  }
+                  self.controller.unmuteUser(
+                    pubKey: pubKey, channelId: self.channelId, xxdk: self.xxdk
+                  )
                 }
               }
             }
@@ -243,10 +171,10 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
 
         // Import key section - only visible for non-admins and not for DMs
-        if !self.isDM, self.channelId != nil, !self.isAdmin {
+        if !self.isDM, self.channelId != nil, !self.controller.isAdmin {
           Section {
             Button {
-              self.showImportKeySheet = true
+              self.controller.showImportKeySheet = true
             } label: {
               HStack {
                 Image(systemName: "key.fill")
@@ -264,9 +192,9 @@ struct ChannelOptionsView<T: XXDKP>: View {
         Section {
           Button(role: .destructive) {
             if self.isDM {
-              self.showDeleteConfirmation = true
+              self.controller.showDeleteConfirmation = true
             } else {
-              self.showLeaveConfirmation = true
+              self.controller.showLeaveConfirmation = true
             }
           } label: {
             HStack {
@@ -276,7 +204,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
             }
           }
         }
-        .alert("Leave Channel", isPresented: self.$showLeaveConfirmation) {
+        .alert("Leave Channel", isPresented: self.$controller.showLeaveConfirmation) {
           Button("Cancel", role: .cancel) {}
           Button("Leave", role: .destructive) {
             self.onLeaveChannel()
@@ -285,7 +213,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
         } message: {
           Text("Are you sure you want to leave \"\(self.chat?.name ?? "this channel")\"?")
         }
-        .alert("Delete Chat", isPresented: self.$showDeleteConfirmation) {
+        .alert("Delete Chat", isPresented: self.$controller.showDeleteConfirmation) {
           Button("Cancel", role: .cancel) {}
           Button("Delete", role: .destructive) {
             self.onDeleteChat?()
@@ -306,50 +234,30 @@ struct ChannelOptionsView<T: XXDKP>: View {
           }.tint(.haven)
         }.hiddenSharedBackground()
       }
-      .sheet(isPresented: self.$showExportKeySheet) {
+      .sheet(isPresented: self.$controller.showExportKeySheet) {
         ExportChannelKeySheet(
           channelId: self.channelId ?? "",
           channelName: self.chat?.name ?? "Unknown",
           xxdk: self.xxdk,
           onSuccess: { message in
-            withAnimation(.spring(response: 0.3)) {
-              self.toastMessage = message
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-              withAnimation {
-                self.toastMessage = nil
-              }
-            }
+            self.controller.handleExportSuccess(message: message)
           }
         )
       }
-      .sheet(isPresented: self.$showImportKeySheet) {
+      .sheet(isPresented: self.$controller.showImportKeySheet) {
         ImportChannelKeySheet(
           channelId: self.channelId ?? "",
           channelName: self.chat?.name ?? "Unknown",
           xxdk: self.xxdk,
           onSuccess: { message in
-            if let chatId = chat?.id {
-              try? self.database.write { db in
-                try ChatModel.where { $0.id.eq(chatId) }
-                  .update { $0.isAdmin = true }
-                  .execute(db)
-              }
-            }
-            self.refreshAdminStatus()
-            withAnimation(.spring(response: 0.3)) {
-              self.toastMessage = message
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-              withAnimation {
-                self.toastMessage = nil
-              }
-            }
+            self.controller.handleImportSuccess(
+              message: message, chatId: self.chat?.id, chat: self.chat, database: self.database
+            )
           }
         )
       }
       .overlay {
-        if let toastMessage {
+        if let toastMessage = self.controller.toastMessage {
           VStack {
             Spacer()
             HStack(spacing: 10) {
@@ -371,41 +279,10 @@ struct ChannelOptionsView<T: XXDKP>: View {
         }
       }
       .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
-        guard let channelId = self.channelId else { return }
-        if let notificationChannelID = notification.userInfo?["channelID"] as? String,
-           notificationChannelID == channelId {
-          do {
-            self.mutedUsers = try self.xxdk.channel.getMutedUsers(channelId: channelId)
-          } catch {
-            AppLogger.channels.error(
-              "Failed to refresh muted users: \(error.localizedDescription, privacy: .public)"
-            )
-          }
-        }
+        self.controller.handleMuteStatusChanged(
+          notification: notification, channelId: self.channelId, xxdk: self.xxdk
+        )
       }
-    }
-  }
-
-  private func refreshAdminStatus() {
-    self.isAdmin = self.chat?.isAdmin ?? false
-  }
-
-  private func saveNickname() {
-    guard let channelId = self.channelId else { return }
-    do {
-      try self.xxdk.channel.setChannelNickname(channelId: channelId, nickname: self.channelNickname)
-      withAnimation(.spring(response: 0.3)) {
-        self.toastMessage = "Nickname saved"
-      }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-        withAnimation {
-          self.toastMessage = nil
-        }
-      }
-    } catch {
-      AppLogger.channels.error(
-        "Failed to save nickname: \(error.localizedDescription, privacy: .public)"
-      )
     }
   }
 }
