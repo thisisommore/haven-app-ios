@@ -73,6 +73,12 @@ struct ChatRowView<T: XXDKP>: View {
     nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
   }
 
+  private func strippedParagraphTags(_ message: String) -> String {
+    message
+      .replacingOccurrences(of: "<p>", with: "")
+      .replacingOccurrences(of: "</p>", with: "")
+  }
+
   /// Display name for chat title
   private var chatDisplayName: String {
     if self.chat.name == "<self>" {
@@ -127,10 +133,15 @@ struct ChatRowView<T: XXDKP>: View {
             return sender.codename
           }()
 
-          VStack(alignment: .leading) {
+          VStack(alignment: .leading, spacing: 2) {
             Text(senderName)
               .foregroundStyle(Color(uiColor: .secondaryLabel))
               .font(.system(size: 12))
+            Text(self.strippedParagraphTags(lastMessage.message))
+              .foregroundStyle(Color(uiColor: .secondaryLabel))
+              .font(.system(size: 12))
+              .lineLimit(1)
+              .truncationMode(.tail)
           }
         } else {
           Text("No messages yet")
