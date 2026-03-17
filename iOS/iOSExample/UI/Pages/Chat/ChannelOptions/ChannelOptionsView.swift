@@ -13,7 +13,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
   let onLeaveChannel: () -> Void
   var onDeleteChat: (() -> Void)?
   @Environment(\.dismiss) private var dismiss
-  @EnvironmentObject var xxdk: T
+  @Environment(T.self) var xxdk
   @Dependency(\.defaultDatabase) var database
   @State private var controller = ChannelOptionsController()
   @FocusState private var isNicknameFocused: Bool

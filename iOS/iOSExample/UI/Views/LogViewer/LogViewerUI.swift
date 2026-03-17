@@ -65,7 +65,7 @@ struct StyledLogMessage: Identifiable {
 }
 
 struct LogViewerUI: View {
-  @EnvironmentObject var logOutput: LogViewer
+  @Environment(LogViewer.self) var logOutput
   @State private var searchText = ""
   @State private var selectedFilter: LogLevel = .all
   @State private var autoScroll = true
@@ -147,13 +147,13 @@ extension String {
 
 #Preview("Log Viewer") {
   LogViewerUI()
-    .environmentObject(LogViewer())
+    .environment(LogViewer())
     .frame(height: 500)
     .padding()
 }
 
 #Preview("Dark Mode") {
   LogViewerUI()
-    .environmentObject(LogViewer())
+    .environment(LogViewer())
     .preferredColorScheme(.dark)
 }

@@ -18,7 +18,7 @@ struct GeneratedIdentity {
   let pubkey: String
 }
 
-protocol XXDKP: ObservableObject, AnyObject {
+protocol XXDKP: Observable, AnyObject {
   associatedtype ChannelType: ChannelsP
   associatedtype DirectMessageType: DirectMessageP
   var status: String { get }

@@ -43,7 +43,7 @@ struct UnreadBadge: View {
 
 struct ChatRowView<T: XXDKP>: View {
   let chat: ChatModel
-  @EnvironmentObject var xxdk: T
+  @Environment(T.self) var xxdk
   @Dependency(\.defaultDatabase) var database
   @FetchAll private var latestMessage: [ChatMessageModel]
 

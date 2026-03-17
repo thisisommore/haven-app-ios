@@ -11,9 +11,9 @@ struct PasswordCreationView<T: XXDKP>: View {
   @State private var showImportSheet: Bool = false
   @State private var importPassword: String = ""
 
-  @EnvironmentObject var appStorage: AppStorage
-  @EnvironmentObject var xxdk: T
-  @EnvironmentObject var navigation: AppNavigationPath
+  @Environment(AppStorage.self) var appStorage
+  @Environment(T.self) var xxdk
+  @Environment(AppNavigationPath.self) var navigation
 
   private var failingRules: [PasswordRule] {
     PasswordRule.allCases.filter { !$0.isSatisfied(by: self.password) }
@@ -97,7 +97,7 @@ enum BranchColor {
 
 #Preview {
   PasswordCreationView<XXDKMock>()
-    .environmentObject(AppStorage())
-    .environmentObject(AppNavigationPath())
+    .environment(AppStorage())
+    .environment(AppNavigationPath())
     .mock()
 }

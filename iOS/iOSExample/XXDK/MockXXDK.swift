@@ -11,6 +11,7 @@ import Kronos
 import SQLiteData
 import SwiftUI
 
+@Observable
 final class XXDKMock: XXDKP {
   var channel: Channel {
     fatalError("mock")
@@ -24,8 +25,8 @@ final class XXDKMock: XXDKP {
 
   func deleteMessage(channelId _: String, messageId _: String) {}
 
-  @Published var status: String = "Initiating"
-  @Published var statusPercentage: Double = 0
+  var status: String = "Initiating"
+  var statusPercentage: Double = 0
   func setStates(appStorage _: AppStorage) {
     // Retain container and inject into receivers/callbacks
     self.eventModelBuilder = ChannelEventModelBuilder()

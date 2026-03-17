@@ -7,7 +7,7 @@ import SwiftUI
 
 struct NicknamePickerView<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
-  @EnvironmentObject var xxdk: T
+  @Environment(T.self) var xxdk
 
   @State private var nickname: String = ""
   @State private var isSaving: Bool = false

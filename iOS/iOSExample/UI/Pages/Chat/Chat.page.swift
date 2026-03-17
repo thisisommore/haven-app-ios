@@ -12,7 +12,7 @@ struct ChatView<T: XXDKP>: View {
   let chatId: UUID
   let chatTitle: String
 
-  @EnvironmentObject var selectedChat: SelectedChat
+  @Environment(SelectedChat.self) var selectedChat
   @Dependency(\.defaultDatabase) var database
   @FetchOne private var chat: ChatModel?
   @FetchOne private var firstMessage: ChatMessageModel?
@@ -27,7 +27,7 @@ struct ChatView<T: XXDKP>: View {
   @State private var showChannelOptions: Bool = false
   @State private var isAdmin: Bool = false
   @State private var isMuted: Bool = false
-  @EnvironmentObject var xxdk: T
+  @Environment(T.self) var xxdk
 
   private func markMessagesAsRead() {
     guard let chat else { return }
@@ -161,7 +161,7 @@ struct ChatView<T: XXDKP>: View {
           }
         }
       }
-      .environmentObject(self.xxdk)
+      .environment(self.xxdk)
     }
     .onAppear {
       self.isAdmin = self.chat?.isAdmin ?? false

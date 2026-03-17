@@ -11,8 +11,8 @@ struct CodenameGeneratorView<T: XXDKP>: View {
   @State private var selectedCodename: Codename?
   @State private var isGenerating = false
   @State private var generatedIdentities: [GeneratedIdentity] = []
-  @EnvironmentObject private var xxdk: T
-  @EnvironmentObject private var navigation: AppNavigationPath
+  @Environment(T.self) private var xxdk
+  @Environment(AppNavigationPath.self) private var navigation
   private let adjectives1 = [
     "elector", "brother", "recruit", "clever", "swift", "mystic", "cosmic",
     "quantum", "stellar", "cyber", "digital", "neural", "atomic", "solar",

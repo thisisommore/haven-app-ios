@@ -10,11 +10,11 @@ import SQLiteData
 import SwiftUI
 
 struct Root: View {
-  @EnvironmentObject var logOutput: LogViewer
-  @EnvironmentObject var xxdk: XXDK
-  @EnvironmentObject var appStorage: AppStorage
-  @EnvironmentObject var selectedChat: SelectedChat
-  @EnvironmentObject var navigation: AppNavigationPath
+  @Environment(LogViewer.self) var logOutput
+  @Environment(XXDK.self) var xxdk
+  @Environment(AppStorage.self) var appStorage
+  @Environment(SelectedChat.self) var selectedChat
+  @Environment(AppNavigationPath.self) var navigation
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
   @Dependency(\.defaultDatabase) var database
   @State private var didRunOnboardingReset = false
@@ -40,8 +40,10 @@ struct Root: View {
   }
 
   private var setupCompletedView: some View {
-    NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
-      NavigationStack(path: self.$navigation.path) {
+    @Bindable var navigation = self.navigation
+
+    return NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+      NavigationStack(path: $navigation.path) {
         HomeView<XXDK>()
           .navigationDestination(for: Destination.self) { destination in
             destination.destinationView()
@@ -54,7 +56,9 @@ struct Root: View {
   }
 
   private var setupIncompleteView: some View {
-    NavigationStack(path: self.$navigation.path) {
+    @Bindable var navigation = self.navigation
+
+    return NavigationStack(path: $navigation.path) {
       EmptyView()
         .navigationDestination(for: Destination.self) { destination in
           destination.destinationView()
@@ -103,7 +107,7 @@ struct Root: View {
 }
 
 struct DeepLinkHandler: ViewModifier {
-  @EnvironmentObject var selectedChat: SelectedChat
+  @Environment(SelectedChat.self) var selectedChat
   @Dependency(\.defaultDatabase) var database
 
   @State private var deepLinkError: String?

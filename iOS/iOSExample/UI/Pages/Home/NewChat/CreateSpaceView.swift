@@ -3,7 +3,7 @@ import SwiftUI
 
 struct CreateSpaceView<T: XXDKP>: View {
   @Environment(\.dismiss) var dismiss
-  @EnvironmentObject var xxdk: T
+  @Environment(T.self) var xxdk
   @Dependency(\.defaultDatabase) var database
 
   @State private var name: String = ""

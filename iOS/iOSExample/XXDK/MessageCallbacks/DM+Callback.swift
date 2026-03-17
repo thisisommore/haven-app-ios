@@ -22,7 +22,8 @@ struct ReceivedMessage: Identifiable {
   var id = UUID()
 }
 
-final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
+@Observable
+final class DMReceiverBuilder: NSObject, Bindings.BindingsDMReceiverProtocol, Bindings
   .BindingsDmCallbacksProtocol, Bindings.BindingsDMReceiverBuilderProtocol {
   func build(_: String?) -> (any BindingsDMReceiverProtocol)? {
     return self
@@ -94,8 +95,8 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     }
   }
 
-  @Dependency(\.defaultDatabase) private var database
-  private let receiverHelpers = ReceiverHelpers.shared
+  @ObservationIgnored @Dependency(\.defaultDatabase) private var database
+  @ObservationIgnored private let receiverHelpers = ReceiverHelpers.shared
 
   func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
     return true

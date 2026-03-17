@@ -10,9 +10,9 @@ import SwiftUI
 
 struct ImportAccountSheet<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
-  @EnvironmentObject var navigation: AppNavigationPath
-  @EnvironmentObject var xxdk: T
-  @EnvironmentObject var appStorage: AppStorage
+  @Environment(AppNavigationPath.self) var navigation
+  @Environment(T.self) var xxdk
+  @Environment(AppStorage.self) var appStorage
 
   @Binding var importPassword: String
   @State private var selectedFileURL: URL?

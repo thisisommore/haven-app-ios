@@ -71,8 +71,8 @@ extension View {
       return NavigationStack {
         self
       }
-      .environmentObject(XXDKMock())
-      .environmentObject(SelectedChat())
+      .environment(XXDKMock())
+      .environment(SelectedChat())
       .navigationBarBackButtonHidden()
     #else
       return self
