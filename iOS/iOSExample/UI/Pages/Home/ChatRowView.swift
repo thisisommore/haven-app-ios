@@ -45,6 +45,16 @@ struct ChatRowView<T: XXDKP>: View {
   let chat: ChatModel
   @EnvironmentObject var xxdk: T
   @Dependency(\.defaultDatabase) var database
+  @FetchAll private var latestMessage: [ChatMessageModel]
+
+  init(chat: ChatModel) {
+    self.chat = chat
+    _latestMessage = FetchAll(
+      ChatMessageModel.where { $0.chatId.eq(chat.id) }
+        .order { $0.timestamp.desc() }
+        .limit(1)
+    )
+  }
 
   private var isChannel: Bool {
     self.chat.name != "<self>" && self.chat.dmToken == nil
@@ -109,34 +119,9 @@ struct ChatRowView<T: XXDKP>: View {
           }
         }
 
-        if let lastMessage = try? database.read({ db in
-          try ChatMessageModel.where { $0.chatId.eq(chat.id) }
-            .order { $0.timestamp.desc() }
-            .limit(1)
-            .fetchOne(db)
-        }) {
-          let senderName: String = {
-            if !lastMessage.isIncoming {
-              return "you"
-            }
-            guard let senderId = lastMessage.senderId,
-                  let sender = try? database.read({ db in
-                    try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)
-                  })
-            else { return "unknown" }
-            if self.isDM {
-              return sender.codename
-            }
-            if let nickname = sender.nickname, !nickname.isEmpty {
-              return "\(self.truncateNickname(nickname)) aka \(sender.codename)"
-            }
-            return sender.codename
-          }()
-
+        if let lastMessage = self.latestMessage.first {
           VStack(alignment: .leading, spacing: 2) {
-            Text(senderName)
-              .foregroundStyle(Color(uiColor: .secondaryLabel))
-              .font(.system(size: 12))
+            LastMessageSenderNameView(lastMessage: lastMessage, isDM: self.isDM)
             Text(self.strippedParagraphTags(lastMessage.message))
               .foregroundStyle(Color(uiColor: .secondaryLabel))
               .font(.system(size: 12))
@@ -156,5 +141,50 @@ struct ChatRowView<T: XXDKP>: View {
         UnreadBadge(count: self.chat.unreadCount)
       }
     }
+  }
+}
+
+private struct LastMessageSenderNameView: View {
+  private static let fallbackSenderId = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+
+  let lastMessage: ChatMessageModel
+  let isDM: Bool
+  @FetchOne private var sender: MessageSenderModel?
+
+  init(lastMessage: ChatMessageModel, isDM: Bool) {
+    self.lastMessage = lastMessage
+    self.isDM = isDM
+
+    if lastMessage.isIncoming, let senderId = lastMessage.senderId {
+      _sender = FetchOne(MessageSenderModel.where { $0.id.eq(senderId) })
+    } else {
+      _sender = FetchOne(MessageSenderModel.where { $0.id.eq(Self.fallbackSenderId) })
+    }
+  }
+
+  private func truncateNickname(_ nickname: String) -> String {
+    nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
+  }
+
+  private var senderName: String {
+    if !self.lastMessage.isIncoming {
+      return "you"
+    }
+    guard let sender else {
+      return "unknown"
+    }
+    if self.isDM {
+      return sender.codename
+    }
+    if let nickname = sender.nickname, !nickname.isEmpty {
+      return "\(self.truncateNickname(nickname)) aka \(sender.codename)"
+    }
+    return sender.codename
+  }
+
+  var body: some View {
+    Text(self.senderName)
+      .foregroundStyle(Color(uiColor: .secondaryLabel))
+      .font(.system(size: 12))
   }
 }
