@@ -70,7 +70,8 @@ extension DatabaseMigrator {
           "targetMessageId" TEXT NOT NULL,
           "emoji" TEXT NOT NULL,
           "timestamp" TEXT NOT NULL,
-          "senderId" TEXT NOT NULL REFERENCES "messageSenders"("id")
+          "senderId" TEXT NOT NULL REFERENCES "messageSenders"("id"),
+          "status" INTEGER NOT NULL
         ) STRICT
         """
       )

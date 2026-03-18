@@ -49,6 +49,23 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       try self.database.write { db in
         try ChatMessageModel.update(message).execute(db)
       }
+      return
+    }
+
+    let reaction = try database.read { db in
+      try MessageReactionModel.where { $0.id.eq(uuid) }.fetchOne(db)
+    }
+    if var reaction {
+      if updateInfo.MessageIDSet, let newMessageId = updateInfo.MessageID {
+        reaction.externalId = newMessageId
+      }
+      if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
+         let newStatus = MessageStatus(rawValue: newStatusRaw) {
+        reaction.status = newStatus
+      }
+      try self.database.write { db in
+        try MessageReactionModel.update(reaction).execute(db)
+      }
     }
   }
 
@@ -125,7 +142,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
   func joinChannel(_: String?) {}
 
   func leaveChannel(_: Data?) {}
-
   func receiveMessage(
     _ channelID: Data?,
     messageID: Data?,
@@ -141,6 +157,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     status: Int64,
     hidden: Bool
   ) -> Int64 {
+    AppLogger.messaging.info("messageType \(messageType)")
     _ = (lease, roundID, messageType, hidden)
 
     let messageIdB64 = messageID?.base64EncodedString()
@@ -185,7 +202,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     lease _: Int64,
     roundID _: Int64,
     messageType _: Int64,
-    status _: Int64,
+    status: Int64,
     hidden _: Bool
   ) -> Int64 {
     guard let pubKey else { fatalError("no pub key") }
@@ -238,6 +255,9 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         if canonical.senderId != reactionSenderId {
           canonical.senderId = reactionSenderId
         }
+        if let newStatus = MessageStatus(status) {
+          canonical.status = newStatus
+        }
         try self.database.write { db in
           try MessageReactionModel.update(canonical).execute(db)
         }
@@ -251,13 +271,16 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         record = canonical
       } else {
         let id = InternalIdGenerator.shared.next()
-        let newRecord = MessageReactionModel(
+        var newRecord = MessageReactionModel(
           id: id,
           externalId: reactionMessageId,
           targetMessageId: targetId,
           emoji: reactionText,
           senderId: reactionSenderId
         )
+        if let newStatus = MessageStatus(status) {
+          newRecord.status = newStatus
+        }
         try self.database.write { db in
           try MessageReactionModel.insert { newRecord }.execute(db)
         }

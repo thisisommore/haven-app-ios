@@ -13,6 +13,7 @@ struct MessageReactionModel: Identifiable, Hashable {
   var emoji: String
   var timestamp: Date = .init()
   var senderId: UUID
+  var status: MessageStatus = .unsent
   var isMe: Bool {
     self.senderId == UUID.selfId
   }
