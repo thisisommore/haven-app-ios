@@ -42,21 +42,46 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     }
 
     do {
-      try self.database.write { db in
-        var message = try ChatMessageModel.where { $0.id.eq(uuid) }.fetchOne(db)
-        if message == nil, let messageID {
-          let messageIDB64 = messageID.base64EncodedString()
-          message = try ChatMessageModel.where { $0.externalId.eq(messageIDB64) }
-            .fetchOne(db)
+      var message = try database.read { db in
+        try ChatMessageModel.where { $0.id.eq(uuid) }.fetchOne(db)
+      }
+      if message == nil, let messageID {
+        let messageIDB64 = messageID.base64EncodedString()
+        message = try self.database.read { db in
+          try ChatMessageModel.where { $0.externalId.eq(messageIDB64) }.fetchOne(db)
         }
+      }
 
-        guard var message else { return }
+      if var message {
+        try self.database.write { db in
+          if parsedStatus == .failed {
+            try ChatMessageModel.delete(message).execute(db)
+          } else {
+            message.status = parsedStatus
+            try ChatMessageModel.update(message).execute(db)
+          }
+        }
+        return
+      }
 
+      var reaction = try database.read { db in
+        try MessageReactionModel.where { $0.id.eq(uuid) }.fetchOne(db)
+      }
+      if reaction == nil, let messageID {
+        let messageIDB64 = messageID.base64EncodedString()
+        reaction = try self.database.read { db in
+          try MessageReactionModel.where { $0.externalId.eq(messageIDB64) }.fetchOne(db)
+        }
+      }
+
+      guard var reaction else { return }
+
+      try self.database.write { db in
         if parsedStatus == .failed {
-          try ChatMessageModel.delete(message).execute(db)
+          try MessageReactionModel.delete(reaction).execute(db)
         } else {
-          message.status = parsedStatus
-          try ChatMessageModel.update(message).execute(db)
+          reaction.status = parsedStatus
+          try MessageReactionModel.update(reaction).execute(db)
         }
       }
     } catch {
