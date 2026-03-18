@@ -24,14 +24,14 @@ struct MessageSenderModel {
     self.color = color
   }
 
-  private init() {
-    self.pubkey = Data()
+  private init(pubkey: Data) {
+    self.pubkey = pubkey
     self.codename = ""
     self.color = 0
     self.id = UUID.selfId
   }
 
-  static func selfSender() -> MessageSenderModel {
-    return MessageSenderModel()
+  static func selfSender(pubkey: Data) -> MessageSenderModel {
+    return MessageSenderModel(pubkey: pubkey)
   }
 }
