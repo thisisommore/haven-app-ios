@@ -40,7 +40,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
     if var message {
       if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
-         let newStatus = MessageStatus(rawValue: newStatusRaw), newStatus == .failed {
+         let newStatus = MessageStatus(newStatusRaw), newStatus == .failed {
         try self.database.write { db in
           try ChatMessageModel.delete(message).execute(db)
         }
@@ -51,7 +51,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         message.externalId = newMessageId
       }
       if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
-         let newStatus = MessageStatus(rawValue: newStatusRaw) {
+         let newStatus = MessageStatus(newStatusRaw) {
         message.status = newStatus
       }
       try self.database.write { db in
@@ -65,7 +65,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
     if var reaction {
       if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
-         let newStatus = MessageStatus(rawValue: newStatusRaw), newStatus == .failed {
+         let newStatus = MessageStatus(newStatusRaw), newStatus == .failed {
         try self.database.write { db in
           try MessageReactionModel.delete(reaction).execute(db)
         }
@@ -76,7 +76,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         reaction.externalId = newMessageId
       }
       if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
-         let newStatus = MessageStatus(rawValue: newStatusRaw) {
+         let newStatus = MessageStatus(newStatusRaw) {
         reaction.status = newStatus
       }
       try self.database.write { db in

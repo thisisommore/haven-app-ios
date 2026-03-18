@@ -30,6 +30,13 @@ enum MessageStatus: Int, QueryBindable {
     }
     self = s
   }
+
+  init?(_ rawValue: Int) {
+    guard let s = MessageStatus(rawValue: Int(rawValue)) else {
+      return nil
+    }
+    self = s
+  }
 }
 
 @Table("chatMessages")

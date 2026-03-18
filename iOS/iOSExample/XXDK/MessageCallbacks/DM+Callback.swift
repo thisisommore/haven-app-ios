@@ -33,7 +33,7 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
   ) {
     _ = (timestamp, roundID)
 
-    guard let parsedStatus = MessageStatus(rawValue: Int(status))
+    guard let parsedStatus = MessageStatus(status)
     else {
       AppLogger.messaging.error(
         "updateSentStatus invalid status=\(status, privacy: .public) uuid=\(uuid, privacy: .public)"
