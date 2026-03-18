@@ -39,6 +39,14 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       try ChatMessageModel.where { $0.id.eq(uuid) }.fetchOne(db)
     }
     if var message {
+      if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
+         let newStatus = MessageStatus(rawValue: newStatusRaw), newStatus == .failed {
+        try self.database.write { db in
+          try ChatMessageModel.delete(message).execute(db)
+        }
+        return
+      }
+
       if updateInfo.MessageIDSet, let newMessageId = updateInfo.MessageID {
         message.externalId = newMessageId
       }
@@ -56,6 +64,14 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       try MessageReactionModel.where { $0.id.eq(uuid) }.fetchOne(db)
     }
     if var reaction {
+      if updateInfo.StatusSet, let newStatusRaw = updateInfo.Status,
+         let newStatus = MessageStatus(rawValue: newStatusRaw), newStatus == .failed {
+        try self.database.write { db in
+          try MessageReactionModel.delete(reaction).execute(db)
+        }
+        return
+      }
+
       if updateInfo.MessageIDSet, let newMessageId = updateInfo.MessageID {
         reaction.externalId = newMessageId
       }
@@ -414,9 +430,9 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       }
 
       if let reaction {
-          try self.database.write { db in
-            try MessageReactionModel.delete(reaction).execute(db)
-          }
+        try self.database.write { db in
+          try MessageReactionModel.delete(reaction).execute(db)
+        }
         return
       }
     } catch {
