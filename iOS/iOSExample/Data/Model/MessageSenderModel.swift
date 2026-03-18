@@ -23,4 +23,15 @@ struct MessageSenderModel {
     self.dmToken = dmToken
     self.color = color
   }
+
+  private init() {
+    self.pubkey = Data()
+    self.codename = ""
+    self.color = 0
+    self.id = UUID.selfId
+  }
+
+  static func selfSender() -> MessageSenderModel {
+    return MessageSenderModel()
+  }
 }
