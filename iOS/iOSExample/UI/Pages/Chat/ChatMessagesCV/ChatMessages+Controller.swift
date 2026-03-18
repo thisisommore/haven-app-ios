@@ -18,6 +18,7 @@ struct MessageWithSender: Hashable {
   let senderNickname: String?
   let replyTo: ChatMessageModel?
   let colorHex: Int?
+  let reactionEmojis: [String]
 }
 
 final class ChatMessagesVC: UIViewController {
@@ -25,6 +26,8 @@ final class ChatMessagesVC: UIViewController {
   let chatId: UUID
   var isFetchingNextPage = true
   var onReply: (ChatMessageModel) -> Void
+  var onReact: (ChatMessageModel) -> Void
+  var onDeleteReaction: (MessageReactionModel) -> Void
 
   /// DataSource
   enum Message: Hashable {
@@ -41,6 +44,7 @@ final class ChatMessagesVC: UIViewController {
           && lhsMessage.sender == rhsMessage.sender
           && lhsMessage.senderNickname == rhsMessage.senderNickname
           && lhsMessage.replyTo == rhsMessage.replyTo
+          && lhsMessage.reactionEmojis == rhsMessage.reactionEmojis
       case let (.date(lhsDate), .date(rhsDate)):
         return lhsDate == rhsDate
       default:
@@ -56,6 +60,7 @@ final class ChatMessagesVC: UIViewController {
         hasher.combine(messageWithSender.sender)
         hasher.combine(messageWithSender.senderNickname)
         hasher.combine(messageWithSender.replyTo)
+        hasher.combine(messageWithSender.reactionEmojis)
       case let .date(date):
         hasher.combine(1)
         hasher.combine(date)
@@ -109,9 +114,16 @@ final class ChatMessagesVC: UIViewController {
   private(set) var cv: UICollectionView
   private var previousViewSize: CGFloat = 0
 
-  init(chatId: UUID, onReply: @escaping ((ChatMessageModel) -> Void)) {
+  init(
+    chatId: UUID,
+    onReply: @escaping ((ChatMessageModel) -> Void),
+    onReact: @escaping ((ChatMessageModel) -> Void),
+    onDeleteReaction: @escaping ((MessageReactionModel) -> Void)
+  ) {
     self.chatId = chatId
     self.onReply = onReply
+    self.onReact = onReact
+    self.onDeleteReaction = onDeleteReaction
     self.cv = UICollectionView(
       frame: .zero, collectionViewLayout: ChatMessagesCollectionViewLayout()
     )
@@ -335,14 +347,69 @@ final class ChatMessagesVC: UIViewController {
   }
 }
 
+extension ChatMessagesVC {
+  static func reactionPreviewEmojis(from fetchedEmojis: [String]) -> [String] {
+    guard !fetchedEmojis.isEmpty else { return [] }
+    if fetchedEmojis.count == 3 {
+      return Array(fetchedEmojis.prefix(2)) + ["+"]
+    }
+    return fetchedEmojis
+  }
+
+  func showReactors(for message: ChatMessageModel) {
+    let groupedReactions: [(emoji: String, reactions: [MessageReactionModel])] = {
+      guard let reactions = try? self.database.read({ db in
+        try MessageReactionModel.where { $0.targetMessageId.eq(message.externalId) }.fetchAll(db)
+      }) else {
+        return []
+      }
+      return Dictionary(grouping: reactions, by: { $0.emoji })
+        .map { (emoji: $0.key, reactions: $0.value) }
+        .sorted { $0.reactions.count > $1.reactions.count }
+    }()
+    let canDeleteMyReactions: Bool = {
+      guard let chat = try? self.database.read({ db in
+        try ChatModel.where { $0.id.eq(self.chatId) }.fetchOne(db)
+      }) else {
+        return false
+      }
+      return chat.channelId != nil
+    }()
+
+    guard !groupedReactions.isEmpty else { return }
+    let view = ReactorsSheet(
+      groupedReactions: groupedReactions,
+      selectedEmoji: nil,
+      canDeleteMyReactions: canDeleteMyReactions,
+      onDeleteReaction: { [weak self] reaction in
+        self?.onDeleteReaction(reaction)
+      }
+    )
+    let controller = UIHostingController(rootView: view)
+    if let sheet = controller.sheetPresentationController {
+      sheet.detents = [.medium(), .large()]
+    }
+    self.present(controller, animated: true)
+  }
+}
+
 struct ChatMessages: UIViewControllerRepresentable {
   let chatId: UUID
   var onReply: (ChatMessageModel) -> Void
+  var onReact: (ChatMessageModel) -> Void
+  var onDeleteReaction: (MessageReactionModel) -> Void
   func updateUIViewController(_ uiViewController: ChatMessagesVC, context _: Context) {
     uiViewController.onReply = self.onReply
+    uiViewController.onReact = self.onReact
+    uiViewController.onDeleteReaction = self.onDeleteReaction
   }
 
   func makeUIViewController(context _: Context) -> ChatMessagesVC {
-    return ChatMessagesVC(chatId: self.chatId, onReply: self.onReply)
+    return ChatMessagesVC(
+      chatId: self.chatId,
+      onReply: self.onReply,
+      onReact: self.onReact,
+      onDeleteReaction: self.onDeleteReaction
+    )
   }
 }

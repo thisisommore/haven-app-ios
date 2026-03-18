@@ -5,46 +5,33 @@
 //  Created by Om More on 10/03/26.
 //
 
-import GRDB
+import struct GRDB.ValueObservation
 import SQLiteData
 import UIKit
 
 extension ChatMessagesVC {
+  typealias ObservedMessages = [(ChatMessageModel, String, String?.QueryOutput, TableAlias<ChatMessageModel, ChatMessagesVC.ReplyTo>?.QueryOutput, Int, [String])]
+
   enum ReplyTo: AliasName {}
   func startObservation() {
     cancellable?.cancel()
 
     // Data obervation and initialization
     let observation = ValueObservation.tracking { db in
-      try ChatMessageModel
-        .where {
-          $0.chatId.eq(self.chatId)
-            && ($0.status.eq(MessageStatus.unsent)
-              || $0.status.eq(MessageStatus.delivered)
-              || $0.status.eq(MessageStatus.sent))
-        }
-        .join(MessageSenderModel.all) { message, sender in
-          message.senderId.eq(sender.id)
-        }
-        .leftJoin(ChatMessageModel.as(ReplyTo.self).all) { message, _, reply in
-          message.replyTo.eq(reply.externalId)
-        }
-        .select { message, sender, reply in
-          (message, sender.codename, sender.nickname, reply, sender.color) // reply is optional (LEFT JOIN)
-        }
-        .order { message, _, _ in
-          message.timestamp.desc()
-        }
-        .limit(Self.limit * self.page)
-        .fetchAll(db)
+      try self.makeObservationPayload(db: db)
     }
 
     cancellable = observation.start(in: database, scheduling: .immediate) { _ in
       // Handle error
-    } onChange: { (_messages: [(ChatMessageModel, String?, String?, ChatMessageModel?, Int?)]) in
+    } onChange: { (_messages: ObservedMessages) in
       self.messages = _messages.reversed().map {
-        MessageWithSender(
-          message: $0.0, sender: $0.1, senderNickname: $0.2, replyTo: $0.3, colorHex: $0.4
+        var strArr = $0.5
+        if strArr.count >= 3 {
+          strArr[2] = "+"
+        }
+        return MessageWithSender(
+          message: $0.0, sender: $0.1, senderNickname: $0.2, replyTo: $0.3, colorHex: $0.4,
+          reactionEmojis: strArr
         )
       }
       var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
@@ -68,7 +55,8 @@ extension ChatMessagesVC {
                 ? message
                 : MessageWithSender(
                   message: message.message, sender: nil, senderNickname: nil, replyTo: message.replyTo,
-                  colorHex: message.colorHex
+                  colorHex: message.colorHex,
+                  reactionEmojis: message.reactionEmojis
                 )
             if dateChanged {
               return [
@@ -114,22 +102,24 @@ extension ChatMessagesVC {
         }
 
         let wasNearBottom = self.isNearBottom
-        self.withScrollToButtomDisabled { enable in
-          // Calculates differences and applies them
-          self.dataSource.apply(snapshot, animatingDifferences: false)
-          // If user was near bottom, scroll to bottom to show new message
-          if wasNearBottom, !self.cv.isTracking, !self.cv.isDragging, !self.cv.isDecelerating {
+        if wasNearBottom, !self.cv.isTracking, !self.cv.isDragging, !self.cv.isDecelerating {
+          self.withScrollToButtomDisabled { enable in
+            // Calculates differences and applies them
+            self.dataSource.apply(snapshot, animatingDifferences: false)
+            // If user was near bottom, scroll to bottom to show new message
             let numberOfItems = self.cv.numberOfItems(inSection: 0)
             if numberOfItems > 0 {
               self.cv.scrollToItem(
                 at: (numberOfItems - 1).idxPath(), at: .bottom, animated: true
               )
             }
-          }
 
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [enable] in
-            enable()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [enable] in
+              enable()
+            }
           }
+        } else {
+          self.dataSource.apply(snapshot, animatingDifferences: false)
         }
 
       } else {
@@ -175,5 +165,45 @@ extension ChatMessagesVC {
 
   func isCurrentPageFull() -> Bool {
     return messages.count >= Self.limit * page
+  }
+
+  private func makeObservationPayload(db: Database) throws -> ObservedMessages {
+    return try ChatMessageModel
+      .where {
+        $0.chatId.eq(self.chatId)
+          && ($0.status.eq(MessageStatus.unsent)
+            || $0.status.eq(MessageStatus.delivered)
+            || $0.status.eq(MessageStatus.sent))
+      }
+      .join(MessageSenderModel.all) { message, sender in
+        message.senderId.eq(sender.id)
+      }
+      .leftJoin(ChatMessageModel.as(ReplyTo.self).all) { message, _, reply in
+        message.replyTo.eq(reply.externalId)
+      }
+      .select { message, sender, reply in
+        let first3UniqueReactions = MessageReactionModel
+          .where { $0.targetMessageId.eq(message.externalId) } // correlated
+          .select(\.emoji)
+          .distinct()
+          .limit(3)
+
+        return (
+          message,
+          sender.codename,
+          sender.nickname,
+          reply,
+          sender.color,
+          #sql(
+            "coalesce((SELECT json_group_array(emoji) FROM (\(first3UniqueReactions))), '[]')",
+            as: [String].JSONRepresentation.self
+          )
+        )
+      }
+      .order { message, _, _ in
+        message.timestamp.desc()
+      }
+      .limit(Self.limit * self.page)
+      .fetchAll(db)
   }
 }

@@ -235,13 +235,15 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         dmToken: dmToken,
         color: color
       )
+      let isSelfSender = self.receiverHelpers.isSenderSelf(senderPubKey: pubKey)
+      let reactionSenderId = isSelfSender ? UUID.selfId : sender.id
 
       // De-duplicate by message target + emoji + sender.
       // If a duplicate exists, update its id instead of creating another row.
       let sameSenderReactions = try database.read { db in
         try MessageReactionModel.where {
           $0.targetMessageId.eq(targetId) && $0.emoji.eq(reactionText)
-            && $0.senderId.eq(sender.id)
+            && $0.senderId.eq(reactionSenderId)
         }.fetchAll(db)
       }
 
@@ -250,6 +252,12 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         ?? sameSenderReactions.first {
         if canonical.externalId != reactionMessageId {
           canonical.externalId = reactionMessageId
+        }
+        if canonical.senderId != reactionSenderId {
+          canonical.senderId = reactionSenderId
+        }
+        try self.database.write { db in
+          try MessageReactionModel.update(canonical).execute(db)
         }
 
         // If duplicates already exist, keep one canonical row.
@@ -266,7 +274,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
           externalId: reactionMessageId,
           targetMessageId: targetId,
           emoji: reactionText,
-          senderId: sender.id
+          senderId: reactionSenderId
         )
         try self.database.write { db in
           try MessageReactionModel.insert { newRecord }.execute(db)

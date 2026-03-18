@@ -21,11 +21,14 @@ final class TextCell: UICollectionViewCell {
   let timeLabel = UILabel()
   private let senderNameLabel = UILabel()
   private let replyPreviewLabel = UILabel()
+  private let reactionsContainer = UIStackView()
   let replyImage = UIImageView(image: UIImage(systemName: "arrowshape.turn.up.left.circle.fill"))
   let container = UIView()
   var hasCrossedReplyThreshold = false
   let feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
   var onReply: (() -> Void)?
+  var onReact: (() -> Void)?
+  var onReactionPreviewTap: (() -> Void)?
   var onReplyPreviewClick: (() -> Void)?
   var onLinkTapped: ((URL) -> Void)?
   private static let paddingY: CGFloat = 4
@@ -48,6 +51,7 @@ final class TextCell: UICollectionViewCell {
   private var messageTopToContainerConstraint: Constraint?
   private var containerTopToContentConstraint: Constraint?
   private var containerTopToReplyConstraint: Constraint?
+  private var containerBottomConstraint: Constraint?
 
   @available(*, unavailable)
   required init?(coder _: NSCoder) {
@@ -57,6 +61,8 @@ final class TextCell: UICollectionViewCell {
   override func prepareForReuse() {
     super.prepareForReuse()
     self.onReply = nil
+    self.onReact = nil
+    self.onReactionPreviewTap = nil
     self.onReplyPreviewClick = nil
     self.onLinkTapped = nil
     self.hasCrossedReplyThreshold = false
@@ -68,6 +74,7 @@ final class TextCell: UICollectionViewCell {
     self.container.layer.borderColor = nil
     setSenderName(nil)
     setReplyPreview(nil)
+    setReactions([])
   }
 
   private static let senderNameTextAttributes: [NSAttributedString.Key: Any] = [
@@ -92,6 +99,11 @@ final class TextCell: UICollectionViewCell {
   ]
   private static let replySpacingToMessage: CGFloat = 6
   private static let replySpacingAboveMessage: CGFloat = 10
+  private static let reactionPlusToken = "+"
+  private static let reactionPlusIconName = "plus"
+  private static let reactionChipSize: CGFloat = 20
+  private static let reactionChipSpacing: CGFloat = 4
+  private static let reactionPlusIconSize: CGFloat = 10
 
   private static let lastWidth: CGFloat = 0
   private static var timeRecCached: CGRect = .zero
@@ -107,6 +119,13 @@ final class TextCell: UICollectionViewCell {
     )
   }
 
+  private static func reactionRowSize(for emojis: [String]) -> CGSize {
+    guard !emojis.isEmpty else { return .zero }
+    let count = CGFloat(emojis.count)
+    let width = (count * Self.reactionChipSize) + ((count - 1) * Self.reactionChipSpacing)
+    return CGSize(width: width, height: Self.reactionChipSize)
+  }
+
   static func formattedSenderName(sender: String?, nickname: String?) -> String? {
     guard let sender, !sender.isEmpty else { return nil }
     let trimmedNickname = nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -118,7 +137,7 @@ final class TextCell: UICollectionViewCell {
 
   static func size(
     text: NSAttributedString, sender: String?, senderNickname: String? = nil,
-    replyPreview: String? = nil, width: CGFloat,
+    replyPreview: String? = nil, reactionEmojis: [String] = [], width: CGFloat,
     showsClockIcon: Bool = false
   )
     -> CGSize {
@@ -163,13 +182,19 @@ final class TextCell: UICollectionViewCell {
         width: availableWidth
       )
     }()
+    let reactionsR: CGRect = {
+      guard !reactionEmojis.isEmpty else { return .zero }
+      return CGRect(origin: .zero, size: self.reactionRowSize(for: reactionEmojis))
+    }()
+    let reactionBottomInset = reactionsR == .zero ? 0 : ceil(reactionsR.height / 2)
 
     let calculatedWidth =
       max(
         ceil(messageR.width),
         ceil(timeR.width),
         ceil(senderNameR.width),
-        ceil(replyContainerR.width)
+        ceil(replyContainerR.width),
+        ceil(reactionsR.width)
       ) + self.paddingXCal
     let calculatedHeight =
       ceil(messageR.height)
@@ -179,6 +204,7 @@ final class TextCell: UICollectionViewCell {
         + ceil(replyContainerR.height)
         + (replyContainerR == .zero
           ? 0 : Self.replySpacingToMessage + Self.replySpacingAboveMessage)
+        + reactionBottomInset
 
     // ceil to provide extra space since it might remove all the decimals which can result in smaller space
     return CGSize(width: min(calculatedWidth, maxBubbleWidth), height: calculatedHeight)
@@ -190,6 +216,7 @@ extension TextCell {
     contentView.addSubview(self.replyImage)
     contentView.addSubview(self.container)
     contentView.addSubview(self.replyPreviewLabel)
+    contentView.addSubview(self.reactionsContainer)
     self.container.addSubview(self.label)
     self.container.addSubview(self.timeLabel)
     self.container.addSubview(self.senderNameLabel)
@@ -204,7 +231,7 @@ extension TextCell {
     self.container.snp.makeConstraints {
       $0.leading.equalTo(contentView)
       $0.trailing.equalTo(contentView)
-      $0.bottom.equalTo(contentView)
+      self.containerBottomConstraint = $0.bottom.equalTo(contentView).constraint
       self.containerTopToContentConstraint = $0.top.equalTo(contentView).constraint
       self.containerTopToReplyConstraint =
         $0.top.equalTo(self.replyPreviewLabel.snp.bottom).offset(Self.replySpacingToMessage)
@@ -265,9 +292,25 @@ extension TextCell {
       .backgroundColor: UIColor.systemOrange.withAlphaComponent(0.15),
     ]
 
+    self.reactionsContainer.snp.makeConstraints {
+      $0.leading.equalTo(self.container).offset(Self.paddingX)
+      $0.centerY.equalTo(self.container.snp.bottom)
+      $0.trailing.lessThanOrEqualTo(self.contentView).offset(-Self.paddingX)
+      $0.height.equalTo(Self.reactionChipSize)
+    }
+    self.reactionsContainer.axis = .horizontal
+    self.reactionsContainer.spacing = Self.reactionChipSpacing
+    self.reactionsContainer.alignment = .center
+    self.reactionsContainer.distribution = .fill
+    self.reactionsContainer.isHidden = true
+    self.reactionsContainer.isUserInteractionEnabled = true
+    self.reactionsContainer.addGestureRecognizer(
+      UITapGestureRecognizer(target: self, action: #selector(self.handleReactionTap))
+    )
+
     self.timeLabel.snp.makeConstraints {
       $0.trailing.equalTo(self.container).offset(-Self.paddingX)
-      $0.top.equalTo(self.label.snp.bottom).offset(Self.paddingY) // Defines the vertical stack
+      $0.top.equalTo(self.label.snp.bottom).offset(Self.paddingY)
       $0.bottom.equalTo(self.container).offset(-Self.paddingY)
     }
     self.timeLabel.textColor = .gray
@@ -276,11 +319,16 @@ extension TextCell {
 
     self.setSenderName(nil)
     self.setReplyPreview(nil)
+    self.setReactions([])
     self.setBubbleShape(.single, isIncoming: true)
   }
 
   @objc private func handleReplyPreviewTap() {
     self.onReplyPreviewClick?()
+  }
+
+  @objc private func handleReactionTap() {
+    self.onReactionPreviewTap?()
   }
 
   func setSenderName(_ sender: String?, nickname: String? = nil, colorHex: Int? = nil) {
@@ -317,6 +365,25 @@ extension TextCell {
     self.updateConstraint()
   }
 
+  func setReactions(_ reactionEmojis: [String]) {
+    for subview in self.reactionsContainer.arrangedSubviews {
+      self.reactionsContainer.removeArrangedSubview(subview)
+      subview.removeFromSuperview()
+    }
+
+    guard !reactionEmojis.isEmpty else {
+      self.reactionsContainer.isHidden = true
+      self.updateReactionBottomInset()
+      return
+    }
+
+    for token in reactionEmojis {
+      self.reactionsContainer.addArrangedSubview(Self.makeReactionChip(token))
+    }
+    self.reactionsContainer.isHidden = false
+    self.updateReactionBottomInset()
+  }
+
   private func updateConstraint() {
     self.messageTopToSenderConstraint?.deactivate()
     self.messageTopToContainerConstraint?.deactivate()
@@ -334,6 +401,16 @@ extension TextCell {
     } else {
       self.messageTopToContainerConstraint?.activate()
     }
+    self.updateReactionBottomInset()
+  }
+
+  private func updateReactionBottomInset() {
+    self.containerBottomConstraint?.update(offset: -self.currentReactionBottomInset())
+  }
+
+  private func currentReactionBottomInset() -> CGFloat {
+    guard !self.reactionsContainer.isHidden else { return 0 }
+    return ceil(Self.reactionChipSize / 2)
   }
 
   func setTime(_ text: String?, showsClockIcon: Bool = false) {
@@ -380,6 +457,34 @@ extension TextCell {
     )
     attributedText.append(NSAttributedString(attachment: attachment))
     return attributedText
+  }
+
+  private static func makeReactionChip(_ token: String) -> UIView {
+    let chip = UIView()
+    chip.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(0.9)
+    chip.layer.cornerRadius = Self.reactionChipSize / 2
+    chip.layer.masksToBounds = true
+    chip.snp.makeConstraints { $0.size.equalTo(Self.reactionChipSize) }
+
+    if token == Self.reactionPlusToken {
+      let icon = UIImageView(image: UIImage(systemName: Self.reactionPlusIconName))
+      icon.tintColor = .secondaryLabel
+      icon.contentMode = .scaleAspectFit
+      chip.addSubview(icon)
+      icon.snp.makeConstraints {
+        $0.center.equalToSuperview()
+        $0.size.equalTo(Self.reactionPlusIconSize)
+      }
+      return chip
+    }
+
+    let label = UILabel()
+    label.text = token
+    label.textAlignment = .center
+    label.font = UIFont.systemFont(ofSize: 13)
+    chip.addSubview(label)
+    label.snp.makeConstraints { $0.center.equalToSuperview() }
+    return chip
   }
 
   func setBubbleShape(_ shape: BubbleShape, isIncoming: Bool) {

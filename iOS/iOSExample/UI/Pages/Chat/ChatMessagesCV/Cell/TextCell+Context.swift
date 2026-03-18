@@ -37,6 +37,9 @@ extension TextCell: CellWithContextMenu {
   func makeContextMenu() -> UIContextMenuConfiguration {
     return UIContextMenuConfiguration(actionProvider: { _ in
       UIMenu(children: [
+        UIAction(title: "React", image: UIImage(systemName: "face.smiling")) { [weak self] _ in
+          self?.onReact?()
+        },
         UIAction(title: "Reply", image: UIImage(systemName: "arrowshape.turn.up.left")) { [weak self] _ in
           self?.onReply?()
         },

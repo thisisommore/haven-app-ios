@@ -302,8 +302,10 @@ extension XXDK {
             dmToken: selfToken,
             color: 0xE97451
           )
+          let sender = MessageSenderModel.selfSender()
           try await database.write { db in
             try ChatModel.insert { chat }.execute(db)
+            try MessageSenderModel.insert { sender }.execute(db)
           }
         }
       } catch {

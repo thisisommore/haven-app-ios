@@ -24,6 +24,7 @@ struct ChatView<T: XXDKP>: View {
 
   @Environment(\.dismiss) private var dismiss
   @State private var replyingTo: ChatMessageModel?
+  @State private var reactingTo: ChatMessageModel?
   @State private var showChannelOptions: Bool = false
   @State private var isAdmin: Bool = false
   @State private var isMuted: Bool = false
@@ -68,6 +69,10 @@ struct ChatView<T: XXDKP>: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
           self.replyingTo = message
         }
+      } onReact: { message in
+        self.reactingTo = message
+      } onDeleteReaction: { reaction in
+        self.deleteReaction(reaction)
       }
       if self.firstMessage == nil {
         EmptyChatView()
@@ -163,6 +168,18 @@ struct ChatView<T: XXDKP>: View {
       }
       .environmentObject(self.xxdk)
     }
+    .sheet(item: self.$reactingTo) { message in
+      NavigationStack {
+        EmojiKeyboard { emoji in
+          if emoji.isEmpty {
+            self.reactingTo = nil
+            return
+          }
+          self.sendReaction(emoji, to: message)
+          self.reactingTo = nil
+        }
+      }
+    }
     .onAppear {
       self.isAdmin = self.chat?.isAdmin ?? false
       if self.isChannel, let channelId = self.chat?.channelId {
@@ -189,6 +206,45 @@ struct ChatView<T: XXDKP>: View {
     .onChange(of: self.chat?.unreadCount) { _, newValue in
       guard let newValue, newValue > 0 else { return }
       self.markMessagesAsRead()
+    }
+  }
+
+  private func sendReaction(_ emoji: String, to message: ChatMessageModel) {
+    guard !emoji.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    guard let chat else { return }
+
+    let xxdk = self.xxdk
+    if let token = chat.dmToken, let pubKey = chat.pubKey {
+      Task.detached {
+        xxdk.dm?.sendReaction(
+          emoji: emoji,
+          toMessageIdB64: message.externalId,
+          toPubKey: pubKey,
+          partnerToken: token
+        )
+      }
+      return
+    }
+    if let channelId = chat.channelId {
+      Task.detached {
+        xxdk.channel.msg.sendReaction(
+          emoji: emoji,
+          toMessageIdB64: message.externalId,
+          inChannelId: channelId
+        )
+      }
+    }
+  }
+
+  private func deleteReaction(_ reaction: MessageReactionModel) {
+    guard let channelId = self.chat?.channelId else { return }
+
+    let xxdk = self.xxdk
+    Task.detached {
+      xxdk.channel.msg.deleteMessage(
+        channelId: channelId,
+        messageId: reaction.externalId
+      )
     }
   }
 }

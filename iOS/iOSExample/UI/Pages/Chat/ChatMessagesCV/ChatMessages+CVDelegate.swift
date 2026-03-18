@@ -77,12 +77,19 @@ extension ChatMessagesVC {
           )
 
           cell.setReplyPreview(self.replyText(for: message))
+          cell.setReactions(message.reactionEmojis)
           cell.setBubbleShape(
             self.bubbleShape(for: message, at: indexPath),
             isIncoming: message.message.isIncoming
           )
           cell.onReply = { [weak self] in
             self?.onReply(message.message)
+          }
+          cell.onReact = { [weak self] in
+            self?.onReact(message.message)
+          }
+          cell.onReactionPreviewTap = { [weak self] in
+            self?.showReactors(for: message.message)
           }
           cell.onReplyPreviewClick = { [weak self] in
             self?.scrollToMessage(message.replyTo)
@@ -143,6 +150,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
         sender: self.sender(for: message),
         senderNickname: message.senderNickname,
         replyPreview: self.replyText(for: message),
+        reactionEmojis: message.reactionEmojis,
         width: collectionView.bounds.width,
         showsClockIcon: message.message.status == .unsent
       )
