@@ -52,24 +52,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
   }
 
-  private func short(_ data: Data?) -> String {
-    guard let data else { return "nil" }
-    let b64 = data.base64EncodedString()
-    return b64.count > 16 ? String(b64.prefix(16)) + "…" : b64
-  }
-
-  private func describe(_ updateInfo: MessageUpdateInfoJSON) -> String {
-    let messageID = updateInfo.MessageID ?? "nil"
-    let timestamp = updateInfo.Timestamp.map(String.init) ?? "nil"
-    let roundID = updateInfo.RoundID.map(String.init) ?? "nil"
-    let pinned = updateInfo.Pinned.map(String.init) ?? "nil"
-    let hidden = updateInfo.Hidden.map(String.init) ?? "nil"
-    let status = updateInfo.Status.map(String.init) ?? "nil"
-
-    return
-      "MessageUpdateInfoJSON(MessageID: \(messageID), MessageIDSet: \(updateInfo.MessageIDSet), Timestamp: \(timestamp), TimestampSet: \(updateInfo.TimestampSet), RoundID: \(roundID), RoundIDSet: \(updateInfo.RoundIDSet), Pinned: \(pinned), PinnedSet: \(updateInfo.PinnedSet), Hidden: \(hidden), HiddenSet: \(updateInfo.HiddenSet), Status: \(status), StatusSet: \(updateInfo.StatusSet))"
-  }
-
   /// Fetch existing Chat by channelId or create a new one
   private func fetchOrCreateChannelChat(
     channelId: String,
