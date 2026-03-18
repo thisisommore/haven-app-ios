@@ -168,22 +168,25 @@ extension ChatMessagesVC {
   }
 
   private func makeObservationPayload(db: Database) throws -> ObservedMessages {
-    return try ChatMessageModel
+    let whereC = ChatMessageModel
       .where {
         $0.chatId.eq(self.chatId)
           && ($0.status.eq(MessageStatus.unsent)
             || $0.status.eq(MessageStatus.delivered)
             || $0.status.eq(MessageStatus.sent))
       }
-      .join(MessageSenderModel.all) { message, sender in
-        message.senderId.eq(sender.id)
-      }
-      .leftJoin(ChatMessageModel.as(ReplyTo.self).all) { message, _, reply in
-        message.replyTo.eq(reply.externalId)
-      }
-      .select { message, sender, reply in
+
+    let joinSender = whereC.join(MessageSenderModel.all) { message, sender in
+      message.senderId.eq(sender.id)
+    }
+
+    let joinReplyTo = joinSender.leftJoin(ChatMessageModel.as(ReplyTo.self).all) { message, _, reply in
+      message.replyTo.eq(reply.externalId)
+    }
+    return try
+      joinReplyTo.select { message, sender, reply in
         let first3UniqueReactions = MessageReactionModel
-          .where { $0.targetMessageId.eq(message.externalId) } // correlated
+          .where { $0.targetMessageId.eq(message.externalId) && $0.status.neq(MessageStatus.failed) } // correlated
           .select(\.emoji)
           .distinct()
           .limit(3)
