@@ -25,33 +25,6 @@ class ChannelsMessaging: ChannelsMessagingP {
     self.channelsManager = channelsManager
   }
 
-  /// Persist a reaction to SwiftData
-  private func persistReaction(
-    messageIdB64: String,
-    emoji: String,
-    targetMessageId: String,
-    senderId: UUID
-  ) {
-    Task {
-      do {
-        let reaction = MessageReactionModel(
-          id: InternalIdGenerator.shared.next(),
-          externalId: messageIdB64,
-          targetMessageId: targetMessageId,
-          emoji: emoji,
-          senderId: senderId
-        )
-        try self.database.write { db in
-          try MessageReactionModel.insert { reaction }.execute(db)
-        }
-      } catch {
-        AppLogger.messaging.error(
-          "persistReaction failed: \(error.localizedDescription, privacy: .public)"
-        )
-      }
-    }
-  }
-
   /// Send a message to a channel by Channel ID (base64-encoded)
   func sendDM(msg: String, channelId: String) {
     let channelIdData =
@@ -121,21 +94,13 @@ class ChannelsMessaging: ChannelsMessagingP {
       return
     }
     do {
-      let report = try channelsManager.sendReaction(
+      try self.channelsManager.sendReaction(
         channelIdData,
         reaction: emoji,
         messageToReactTo: targetMessageId,
         validUntilMS: Bindings.BindingsValidForeverBindings,
         cmixParamsJSON: "".data
       )
-      if let report, let messageID = report.messageID {
-        self.persistReaction(
-          messageIdB64: messageID.base64EncodedString(),
-          emoji: emoji,
-          targetMessageId: toMessageIdB64,
-          senderId: UUID.selfId
-        )
-      }
     } catch {
       AppLogger.messaging.error(
         "sendReaction(channel) failed: \(error.localizedDescription, privacy: .public)"
