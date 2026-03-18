@@ -5,7 +5,6 @@
 //  Created by Om More on 28/09/25.
 //
 
-import GRDB
 import SQLiteData
 import SwiftUI
 
@@ -14,10 +13,9 @@ struct ReactorsSheet: View {
   let chatId: UUID
   let selectedEmoji: String?
   var onDeleteReaction: ((MessageReactionModel) -> Void)?
-  @State private var groupedReactions: [(emoji: String, reactions: [MessageReactionModel])]
+  @FetchAll private var reactions: [MessageReactionModel]
   @State private var currentEmoji: String?
   @State private var canDeleteMyReactions: Bool = false
-  @State private var reactionsCancellable: AnyDatabaseCancellable?
   @Dependency(\.defaultDatabase) var database
 
   init(
@@ -30,8 +28,14 @@ struct ReactorsSheet: View {
     self.chatId = chatId
     self.selectedEmoji = selectedEmoji
     self.onDeleteReaction = onDeleteReaction
-    _groupedReactions = State(initialValue: [])
+    _reactions = FetchAll(MessageReactionModel.where { $0.targetMessageId.eq(targetMessageId) })
     _currentEmoji = State(initialValue: selectedEmoji)
+  }
+
+  private var groupedReactions: [(emoji: String, reactions: [MessageReactionModel])] {
+    Dictionary(grouping: self.reactions, by: \.emoji)
+      .map { (emoji: $0.key, reactions: $0.value) }
+      .sorted { $0.reactions.count > $1.reactions.count }
   }
 
   private var totalReactionCount: Int {
@@ -134,11 +138,10 @@ struct ReactorsSheet: View {
     }
     .onAppear {
       self.refreshDeletePermission()
-      self.startReactionObservation()
+      self.ensureCurrentEmojiIsValid()
     }
-    .onDisappear {
-      self.reactionsCancellable?.cancel()
-      self.reactionsCancellable = nil
+    .onChange(of: self.reactions) { _, _ in
+      self.ensureCurrentEmojiIsValid()
     }
   }
 
@@ -150,27 +153,10 @@ struct ReactorsSheet: View {
     return sender?.codename ?? "Unknown"
   }
 
-  private func startReactionObservation() {
-    self.reactionsCancellable?.cancel()
-
-    let observation = ValueObservation.tracking { db in
-      try MessageReactionModel
-        .where { $0.targetMessageId.eq(self.targetMessageId) }
-        .fetchAll(db)
-    }
-
-    self.reactionsCancellable = observation.start(in: self.database, scheduling: .immediate) { _ in
-      // Keep current UI state on read failures.
-    } onChange: { reactions in
-      let grouped = Dictionary(grouping: reactions, by: \.emoji)
-        .map { (emoji: $0.key, reactions: $0.value) }
-        .sorted { $0.reactions.count > $1.reactions.count }
-
-      self.groupedReactions = grouped
-      if let currentEmoji = self.currentEmoji,
-         !grouped.contains(where: { $0.emoji == currentEmoji }) {
-        self.currentEmoji = nil
-      }
+  private func ensureCurrentEmojiIsValid() {
+    if let currentEmoji = self.currentEmoji,
+       !self.groupedReactions.contains(where: { $0.emoji == currentEmoji }) {
+      self.currentEmoji = nil
     }
   }
 
