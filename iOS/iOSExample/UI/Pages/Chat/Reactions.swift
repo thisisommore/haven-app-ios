@@ -28,7 +28,7 @@ struct ReactorsSheet: View {
     self.chatId = chatId
     self.selectedEmoji = selectedEmoji
     self.onDeleteReaction = onDeleteReaction
-    _reactions = FetchAll(MessageReactionModel.where { $0.targetMessageId.eq(targetMessageId) })
+    _reactions = FetchAll(MessageReactionModel.where { $0.targetMessageId.eq(targetMessageId) && $0.status.neq(MessageStatus.failed) })
     _currentEmoji = State(initialValue: selectedEmoji)
   }
 
