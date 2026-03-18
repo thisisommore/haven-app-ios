@@ -5,27 +5,32 @@
 //  Created by Om More on 28/09/25.
 //
 
+import GRDB
 import SQLiteData
 import SwiftUI
 
 struct ReactorsSheet: View {
-  let groupedReactions: [(emoji: String, reactions: [MessageReactionModel])]
+  let targetMessageId: String
+  let chatId: UUID
   let selectedEmoji: String?
-  let canDeleteMyReactions: Bool
   var onDeleteReaction: ((MessageReactionModel) -> Void)?
+  @State private var groupedReactions: [(emoji: String, reactions: [MessageReactionModel])]
   @State private var currentEmoji: String?
+  @State private var canDeleteMyReactions: Bool = false
+  @State private var reactionsCancellable: AnyDatabaseCancellable?
   @Dependency(\.defaultDatabase) var database
 
   init(
-    groupedReactions: [(emoji: String, reactions: [MessageReactionModel])],
+    targetMessageId: String,
+    chatId: UUID,
     selectedEmoji: String?,
-    canDeleteMyReactions: Bool = false,
     onDeleteReaction: ((MessageReactionModel) -> Void)? = nil
   ) {
-    self.groupedReactions = groupedReactions
+    self.targetMessageId = targetMessageId
+    self.chatId = chatId
     self.selectedEmoji = selectedEmoji
-    self.canDeleteMyReactions = canDeleteMyReactions
     self.onDeleteReaction = onDeleteReaction
+    _groupedReactions = State(initialValue: [])
     _currentEmoji = State(initialValue: selectedEmoji)
   }
 
@@ -112,7 +117,7 @@ struct ReactorsSheet: View {
                 .foregroundStyle(.secondary)
               if self.canDeleteMyReactions {
                 Button(role: .destructive) {
-                  self.onDeleteReaction?(reaction)
+                  self.deleteReaction(reaction)
                 } label: {
                   Image(systemName: "trash")
                     .font(.caption)
@@ -127,6 +132,14 @@ struct ReactorsSheet: View {
       .navigationTitle("Reactions")
       .navigationBarTitleDisplayMode(.inline)
     }
+    .onAppear {
+      self.refreshDeletePermission()
+      self.startReactionObservation()
+    }
+    .onDisappear {
+      self.reactionsCancellable?.cancel()
+      self.reactionsCancellable = nil
+    }
   }
 
   private func senderCodename(for reaction: MessageReactionModel) -> String {
@@ -135,5 +148,51 @@ struct ReactorsSheet: View {
       try MessageSenderModel.where { $0.id.eq(reaction.senderId) }.fetchOne(db)
     }
     return sender?.codename ?? "Unknown"
+  }
+
+  private func startReactionObservation() {
+    self.reactionsCancellable?.cancel()
+
+    let observation = ValueObservation.tracking { db in
+      try MessageReactionModel
+        .where { $0.targetMessageId.eq(self.targetMessageId) }
+        .fetchAll(db)
+    }
+
+    self.reactionsCancellable = observation.start(in: self.database, scheduling: .immediate) { _ in
+      // Keep current UI state on read failures.
+    } onChange: { reactions in
+      let grouped = Dictionary(grouping: reactions, by: \.emoji)
+        .map { (emoji: $0.key, reactions: $0.value) }
+        .sorted { $0.reactions.count > $1.reactions.count }
+
+      self.groupedReactions = grouped
+      if let currentEmoji = self.currentEmoji,
+         !grouped.contains(where: { $0.emoji == currentEmoji }) {
+        self.currentEmoji = nil
+      }
+    }
+  }
+
+  private func refreshDeletePermission() {
+    let canDelete = (try? self.database.read { db in
+      try ChatModel.where { $0.id.eq(self.chatId) }.fetchOne(db)
+    })?.channelId != nil
+    self.canDeleteMyReactions = canDelete
+  }
+
+  private func deleteReaction(_ reaction: MessageReactionModel) {
+    guard self.canDeleteMyReactions else { return }
+
+    do {
+      try self.database.write { db in
+        try MessageReactionModel.delete(reaction).execute(db)
+      }
+      self.onDeleteReaction?(reaction)
+    } catch {
+      AppLogger.chat.error(
+        "Failed to delete reaction from sheet: \(error.localizedDescription, privacy: .public)"
+      )
+    }
   }
 }

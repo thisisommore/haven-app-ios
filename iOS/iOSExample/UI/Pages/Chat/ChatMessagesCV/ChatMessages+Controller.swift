@@ -357,30 +357,10 @@ extension ChatMessagesVC {
   }
 
   func showReactors(for message: ChatMessageModel) {
-    let groupedReactions: [(emoji: String, reactions: [MessageReactionModel])] = {
-      guard let reactions = try? self.database.read({ db in
-        try MessageReactionModel.where { $0.targetMessageId.eq(message.externalId) }.fetchAll(db)
-      }) else {
-        return []
-      }
-      return Dictionary(grouping: reactions, by: { $0.emoji })
-        .map { (emoji: $0.key, reactions: $0.value) }
-        .sorted { $0.reactions.count > $1.reactions.count }
-    }()
-    let canDeleteMyReactions: Bool = {
-      guard let chat = try? self.database.read({ db in
-        try ChatModel.where { $0.id.eq(self.chatId) }.fetchOne(db)
-      }) else {
-        return false
-      }
-      return chat.channelId != nil
-    }()
-
-    guard !groupedReactions.isEmpty else { return }
     let view = ReactorsSheet(
-      groupedReactions: groupedReactions,
+      targetMessageId: message.externalId,
+      chatId: self.chatId,
       selectedEmoji: nil,
-      canDeleteMyReactions: canDeleteMyReactions,
       onDeleteReaction: { [weak self] reaction in
         self?.onDeleteReaction(reaction)
       }
