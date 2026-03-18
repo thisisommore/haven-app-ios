@@ -409,16 +409,14 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       }
 
       // If no message found, check for reactions
-      let reactions = try database.read { db in
-        try MessageReactionModel.where { $0.externalId.eq(messageIdB64) }.fetchAll(db)
+      let reaction = try database.read { db in
+        try MessageReactionModel.where { $0.externalId.eq(messageIdB64) }.fetchOne(db)
       }
 
-      if !reactions.isEmpty {
-        for reaction in reactions {
+      if let reaction {
           try self.database.write { db in
             try MessageReactionModel.delete(reaction).execute(db)
           }
-        }
         return
       }
     } catch {
