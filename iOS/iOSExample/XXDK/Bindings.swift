@@ -294,6 +294,7 @@ final class BindingsChannelsManagerWrapper {
     return try Parser.decode(ChannelSendReportJSON.self, from: data)
   }
 
+  @discardableResult
   func sendReaction(
     _ channelIdData: Data, reaction: String, messageToReactTo: Data, validUntilMS: Int64,
     cmixParamsJSON: Data
