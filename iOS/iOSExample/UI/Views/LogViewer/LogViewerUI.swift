@@ -88,10 +88,10 @@ struct LogViewerUI: View {
       LogHeaderBar(
         messageCount: self.filteredMessages.count,
         totalCount: self.logOutput.Messages.count,
+        allMessages: self.logOutput.Messages,
         autoScroll: self.$autoScroll,
         showFilters: self.$showFilters,
-        showLineNumbers: self.$showLineNumbers,
-        allMessages: self.logOutput.Messages
+        showLineNumbers: self.$showLineNumbers
       )
 
       // Search & Filters
