@@ -293,6 +293,13 @@ final class ChatMessagesVC: UIViewController {
     self.preserveBottomOffset()
   }
 
+  override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+    super.viewWillTransition(to: size, with: coordinator)
+    coordinator.animate(alongsideTransition: { _ in
+      self.cv.collectionViewLayout.invalidateLayout()
+    })
+  }
+
   @available(*, unavailable)
   required init?(coder _: NSCoder) {
     fatalError("init(coder:) has not been implemented")
