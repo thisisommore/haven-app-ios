@@ -13,7 +13,6 @@ struct MessageForm<T: XXDKP>: View {
   var onCancelReply: (() -> Void)?
 
   @EnvironmentObject private var xxdk: T
-  @Namespace private var namespace
 
   @State private var abc: String = ""
   @State private var isSendingMessage: Bool = false
