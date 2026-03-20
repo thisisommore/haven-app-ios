@@ -27,7 +27,7 @@ protocol ChannelsP {
   func disableDirectMessages(channelId: String) throws
   func areDMsEnabled(channelId: String) throws -> Bool
   func isChannelAdmin(channelId: String) -> Bool
-  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String
+  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> Data
   func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
     throws
   func getMutedUsers(channelId: String) throws -> [Data]
@@ -237,7 +237,7 @@ class Channel: ChannelsP {
   }
 
   /// Export the admin key for a channel
-  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
+  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> Data {
     guard let channelsManager
     else {
       throw XXDKError.channelManagerNotInitialized
@@ -250,7 +250,7 @@ class Channel: ChannelsP {
     let result = try channelsManager.exportChannelAdminKey(
       channelIdData, encryptionPassword: encryptionPassword
     )
-    return try result.utf8()
+    return try result
   }
 
   /// Import an admin key for a channel

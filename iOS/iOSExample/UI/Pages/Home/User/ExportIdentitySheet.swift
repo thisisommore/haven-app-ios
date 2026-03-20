@@ -14,7 +14,7 @@ struct ExportIdentitySheet<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
   @State private var encryptionPassword = ""
   @State private var showFileExporter = false
-  @State private var exportedText = ""
+  @State private var exportedText: TextFileDocument?
   @State private var errorMessage: String?
 
   private var isPasswordValid: Bool {
@@ -120,7 +120,7 @@ struct ExportIdentitySheet<T: XXDKP>: View {
       }
       .fileExporter(
         isPresented: self.$showFileExporter,
-        document: TextFileDocument(text: self.exportedText),
+        document: self.exportedText,
         contentType: .plainText,
         defaultFilename: "codename_backup.json"
       ) { result in
@@ -137,8 +137,8 @@ struct ExportIdentitySheet<T: XXDKP>: View {
 
   private func exportToFile() {
     do {
-      let data = try xxdk.exportIdentity(password: self.encryptionPassword)
-      self.exportedText = try data.utf8()
+      let exportedText = try xxdk.exportIdentity(password: self.encryptionPassword)
+      self.exportedText = TextFileDocument(data: exportedText)
       self.errorMessage = nil
       self.showFileExporter = true
     } catch {

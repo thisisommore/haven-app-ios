@@ -18,7 +18,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
 
   @State private var showFileExporter = false
   @State private var encryptionPassword = ""
-  @State private var document = TextFileDocument(text: "")
+  @State private var document: TextFileDocument? = nil
   @State private var errorMessage: String?
 
   private var isPasswordValid: Bool {
@@ -30,7 +30,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
       let key = try xxdk.channel.exportChannelAdminKey(
         channelId: self.channelId, encryptionPassword: self.encryptionPassword
       )
-      self.document = TextFileDocument(text: key)
+      self.document = TextFileDocument(data: key)
       self.errorMessage = nil
       self.showFileExporter = true
     } catch {
@@ -43,7 +43,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
       let key = try xxdk.channel.exportChannelAdminKey(
         channelId: self.channelId, encryptionPassword: self.encryptionPassword
       )
-      UIPasteboard.general.string = key
+      UIPasteboard.general.string = try? key.utf8()
       self.errorMessage = nil
       self.onSuccess("Copied to Clipboard")
       self.dismiss()

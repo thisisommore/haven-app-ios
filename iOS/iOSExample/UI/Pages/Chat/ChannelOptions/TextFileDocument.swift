@@ -13,21 +13,21 @@ struct TextFileDocument: FileDocument {
     [.plainText]
   }
 
-  var text: String
+  var data: Data
 
-  init(text: String) {
-    self.text = text
+  init(data: Data) {
+    self.data = data
   }
 
   init(configuration: ReadConfiguration) throws {
     if let data = configuration.file.regularFileContents {
-      self.text = try data.utf8()
+      self.data = data
     } else {
-      self.text = ""
+      self.data = Data()
     }
   }
 
   func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
-    FileWrapper(regularFileWithContents: self.text.data)
+    FileWrapper(regularFileWithContents: self.data)
   }
 }
