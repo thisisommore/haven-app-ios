@@ -9,18 +9,77 @@ import Foundation
 import SwiftUI
 
 struct ImportAccountSheet<T: XXDKP>: View {
+  @Binding var importPassword: String
+  let ndfTask: Task<Data, Never>?
+
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var navigation: AppNavigationPath
   @EnvironmentObject var xxdk: T
   @EnvironmentObject var appStorage: AppStorage
 
-  @Binding var importPassword: String
-  let ndfTask: Task<Data, Never>?
   @State private var selectedFileURL: URL?
   @State private var showFilePicker = false
   @State private var isImporting = false
   @State private var errorMessage: String?
   @State private var showError = false
+
+  private func handleImport() {
+    guard let url = selectedFileURL else { return }
+    self.isImporting = true
+
+    // Access security scoped resource
+    let accessing = url.startAccessingSecurityScopedResource()
+    defer {
+      if accessing {
+        url.stopAccessingSecurityScopedResource()
+      }
+    }
+
+    do {
+      let data = try Data(contentsOf: url)
+      // Call import
+      let identity = try xxdk.importIdentity(password: self.importPassword, data: data)
+
+      // Use the import password as the app password
+      try self.appStorage.storePassword(self.importPassword)
+
+      Task {
+        // Initialize Cmix before loading identity
+        guard let ndfTask = self.ndfTask
+        else {
+          self.errorMessage = "NDF is still loading. Please try again."
+          self.showError = true
+          self.isImporting = false
+          return
+        }
+        let ndf = await ndfTask.value
+        await self.xxdk.newCmix(downloadedNdf: ndf)
+
+        // Start network follower to ensure connectivity before load blocks
+        await self.xxdk.startNetworkFollower()
+
+        await self.xxdk.setupClients(privateIdentity: identity) {
+          do {
+            try self.xxdk.savePrivateIdentity(privateIdentity: identity)
+          } catch {
+            fatalError("failed to save private identity in cmix ekv: \(error.localizedDescription)")
+          }
+        }
+      }
+
+      // Navigate immediately
+      self.isImporting = false
+      self.dismiss()
+      self.navigation.path.append(Destination.landing)
+    } catch {
+      AppLogger.identity.error(
+        "Import failed: \(error.localizedDescription, privacy: .public)"
+      )
+      self.errorMessage = error.localizedDescription
+      self.showError = true
+      self.isImporting = false
+    }
+  }
 
   var body: some View {
     NavigationStack {
@@ -134,64 +193,6 @@ struct ImportAccountSheet<T: XXDKP>: View {
       if case let .success(urls) = result, let url = urls.first {
         self.selectedFileURL = url
       }
-    }
-  }
-
-  private func handleImport() {
-    guard let url = selectedFileURL else { return }
-    self.isImporting = true
-
-    // Access security scoped resource
-    let accessing = url.startAccessingSecurityScopedResource()
-    defer {
-      if accessing {
-        url.stopAccessingSecurityScopedResource()
-      }
-    }
-
-    do {
-      let data = try Data(contentsOf: url)
-      // Call import
-      let identity = try xxdk.importIdentity(password: self.importPassword, data: data)
-
-      // Use the import password as the app password
-      try self.appStorage.storePassword(self.importPassword)
-
-      Task {
-        // Initialize Cmix before loading identity
-        guard let ndfTask = self.ndfTask
-        else {
-          self.errorMessage = "NDF is still loading. Please try again."
-          self.showError = true
-          self.isImporting = false
-          return
-        }
-        let ndf = await ndfTask.value
-        await self.xxdk.newCmix(downloadedNdf: ndf)
-
-        // Start network follower to ensure connectivity before load blocks
-        await self.xxdk.startNetworkFollower()
-
-        await self.xxdk.setupClients(privateIdentity: identity) {
-          do {
-            try self.xxdk.savePrivateIdentity(privateIdentity: identity)
-          } catch {
-            fatalError("failed to save private identity in cmix ekv: \(error.localizedDescription)")
-          }
-        }
-      }
-
-      // Navigate immediately
-      self.isImporting = false
-      self.dismiss()
-      self.navigation.path.append(Destination.landing)
-    } catch {
-      AppLogger.identity.error(
-        "Import failed: \(error.localizedDescription, privacy: .public)"
-      )
-      self.errorMessage = error.localizedDescription
-      self.showError = true
-      self.isImporting = false
     }
   }
 }

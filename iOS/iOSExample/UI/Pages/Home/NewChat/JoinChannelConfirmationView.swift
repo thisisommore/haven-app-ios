@@ -13,8 +13,9 @@ struct JoinChannelConfirmationView: View {
   @Binding var isJoining: Bool
   let onConfirm: (Bool) -> Void
 
-  @State private var enableDM = false
   @Environment(\.dismiss) var dismiss
+
+  @State private var enableDM = false
 
   var body: some View {
     NavigationView {

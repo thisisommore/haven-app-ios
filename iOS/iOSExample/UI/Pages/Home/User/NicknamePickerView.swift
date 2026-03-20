@@ -6,6 +6,8 @@
 import SwiftUI
 
 struct NicknamePickerView<T: XXDKP>: View {
+  let codename: String
+
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var xxdk: T
 
@@ -13,8 +15,6 @@ struct NicknamePickerView<T: XXDKP>: View {
   @State private var isSaving: Bool = false
   @State private var errorMessage: String?
   @FocusState private var isNicknameFocused: Bool
-
-  let codename: String
 
   private let maxNicknameLength = 24
 
@@ -24,39 +24,6 @@ struct NicknamePickerView<T: XXDKP>: View {
     }
     let truncatedNick = self.nickname.count > 10 ? String(self.nickname.prefix(10)) + "…" : self.nickname
     return "\(truncatedNick) aka \(self.codename)"
-  }
-
-  var body: some View {
-    NavigationView {
-      ScrollView {
-        VStack(spacing: 28) {
-          // Nickname input
-          self.nicknameInput
-
-          // Info text
-          self.infoSection
-
-          Spacer(minLength: 40)
-        }
-        .padding(.horizontal, 20)
-      }
-      .background(Color(.systemGroupedBackground))
-      .navigationTitle("DM Nickname")
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
-          Button("Cancel") { self.dismiss() }
-            .tint(.haven)
-        }
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button("Save") { self.saveNickname() }
-            .fontWeight(.semibold)
-            .tint(.haven)
-            .disabled(self.isSaving)
-        }
-      }
-      .onAppear { self.loadCurrentNickname() }
-    }
   }
 
   private var nicknameInput: some View {
@@ -208,6 +175,39 @@ struct NicknamePickerView<T: XXDKP>: View {
     }
 
     self.isSaving = false
+  }
+
+  var body: some View {
+    NavigationView {
+      ScrollView {
+        VStack(spacing: 28) {
+          // Nickname input
+          self.nicknameInput
+
+          // Info text
+          self.infoSection
+
+          Spacer(minLength: 40)
+        }
+        .padding(.horizontal, 20)
+      }
+      .background(Color(.systemGroupedBackground))
+      .navigationTitle("DM Nickname")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .navigationBarLeading) {
+          Button("Cancel") { self.dismiss() }
+            .tint(.haven)
+        }
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button("Save") { self.saveNickname() }
+            .fontWeight(.semibold)
+            .tint(.haven)
+            .disabled(self.isSaving)
+        }
+      }
+      .onAppear { self.loadCurrentNickname() }
+    }
   }
 }
 

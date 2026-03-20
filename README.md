@@ -132,3 +132,51 @@ Running
 ```
 swiftlint .
 ```
+
+# Code patterns
+For swiftui view follow this order
+- Controller state
+- normal vars, non state, can be props, @Binding included
+- environment variables
+- @Dependency
+- fetch hooks
+- @States
+- anything else here
+- then body views go last
+
+```swift
+struct ExampleView: View {
+  // Controller state
+  @State private var controller = ExampleController()
+
+  // Normal vars / props / @Binding
+  let title: String
+  @Binding var isPresented: Bool
+
+  // Environment variables
+  @EnvironmentObject private var appState: AppState
+  @Environment(\.dismiss) private var dismiss
+
+  // Dependencies
+  @Dependency(\.defaultDatabase) private var database
+
+  // Fetch hooks
+  @FetchAll(Item.order { $0.name }) private var items: [Item]
+  @FetchOne private var selectedItem: Item?
+
+  // States
+  @State private var searchText = ""
+  @FocusState private var isSearchFocused: Bool
+
+  // Anything else
+  private func hello() {
+    AppLogger.app.info("hello")
+  }
+
+  private var pageSize = 20
+
+  var body: some View {
+    Text(title)
+  }
+}
+```

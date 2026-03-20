@@ -6,23 +6,24 @@
 //
 import SwiftUI
 
+private enum EmojiKeyboardCategory: String, CaseIterable, Identifiable {
+  case smileys = "Smileys"
+  case animals = "Animals"
+  case food = "Food"
+  case activities = "Activities"
+  case symbols = "Symbols"
+
+  var id: Self {
+    self
+  }
+}
+
 struct EmojiKeyboard: View {
   let onSelect: (String) -> Void
 
-  private enum Category: String, CaseIterable, Identifiable {
-    case smileys = "Smileys"
-    case animals = "Animals"
-    case food = "Food"
-    case activities = "Activities"
-    case symbols = "Symbols"
-    var id: Self {
-      self
-    }
-  }
+  @State private var selectedCategory: EmojiKeyboardCategory = .smileys
 
-  @State private var selectedCategory: Category = .smileys
-
-  private let emojiByCategory: [Category: [String]] = [
+  private let emojiByCategory: [EmojiKeyboardCategory: [String]] = [
     .smileys: [
       "😀", "😃", "😄", "😁", "😆", "🥹", "😂", "🤣", "😊", "😇",
       "🙂", "🙃", "😉", "😍", "😘", "😗", "😙", "😚", "🥰", "😋",
@@ -70,7 +71,7 @@ struct EmojiKeyboard: View {
   var body: some View {
     ScrollView {
       Picker("Category", selection: self.$selectedCategory) {
-        ForEach(Category.allCases) { category in
+        ForEach(EmojiKeyboardCategory.allCases) { category in
           Text(category.rawValue).tag(category)
         }
       }

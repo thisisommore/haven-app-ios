@@ -14,15 +14,6 @@ struct HighlightedText: View {
   let baseColor: Color
   let highlightColor: Color
 
-  var body: some View {
-    if self.highlight.isEmpty {
-      Text(self.text)
-        .foregroundColor(self.baseColor)
-    } else {
-      self.highlightedAttributedText
-    }
-  }
-
   private var highlightedAttributedText: Text {
     let ranges = self.text.ranges(of: self.highlight, options: .caseInsensitive)
     var result = Text("")
@@ -55,5 +46,14 @@ struct HighlightedText: View {
     }
 
     return result
+  }
+
+  var body: some View {
+    if self.highlight.isEmpty {
+      Text(self.text)
+        .foregroundColor(self.baseColor)
+    } else {
+      self.highlightedAttributedText
+    }
   }
 }

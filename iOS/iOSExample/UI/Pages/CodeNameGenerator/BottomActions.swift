@@ -9,10 +9,11 @@ import Foundation
 import SwiftUI
 
 struct BottomActionsView: View {
-  @Binding var isGenerating: Bool
   let selectedCodename: Codename?
   let onGenerate: () -> Void
   let onClaim: () -> Void
+
+  @Binding var isGenerating: Bool
 
   var body: some View {
     HStack(spacing: 12) {

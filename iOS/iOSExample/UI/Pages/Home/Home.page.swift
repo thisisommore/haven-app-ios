@@ -24,6 +24,16 @@ enum HomeSheet: Identifiable {
 }
 
 struct HomeView<T: XXDKP>: View {
+  @EnvironmentObject var xxdk: T
+  @EnvironmentObject private var appStorage: AppStorage
+  @EnvironmentObject private var navigation: AppNavigationPath
+  @Environment(\.isSplitView) private var isSplitView
+  @EnvironmentObject private var selectedChat: SelectedChat
+
+  @Dependency(\.defaultDatabase) var database
+
+  @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
+
   @State private var activeSheet: HomeSheet?
   @State private var toastMessage: String?
   @State private var showLogoutAlert = false
@@ -31,16 +41,7 @@ struct HomeView<T: XXDKP>: View {
   @State private var searchText: String = ""
   @State private var isLoggingOut = false
   @State private var didNormalizeNavigation = false
-  @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
-
-  @EnvironmentObject var xxdk: T
   @State private var didStartLoad = false
-  @Dependency(\.defaultDatabase) var database
-  @EnvironmentObject private var appStorage: AppStorage
-  @EnvironmentObject private var navigation: AppNavigationPath
-  @Environment(\.isSplitView) private var isSplitView
-  @EnvironmentObject private var selectedChat: SelectedChat
-
   @State private var showTooltip = false
 
   private var filteredChats: [ChatModel] {
@@ -67,6 +68,109 @@ struct HomeView<T: XXDKP>: View {
         return true
       }
       return false
+    }
+  }
+
+  private func handleAddUser(code: String) {
+    guard let url = URL(string: code),
+          let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+    else {
+      return
+    }
+
+    guard components.scheme == "haven",
+          components.host == "dm",
+          let queryItems = components.queryItems
+    else {
+      return
+    }
+
+    guard let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
+          let token64 = Int64(tokenStr),
+          let pubKeyStr = queryItems.first(where: { $0.name == "pubKey" })?.value,
+          let pubKey = Data(base64Encoded: pubKeyStr)
+    else {
+      return
+    }
+
+    // Convert Int64 token to Int32 (handling unsigned 32-bit values that overflow signed Int32)
+    let token = Int32(bitPattern: UInt32(truncatingIfNeeded: token64))
+
+    // Get codeset from URL
+    guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
+          let codeset = Int(codesetStr)
+    else {
+      withAnimation(.spring(response: 0.3)) {
+        self.toastMessage = "Invalid QR code: missing codeset"
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        withAnimation { self.toastMessage = nil }
+      }
+      return
+    }
+
+    // Derive codename and color using BindingsConstructIdentity
+    let identity: IdentityJSON?
+    do {
+      identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
+    } catch {
+      AppLogger.home.error(
+        "BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)"
+      )
+      withAnimation(.spring(response: 0.3)) {
+        self.toastMessage = "Failed to derive identity"
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        withAnimation { self.toastMessage = nil }
+      }
+      return
+    }
+    guard let identity
+    else {
+      AppLogger.home.error("BindingsConstructIdentity returned nil")
+      withAnimation(.spring(response: 0.3)) { self.toastMessage = "Failed to derive identity" }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        withAnimation { self.toastMessage = nil }
+      }
+      return
+    }
+
+    let name: String
+    let color: Int
+    name = identity.Codename
+    var colorStr = identity.Color
+    if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
+      colorStr.removeFirst(2)
+    }
+    color = Int(colorStr, radix: 16) ?? 0xE97451
+
+    let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
+
+    Task.detached {
+      try? self.database.write { db in
+        try ChatModel.insert { newChat }.execute(db)
+      }
+    }
+
+    withAnimation(.spring(response: 0.3)) {
+      self.toastMessage = "User added successfully"
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+      withAnimation {
+        self.toastMessage = nil
+      }
+    }
+  }
+
+  private func loadCurrentNickname() {
+    do {
+      if let nickname = try xxdk.dm?.getNickname() {
+        self.currentNickname = nickname.isEmpty ? nil : nickname
+      } else {
+        self.currentNickname = nil
+      }
+    } catch {
+      self.currentNickname = nil
     }
   }
 
@@ -292,109 +396,6 @@ struct HomeView<T: XXDKP>: View {
         }
         .navigationTitle("Chat")
         .navigationBarTitleDisplayMode(NavigationBarItem.TitleDisplayMode.large)
-  }
-
-  private func handleAddUser(code: String) {
-    guard let url = URL(string: code),
-          let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-    else {
-      return
-    }
-
-    guard components.scheme == "haven",
-          components.host == "dm",
-          let queryItems = components.queryItems
-    else {
-      return
-    }
-
-    guard let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
-          let token64 = Int64(tokenStr),
-          let pubKeyStr = queryItems.first(where: { $0.name == "pubKey" })?.value,
-          let pubKey = Data(base64Encoded: pubKeyStr)
-    else {
-      return
-    }
-
-    // Convert Int64 token to Int32 (handling unsigned 32-bit values that overflow signed Int32)
-    let token = Int32(bitPattern: UInt32(truncatingIfNeeded: token64))
-
-    // Get codeset from URL
-    guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
-          let codeset = Int(codesetStr)
-    else {
-      withAnimation(.spring(response: 0.3)) {
-        self.toastMessage = "Invalid QR code: missing codeset"
-      }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-        withAnimation { self.toastMessage = nil }
-      }
-      return
-    }
-
-    // Derive codename and color using BindingsConstructIdentity
-    let identity: IdentityJSON?
-    do {
-      identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
-    } catch {
-      AppLogger.home.error(
-        "BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)"
-      )
-      withAnimation(.spring(response: 0.3)) {
-        self.toastMessage = "Failed to derive identity"
-      }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-        withAnimation { self.toastMessage = nil }
-      }
-      return
-    }
-    guard let identity
-    else {
-      AppLogger.home.error("BindingsConstructIdentity returned nil")
-      withAnimation(.spring(response: 0.3)) { self.toastMessage = "Failed to derive identity" }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-        withAnimation { self.toastMessage = nil }
-      }
-      return
-    }
-
-    let name: String
-    let color: Int
-    name = identity.Codename
-    var colorStr = identity.Color
-    if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
-      colorStr.removeFirst(2)
-    }
-    color = Int(colorStr, radix: 16) ?? 0xE97451
-
-    let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
-
-    Task.detached {
-      try? self.database.write { db in
-        try ChatModel.insert { newChat }.execute(db)
-      }
-    }
-
-    withAnimation(.spring(response: 0.3)) {
-      self.toastMessage = "User added successfully"
-    }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-      withAnimation {
-        self.toastMessage = nil
-      }
-    }
-  }
-
-  private func loadCurrentNickname() {
-    do {
-      if let nickname = try xxdk.dm?.getNickname() {
-        self.currentNickname = nickname.isEmpty ? nil : nickname
-      } else {
-        self.currentNickname = nil
-      }
-    } catch {
-      self.currentNickname = nil
-    }
   }
 }
 

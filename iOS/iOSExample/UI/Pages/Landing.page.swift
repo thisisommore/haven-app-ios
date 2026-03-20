@@ -8,11 +8,13 @@
 import SwiftUI
 
 struct LandingPage<T: XXDKP>: View {
-  @State private var moveUp: Bool = false
-  @State private var showProgress: Bool = false
   @EnvironmentObject var xxdk: T
   @EnvironmentObject private var appStorage: AppStorage
+
+  @State private var moveUp: Bool = false
+  @State private var showProgress: Bool = false
   @State private var isLoadingDone = false
+
   var body: some View {
     VStack(spacing: 12) {
       VStack(alignment: .leading) {

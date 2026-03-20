@@ -15,6 +15,16 @@ struct LogRow: View {
   let isAlternate: Bool
   let showLineNumbers: Bool
 
+  private func textColor(for level: LogLevel) -> Color {
+    switch level {
+    case .error: return .red
+    case .warning: return .orange
+    case .debug: return .blue
+    case .trace: return .purple
+    default: return .primary
+    }
+  }
+
   var body: some View {
     HStack(alignment: .top, spacing: 0) {
       // Line number
@@ -49,16 +59,6 @@ struct LogRow: View {
       }) {
         Label("Copy", systemImage: "doc.on.doc")
       }
-    }
-  }
-
-  private func textColor(for level: LogLevel) -> Color {
-    switch level {
-    case .error: return .red
-    case .warning: return .orange
-    case .debug: return .blue
-    case .trace: return .purple
-    default: return .primary
     }
   }
 }

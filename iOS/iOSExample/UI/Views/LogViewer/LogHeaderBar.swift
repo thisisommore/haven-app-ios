@@ -10,13 +10,34 @@ import SwiftUI
 struct LogHeaderBar: View {
   let messageCount: Int
   let totalCount: Int
+  let allMessages: [LogMessage]
+
   @Binding var autoScroll: Bool
   @Binding var showFilters: Bool
   @Binding var showLineNumbers: Bool
-  let allMessages: [LogMessage]
 
   @State private var showShareSheet = false
   @State private var logFileURL: URL?
+
+  private func exportLogs() {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+    let timestamp = dateFormatter.string(from: Date())
+    let fileName = "haven_\(timestamp).log"
+
+    let logContent = self.allMessages.map { $0.Msg }.joined(separator: "\n")
+
+    let tempDir = FileManager.default.temporaryDirectory
+    let fileURL = tempDir.appendingPathComponent(fileName)
+
+    do {
+      try logContent.write(to: fileURL, atomically: true, encoding: .utf8)
+      self.logFileURL = fileURL
+      self.showShareSheet = true
+    } catch {
+      AppLogger.app.error("Failed to export logs: \(error.localizedDescription, privacy: .public)")
+    }
+  }
 
   var body: some View {
     HStack(spacing: 12) {
@@ -84,26 +105,6 @@ struct LogHeaderBar: View {
       if let logFileURL {
         ShareSheet(items: [logFileURL])
       }
-    }
-  }
-
-  private func exportLogs() {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
-    let timestamp = dateFormatter.string(from: Date())
-    let fileName = "haven_\(timestamp).log"
-
-    let logContent = self.allMessages.map { $0.Msg }.joined(separator: "\n")
-
-    let tempDir = FileManager.default.temporaryDirectory
-    let fileURL = tempDir.appendingPathComponent(fileName)
-
-    do {
-      try logContent.write(to: fileURL, atomically: true, encoding: .utf8)
-      self.logFileURL = fileURL
-      self.showShareSheet = true
-    } catch {
-      AppLogger.app.error("Failed to export logs: \(error.localizedDescription, privacy: .public)")
     }
   }
 }

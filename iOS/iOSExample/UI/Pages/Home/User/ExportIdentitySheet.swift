@@ -23,6 +23,49 @@ struct ExportIdentitySheet<T: XXDKP>: View {
     !self.encryptionPassword.isEmpty
   }
 
+  private func exportToFile() {
+    do {
+      let exportedText = try xxdk.exportIdentity(password: self.encryptionPassword)
+      self.exportedText = TextFileDocument(data: exportedText)
+      self.errorMessage = nil
+      self.showFileExporter = true
+    } catch {
+      self.errorMessage = "Failed to export: \(error.localizedDescription)"
+    }
+  }
+
+  private func copyToClipboard() {
+    do {
+      let data = try xxdk.exportIdentity(password: self.encryptionPassword)
+      UIPasteboard.general.string = try data.utf8()
+      self.errorMessage = nil
+      self.onSuccess("Copied to Clipboard")
+      self.dismiss()
+    } catch {
+      self.errorMessage = "Failed to export: \(error.localizedDescription)"
+    }
+  }
+
+  private func authenticateAndPerform(action: @escaping () -> Void) {
+    let context = LAContext()
+    var error: NSError?
+
+    if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+      let reason = "Authenticate to export your identity."
+      context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, authenticationError in
+        DispatchQueue.main.async {
+          if success {
+            action()
+          } else {
+            self.errorMessage = "Authentication failed: \(authenticationError?.localizedDescription ?? "Unknown error")"
+          }
+        }
+      }
+    } else {
+      action()
+    }
+  }
+
   var body: some View {
     NavigationView {
       VStack(spacing: 24) {
@@ -138,49 +181,6 @@ struct ExportIdentitySheet<T: XXDKP>: View {
           self.errorMessage = "Failed to save: \(error.localizedDescription)"
         }
       }
-    }
-  }
-
-  private func exportToFile() {
-    do {
-      let exportedText = try xxdk.exportIdentity(password: self.encryptionPassword)
-      self.exportedText = TextFileDocument(data: exportedText)
-      self.errorMessage = nil
-      self.showFileExporter = true
-    } catch {
-      self.errorMessage = "Failed to export: \(error.localizedDescription)"
-    }
-  }
-
-  private func copyToClipboard() {
-    do {
-      let data = try xxdk.exportIdentity(password: self.encryptionPassword)
-      UIPasteboard.general.string = try data.utf8()
-      self.errorMessage = nil
-      self.onSuccess("Copied to Clipboard")
-      self.dismiss()
-    } catch {
-      self.errorMessage = "Failed to export: \(error.localizedDescription)"
-    }
-  }
-
-  private func authenticateAndPerform(action: @escaping () -> Void) {
-    let context = LAContext()
-    var error: NSError?
-
-    if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
-      let reason = "Authenticate to export your identity."
-      context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, authenticationError in
-        DispatchQueue.main.async {
-          if success {
-            action()
-          } else {
-            self.errorMessage = "Authentication failed: \(authenticationError?.localizedDescription ?? "Unknown error")"
-          }
-        }
-      }
-    } else {
-      action()
     }
   }
 }

@@ -19,6 +19,7 @@ struct ChatView<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
 
   @Dependency(\.defaultDatabase) var database
+
   @FetchOne private var chat: ChatModel?
   @FetchOne private var firstMessage: ChatMessageModel?
 

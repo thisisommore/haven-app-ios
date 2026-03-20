@@ -10,9 +10,11 @@ import SwiftUI
 
 struct NewChatView<T: XXDKP>: View {
   @Environment(\.dismiss) var dismiss
-  @State private var showConfirmationSheet: Bool = false
   @EnvironmentObject var xxdk: T
+
   @Dependency(\.defaultDatabase) var database
+
+  @State private var showConfirmationSheet: Bool = false
   @State private var inviteLink: String = ""
   @State private var channelData: ChannelJSON?
   @State private var errorMessage: String?
@@ -20,6 +22,60 @@ struct NewChatView<T: XXDKP>: View {
   @State private var showPasswordSheet: Bool = false
   @State private var isPrivateChannel: Bool = false
   @State private var prettyPrint: String?
+
+  private func joinChannel(
+    url: String,
+    channelData _: ChannelJSON,
+    enableDM: Bool
+  ) async {
+    self.isJoining = true
+    self.errorMessage = nil
+
+    do {
+      let joinedChannel: ChannelJSON
+      // Use prettyPrint if available (private channel), otherwise decode from URL (public channel)
+      if let prettyPrint {
+        joinedChannel = try await self.xxdk.channel.joinChannel(prettyPrint)
+      } else {
+        joinedChannel = try await self.xxdk.channel.joinChannelFromURL(url)
+      }
+
+      // Create and save the chat to the database
+      guard let channelId = joinedChannel.ChannelID
+      else {
+        throw XXDKError.channelIdMissing
+      }
+
+      // Enable or disable direct messages based on toggle
+      if enableDM {
+        try self.xxdk.channel.enableDirectMessages(channelId: channelId)
+      } else {
+        try self.xxdk.channel.disableDirectMessages(channelId: channelId)
+      }
+
+      let newChat = ChatModel(
+        channelId: channelId, name: joinedChannel.Name, isSecret: self.isPrivateChannel
+      )
+      try await self.database.write { db in
+        try ChatModel.insert { newChat }.execute(db)
+      }
+
+      // Dismiss both sheets and reset state
+      self.channelData = nil
+      prettyPrint = nil
+      self.dismiss()
+    } catch {
+      AppLogger.channels.error(
+        "Failed to join channel: \(error.localizedDescription, privacy: .public)"
+      )
+      self.errorMessage =
+        "Failed to join channel: \(error.localizedDescription)"
+      self.channelData = nil
+      self.prettyPrint = nil
+    }
+
+    self.isJoining = false
+  }
 
   var body: some View {
     NavigationView {
@@ -130,59 +186,5 @@ struct NewChatView<T: XXDKP>: View {
       .navigationTitle("Join Channel")
       .navigationBarTitleDisplayMode(.inline)
     }
-  }
-
-  private func joinChannel(
-    url: String,
-    channelData _: ChannelJSON,
-    enableDM: Bool
-  ) async {
-    self.isJoining = true
-    self.errorMessage = nil
-
-    do {
-      let joinedChannel: ChannelJSON
-      // Use prettyPrint if available (private channel), otherwise decode from URL (public channel)
-      if let prettyPrint {
-        joinedChannel = try await self.xxdk.channel.joinChannel(prettyPrint)
-      } else {
-        joinedChannel = try await self.xxdk.channel.joinChannelFromURL(url)
-      }
-
-      // Create and save the chat to the database
-      guard let channelId = joinedChannel.ChannelID
-      else {
-        throw XXDKError.channelIdMissing
-      }
-
-      // Enable or disable direct messages based on toggle
-      if enableDM {
-        try self.xxdk.channel.enableDirectMessages(channelId: channelId)
-      } else {
-        try self.xxdk.channel.disableDirectMessages(channelId: channelId)
-      }
-
-      let newChat = ChatModel(
-        channelId: channelId, name: joinedChannel.Name, isSecret: self.isPrivateChannel
-      )
-      try await self.database.write { db in
-        try ChatModel.insert { newChat }.execute(db)
-      }
-
-      // Dismiss both sheets and reset state
-      self.channelData = nil
-      prettyPrint = nil
-      self.dismiss()
-    } catch {
-      AppLogger.channels.error(
-        "Failed to join channel: \(error.localizedDescription, privacy: .public)"
-      )
-      self.errorMessage =
-        "Failed to join channel: \(error.localizedDescription)"
-      self.channelData = nil
-      self.prettyPrint = nil
-    }
-
-    self.isJoining = false
   }
 }

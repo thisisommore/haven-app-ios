@@ -44,7 +44,9 @@ struct UnreadBadge: View {
 struct ChatRowView<T: XXDKP>: View {
   let chat: ChatModel
   @EnvironmentObject var xxdk: T
+
   @Dependency(\.defaultDatabase) var database
+
   @FetchAll private var latestMessage: [ChatMessageModel]
 
   init(chat: ChatModel) {
@@ -145,11 +147,11 @@ struct ChatRowView<T: XXDKP>: View {
 }
 
 private struct LastMessageSenderNameView: View {
-  private static let fallbackSenderId = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
-
   let lastMessage: ChatMessageModel
   let isDM: Bool
   @FetchOne private var sender: MessageSenderModel?
+
+  private static let fallbackSenderId = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
 
   init(lastMessage: ChatMessageModel, isDM: Bool) {
     self.lastMessage = lastMessage

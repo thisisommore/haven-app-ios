@@ -35,16 +35,39 @@ func generateQRCode(from string: String) -> UIImage? {
 }
 
 struct QRCodeView: View {
-  @Environment(\.dismiss) private var dismiss
   let dmToken: Int64
   let pubKey: Data
   let codeset: Int
+
+  @Environment(\.dismiss) private var dismiss
 
   private var url: String {
     let pubKeyBase64 =
       self.pubKey.base64EncodedString()
         .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
     return "haven://dm?token=\(self.dmToken)&pubKey=\(pubKeyBase64)&codeset=\(self.codeset)"
+  }
+
+  private func shareLink() {
+    let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    self.presentActivityVC(activityVC)
+  }
+
+  private func shareQRImage() {
+    guard let qrImage = generateQRCode(from: url) else { return }
+    let activityVC = UIActivityViewController(activityItems: [qrImage], applicationActivities: nil)
+    self.presentActivityVC(activityVC)
+  }
+
+  private func presentActivityVC(_ activityVC: UIActivityViewController) {
+    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+       let rootVC = windowScene.windows.first?.rootViewController {
+      var topVC = rootVC
+      while let presented = topVC.presentedViewController {
+        topVC = presented
+      }
+      topVC.present(activityVC, animated: true)
+    }
   }
 
   var body: some View {
@@ -130,40 +153,30 @@ struct QRCodeView: View {
       }
     }
   }
-
-  private func shareLink() {
-    let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-    self.presentActivityVC(activityVC)
-  }
-
-  private func shareQRImage() {
-    guard let qrImage = generateQRCode(from: url) else { return }
-    let activityVC = UIActivityViewController(activityItems: [qrImage], applicationActivities: nil)
-    self.presentActivityVC(activityVC)
-  }
-
-  private func presentActivityVC(_ activityVC: UIActivityViewController) {
-    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-       let rootVC = windowScene.windows.first?.rootViewController {
-      var topVC = rootVC
-      while let presented = topVC.presentedViewController {
-        topVC = presented
-      }
-      topVC.present(activityVC, animated: true)
-    }
-  }
 }
 
 struct QRScannerView: View {
-  @Environment(\.dismiss) private var dismiss
   let onCodeScanned: (String) -> Void
   var onShowMyQR: (() -> Void)?
+
+  @Environment(\.dismiss) private var dismiss
+
   @State private var isScanning = true
   @State private var showSuccess = false
   @State private var torchOn = false
 
   private var boxSize: CGFloat {
     min(max(UIScreen.w(85), 250), 350)
+  }
+
+  private func toggleTorch(on: Bool) {
+    guard let device = AVCaptureDevice.default(for: .video),
+          device.hasTorch
+    else { return }
+
+    try? device.lockForConfiguration()
+    device.torchMode = on ? .on : .off
+    device.unlockForConfiguration()
   }
 
   var body: some View {
@@ -312,16 +325,6 @@ struct QRScannerView: View {
         self.toggleTorch(on: false)
       }
     }
-  }
-
-  private func toggleTorch(on: Bool) {
-    guard let device = AVCaptureDevice.default(for: .video),
-          device.hasTorch
-    else { return }
-
-    try? device.lockForConfiguration()
-    device.torchMode = on ? .on : .off
-    device.unlockForConfiguration()
   }
 }
 

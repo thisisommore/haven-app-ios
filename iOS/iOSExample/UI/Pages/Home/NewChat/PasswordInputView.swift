@@ -13,8 +13,9 @@ struct PasswordInputView: View {
   let onConfirm: (String) -> Void
   let onCancel: () -> Void
 
-  @State private var password: String = ""
   @Environment(\.dismiss) var dismiss
+
+  @State private var password: String = ""
 
   var body: some View {
     NavigationView {

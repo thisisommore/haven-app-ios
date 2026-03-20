@@ -16,6 +16,7 @@ struct LogContentView: View {
 
   @State private var isAtBottom = true
   @State private var showButton = false
+
   @Namespace private var bottomID
 
   private func scrollToBottom(proxy: ScrollViewProxy) {

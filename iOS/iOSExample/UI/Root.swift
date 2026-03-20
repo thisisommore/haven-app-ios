@@ -16,28 +16,10 @@ struct Root: View {
   @EnvironmentObject var selectedChat: SelectedChat
   @EnvironmentObject var navigation: AppNavigationPath
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-  @Dependency(\.defaultDatabase) var database
-  @State private var didRunOnboardingReset = false
 
-  var body: some View {
-    Group {
-      if self.appStorage.isSetupComplete {
-        self.setupCompletedView
-      } else {
-        self.setupIncompleteView
-      }
-    }
-    .onAppear {
-      self.xxdk.setAppStorage(self.appStorage)
-    }
-    .onChange(of: self.appStorage.isSetupComplete) { _, newValue in
-      if newValue {
-        self.navigation.path = NavigationPath()
-      }
-    }
-    .logViewerOnShake()
-    .handleDeepLinks()
-  }
+  @Dependency(\.defaultDatabase) var database
+
+  @State private var didRunOnboardingReset = false
 
   private var setupCompletedView: some View {
     NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
@@ -99,6 +81,26 @@ struct Root: View {
     } else if self.horizontalSizeClass == .regular {
       NoChatSelectedView()
     }
+  }
+
+  var body: some View {
+    Group {
+      if self.appStorage.isSetupComplete {
+        self.setupCompletedView
+      } else {
+        self.setupIncompleteView
+      }
+    }
+    .onAppear {
+      self.xxdk.setAppStorage(self.appStorage)
+    }
+    .onChange(of: self.appStorage.isSetupComplete) { _, newValue in
+      if newValue {
+        self.navigation.path = NavigationPath()
+      }
+    }
+    .logViewerOnShake()
+    .handleDeepLinks()
   }
 }
 

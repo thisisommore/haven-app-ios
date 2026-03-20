@@ -3,18 +3,19 @@ import SwiftUI
 
 @MainActor
 struct PasswordCreationView<T: XXDKP>: View {
+  @EnvironmentObject var appStorage: AppStorage
+  @EnvironmentObject var xxdk: T
+  @EnvironmentObject var navigation: AppNavigationPath
+
   @State private var password: String = ""
   @State private var confirm: String = ""
   @State private var attemptedSubmit: Bool = false
   @State private var isLoading = false
   @State private var ndfTask: Task<Data, Never>?
-  @FocusState private var focusedField: PasswordField?
   @State private var showImportSheet: Bool = false
   @State private var importPassword: String = ""
 
-  @EnvironmentObject var appStorage: AppStorage
-  @EnvironmentObject var xxdk: T
-  @EnvironmentObject var navigation: AppNavigationPath
+  @FocusState private var focusedField: PasswordField?
 
   private var failingRules: [PasswordRule] {
     PasswordRule.allCases.filter { !$0.isSatisfied(by: self.password) }
@@ -38,29 +39,6 @@ struct PasswordCreationView<T: XXDKP>: View {
     case ..<0.8: return BranchColor.primary.opacity(0.8)
     default: return BranchColor.primary
     }
-  }
-
-  var body: some View {
-    PasswordCreationUI<T>(
-      password: self.$password,
-      confirm: self.$confirm,
-      attemptedSubmit: self.$attemptedSubmit,
-      isLoading: self.$isLoading,
-      showImportSheet: self.$showImportSheet,
-      importPassword: self.$importPassword,
-      focusedField: self.$focusedField,
-      canContinue: self.canContinue,
-      passwordsMatch: self.passwordsMatch,
-      strength: self.strength,
-      strengthColor: self.strengthColor,
-      statusText: self.xxdk.status,
-      onSubmit: self.handleSubmit,
-      onImportTapped: {
-        self.showImportSheet = true
-      },
-      onAppear: self.handleAppear,
-      ndfTask: self.ndfTask
-    )
   }
 
   private func handleAppear() {
@@ -94,6 +72,29 @@ struct PasswordCreationView<T: XXDKP>: View {
         self.navigation.path.append(Destination.codenameGenerator)
       }
     }
+  }
+
+  var body: some View {
+    PasswordCreationUI<T>(
+      password: self.$password,
+      confirm: self.$confirm,
+      attemptedSubmit: self.$attemptedSubmit,
+      isLoading: self.$isLoading,
+      showImportSheet: self.$showImportSheet,
+      importPassword: self.$importPassword,
+      focusedField: self.$focusedField,
+      canContinue: self.canContinue,
+      passwordsMatch: self.passwordsMatch,
+      strength: self.strength,
+      strengthColor: self.strengthColor,
+      statusText: self.xxdk.status,
+      onSubmit: self.handleSubmit,
+      onImportTapped: {
+        self.showImportSheet = true
+      },
+      onAppear: self.handleAppear,
+      ndfTask: self.ndfTask
+    )
   }
 }
 

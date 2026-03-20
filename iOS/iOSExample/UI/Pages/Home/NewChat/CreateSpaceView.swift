@@ -4,6 +4,7 @@ import SwiftUI
 struct CreateSpaceView<T: XXDKP>: View {
   @Environment(\.dismiss) var dismiss
   @EnvironmentObject var xxdk: T
+
   @Dependency(\.defaultDatabase) var database
 
   @State private var name: String = ""
@@ -12,6 +13,46 @@ struct CreateSpaceView<T: XXDKP>: View {
   @State private var enableDirectMessages: Bool = false
   @State private var isCreating: Bool = false
   @State private var errorMessage: String?
+
+  private func createChannel() {
+    self.isCreating = true
+    self.errorMessage = nil
+
+    let privacyLevel: PrivacyLevel = self.isSecret ? .secret : .publicChannel
+
+    Task {
+      do {
+        let channel = try await xxdk.channel.createChannel(
+          name: self.name,
+          description: self.description,
+          privacyLevel: privacyLevel,
+          enableDms: self.enableDirectMessages
+        )
+
+        guard let channelId = channel.ChannelID
+        else {
+          throw XXDKError.channelIdMissing
+        }
+
+        let newChat = ChatModel(
+          channelId: channelId, name: channel.Name, isAdmin: true,
+          isSecret: privacyLevel == .secret
+        )
+        try await self.database.write { db in
+          try ChatModel.insert { newChat }.execute(db)
+        }
+
+        await MainActor.run {
+          self.dismiss()
+        }
+      } catch {
+        await MainActor.run {
+          self.errorMessage = error.localizedDescription
+          self.isCreating = false
+        }
+      }
+    }
+  }
 
   var body: some View {
     NavigationView {
@@ -79,46 +120,6 @@ struct CreateSpaceView<T: XXDKP>: View {
           .tint(.haven)
           .disabled(self.name.isEmpty || self.isCreating)
         }.hiddenSharedBackground()
-      }
-    }
-  }
-
-  private func createChannel() {
-    self.isCreating = true
-    self.errorMessage = nil
-
-    let privacyLevel: PrivacyLevel = self.isSecret ? .secret : .publicChannel
-
-    Task {
-      do {
-        let channel = try await xxdk.channel.createChannel(
-          name: self.name,
-          description: self.description,
-          privacyLevel: privacyLevel,
-          enableDms: self.enableDirectMessages
-        )
-
-        guard let channelId = channel.ChannelID
-        else {
-          throw XXDKError.channelIdMissing
-        }
-
-        let newChat = ChatModel(
-          channelId: channelId, name: channel.Name, isAdmin: true,
-          isSecret: privacyLevel == .secret
-        )
-        try await self.database.write { db in
-          try ChatModel.insert { newChat }.execute(db)
-        }
-
-        await MainActor.run {
-          self.dismiss()
-        }
-      } catch {
-        await MainActor.run {
-          self.errorMessage = error.localizedDescription
-          self.isCreating = false
-        }
       }
     }
   }

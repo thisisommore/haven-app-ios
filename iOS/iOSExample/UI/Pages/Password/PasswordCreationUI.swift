@@ -27,7 +27,6 @@ enum PasswordRule: CaseIterable {
 }
 
 struct PasswordCreationUI<T: XXDKP>: View {
-  // States
   @Binding var password: String
   @Binding var confirm: String
   @Binding var attemptedSubmit: Bool
@@ -36,18 +35,24 @@ struct PasswordCreationUI<T: XXDKP>: View {
   @Binding var importPassword: String
   @FocusState.Binding var focusedField: PasswordField?
 
-  // Computed states passed in
   let canContinue: Bool
   let passwordsMatch: Bool
   let strength: Double
   let strengthColor: Color
   let statusText: String
 
-  // Callbacks
   var onSubmit: () -> Void
   var onImportTapped: () -> Void
   var onAppear: () -> Void
   var ndfTask: Task<Data, Never>?
+
+  private func strengthLabel(for value: Double) -> String {
+    switch value {
+    case ..<0.4: return "Weak"
+    case ..<0.8: return "Okay"
+    default: return "Strong"
+    }
+  }
 
   var body: some View {
     ScrollView {
@@ -158,14 +163,6 @@ struct PasswordCreationUI<T: XXDKP>: View {
         importPassword: self.$importPassword,
         ndfTask: self.ndfTask
       )
-    }
-  }
-
-  private func strengthLabel(for value: Double) -> String {
-    switch value {
-    case ..<0.4: return "Weak"
-    case ..<0.8: return "Okay"
-    default: return "Strong"
     }
   }
 }

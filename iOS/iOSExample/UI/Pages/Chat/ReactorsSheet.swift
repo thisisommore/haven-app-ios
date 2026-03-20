@@ -14,11 +14,12 @@ struct ReactorsSheet: View {
   let selectedEmoji: String?
   var onDeleteReaction: ((MessageReactionModel) -> Void)?
 
+  @Dependency(\.defaultDatabase) var database
+
+  @FetchAll private var reactions: [MessageReactionModel]
+
   @State private var currentEmoji: String?
   @State private var canDeleteMyReactions: Bool = false
-
-  @Dependency(\.defaultDatabase) var database
-  @FetchAll private var reactions: [MessageReactionModel]
 
   init(
     targetMessageId: String,
