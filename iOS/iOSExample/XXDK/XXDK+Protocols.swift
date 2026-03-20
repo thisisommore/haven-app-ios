@@ -9,7 +9,6 @@ import Bindings
 import Foundation
 import Kronos
 import SQLiteData
-import SwiftData
 
 struct GeneratedIdentity {
   let privateIdentity: Data

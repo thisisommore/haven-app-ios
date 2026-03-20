@@ -8,7 +8,6 @@
 import Bindings
 import Foundation
 import SQLiteData
-import SwiftData
 
 final class ReceiverHelpers {
   static let shared = ReceiverHelpers()

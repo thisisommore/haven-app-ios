@@ -7,7 +7,6 @@
 
 import Bindings
 import SQLiteData
-import SwiftData
 
 // DMReceiver's are callbacks for message processing. These include
 // message reception and retrieval of specific data to process a message.

@@ -2,7 +2,6 @@ import Bindings
 import Dispatch
 import Foundation
 import SQLiteData
-import SwiftData
 
 extension Notification.Name {
   static let userMuteStatusChanged = Notification.Name("userMuteStatusChanged")

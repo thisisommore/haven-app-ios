@@ -1,7 +1,6 @@
 import Bindings
 import Foundation
 import SQLiteData
-import SwiftData
 
 // NOTE:
 // This is a stub implementation of the Channels UI callbacks used by the
