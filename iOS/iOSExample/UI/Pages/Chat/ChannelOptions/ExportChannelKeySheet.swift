@@ -43,7 +43,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
       let key = try xxdk.channel.exportChannelAdminKey(
         channelId: self.channelId, encryptionPassword: self.encryptionPassword
       )
-      UIPasteboard.general.string = try? key.utf8()
+      UIPasteboard.general.string = try key.utf8()
       self.errorMessage = nil
       self.onSuccess("Copied to Clipboard")
       self.dismiss()
