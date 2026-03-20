@@ -29,6 +29,10 @@ struct ChatModel: Identifiable, Hashable {
   var pubKey: Data?
   var dmToken: Int32?
   //
+
+  var isChannel: Bool {
+    self.name != "<self>" && self.dmToken == nil
+  }
 }
 
 extension ChatModel {

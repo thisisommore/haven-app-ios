@@ -45,7 +45,7 @@ final class ChatPageController {
 
   func onAppear<T: XXDKP>(chat: ChatModel, xxdk: T, database: any DatabaseWriter) {
     self.isAdmin = chat.isAdmin
-    if Self.isChannel(chat), let channelId = chat.channelId {
+    if chat.isChannel, let channelId = chat.channelId {
       self.isMuted = xxdk.channel.isMuted(channelId: channelId)
     } else {
       self.isMuted = false
@@ -54,9 +54,9 @@ final class ChatPageController {
   }
 
   func refreshMuteFromNotification<T: XXDKP>(
-    _ notification: Notification, chat: ChatModel?, xxdk: T
+    _ notification: Notification, chat: ChatModel, xxdk: T
   ) {
-    guard Self.isChannel(chat), let channelId = chat?.channelId else { return }
+    guard chat.isChannel, let channelId = chat.channelId else { return }
     if let channelID = notification.userInfo?["channelID"] as? String,
        channelID == channelId {
       self.isMuted = xxdk.channel.isMuted(channelId: channelId)
@@ -145,10 +145,5 @@ final class ChatPageController {
         )
       }
     }
-  }
-
-  static func isChannel(_ chat: ChatModel?) -> Bool {
-    guard let chat else { return false }
-    return chat.name != "<self>" && chat.dmToken == nil
   }
 }

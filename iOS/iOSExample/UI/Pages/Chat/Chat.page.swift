@@ -18,10 +18,6 @@ struct ChatView<T: XXDKP>: View {
   @FetchOne private var chat: ChatModel?
   @FetchOne private var firstMessage: ChatMessageModel?
 
-  private var isChannel: Bool {
-    ChatPageController.isChannel(self.chat)
-  }
-
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var xxdk: T
 
@@ -100,11 +96,13 @@ struct ChatView<T: XXDKP>: View {
             Text(self.chatTitle == "<self>" ? "Notes" : self.chatTitle)
               .font(.headline.weight(.semibold))
               .foregroundStyle(.primary)
-            if self.isChannel && self.chat?.isSecret == true {
-              SecretBadge()
-            }
-            if self.isChannel && self.controller.isAdmin {
-              AdminBadge()
+            if let chat, chat.isChannel {
+              if chat.isSecret == true {
+                SecretBadge()
+              }
+              if self.controller.isAdmin {
+                AdminBadge()
+              }
             }
           }
         }
@@ -148,9 +146,11 @@ struct ChatView<T: XXDKP>: View {
     .onReceive(
       NotificationCenter.default.publisher(for: .userMuteStatusChanged)
     ) { notification in
-      self.controller.refreshMuteFromNotification(
-        notification, chat: self.chat, xxdk: self.xxdk
-      )
+      if let chat {
+        self.controller.refreshMuteFromNotification(
+          notification, chat: chat, xxdk: self.xxdk
+        )
+      }
     }
     .id("chat-\(self.chatId.uuidString)")
     .onChange(of: self.controller.showChannelOptions) { _, newValue in
