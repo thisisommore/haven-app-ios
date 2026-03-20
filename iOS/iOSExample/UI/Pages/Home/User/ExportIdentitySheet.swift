@@ -12,6 +12,7 @@ import SwiftUI
 struct ExportIdentitySheet<T: XXDKP>: View {
   let xxdk: T
   let onSuccess: (String) -> Void
+  let codename: String
   @Environment(\.dismiss) private var dismiss
   @State private var encryptionPassword = ""
   @State private var showFileExporter = false
@@ -127,7 +128,7 @@ struct ExportIdentitySheet<T: XXDKP>: View {
         isPresented: self.$showFileExporter,
         document: self.exportedText,
         contentType: .json,
-        defaultFilename: "codename_backup"
+        defaultFilename: self.codename + "_export"
       ) { result in
         switch result {
         case .success:

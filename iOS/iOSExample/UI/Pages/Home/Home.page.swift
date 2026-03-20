@@ -180,19 +180,22 @@ struct HomeView<T: XXDKP>: View {
                 self.loadCurrentNickname()
               }
           case .exportIdentity:
-            ExportIdentitySheet(
-              xxdk: self.xxdk,
-              onSuccess: { message in
-                withAnimation(.spring(response: 0.3)) {
-                  self.toastMessage = message
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                  withAnimation {
-                    self.toastMessage = nil
+            if let codename = xxdk.codename {
+              ExportIdentitySheet(
+                xxdk: self.xxdk,
+                onSuccess: { message in
+                  withAnimation(.spring(response: 0.3)) {
+                    self.toastMessage = message
                   }
-                }
-              }
-            )
+                  DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation {
+                      self.toastMessage = nil
+                    }
+                  }
+                },
+                codename: codename
+              )
+            }
           }
         }
         .alert("Logout", isPresented: self.$showLogoutAlert) {
