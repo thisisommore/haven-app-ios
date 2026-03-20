@@ -8,14 +8,16 @@ import SQLiteData
 import SwiftUI
 
 struct MessageForm<T: XXDKP>: View {
-  @State private var abc: String = ""
-  @State private var isSendingMessage: Bool = false
   var chat: ChatModel?
   var replyTo: ChatMessageModel?
   var onCancelReply: (() -> Void)?
+
   @EnvironmentObject private var xxdk: T
-  @State private var showSendButton: Bool = false
   @Namespace private var namespace
+
+  @State private var abc: String = ""
+  @State private var isSendingMessage: Bool = false
+  @State private var showSendButton: Bool = false
 
   var body: some View {
     VStack(spacing: 0) {
