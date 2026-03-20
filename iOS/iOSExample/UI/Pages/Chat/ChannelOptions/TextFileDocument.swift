@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 
 struct TextFileDocument: FileDocument {
   static var readableContentTypes: [UTType] {
-    [.plainText]
+    [.plainText, .json]
   }
 
   var data: Data
