@@ -19,56 +19,6 @@ struct CodenameGeneratorView<T: XXDKP>: View {
     .blue, .green, .orange, .purple, .pink, .red, .cyan, .mint, .indigo, .teal,
   ]
 
-  var body: some View {
-    VStack(spacing: 0) {
-      // Header with icon
-      HeaderView()
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
-        .padding(.bottom, 24)
-
-      // Codenames list
-      ScrollView {
-        LazyVStack(spacing: 12) {
-          ForEach(Array(self.codenames.enumerated()), id: \.element.id) { _, codename in
-            CodenameCard(
-              codename: codename,
-              isSelected: self.selectedCodename?.id == codename.id
-            )
-            .onTapGesture {
-              withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                self.selectedCodename = codename
-                let impact = UIImpactFeedbackGenerator(style: .light)
-                impact.impactOccurred()
-              }
-            }
-          }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-      }
-
-      // Bottom action buttons
-      BottomActionsView(
-        isGenerating: self.$isGenerating,
-        selectedCodename: self.selectedCodename,
-        onGenerate: self.generateCodenames,
-        onClaim: self.claimCodename
-      )
-      .padding(.horizontal, 20)
-      .padding(.vertical, 20)
-    }
-    .background(Color(uiColor: .systemBackground))
-    .onAppear {
-      Task.detached {
-        await self.xxdk.startNetworkFollower()
-      }
-      if self.codenames.isEmpty && !self.isGenerating {
-        self.generateCodenames()
-      }
-    }
-  }
-
   private func generateCodenames() {
     self.isGenerating = true
     let impact = UIImpactFeedbackGenerator(style: .medium)
@@ -125,6 +75,56 @@ struct CodenameGeneratorView<T: XXDKP>: View {
       }
     }
     self.navigation.path.append(Destination.landing)
+  }
+
+  var body: some View {
+    VStack(spacing: 0) {
+      // Header with icon
+      HeaderView()
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 24)
+
+      // Codenames list
+      ScrollView {
+        LazyVStack(spacing: 12) {
+          ForEach(Array(self.codenames.enumerated()), id: \.element.id) { _, codename in
+            CodenameCard(
+              codename: codename,
+              isSelected: self.selectedCodename?.id == codename.id
+            )
+            .onTapGesture {
+              withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
+                self.selectedCodename = codename
+                let impact = UIImpactFeedbackGenerator(style: .light)
+                impact.impactOccurred()
+              }
+            }
+          }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+      }
+
+      // Bottom action buttons
+      BottomActionsView(
+        isGenerating: self.$isGenerating,
+        selectedCodename: self.selectedCodename,
+        onGenerate: self.generateCodenames,
+        onClaim: self.claimCodename
+      )
+      .padding(.horizontal, 20)
+      .padding(.vertical, 20)
+    }
+    .background(Color(uiColor: .systemBackground))
+    .onAppear {
+      Task.detached {
+        await self.xxdk.startNetworkFollower()
+      }
+      if self.codenames.isEmpty && !self.isGenerating {
+        self.generateCodenames()
+      }
+    }
   }
 }
 
