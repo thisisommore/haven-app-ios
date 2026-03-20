@@ -9,17 +9,18 @@ import SQLiteData
 import SwiftUI
 
 struct ChatView<T: XXDKP>: View {
+  @State private var controller = ChatPageController()
+
   let chatId: UUID
   let chatTitle: String
 
-  @State private var controller = ChatPageController()
   @EnvironmentObject var selectedChat: SelectedChat
+  @EnvironmentObject var xxdk: T
+  @Environment(\.dismiss) private var dismiss
+
   @Dependency(\.defaultDatabase) var database
   @FetchOne private var chat: ChatModel?
   @FetchOne private var firstMessage: ChatMessageModel?
-
-  @Environment(\.dismiss) private var dismiss
-  @EnvironmentObject var xxdk: T
 
   init(chatId: UUID, chatTitle: String) {
     self.chatId = chatId
