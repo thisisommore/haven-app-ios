@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import LocalAuthentication
 import SwiftUI
 
 struct ExportIdentitySheet<T: XXDKP>: View {
@@ -68,7 +69,9 @@ struct ExportIdentitySheet<T: XXDKP>: View {
 
         VStack(spacing: 12) {
           Button {
-            self.exportToFile()
+            self.authenticateAndPerform {
+              self.exportToFile()
+            }
           } label: {
             HStack {
               Image(systemName: "doc.fill")
@@ -83,7 +86,9 @@ struct ExportIdentitySheet<T: XXDKP>: View {
           .disabled(!self.isPasswordValid)
 
           Button {
-            self.copyToClipboard()
+            self.authenticateAndPerform {
+              self.copyToClipboard()
+            }
           } label: {
             HStack {
               Image(systemName: "doc.on.doc")
@@ -155,6 +160,26 @@ struct ExportIdentitySheet<T: XXDKP>: View {
       self.dismiss()
     } catch {
       self.errorMessage = "Failed to export: \(error.localizedDescription)"
+    }
+  }
+
+  private func authenticateAndPerform(action: @escaping () -> Void) {
+    let context = LAContext()
+    var error: NSError?
+
+    if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+      let reason = "Authenticate to export your identity."
+      context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, authenticationError in
+        DispatchQueue.main.async {
+          if success {
+            action()
+          } else {
+            self.errorMessage = "Authentication failed: \(authenticationError?.localizedDescription ?? "Unknown error")"
+          }
+        }
+      }
+    } else {
+      action()
     }
   }
 }
