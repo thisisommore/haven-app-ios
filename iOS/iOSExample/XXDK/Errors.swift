@@ -27,6 +27,7 @@ enum XXDKError: LocalizedError {
   case loadChannelsManagerFailed(String)
   case invalidUTF8
   case channelIDIsNotBase64Encoded
+  case channelNotFound
   case custom(String)
 
   var errorDescription: String? {
@@ -49,6 +50,7 @@ enum XXDKError: LocalizedError {
       return "could not load notifications dummy: \(msg)"
     case let .loadChannelsManagerFailed(msg): return "could not load channels manager: \(msg)"
     case .invalidUTF8: return "invalid UTF-8"
+    case .channelNotFound: return "channel not found"
     case let .custom(msg): return msg
     }
   }

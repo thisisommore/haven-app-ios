@@ -79,28 +79,22 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
   }
 
   /// Fetch existing Chat by channelId or create a new one
-  private func fetchOrCreateChannelChat(
-    channelId: String,
-    channelName: String
+  private func fetchChannel(
+    channelId: String
   ) throws -> ChatModel {
     let existing = try database.read { db in
       try ChatModel.where { $0.channelId.eq(channelId) }.fetchOne(db)
     }
 
-    if let existing {
-      return existing
+    guard let existing else {
+      throw XXDKError.channelNotFound
     }
-    let newChat = ChatModel(channelId: channelId, name: channelName)
-    try database.write { db in
-      try ChatModel.insert { newChat }.execute(db)
-    }
-    return newChat
+    return existing
   }
 
   /// Persist a message into SwiftData
   private func persistMessage(
     channelId: String,
-    channelName: String,
     text: String,
     senderCodename: String?,
     senderPubKey: Data?,
@@ -113,9 +107,8 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     status: Int64
   ) -> Int64 {
     do {
-      let chat = try fetchOrCreateChannelChat(
-        channelId: channelId,
-        channelName: channelName
+      let chat = try fetchChannel(
+        channelId: channelId
       )
 
       guard let messageIdB64 = messageIdB64, !messageIdB64.isEmpty
@@ -179,7 +172,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       if let decodedText = decodeMessage(messageTextB64) {
         return self.persistMessage(
           channelId: channelIdB64,
-          channelName: "Channel \(String(channelIdB64.prefix(8)))",
           text: decodedText,
           senderCodename: codename,
           senderPubKey: pubKey,
@@ -337,7 +329,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     if let decodedReply = decodeMessage(replyTextB64) {
       return self.persistMessage(
         channelId: channelIdB64,
-        channelName: "Channel \(String(channelIdB64.prefix(8)))",
         text: decodedReply,
         senderCodename: nick,
         senderPubKey: pubKey,
