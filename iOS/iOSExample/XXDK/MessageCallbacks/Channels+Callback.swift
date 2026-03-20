@@ -160,14 +160,13 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     dmToken: Int32,
     codeset: Int,
     timestamp: Int64,
-    lease: Int64,
-    roundID: Int64,
+    lease _: Int64,
+    roundID _: Int64,
     messageType: Int64,
     status: Int64,
-    hidden: Bool
+    hidden _: Bool
   ) -> Int64 {
     AppLogger.messaging.info("messageType \(messageType)")
-    _ = (lease, roundID, messageType, hidden)
 
     let messageIdB64 = messageID?.base64EncodedString()
     let messageTextB64 = text ?? ""

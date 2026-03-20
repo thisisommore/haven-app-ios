@@ -28,10 +28,8 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
   }
 
   func updateSentStatus(
-    _ uuid: Int64, messageID: Data?, timestamp: Int64, roundID: Int64, status: Int64
+    _ uuid: Int64, messageID: Data?, timestamp _: Int64, roundID _: Int64, status: Int64
   ) {
-    _ = (timestamp, roundID)
-
     guard let parsedStatus = MessageStatus(status)
     else {
       AppLogger.messaging.error(
@@ -134,13 +132,10 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
   }
 
   func receive(
-    _ messageID: Data?, nickname: String?, text: Data?, partnerKey: Data?, senderKey: Data?,
-    dmToken: Int32, codeset: Int, timestamp: Int64, roundId: Int64, mType: Int64,
+    _ messageID: Data?, nickname _: String?, text: Data?, partnerKey: Data?, senderKey: Data?,
+    dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, mType _: Int64,
     status: Int64
   ) -> Int64 {
-    // Ensure UI updates happen on main thread
-    _ = (nickname, roundId, mType)
-
     guard let messageID else { fatalError("no msg id") }
     guard let text else { fatalError("no text") }
     guard let decodedMessage = decodeMessage(text.base64EncodedString())
@@ -209,14 +204,9 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
   }
 
   func receiveText(
-    _ messageID: Data?, nickname: String?, text: String?, partnerKey: Data?, senderKey: Data?,
-    dmToken: Int32, codeset: Int, timestamp: Int64, roundId: Int64, status: Int64
+    _ messageID: Data?, nickname _: String?, text: String?, partnerKey: Data?, senderKey: Data?,
+    dmToken: Int32, codeset: Int, timestamp: Int64, roundId _: Int64, status: Int64
   ) -> Int64 {
-    // if roundId == 0 {
-    //     return InternalIdGenerator.shared.next()
-    // }
-    _ = (nickname, roundId)
-
     guard let messageID else { fatalError("no msg id") }
     let messageTextB64 = text ?? ""
     guard let decodedText = decodeMessage(messageTextB64)
