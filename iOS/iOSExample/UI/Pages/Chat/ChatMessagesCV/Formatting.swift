@@ -30,6 +30,14 @@ extension String {
     .foregroundColor: UIColor.label,
   ]
 
+  /// Strips a single surrounding <p>...</p> pair if present (after trimming whitespace)
+  func stripParagraphTags() -> String {
+    let t = self.trimmingCharacters(in: .whitespacesAndNewlines)
+    return t.hasPrefix("<p>") &&
+      t.hasSuffix("</p>") ?
+      String(t.dropFirst(3).dropLast(4)) : self
+  }
+
   /// Converts a string containing HTML tags to an NSAttributedString, removing trailing newlines and adjusting the font.
   var markdown: NSAttributedString {
     do {

@@ -14,7 +14,7 @@ extension ChatMessagesVC {
   }
 
   private func text(for message: ChatMessageModel) -> NSAttributedString {
-    let tagStripped = stripParagraphTags(message.message)
+    let tagStripped = message.message.stripParagraphTags()
     return message.isPlain ?
       tagStripped.attr :
       tagStripped.markdown
