@@ -19,16 +19,10 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
   // MARK: - Helper Methods
 
   func update(
-    fromMessageID messageID: Data?,
-    messageUpdateInfoJSON updateInfoJSON: Data?,
-    ret0_ ret0: UnsafeMutablePointer<Int64>?
-  ) throws {
-    _ = messageID
-    _ = ret0
-    _ = try updateInfoJSON.map {
-      try Parser.decode(MessageUpdateInfoJSON.self, from: $0)
-    }
-  }
+    fromMessageID _: Data?,
+    messageUpdateInfoJSON _: Data?,
+    ret0_ _: UnsafeMutablePointer<Int64>?
+  ) throws {}
 
   func update(fromUUID uuid: Int64, messageUpdateInfoJSON: Data?) throws {
     guard let messageUpdateInfoJSON
