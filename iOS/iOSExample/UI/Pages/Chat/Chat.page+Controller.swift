@@ -18,8 +18,7 @@ final class ChatPageController {
   var isAdmin: Bool = false
   var isMuted: Bool = false
 
-  func markMessagesAsRead(chat: ChatModel?, database: any DatabaseWriter) {
-    guard let chat else { return }
+  func markMessagesAsRead(chat: ChatModel, database: any DatabaseWriter) {
     let joinedAt = chat.joinedAt
     let chatId = chat.id
 
@@ -44,9 +43,9 @@ final class ChatPageController {
     }
   }
 
-  func onAppear<T: XXDKP>(chat: ChatModel?, xxdk: T, database: any DatabaseWriter) {
-    self.isAdmin = chat?.isAdmin ?? false
-    if Self.isChannel(chat), let channelId = chat?.channelId {
+  func onAppear<T: XXDKP>(chat: ChatModel, xxdk: T, database: any DatabaseWriter) {
+    self.isAdmin = chat.isAdmin
+    if Self.isChannel(chat), let channelId = chat.channelId {
       self.isMuted = xxdk.channel.isMuted(channelId: channelId)
     } else {
       self.isMuted = false
@@ -71,7 +70,7 @@ final class ChatPageController {
   }
 
   func onUnreadCountChanged(
-    newValue: Int?, chat: ChatModel?, database: any DatabaseWriter
+    newValue: Int?, chat: ChatModel, database: any DatabaseWriter
   ) {
     guard let newValue, newValue > 0 else { return }
     self.markMessagesAsRead(chat: chat, database: database)

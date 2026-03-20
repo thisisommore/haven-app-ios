@@ -139,9 +139,11 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .onAppear {
-      self.controller.onAppear(
-        chat: self.chat, xxdk: self.xxdk, database: self.database
-      )
+      if let chat {
+        self.controller.onAppear(
+          chat: chat, xxdk: self.xxdk, database: self.database
+        )
+      }
     }
     .onReceive(
       NotificationCenter.default.publisher(for: .userMuteStatusChanged)
@@ -157,9 +159,11 @@ struct ChatView<T: XXDKP>: View {
       )
     }
     .onChange(of: self.chat?.unreadCount) { _, newValue in
-      self.controller.onUnreadCountChanged(
-        newValue: newValue, chat: self.chat, database: self.database
-      )
+      if let chat {
+        self.controller.onUnreadCountChanged(
+          newValue: newValue, chat: chat, database: self.database
+        )
+      }
     }
   }
 }
