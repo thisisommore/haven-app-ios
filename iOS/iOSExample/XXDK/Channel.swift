@@ -261,11 +261,12 @@ class Channel: ChannelsP {
       throw XXDKError.channelManagerNotInitialized
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
-    let privateKeyData = privateKey.data
+    guard let channelIdData = Data(base64Encoded: channelId) else {
+      throw XXDKError.channelIDIsNotBase64Encoded
+    }
 
     try channelsManager.importChannelAdminKey(
-      channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKeyData
+      channelIdData, encryptionPassword: encryptionPassword, encryptedPrivKey: privateKey.data
     )
   }
 

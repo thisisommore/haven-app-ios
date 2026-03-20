@@ -13,7 +13,9 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
   let channelName: String
   let xxdk: T
   let onSuccess: (String) -> Void
+
   @Environment(\.dismiss) private var dismiss
+
   @State private var showFileImporter = false
   @State private var decryptionPassword = ""
   @State private var importedKeyContent: String?
