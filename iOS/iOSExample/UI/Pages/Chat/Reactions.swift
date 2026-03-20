@@ -13,10 +13,12 @@ struct ReactorsSheet: View {
   let chatId: UUID
   let selectedEmoji: String?
   var onDeleteReaction: ((MessageReactionModel) -> Void)?
-  @FetchAll private var reactions: [MessageReactionModel]
+
   @State private var currentEmoji: String?
   @State private var canDeleteMyReactions: Bool = false
+
   @Dependency(\.defaultDatabase) var database
+  @FetchAll private var reactions: [MessageReactionModel]
 
   init(
     targetMessageId: String,
@@ -49,6 +51,43 @@ struct ReactorsSheet: View {
       return self.groupedReactions.first { $0.emoji == emoji }?.reactions ?? []
     }
     return self.groupedReactions.flatMap { $0.reactions }
+  }
+
+  private func senderCodename(for reaction: MessageReactionModel) -> String {
+    if reaction.isMe { return "You" }
+    let sender = try? self.database.read { db in
+      try MessageSenderModel.where { $0.id.eq(reaction.senderId) }.fetchOne(db)
+    }
+    return sender?.codename ?? "Unknown"
+  }
+
+  private func ensureCurrentEmojiIsValid() {
+    if let currentEmoji = self.currentEmoji,
+       !self.groupedReactions.contains(where: { $0.emoji == currentEmoji }) {
+      self.currentEmoji = nil
+    }
+  }
+
+  private func refreshDeletePermission() {
+    let canDelete = (try? self.database.read { db in
+      try ChatModel.where { $0.id.eq(self.chatId) }.fetchOne(db)
+    })?.channelId != nil
+    self.canDeleteMyReactions = canDelete
+  }
+
+  private func deleteReaction(_ reaction: MessageReactionModel) {
+    guard self.canDeleteMyReactions else { return }
+
+    do {
+      try self.database.write { db in
+        try MessageReactionModel.delete(reaction).execute(db)
+      }
+      self.onDeleteReaction?(reaction)
+    } catch {
+      AppLogger.chat.error(
+        "Failed to delete reaction from sheet: \(error.localizedDescription, privacy: .public)"
+      )
+    }
   }
 
   var body: some View {
@@ -142,43 +181,6 @@ struct ReactorsSheet: View {
     }
     .onChange(of: self.reactions) { _, _ in
       self.ensureCurrentEmojiIsValid()
-    }
-  }
-
-  private func senderCodename(for reaction: MessageReactionModel) -> String {
-    if reaction.isMe { return "You" }
-    let sender = try? self.database.read { db in
-      try MessageSenderModel.where { $0.id.eq(reaction.senderId) }.fetchOne(db)
-    }
-    return sender?.codename ?? "Unknown"
-  }
-
-  private func ensureCurrentEmojiIsValid() {
-    if let currentEmoji = self.currentEmoji,
-       !self.groupedReactions.contains(where: { $0.emoji == currentEmoji }) {
-      self.currentEmoji = nil
-    }
-  }
-
-  private func refreshDeletePermission() {
-    let canDelete = (try? self.database.read { db in
-      try ChatModel.where { $0.id.eq(self.chatId) }.fetchOne(db)
-    })?.channelId != nil
-    self.canDeleteMyReactions = canDelete
-  }
-
-  private func deleteReaction(_ reaction: MessageReactionModel) {
-    guard self.canDeleteMyReactions else { return }
-
-    do {
-      try self.database.write { db in
-        try MessageReactionModel.delete(reaction).execute(db)
-      }
-      self.onDeleteReaction?(reaction)
-    } catch {
-      AppLogger.chat.error(
-        "Failed to delete reaction from sheet: \(error.localizedDescription, privacy: .public)"
-      )
     }
   }
 }
