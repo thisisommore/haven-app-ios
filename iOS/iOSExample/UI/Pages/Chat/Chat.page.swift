@@ -12,49 +12,18 @@ struct ChatView<T: XXDKP>: View {
   let chatId: UUID
   let chatTitle: String
 
+  @State private var controller = ChatPageController()
   @EnvironmentObject var selectedChat: SelectedChat
   @Dependency(\.defaultDatabase) var database
   @FetchOne private var chat: ChatModel?
   @FetchOne private var firstMessage: ChatMessageModel?
 
   private var isChannel: Bool {
-    guard let chat else { return false }
-    return chat.name != "<self>" && chat.dmToken == nil
+    ChatPageController.isChannel(self.chat)
   }
 
   @Environment(\.dismiss) private var dismiss
-  @State private var replyingTo: ChatMessageModel?
-  @State private var reactingTo: ChatMessageModel?
-  @State private var showChannelOptions: Bool = false
-  @State private var isAdmin: Bool = false
-  @State private var isMuted: Bool = false
   @EnvironmentObject var xxdk: T
-
-  private func markMessagesAsRead() {
-    guard let chat else { return }
-    let joinedAt = chat.joinedAt
-    let chatId = chat.id
-
-    guard
-      let unreadMessages = try? database.read({ db in
-        try ChatMessageModel.where { message in
-          message.chatId.eq(chatId) && message.isIncoming && !message.isRead
-            && message.timestamp > joinedAt
-        }.fetchAll(db)
-      }), !unreadMessages.isEmpty
-    else { return }
-
-    var updatedChat = chat
-    updatedChat.unreadCount = 0
-
-    try? self.database.write { db in
-      for var message in unreadMessages {
-        message.isRead = true
-        try ChatMessageModel.update(message).execute(db)
-      }
-      try ChatModel.update(updatedChat).execute(db)
-    }
-  }
 
   init(chatId: UUID, chatTitle: String) {
     self.chatId = chatId
@@ -67,12 +36,14 @@ struct ChatView<T: XXDKP>: View {
     ZStack {
       ChatMessages(chatId: self.chatId) { message in
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-          self.replyingTo = message
+          self.controller.replyingTo = message
         }
       } onReact: { message in
-        self.reactingTo = message
+        self.controller.reactingTo = message
       } onDeleteReaction: { reaction in
-        self.deleteReaction(reaction)
+        self.controller.deleteReaction(
+          reaction, channelId: self.chat?.channelId, xxdk: self.xxdk
+        )
       }
       if self.firstMessage == nil {
         EmptyChatView()
@@ -81,7 +52,7 @@ struct ChatView<T: XXDKP>: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color.appBackground)
     .safeAreaInset(edge: .bottom, spacing: 0) {
-      if self.isMuted {
+      if self.controller.isMuted {
         HStack {
           Image(systemName: "speaker.slash.fill")
             .foregroundColor(.secondary)
@@ -94,9 +65,9 @@ struct ChatView<T: XXDKP>: View {
       } else {
         MessageForm<T>(
           chat: self.chat,
-          replyTo: self.replyingTo,
+          replyTo: self.controller.replyingTo,
           onCancelReply: {
-            self.replyingTo = nil
+            self.controller.replyingTo = nil
           }
         )
         .padding(.vertical, 4)
@@ -123,7 +94,7 @@ struct ChatView<T: XXDKP>: View {
       }
       ToolbarItem(placement: .principal) {
         Button {
-          self.showChannelOptions = true
+          self.controller.showChannelOptions = true
         } label: {
           HStack(spacing: 4) {
             Text(self.chatTitle == "<self>" ? "Notes" : self.chatTitle)
@@ -132,120 +103,62 @@ struct ChatView<T: XXDKP>: View {
             if self.isChannel && self.chat?.isSecret == true {
               SecretBadge()
             }
-            if self.isChannel && self.isAdmin {
+            if self.isChannel && self.controller.isAdmin {
               AdminBadge()
             }
           }
         }
       }
     }
-    .sheet(isPresented: self.$showChannelOptions) {
+    .sheet(isPresented: self.$controller.showChannelOptions) {
       if let chat = self.chat {
         ChannelOptionsView<T>(chat: chat) {
-          Task {
-            do {
-              guard let channelId = self.chat?.channelId else { return }
-              try self.xxdk.channel.leaveChannel(channelId: channelId)
-              let chatsToDelete =
-                try? await database.read { db in
-                  try ChatModel.where { $0.id.eq(self.chatId) }.fetchAll(db)
-                }
-              if let chatsToDelete {
-                try? await self.database.write { db in
-                  for chatToDelete in chatsToDelete {
-                    try ChatModel.delete(chatToDelete).execute(db)
-                  }
-                }
-              }
-              await MainActor.run {
-                self.dismiss()
-              }
-            } catch {
-              AppLogger.channels.error(
-                "Failed to leave channel: \(error.localizedDescription, privacy: .public)"
-              )
-            }
-          }
+          self.controller.leaveChannel(
+            chatId: self.chatId,
+            chat: self.chat,
+            xxdk: self.xxdk,
+            database: self.database,
+            dismiss: { self.dismiss() }
+          )
         }
         .environmentObject(self.xxdk)
       }
     }
-    .sheet(item: self.$reactingTo) { message in
+    .sheet(item: self.$controller.reactingTo) { message in
       NavigationStack {
         EmojiKeyboard { emoji in
           if emoji.isEmpty {
-            self.reactingTo = nil
+            self.controller.reactingTo = nil
             return
           }
-          self.sendReaction(emoji, to: message)
-          self.reactingTo = nil
+          self.controller.sendReaction(
+            emoji, to: message, chat: self.chat, xxdk: self.xxdk
+          )
+          self.controller.reactingTo = nil
         }
       }
     }
     .onAppear {
-      self.isAdmin = self.chat?.isAdmin ?? false
-      if self.isChannel, let channelId = self.chat?.channelId {
-        self.isMuted = self.xxdk.channel.isMuted(channelId: channelId)
-      } else {
-        self.isMuted = false
-      }
-      // Mark all incoming messages as read
-      self.markMessagesAsRead()
+      self.controller.onAppear(
+        chat: self.chat, xxdk: self.xxdk, database: self.database
+      )
     }
-    .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
-      if let channelID = notification.userInfo?["channelID"] as? String,
-         channelID == self.chat?.channelId {
-        guard self.isChannel, let channelId = self.chat?.channelId else { return }
-        self.isMuted = self.xxdk.channel.isMuted(channelId: channelId)
-      }
+    .onReceive(
+      NotificationCenter.default.publisher(for: .userMuteStatusChanged)
+    ) { notification in
+      self.controller.refreshMuteFromNotification(
+        notification, chat: self.chat, xxdk: self.xxdk
+      )
     }
     .id("chat-\(self.chatId.uuidString)")
-    .onChange(of: self.showChannelOptions) { _, newValue in
-      if !newValue {
-        self.isAdmin = self.chat?.isAdmin ?? false
-      }
+    .onChange(of: self.controller.showChannelOptions) { _, newValue in
+      self.controller.onChannelOptionsVisibilityChanged(
+        newValue: newValue, chat: self.chat
+      )
     }
     .onChange(of: self.chat?.unreadCount) { _, newValue in
-      guard let newValue, newValue > 0 else { return }
-      self.markMessagesAsRead()
-    }
-  }
-
-  private func sendReaction(_ emoji: String, to message: ChatMessageModel) {
-    guard !emoji.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-    guard let chat else { return }
-
-    let xxdk = self.xxdk
-    if let token = chat.dmToken, let pubKey = chat.pubKey {
-      Task.detached {
-        xxdk.dm?.sendReaction(
-          emoji: emoji,
-          toMessageIdB64: message.externalId,
-          toPubKey: pubKey,
-          partnerToken: token
-        )
-      }
-      return
-    }
-    if let channelId = chat.channelId {
-      Task.detached {
-        xxdk.channel.msg.sendReaction(
-          emoji: emoji,
-          toMessageIdB64: message.externalId,
-          inChannelId: channelId
-        )
-      }
-    }
-  }
-
-  private func deleteReaction(_ reaction: MessageReactionModel) {
-    guard let channelId = self.chat?.channelId else { return }
-
-    let xxdk = self.xxdk
-    Task.detached {
-      xxdk.channel.msg.deleteMessage(
-        channelId: channelId,
-        messageId: reaction.externalId
+      self.controller.onUnreadCountChanged(
+        newValue: newValue, chat: self.chat, database: self.database
       )
     }
   }
