@@ -84,8 +84,8 @@ extension XXDK {
   }
 
   /// Export identity with password encryption
-  func exportIdentity(password _: String) throws -> Data {
-    return try self.loadSavedPrivateIdentity()
+  func exportIdentity(password: String) throws -> Data {
+    return try self.channel.exportPrivateIdentity(password: password)
   }
 
   /// Import a private identity using a password

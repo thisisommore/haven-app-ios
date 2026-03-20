@@ -313,6 +313,10 @@ final class BindingsChannelsManagerWrapper {
       cmixParamsJSON: cmixParamsJSON
     )
   }
+
+  func exportPrivateIdentity(password: String) throws -> Data {
+    try self.inner.exportPrivateIdentity(password)
+  }
 }
 
 // MARK: - DMClient

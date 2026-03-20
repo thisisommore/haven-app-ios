@@ -344,4 +344,12 @@ class Channel: ChannelsP {
     }
     try channelsManager.setNickname(nickname, channelIDBytes: channelIdBytes)
   }
+
+  func exportPrivateIdentity(password: String) throws -> Data {
+    guard let channelsManager
+    else {
+      throw XXDKError.channelManagerNotInitialized
+    }
+    return try channelsManager.exportPrivateIdentity(password: password)
+  }
 }
