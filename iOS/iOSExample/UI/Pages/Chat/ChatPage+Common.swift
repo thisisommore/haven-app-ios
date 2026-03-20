@@ -9,10 +9,8 @@ import Foundation
 
 /// Strips a single surrounding <p>...</p> pair if present (after trimming whitespace)
 func stripParagraphTags(_ s: String) -> String {
-  let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
-  if trimmed.hasPrefix("<p>") && trimmed.hasSuffix("</p>") {
-    let inner = trimmed.dropFirst(3).dropLast(4)
-    return String(inner)
-  }
-  return s
+  let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+  return t.hasPrefix("<p>") &&
+    t.hasSuffix("</p>") ?
+    String(t.dropFirst(3).dropLast(4)) : s
 }
