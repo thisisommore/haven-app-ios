@@ -9,21 +9,24 @@ import SQLiteData
 import SwiftUI
 
 struct ChannelOptionsView<T: XXDKP>: View {
-  var chat: ChatModel?
+  @State private var controller = ChannelOptionsController()
+
+  var chat: ChatModel
   let onLeaveChannel: () -> Void
   var onDeleteChat: (() -> Void)?
+
+  @Dependency(\.defaultDatabase) var database
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var xxdk: T
-  @Dependency(\.defaultDatabase) var database
-  @State private var controller = ChannelOptionsController()
+
   @FocusState private var isNicknameFocused: Bool
 
   private var isDM: Bool {
-    self.chat?.dmToken != nil
+    self.chat.dmToken != nil
   }
 
   private var channelId: String? {
-    self.chat?.channelId
+    self.chat.channelId
   }
 
   var body: some View {
@@ -34,11 +37,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
             Text(self.isDM ? "Name" : "Channel Name")
               .font(.caption)
               .foregroundColor(.secondary)
-            Text(self.chat?.name ?? "Unknown")
+            Text(self.chat.name)
               .font(.body)
           }
 
-          if !self.isDM, let description = chat?.channelDescription, !description.isEmpty {
+          if !self.isDM, let description = chat.channelDescription, !description.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
               Text("Description")
                 .font(.caption)
@@ -211,7 +214,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
             self.dismiss()
           }
         } message: {
-          Text("Are you sure you want to leave \"\(self.chat?.name ?? "this channel")\"?")
+          Text("Are you sure you want to leave \"\(self.chat.name)\"?")
         }
         .alert("Delete Chat", isPresented: self.$controller.showDeleteConfirmation) {
           Button("Cancel", role: .cancel) {}
@@ -221,7 +224,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
           }
         } message: {
           Text(
-            "Are you sure you want to delete this chat with \"\(self.chat?.name ?? "this contact")\"?"
+            "Are you sure you want to delete this chat with \"\(self.chat.name)\"?"
           )
         }
       }
@@ -237,7 +240,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
       .sheet(isPresented: self.$controller.showExportKeySheet) {
         ExportChannelKeySheet(
           channelId: self.channelId ?? "",
-          channelName: self.chat?.name ?? "Unknown",
+          channelName: self.chat.name,
           xxdk: self.xxdk,
           onSuccess: { message in
             self.controller.handleExportSuccess(message: message)
@@ -247,11 +250,11 @@ struct ChannelOptionsView<T: XXDKP>: View {
       .sheet(isPresented: self.$controller.showImportKeySheet) {
         ImportChannelKeySheet(
           channelId: self.channelId ?? "",
-          channelName: self.chat?.name ?? "Unknown",
+          channelName: self.chat.name,
           xxdk: self.xxdk,
           onSuccess: { message in
             self.controller.handleImportSuccess(
-              message: message, chatId: self.chat?.id, chat: self.chat, database: self.database
+              message: message, chatId: self.chat.id, chat: self.chat, database: self.database
             )
           }
         )

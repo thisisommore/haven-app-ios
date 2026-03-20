@@ -140,33 +140,35 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .sheet(isPresented: self.$showChannelOptions) {
-      ChannelOptionsView<T>(chat: self.chat) {
-        Task {
-          do {
-            guard let channelId = self.chat?.channelId else { return }
-            try self.xxdk.channel.leaveChannel(channelId: channelId)
-            let chatsToDelete =
-              try? await database.read { db in
-                try ChatModel.where { $0.id.eq(self.chatId) }.fetchAll(db)
-              }
-            if let chatsToDelete {
-              try? await self.database.write { db in
-                for chatToDelete in chatsToDelete {
-                  try ChatModel.delete(chatToDelete).execute(db)
+      if let chat = self.chat {
+        ChannelOptionsView<T>(chat: chat) {
+          Task {
+            do {
+              guard let channelId = self.chat?.channelId else { return }
+              try self.xxdk.channel.leaveChannel(channelId: channelId)
+              let chatsToDelete =
+                try? await database.read { db in
+                  try ChatModel.where { $0.id.eq(self.chatId) }.fetchAll(db)
+                }
+              if let chatsToDelete {
+                try? await self.database.write { db in
+                  for chatToDelete in chatsToDelete {
+                    try ChatModel.delete(chatToDelete).execute(db)
+                  }
                 }
               }
+              await MainActor.run {
+                self.dismiss()
+              }
+            } catch {
+              AppLogger.channels.error(
+                "Failed to leave channel: \(error.localizedDescription, privacy: .public)"
+              )
             }
-            await MainActor.run {
-              self.dismiss()
-            }
-          } catch {
-            AppLogger.channels.error(
-              "Failed to leave channel: \(error.localizedDescription, privacy: .public)"
-            )
           }
         }
+        .environmentObject(self.xxdk)
       }
-      .environmentObject(self.xxdk)
     }
     .sheet(item: self.$reactingTo) { message in
       NavigationStack {
