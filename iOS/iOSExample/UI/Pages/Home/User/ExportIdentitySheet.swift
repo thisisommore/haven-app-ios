@@ -121,8 +121,8 @@ struct ExportIdentitySheet<T: XXDKP>: View {
       .fileExporter(
         isPresented: self.$showFileExporter,
         document: self.exportedText,
-        contentType: .plainText,
-        defaultFilename: "codename_backup.json"
+        contentType: .json,
+        defaultFilename: "codename_backup"
       ) { result in
         switch result {
         case .success:
