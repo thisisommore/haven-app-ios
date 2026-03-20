@@ -39,59 +39,5 @@ enum ChannelEvent: Int64, CustomStringConvertible {
 }
 
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
-  private func short(_ data: Data?) -> String {
-    guard let data else { return "nil" }
-    let b64 = data.base64EncodedString()
-    return b64.count > 16 ? String(b64.prefix(16)) + "…" : b64
-  }
-
-  /// Pretty-print JSON from Data. If the data isn't valid JSON, try to interpret it
-  /// as a UTF-8 base64 string that itself contains JSON. Falls back to a short base64 preview.
-  private func prettyJSONString(from data: Data?) -> String {
-    guard let data else { return "nil" }
-
-    // 1) Try raw JSON bytes first
-    if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
-       JSONSerialization.isValidJSONObject(jsonObject) == false || true { // allow any JSON object
-      if let pretty = try? JSONSerialization.data(
-        withJSONObject: jsonObject, options: [.prettyPrinted]
-      ),
-        let prettyStr = try? pretty.utf8() {
-        return prettyStr
-      }
-    }
-
-    // 2) If that failed, try to interpret the data as a UTF-8 string that is base64 of JSON
-    if let asString = try? data.utf8() {
-      // Attempt base64 decode
-      if let b64Data = Data(base64Encoded: asString) {
-        if let jsonObject = try? JSONSerialization.jsonObject(with: b64Data, options: []),
-           let pretty = try? JSONSerialization.data(
-             withJSONObject: jsonObject, options: [.prettyPrinted]
-           ),
-           let prettyStr = try? pretty.utf8() {
-          return prettyStr
-        }
-      }
-      // 3) If it's already UTF-8 JSON string, pretty print it by reparsing
-      let strData = asString.data
-      if let jsonObject = try? JSONSerialization.jsonObject(with: strData, options: []),
-         let pretty = try? JSONSerialization.data(
-           withJSONObject: jsonObject, options: [.prettyPrinted]
-         ),
-         let prettyStr = try? pretty.utf8() {
-        return prettyStr
-      }
-    }
-
-    // 4) Fallback
-    return self.short(data)
-  }
-
-  override init() {
-    super.init()
-  }
-
-  /// Event notifications (generic JSON payloads)
   func eventUpdate(_: Int64, jsonData _: Data?) {}
 }
