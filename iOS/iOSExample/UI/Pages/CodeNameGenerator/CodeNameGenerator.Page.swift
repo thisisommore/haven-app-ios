@@ -108,10 +108,10 @@ struct CodenameGeneratorView<T: XXDKP>: View {
 
       // Bottom action buttons
       BottomActionsView(
-        isGenerating: self.$isGenerating,
         selectedCodename: self.selectedCodename,
         onGenerate: self.generateCodenames,
-        onClaim: self.claimCodename
+        onClaim: self.claimCodename,
+        isGenerating: self.$isGenerating
       )
       .padding(.horizontal, 20)
       .padding(.vertical, 20)
