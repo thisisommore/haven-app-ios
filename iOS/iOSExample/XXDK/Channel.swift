@@ -243,7 +243,9 @@ class Channel: ChannelsP {
       throw XXDKError.channelManagerNotInitialized
     }
 
-    let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
+    guard let channelIdData = Data(base64Encoded: channelId) else {
+      throw XXDKError.channelIDIsNotBase64Encoded
+    }
 
     let result = try channelsManager.exportChannelAdminKey(
       channelIdData, encryptionPassword: encryptionPassword

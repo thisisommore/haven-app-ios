@@ -26,6 +26,7 @@ enum XXDKError: LocalizedError {
   case loadNotificationsDummyFailed(String)
   case loadChannelsManagerFailed(String)
   case invalidUTF8
+  case channelIDIsNotBase64Encoded
   case custom(String)
 
   var errorDescription: String? {
@@ -43,6 +44,7 @@ enum XXDKError: LocalizedError {
     case .channelIdNotFound: return "ChannelID was not found"
     case .dmTokenRequired: return "dmToken is required to create chat with pubKey"
     case .pubkeyRequired: return "pubkey is required to create chat"
+    case .channelIDIsNotBase64Encoded: return "Channel id must be base64 encoded"
     case let .loadNotificationsDummyFailed(msg):
       return "could not load notifications dummy: \(msg)"
     case let .loadChannelsManagerFailed(msg): return "could not load channels manager: \(msg)"

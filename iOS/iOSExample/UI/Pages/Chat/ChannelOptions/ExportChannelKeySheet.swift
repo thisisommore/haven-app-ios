@@ -13,7 +13,9 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
   let channelName: String
   let xxdk: T
   let onSuccess: (String) -> Void
+
   @Environment(\.dismiss) private var dismiss
+
   @State private var showFileExporter = false
   @State private var encryptionPassword = ""
   @State private var document = TextFileDocument(text: "")
