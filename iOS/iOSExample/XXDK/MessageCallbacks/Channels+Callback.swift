@@ -159,7 +159,22 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     status: Int64,
     hidden _: Bool
   ) -> Int64 {
-    AppLogger.messaging.info("messageType \(messageType)")
+    AppLogger.messaging.info(
+      """
+      receiveMessage(\
+       _ channelID: \(channelID?.base64EncodedString() ?? "nil", privacy: .public), \
+      messageID: \(messageID?.base64EncodedString() ?? "nil", privacy: .public), \
+      nickname: \(nickname ?? "nil", privacy: .public), \
+      text: \(text ?? "nil", privacy: .public), \
+      pubKey: \(pubKey?.base64EncodedString() ?? "nil", privacy: .public), \
+      dmToken: \(dmToken, privacy: .public), \
+      codeset: \(codeset, privacy: .public), \
+      timestamp: \(timestamp, privacy: .public), \
+      messageType: \(messageType, privacy: .public), \
+      status: \(status, privacy: .public)\
+      )
+      """
+    )
 
     let messageIdB64 = messageID?.base64EncodedString()
     let messageTextB64 = text ?? ""
@@ -190,7 +205,7 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
   }
 
   func receiveReaction(
-    _: Data?,
+    _ channelID: Data?,
     messageID: Data?,
     reactionTo: Data?,
     nickname: String?,
@@ -198,13 +213,30 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     pubKey: Data?,
     dmToken: Int32,
     codeset: Int,
-    timestamp _: Int64,
+    timestamp: Int64,
     lease _: Int64,
     roundID _: Int64,
     messageType _: Int64,
     status: Int64,
     hidden _: Bool
   ) -> Int64 {
+    AppLogger.messaging.info(
+      """
+      receiveReaction(\
+       _ channelID: \(channelID?.base64EncodedString() ?? "nil", privacy: .public), \
+      messageID: \(messageID?.base64EncodedString() ?? "nil", privacy: .public), \
+      reactionTo: \(reactionTo?.base64EncodedString() ?? "nil", privacy: .public), \
+      nickname: \(nickname ?? "nil", privacy: .public), \
+      reaction: \(reaction ?? "nil", privacy: .public), \
+      pubKey: \(pubKey?.base64EncodedString() ?? "nil", privacy: .public), \
+      dmToken: \(dmToken, privacy: .public), \
+      codeset: \(codeset, privacy: .public), \
+      timestamp: \(timestamp, privacy: .public), \
+      status: \(status, privacy: .public)\
+      )
+      """
+    )
+
     guard let pubKey else { fatalError("no pub key") }
     let reactionText = reaction ?? ""
     let targetMessageIdB64 = reactionTo?.base64EncodedString()
@@ -311,6 +343,23 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     status: Int64,
     hidden _: Bool
   ) -> Int64 {
+    AppLogger.messaging.info(
+      """
+      receiveReply(\
+       _ channelID: \(channelID?.base64EncodedString() ?? "nil", privacy: .public), \
+      messageID: \(messageID?.base64EncodedString() ?? "nil", privacy: .public), \
+      reactionTo: \(reactionTo?.base64EncodedString() ?? "nil", privacy: .public), \
+      nickname: \(nickname ?? "nil", privacy: .public), \
+      text: \(text ?? "nil", privacy: .public), \
+      pubKey: \(pubKey?.base64EncodedString() ?? "nil", privacy: .public), \
+      dmToken: \(dmToken, privacy: .public), \
+      codeset: \(codeset, privacy: .public), \
+      timestamp: \(timestamp, privacy: .public), \
+      status: \(status, privacy: .public)\
+      )
+      """
+    )
+
     let messageIdB64 = messageID?.base64EncodedString()
     let replyTextB64 = text ?? ""
 

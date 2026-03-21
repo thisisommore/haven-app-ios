@@ -12,15 +12,6 @@ import SQLiteData
 import SwiftUI
 import UIKit
 
-struct MessageWithSender: Hashable {
-  let message: ChatMessageModel
-  let sender: String?
-  let senderNickname: String?
-  let replyTo: ChatMessageModel?
-  let colorHex: Int?
-  let reactionEmojis: [String]
-}
-
 final class ChatMessagesVC: UIViewController {
   // Data
   let chatId: UUID
@@ -28,45 +19,6 @@ final class ChatMessagesVC: UIViewController {
   var onReply: (ChatMessageModel) -> Void
   var onReact: (ChatMessageModel) -> Void
   var onDeleteReaction: (MessageReactionModel) -> Void
-
-  /// DataSource
-  enum Message: Hashable {
-    case text(MessageWithSender)
-    case date(String)
-
-    static func == (lhs: Message, rhs: Message) -> Bool {
-      switch (lhs, rhs) {
-      case let (
-        .text(lhsMessage),
-        .text(rhsMessage)
-      ):
-        return lhsMessage.message == rhsMessage.message
-          && lhsMessage.sender == rhsMessage.sender
-          && lhsMessage.senderNickname == rhsMessage.senderNickname
-          && lhsMessage.replyTo == rhsMessage.replyTo
-          && lhsMessage.reactionEmojis == rhsMessage.reactionEmojis
-      case let (.date(lhsDate), .date(rhsDate)):
-        return lhsDate == rhsDate
-      default:
-        return false
-      }
-    }
-
-    func hash(into hasher: inout Hasher) {
-      switch self {
-      case let .text(messageWithSender):
-        hasher.combine(0)
-        hasher.combine(messageWithSender.message)
-        hasher.combine(messageWithSender.sender)
-        hasher.combine(messageWithSender.senderNickname)
-        hasher.combine(messageWithSender.replyTo)
-        hasher.combine(messageWithSender.reactionEmojis)
-      case let .date(date):
-        hasher.combine(1)
-        hasher.combine(date)
-      }
-    }
-  }
 
   typealias Section = Int
   typealias Item = Message
@@ -377,26 +329,5 @@ extension ChatMessagesVC {
       sheet.detents = [.medium(), .large()]
     }
     self.present(controller, animated: true)
-  }
-}
-
-struct ChatMessages: UIViewControllerRepresentable {
-  let chatId: UUID
-  var onReply: (ChatMessageModel) -> Void
-  var onReact: (ChatMessageModel) -> Void
-  var onDeleteReaction: (MessageReactionModel) -> Void
-  func updateUIViewController(_ uiViewController: ChatMessagesVC, context _: Context) {
-    uiViewController.onReply = self.onReply
-    uiViewController.onReact = self.onReact
-    uiViewController.onDeleteReaction = self.onDeleteReaction
-  }
-
-  func makeUIViewController(context _: Context) -> ChatMessagesVC {
-    return ChatMessagesVC(
-      chatId: self.chatId,
-      onReply: self.onReply,
-      onReact: self.onReact,
-      onDeleteReaction: self.onDeleteReaction
-    )
   }
 }
