@@ -1,5 +1,5 @@
 //
-//  NicknamePickerView.swift
+//  User+Nickname.swift
 //  iOSExample
 //
 

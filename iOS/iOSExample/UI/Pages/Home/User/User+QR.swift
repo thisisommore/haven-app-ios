@@ -1,5 +1,5 @@
 //
-//  QRCodeView.swift
+//  User+QR.swift
 //  iOSExample
 //
 
