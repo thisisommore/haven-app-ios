@@ -1,5 +1,5 @@
 //
-//  JoinChannelConfirmationView.swift
+//  NewChat+SpaceConfirmation.swift
 //  iOSExample
 //
 //  Created by Om More on 08/10/25.

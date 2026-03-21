@@ -1,5 +1,5 @@
 //
-//  PasswordInputView.swift
+//  NewChat+PasswordInput.swift
 //  iOSExample
 //
 //  Created by Om More on 17/12/25.
