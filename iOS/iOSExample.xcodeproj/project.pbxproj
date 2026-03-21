@@ -14,7 +14,6 @@
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1445D652F6036BA00FB3744 /* SnapKit */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
-		A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */; };
 		A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4F7E22F5B36FC006D6B39 /* SQLiteData */; };
 		A1A4FAC62F5B3A76006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4FAC52F5B3A76006D6B39 /* SQLiteData */; };
 		A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4FCF22F5B3C1B006D6B39 /* SQLiteData */; };
@@ -57,7 +56,6 @@
 				A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */,
 				A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */,
 				A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */,
-				A1A1E5E12EA9D747008C96D7 /* SwiftHTMLtoMarkdown in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -188,7 +186,6 @@
 			);
 			mainGroup = 980A0D602B96723C004FB15A;
 			packageReferences = (
-				A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */,
 				A1A4FCF12F5B3C1B006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */,
 				A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */,
 			);
@@ -527,14 +524,6 @@
 				minimumVersion = 5.7.1;
 			};
 		};
-		A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ActuallyTaylor/SwiftHTMLToMarkdown";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.1.1;
-			};
-		};
 		A1A4F7E12F5B36FC006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/sqlite-data";
@@ -574,11 +563,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;
-		};
-		A1A1E5E02EA9D747008C96D7 /* SwiftHTMLtoMarkdown */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1A1E5DF2EA9D746008C96D7 /* XCRemoteSwiftPackageReference "SwiftHTMLToMarkdown" */;
-			productName = SwiftHTMLtoMarkdown;
 		};
 		A1A4F7E22F5B36FC006D6B39 /* SQLiteData */ = {
 			isa = XCSwiftPackageProductDependency;
