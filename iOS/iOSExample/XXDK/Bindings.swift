@@ -154,10 +154,10 @@ enum BindingsStatic {
     return result
   }
 
-  static func deleteCmixInstance(_: Int) throws {
-    // var err: NSError?
-    // Bindings.BindingsDeleteCmixInstance(cmixId, &err)
-    // if let err { throw err }
+  static func deleteCmixInstance(_ cmixId: Int) throws {
+    var err: NSError?
+    Bindings.BindingsDeleteCmixInstance(cmixId, &err)
+    if let err { throw err }
   }
 
   /// Network
