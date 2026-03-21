@@ -80,7 +80,7 @@ struct CodenameGeneratorView<T: XXDKP>: View {
   var body: some View {
     VStack(spacing: 0) {
       // Header with icon
-      HeaderView()
+      CodeNameGenHeaderView()
         .padding(.horizontal, 20)
         .padding(.top, 20)
         .padding(.bottom, 24)

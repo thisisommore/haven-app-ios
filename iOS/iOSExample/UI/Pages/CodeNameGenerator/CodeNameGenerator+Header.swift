@@ -7,7 +7,7 @@
 import Foundation
 import SwiftUI
 
-struct HeaderView: View {
+struct CodeNameGenHeaderView: View {
   /// State to control the tooltip popover visibility
   @State private var showTooltip = false
 
