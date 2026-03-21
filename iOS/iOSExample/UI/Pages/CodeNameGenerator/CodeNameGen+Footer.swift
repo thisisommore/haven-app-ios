@@ -1,5 +1,5 @@
 //
-//  BottomActions.swift
+//  CodeNameGen+Footer.swift
 //  iOSExample
 //
 //  Created by Om More on 16/12/25.
