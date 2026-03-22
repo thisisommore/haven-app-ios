@@ -92,6 +92,22 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     return existing
   }
 
+  private func existingStoredMessage(
+    messageId: String
+  ) throws -> ChatMessageModel? {
+    try self.database.read { db in
+      try ChatMessageModel.where { $0.externalId.eq(messageId) }.fetchOne(db)
+    }
+  }
+
+  private func existingStoredReaction(
+    messageId: String
+  ) throws -> MessageReactionModel? {
+    try self.database.read { db in
+      try MessageReactionModel.where { $0.externalId.eq(messageId) }.fetchOne(db)
+    }
+  }
+
   /// Persist a message into SwiftData
   private func persistMessage(
     channelId: String,
@@ -179,6 +195,10 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     let messageIdB64 = messageID?.base64EncodedString()
     let messageTextB64 = text ?? ""
 
+    if let messageIdB64, let existing = try? existingStoredMessage(messageId: messageIdB64) {
+      return existing.id
+    }
+
     do {
       let (codename, color) = try ReceiverHelpers.parseIdentity(
         pubKey: pubKey, codeset: codeset
@@ -259,6 +279,9 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         pubKey: pubKey, codeset: codeset
       )
 
+      if let existing = try? existingStoredReaction(messageId: reactionMessageId) {
+        return existing.id
+      }
       let sender = try self.receiverHelpers.upsertSender(
         pubKey: pubKey,
         codename: codename,
@@ -362,6 +385,10 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
     let messageIdB64 = messageID?.base64EncodedString()
     let replyTextB64 = text ?? ""
+
+    if let messageIdB64, let existing = try? existingStoredMessage(messageId: messageIdB64) {
+      return existing.id
+    }
 
     let nick: String
     let color: Int
