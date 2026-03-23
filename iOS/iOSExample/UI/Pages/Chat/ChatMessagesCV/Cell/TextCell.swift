@@ -18,7 +18,7 @@ final class TextCell: UICollectionViewCell {
 
   static let identifier = String(describing: TextCell.self)
   let label = UITextView()
-  let timeLabel = UILabel()
+  private let timeLabel = UILabel()
   private let senderNameLabel = UILabel()
   private let replyPreviewLabel = UILabel()
   private let reactionsContainer = UIStackView()
@@ -31,11 +31,41 @@ final class TextCell: UICollectionViewCell {
   var onReactionPreviewTap: (() -> Void)?
   var onReplyPreviewClick: (() -> Void)?
   var onLinkTapped: ((URL) -> Void)?
+
   private static let paddingY: CGFloat = 4
   private static let paddingX: CGFloat = 8
   private static let paddingYCal = paddingY * 2
   private static let paddingXCal = paddingX * 2
   private static let maxMessageWidthRatio: CGFloat = 0.76
+
+  private static let senderNameTextAttributes: [NSAttributedString.Key: Any] = [
+    .font: UIFont.systemFont(ofSize: 12),
+  ]
+
+  private static let timeTextAttributes: [NSAttributedString.Key: Any] = [
+    .font: UIFont.systemFont(ofSize: 8),
+  ]
+  private static let timeIconName = "clock"
+  private static let timeIconSpacing: CGFloat = 2
+  private static let timeIconWidth: CGFloat = {
+    guard let image = UIImage(systemName: TextCell.timeIconName) else {
+      return 0
+    }
+    let iconHeight = UIFont.systemFont(ofSize: 8).pointSize
+    return image.size.width * (iconHeight / max(image.size.height, 1)) + TextCell.timeIconSpacing
+  }()
+
+  private static let replyTextAttributes: [NSAttributedString.Key: Any] = [
+    .font: UIFont.systemFont(ofSize: 12, weight: .medium),
+  ]
+  private static let replySpacingToMessage: CGFloat = 6
+  private static let replySpacingAboveMessage: CGFloat = 10
+  private static let reactionPlusToken = "+"
+  private static let reactionPlusIconName = "plus"
+  private static let reactionChipSize: CGFloat = 20
+  private static let reactionChipSpacing: CGFloat = 4
+  private static let reactionPlusIconSize: CGFloat = 10
+
   override init(frame: CGRect) {
     super.init(frame: frame)
     makeUI()
@@ -76,35 +106,17 @@ final class TextCell: UICollectionViewCell {
     setReplyPreview(nil)
     setReactions([])
   }
+}
 
-  private static let senderNameTextAttributes: [NSAttributedString.Key: Any] = [
-    .font: UIFont.systemFont(ofSize: 12),
-  ]
+extension TextCell: UITextViewDelegate {
+  func textView(_: UITextView, shouldInteractWith URL: URL, in _: NSRange)
+    -> Bool {
+    self.onLinkTapped?(URL)
+    return false
+  }
+}
 
-  private static let timeTextAttributes: [NSAttributedString.Key: Any] = [
-    .font: UIFont.systemFont(ofSize: 8),
-  ]
-  private static let timeIconName = "clock"
-  private static let timeIconSpacing: CGFloat = 2
-  private static let timeIconWidth: CGFloat = {
-    guard let image = UIImage(systemName: TextCell.timeIconName) else {
-      return 0
-    }
-    let iconHeight = UIFont.systemFont(ofSize: 8).pointSize
-    return image.size.width * (iconHeight / max(image.size.height, 1)) + TextCell.timeIconSpacing
-  }()
-
-  private static let replyTextAttributes: [NSAttributedString.Key: Any] = [
-    .font: UIFont.systemFont(ofSize: 12, weight: .medium),
-  ]
-  private static let replySpacingToMessage: CGFloat = 6
-  private static let replySpacingAboveMessage: CGFloat = 10
-  private static let reactionPlusToken = "+"
-  private static let reactionPlusIconName = "plus"
-  private static let reactionChipSize: CGFloat = 20
-  private static let reactionChipSpacing: CGFloat = 4
-  private static let reactionPlusIconSize: CGFloat = 10
-
+extension TextCell {
   private static let lastWidth: CGFloat = 0
   private static var timeRecCached: CGRect = .zero
 
@@ -126,7 +138,7 @@ final class TextCell: UICollectionViewCell {
     return CGSize(width: width, height: Self.reactionChipSize)
   }
 
-  static func formattedSenderName(sender: String?, nickname: String?) -> String? {
+  private static func formattedSenderName(sender: String?, nickname: String?) -> String? {
     guard let sender, !sender.isEmpty else { return nil }
     let trimmedNickname = nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
     guard let trimmedNickname, !trimmedNickname.isEmpty else {
@@ -211,45 +223,40 @@ final class TextCell: UICollectionViewCell {
   }
 }
 
+// MARK: - TextCell UI
+
 extension TextCell {
+  // MARK: - Setup
+
+  /// Builds the view hierarchy and constraints. Vertical order: reply preview row → bubble (sender, body, time) → reactions overlapping the bubble bottom.
   private func makeUI() {
+    self.installSubviews()
+
+    self.configureReplyPreviewRow()
+    self.configureBubbleContainer()
+    self.configureReplySwipeIcon()
+    self.configureSenderRow()
+    self.configureMessageBody()
+    self.configureTimeRow()
+    self.configureReactionsRow()
+
+    self.applyInitialEmptyState()
+  }
+
+  private func installSubviews() {
+    // replyImage first so it draws beneath the bubble (later siblings are on top).
     contentView.addSubview(self.replyImage)
     contentView.addSubview(self.container)
     contentView.addSubview(self.replyPreviewLabel)
     contentView.addSubview(self.reactionsContainer)
+
+    self.container.addSubview(self.senderNameLabel)
     self.container.addSubview(self.label)
     self.container.addSubview(self.timeLabel)
-    self.container.addSubview(self.senderNameLabel)
+  }
 
-    self.replyImage.snp.makeConstraints {
-      $0.leading.equalTo(self.container).offset(Self.paddingX)
-      $0.centerY.equalTo(self.container)
-      $0.size.equalTo(20) // Combines width and height
-    }
-    self.replyImage.tintColor = .systemOrange
-
-    self.container.snp.makeConstraints {
-      $0.leading.equalTo(contentView)
-      $0.trailing.equalTo(contentView)
-      self.containerBottomConstraint = $0.bottom.equalTo(contentView).constraint
-      self.containerTopToContentConstraint = $0.top.equalTo(contentView).constraint
-      self.containerTopToReplyConstraint =
-        $0.top.equalTo(self.replyPreviewLabel.snp.bottom).offset(Self.replySpacingToMessage)
-          .constraint
-    }
-    self.containerTopToReplyConstraint?.deactivate()
-    self.container.backgroundColor = UIColor(Color.messageBubble)
-    self.container.layer.cornerRadius = 12
-    self.container.layer.masksToBounds = true
-
-    self.senderNameLabel.snp.makeConstraints {
-      $0.leading.equalTo(self.container).offset(Self.paddingX)
-      $0.top.equalTo(self.container).offset(Self.paddingY)
-    }
-    self.senderNameLabel.textColor = .label
-    self.senderNameLabel.font = UIFont.systemFont(ofSize: 12)
-    self.senderNameLabel.text = ""
-
+  /// One-line preview of the message being replied to; sits above the bubble when visible.
+  private func configureReplyPreviewRow() {
     self.replyPreviewLabel.snp.makeConstraints {
       $0.leading.equalTo(contentView).offset(Self.paddingX)
       $0.trailing.equalTo(contentView).offset(-Self.paddingX)
@@ -265,18 +272,59 @@ extension TextCell {
     self.replyPreviewLabel.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(self.handleReplyPreviewTap))
     )
+  }
 
+  /// Main message bubble; top is pinned either to the reply preview or to the cell top.
+  private func configureBubbleContainer() {
+    self.container.snp.makeConstraints {
+      $0.leading.equalTo(contentView)
+      $0.trailing.equalTo(contentView)
+      self.containerBottomConstraint = $0.bottom.equalTo(contentView).constraint
+      self.containerTopToContentConstraint = $0.top.equalTo(contentView).constraint
+      self.containerTopToReplyConstraint =
+        $0.top.equalTo(self.replyPreviewLabel.snp.bottom).offset(Self.replySpacingToMessage)
+          .constraint
+    }
+    self.containerTopToReplyConstraint?.deactivate()
+
+    self.container.backgroundColor = UIColor(Color.messageBubble)
+    self.container.layer.cornerRadius = 12
+    self.container.layer.masksToBounds = true
+  }
+
+  /// Icon revealed when swiping right to reply; aligned with the bubble, not the preview row.
+  private func configureReplySwipeIcon() {
+    self.replyImage.snp.makeConstraints {
+      $0.leading.equalTo(self.container).offset(Self.paddingX)
+      $0.centerY.equalTo(self.container)
+      $0.size.equalTo(20)
+    }
+    self.replyImage.tintColor = .systemOrange
+  }
+
+  /// Optional sender line at the top inside the bubble.
+  private func configureSenderRow() {
+    self.senderNameLabel.snp.makeConstraints {
+      $0.leading.equalTo(self.container).offset(Self.paddingX)
+      $0.top.equalTo(self.container).offset(Self.paddingY)
+    }
+    self.senderNameLabel.textColor = .label
+    self.senderNameLabel.font = UIFont.systemFont(ofSize: 12)
+    self.senderNameLabel.text = ""
+  }
+
+  /// Non-editable text with link styling; top switches between “under sender” and “top of bubble”.
+  private func configureMessageBody() {
     self.label.snp.makeConstraints {
       $0.leading.equalTo(self.container).offset(Self.paddingX)
       $0.trailing.equalTo(self.container).offset(-Self.paddingX)
       self.messageTopToSenderConstraint = $0.top.equalTo(self.senderNameLabel.snp.bottom).constraint
       self.messageTopToContainerConstraint =
-        $0.top.equalTo(self.container).offset(Self.paddingY)
-          .constraint
-      // We'll let timeLabel handle the vertical spacing between the two
+        $0.top.equalTo(self.container).offset(Self.paddingY).constraint
     }
     self.messageTopToSenderConstraint?.deactivate()
     self.messageTopToContainerConstraint?.deactivate()
+
     self.label.attributedText = nil
     self.label.isEditable = false
     self.label.isScrollEnabled = false
@@ -291,11 +339,26 @@ extension TextCell {
       .underlineColor: UIColor.systemOrange,
       .backgroundColor: UIColor.systemOrange.withAlphaComponent(0.15),
     ]
+  }
 
+  /// Trailing timestamp; bottom pins the bubble height together with the message.
+  private func configureTimeRow() {
+    self.timeLabel.snp.makeConstraints {
+      $0.trailing.equalTo(self.container).offset(-Self.paddingX)
+      $0.top.equalTo(self.label.snp.bottom).offset(Self.paddingY)
+      $0.bottom.equalTo(self.container).offset(-Self.paddingY)
+    }
+    self.timeLabel.textColor = .gray
+    self.timeLabel.font = UIFont.systemFont(ofSize: 8)
+    self.setTime(nil)
+  }
+
+  /// Emoji chips centered on the bottom edge of the bubble.
+  private func configureReactionsRow() {
     self.reactionsContainer.snp.makeConstraints {
       $0.leading.equalTo(self.container).offset(Self.paddingX)
       $0.centerY.equalTo(self.container.snp.bottom)
-      $0.trailing.lessThanOrEqualTo(self.contentView).offset(-Self.paddingX)
+      $0.trailing.lessThanOrEqualTo(contentView).offset(-Self.paddingX)
       $0.height.equalTo(Self.reactionChipSize)
     }
     self.reactionsContainer.axis = .horizontal
@@ -307,29 +370,16 @@ extension TextCell {
     self.reactionsContainer.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(self.handleReactionTap))
     )
+  }
 
-    self.timeLabel.snp.makeConstraints {
-      $0.trailing.equalTo(self.container).offset(-Self.paddingX)
-      $0.top.equalTo(self.label.snp.bottom).offset(Self.paddingY)
-      $0.bottom.equalTo(self.container).offset(-Self.paddingY)
-    }
-    self.timeLabel.textColor = .gray
-    self.timeLabel.font = UIFont.systemFont(ofSize: 8)
-    self.setTime(nil)
-
+  private func applyInitialEmptyState() {
     self.setSenderName(nil)
     self.setReplyPreview(nil)
     self.setReactions([])
     self.setBubbleShape(.single, isIncoming: true)
   }
 
-  @objc private func handleReplyPreviewTap() {
-    self.onReplyPreviewClick?()
-  }
-
-  @objc private func handleReactionTap() {
-    self.onReactionPreviewTap?()
-  }
+  // MARK: - Configuration (callers / reuse)
 
   func setSenderName(_ sender: String?, nickname: String? = nil, colorHex: Int? = nil) {
     guard let senderName = Self.formattedSenderName(sender: sender, nickname: nickname)
@@ -384,35 +434,6 @@ extension TextCell {
     self.updateReactionBottomInset()
   }
 
-  private func updateConstraint() {
-    self.messageTopToSenderConstraint?.deactivate()
-    self.messageTopToContainerConstraint?.deactivate()
-    self.containerTopToContentConstraint?.deactivate()
-    self.containerTopToReplyConstraint?.deactivate()
-
-    if !self.replyPreviewLabel.isHidden {
-      self.containerTopToReplyConstraint?.activate()
-    } else {
-      self.containerTopToContentConstraint?.activate()
-    }
-
-    if !self.senderNameLabel.isHidden {
-      self.messageTopToSenderConstraint?.activate()
-    } else {
-      self.messageTopToContainerConstraint?.activate()
-    }
-    self.updateReactionBottomInset()
-  }
-
-  private func updateReactionBottomInset() {
-    self.containerBottomConstraint?.update(offset: -self.currentReactionBottomInset())
-  }
-
-  private func currentReactionBottomInset() -> CGFloat {
-    guard !self.reactionsContainer.isHidden else { return 0 }
-    return ceil(Self.reactionChipSize / 2)
-  }
-
   func setTime(_ text: String?, showsClockIcon: Bool = false) {
     guard let text, !text.isEmpty
     else {
@@ -420,71 +441,6 @@ extension TextCell {
       return
     }
     self.timeLabel.attributedText = self.makeAttributedTimeText(text, showsClockIcon: showsClockIcon)
-  }
-
-  private func makeAttributedTimeText(_ text: String, showsClockIcon: Bool) -> NSAttributedString {
-    let font = self.timeLabel.font ?? UIFont.systemFont(ofSize: 8)
-    let color = self.timeLabel.textColor ?? .gray
-    let attributes: [NSAttributedString.Key: Any] = [
-      .font: font,
-      .foregroundColor: color,
-    ]
-    let attributedText = NSMutableAttributedString(string: text, attributes: attributes)
-
-    guard showsClockIcon else {
-      return attributedText
-    }
-    attributedText.append(NSAttributedString(string: " ", attributes: attributes))
-
-    guard let iconImage = UIImage(systemName: Self.timeIconName)?
-      .withTintColor(color, renderingMode: .alwaysOriginal)
-    else {
-      return attributedText
-    }
-
-    let attachment = NSTextAttachment()
-    attachment.image = iconImage
-    // Scale icon to match text size.
-    let iconHeight = font.pointSize
-    // Keep original symbol aspect ratio after scaling.
-    let iconWidth = iconImage.size.width * (iconHeight / iconImage.size.height)
-    attachment.bounds = CGRect(
-      x: 0,
-      // Shift icon to vertically align with the text's cap-height.
-      y: (font.capHeight - iconHeight) / 2,
-      width: iconWidth,
-      height: iconHeight
-    )
-    attributedText.append(NSAttributedString(attachment: attachment))
-    return attributedText
-  }
-
-  private static func makeReactionChip(_ token: String) -> UIView {
-    let chip = UIView()
-    chip.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(0.9)
-    chip.layer.cornerRadius = Self.reactionChipSize / 2
-    chip.layer.masksToBounds = true
-    chip.snp.makeConstraints { $0.size.equalTo(Self.reactionChipSize) }
-
-    if token == Self.reactionPlusToken {
-      let icon = UIImageView(image: UIImage(systemName: Self.reactionPlusIconName))
-      icon.tintColor = .secondaryLabel
-      icon.contentMode = .scaleAspectFit
-      chip.addSubview(icon)
-      icon.snp.makeConstraints {
-        $0.center.equalToSuperview()
-        $0.size.equalTo(Self.reactionPlusIconSize)
-      }
-      return chip
-    }
-
-    let label = UILabel()
-    label.text = token
-    label.textAlignment = .center
-    label.font = UIFont.systemFont(ofSize: 13)
-    chip.addSubview(label)
-    label.snp.makeConstraints { $0.center.equalToSuperview() }
-    return chip
   }
 
   func setBubbleShape(_ shape: BubbleShape, isIncoming: Bool) {
@@ -524,6 +480,7 @@ extension TextCell {
     }
   }
 
+  /// Brief orange border, then fades out (e.g. scroll-to-message highlight).
   func highlight() {
     self.container.layer.borderColor = UIColor.systemOrange.cgColor
     self.container.layer.borderWidth = 1.5
@@ -535,12 +492,113 @@ extension TextCell {
       }
     }
   }
-}
 
-extension TextCell: UITextViewDelegate {
-  func textView(_: UITextView, shouldInteractWith URL: URL, in _: NSRange)
-    -> Bool {
-    self.onLinkTapped?(URL)
-    return false
+  // MARK: - Gesture actions
+
+  @objc private func handleReplyPreviewTap() {
+    self.onReplyPreviewClick?()
+  }
+
+  @objc private func handleReactionTap() {
+    self.onReactionPreviewTap?()
+  }
+
+  // MARK: - Layout
+
+  /// Activates the correct vertical constraints for reply preview, sender row, and reaction inset.
+  private func updateConstraint() {
+    self.messageTopToSenderConstraint?.deactivate()
+    self.messageTopToContainerConstraint?.deactivate()
+    self.containerTopToContentConstraint?.deactivate()
+    self.containerTopToReplyConstraint?.deactivate()
+
+    if !self.replyPreviewLabel.isHidden {
+      self.containerTopToReplyConstraint?.activate()
+    } else {
+      self.containerTopToContentConstraint?.activate()
+    }
+
+    if !self.senderNameLabel.isHidden {
+      self.messageTopToSenderConstraint?.activate()
+    } else {
+      self.messageTopToContainerConstraint?.activate()
+    }
+    self.updateReactionBottomInset()
+  }
+
+  private func updateReactionBottomInset() {
+    self.containerBottomConstraint?.update(offset: -self.currentReactionBottomInset())
+  }
+
+  /// Half a chip height so the overlapping reactions row does not clip.
+  private func currentReactionBottomInset() -> CGFloat {
+    guard !self.reactionsContainer.isHidden else { return 0 }
+    return ceil(Self.reactionChipSize / 2)
+  }
+
+  // MARK: - Time
+
+  private func makeAttributedTimeText(_ text: String, showsClockIcon: Bool) -> NSAttributedString {
+    let font = self.timeLabel.font ?? UIFont.systemFont(ofSize: 8)
+    let color = self.timeLabel.textColor ?? .gray
+    let attributes: [NSAttributedString.Key: Any] = [
+      .font: font,
+      .foregroundColor: color,
+    ]
+    let attributedText = NSMutableAttributedString(string: text, attributes: attributes)
+
+    guard showsClockIcon else {
+      return attributedText
+    }
+    attributedText.append(NSAttributedString(string: " ", attributes: attributes))
+
+    guard let iconImage = UIImage(systemName: Self.timeIconName)?
+      .withTintColor(color, renderingMode: .alwaysOriginal)
+    else {
+      return attributedText
+    }
+
+    let attachment = NSTextAttachment()
+    attachment.image = iconImage
+    let iconHeight = font.pointSize
+    let iconWidth = iconImage.size.width * (iconHeight / iconImage.size.height)
+    attachment.bounds = CGRect(
+      x: 0,
+      y: (font.capHeight - iconHeight) / 2,
+      width: iconWidth,
+      height: iconHeight
+    )
+    attributedText.append(NSAttributedString(attachment: attachment))
+    return attributedText
+  }
+
+  // MARK: - Reaction chips
+
+  private static func makeReactionChip(_ token: String) -> UIView {
+    let chip = UIView()
+    chip.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(0.9)
+    chip.layer.cornerRadius = Self.reactionChipSize / 2
+    chip.layer.masksToBounds = true
+    chip.snp.makeConstraints { $0.size.equalTo(Self.reactionChipSize) }
+
+    if token == Self.reactionPlusToken {
+      let icon = UIImageView(image: UIImage(systemName: Self.reactionPlusIconName))
+      icon.tintColor = .secondaryLabel
+      icon.contentMode = .scaleAspectFit
+      chip.addSubview(icon)
+      icon.snp.makeConstraints {
+        $0.center.equalToSuperview()
+        $0.size.equalTo(Self.reactionPlusIconSize)
+      }
+      return chip
+    }
+
+    let label = UILabel()
+    label.text = token
+    label.textAlignment = .center
+    label.font = UIFont.systemFont(ofSize: 13)
+    chip.addSubview(label)
+    label.snp.makeConstraints { $0.center.equalToSuperview() }
+    return chip
   }
 }
