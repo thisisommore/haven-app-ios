@@ -32,24 +32,6 @@ extension ChatMessagesVC {
   private func sender(for message: MessageWithSender) -> String? {
     return message.sender
   }
-
-  private func bubbleShape(for message: MessageWithSender, at indexPath: IndexPath)
-    -> TextCell.BubbleShape {
-    let nextMessage = dataSource.itemIdentifier(for: indexPath.next())
-    let hasSenderNext: Bool = {
-      guard let nextMessage, case let .text(nextTextMessage) = nextMessage
-      else {
-        return false
-      }
-      return nextTextMessage.sender != nil
-    }()
-
-    let hasSender = message.sender != nil
-    if hasSender {
-      return hasSenderNext ? .single : .firstInGroup
-    }
-    return .middleInGroup
-  }
 }
 
 extension ChatMessagesVC {
@@ -62,38 +44,26 @@ extension ChatMessagesVC {
         case let .text(message):
           let cell =
             collectionView.dequeueReusableCell(
-              withReuseIdentifier: TextCell.identifier,
+              withReuseIdentifier: MessageBubble.identifier,
               for: indexPath
-            ) as! TextCell
-          cell.label.attributedText = self.text(for: message) // from items
-          cell.setTime(
-            self.time(for: message),
-            showsClockIcon: message.message.status == .unsent
-          ) // from items
-          cell.setSenderName(
-            message.sender,
-            nickname: message.senderNickname,
-            colorHex: message.colorHex
-          )
-
-          cell.setReplyPreview(self.replyText(for: message))
-          cell.setReactions(message.reactionEmojis)
-          cell.setBubbleShape(
-            self.bubbleShape(for: message, at: indexPath),
-            isIncoming: message.message.isIncoming
-          )
-          cell.onReply = { [weak self] in
-            self?.onReply(message.message)
-          }
-          cell.onReact = { [weak self] in
-            self?.onReact(message.message)
-          }
-          cell.onReactionPreviewTap = { [weak self] in
-            self?.showReactors(for: message.message)
-          }
+            ) as! MessageBubble
+          cell.render(for: message)
           cell.onReplyPreviewClick = { [weak self] in
             self?.scrollToMessage(message.replyTo)
           }
+
+          cell.onReply = { [weak self] in
+            self?.onReply(message.message)
+          }
+
+          cell.onReact = { [weak self] in
+            self?.onReact(message.message)
+          }
+
+          cell.onReactionPreviewTap = { [weak self] in
+            self?.showReactors(for: message.message)
+          }
+
           cell.onLinkTapped = { [weak self] url in
             let linkString = url.absoluteString
             let linkPreview =
@@ -145,15 +115,19 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
 
     switch item {
     case let .text(message):
-      return TextCell.size(
-        text: self.text(for: message),
-        sender: self.sender(for: message),
-        senderNickname: message.senderNickname,
-        replyPreview: self.replyText(for: message),
-        reactionEmojis: message.reactionEmojis,
-        width: collectionView.bounds.width,
-        showsClockIcon: message.message.status == .unsent
+      return MessageBubble.size(
+        for: message,
+        width: collectionView.availableWidth()
       )
+    // return TextCell.size(
+    //   text: self.text(for: message),
+    //   sender: self.sender(for: message),
+    //   senderNickname: message.senderNickname,
+    //   replyPreview: self.replyText(for: message),
+    //   reactionEmojis: message.reactionEmojis,
+    //   width: collectionView.bounds.width,
+    //   showsClockIcon: message.message.status == .unsent
+    // )
     case let .date(d):
       return DateBadgeCell.size(text: d, width: collectionView.availableWidth())
     }
@@ -220,7 +194,7 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
     if case let .text(message) = item,
        let highlightId = highlightMessageId,
        message.message.id == highlightId {
-      if let textCell = cell as? TextCell {
+      if let textCell = cell as? MessageBubble {
         textCell.highlight()
       }
       highlightMessageId = nil

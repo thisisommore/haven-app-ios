@@ -133,7 +133,7 @@ final class ChatMessagesVC: UIViewController {
 
     // Collection view
     self.cv.delegate = self
-    self.cv.register(TextCell.self, forCellWithReuseIdentifier: TextCell.identifier)
+    self.cv.register(MessageBubble.self, forCellWithReuseIdentifier: MessageBubble.identifier)
     self.cv.register(DateBadgeCell.self, forCellWithReuseIdentifier: DateBadgeCell.identifier)
     self.cv.alwaysBounceVertical = true
     self.cv.keyboardDismissMode = .interactive
@@ -272,7 +272,7 @@ final class ChatMessagesVC: UIViewController {
 
       self.highlightMessageId = msg.id
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        if let cell = self.cv.cellForItem(at: indexPath) as? TextCell {
+        if let cell = self.cv.cellForItem(at: indexPath) as? MessageBubble {
           if self.highlightMessageId == msg.id {
             cell.highlight()
             self.highlightMessageId = nil

@@ -121,3 +121,16 @@ extension View {
     }
   }
 }
+
+extension CACornerMask {
+  static let topLeft = CACornerMask.layerMinXMinYCorner
+  static let topRight = CACornerMask.layerMaxXMinYCorner
+  static let bottomLeft = CACornerMask.layerMinXMaxYCorner
+  static let bottomRight = CACornerMask.layerMaxXMaxYCorner
+
+  static let top: CACornerMask = [.topLeft, .topRight]
+  static let bottom: CACornerMask = [.bottomLeft, .bottomRight]
+  static let left: CACornerMask = [.topLeft, .bottomLeft]
+  static let right: CACornerMask = [.topRight, .bottomRight]
+  static let all: CACornerMask = [.top, .bottom]
+}

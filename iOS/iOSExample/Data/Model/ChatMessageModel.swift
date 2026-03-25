@@ -70,4 +70,11 @@ struct ChatMessageModel: Identifiable, Hashable {
     self.replyTo = replyTo
     self.status = status ?? .unsent
   }
+
+  var attributedText: NSAttributedString {
+    let tagStripped = self.message.stripParagraphTags()
+    return self.isPlain ?
+      tagStripped.attr :
+      tagStripped.markdown
+  }
 }

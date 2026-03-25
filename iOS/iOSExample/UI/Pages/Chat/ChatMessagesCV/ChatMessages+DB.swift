@@ -144,7 +144,7 @@ extension ChatMessagesVC {
           )
 
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            if let cell = self.cv.cellForItem(at: indexPath) as? TextCell {
+            if let cell = self.cv.cellForItem(at: indexPath) as? MessageBubble {
               if self.highlightMessageId == targetId {
                 cell.highlight()
                 self.highlightMessageId = nil

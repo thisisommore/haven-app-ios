@@ -4,6 +4,7 @@
 //
 //  Created by Om More on 21/03/26.
 //
+import UIKit
 
 struct MessageWithSender: Hashable {
   let message: ChatMessageModel
@@ -12,6 +13,21 @@ struct MessageWithSender: Hashable {
   let replyTo: ChatMessageModel?
   let colorHex: Int?
   let reactionEmojis: [String]
+}
+
+extension MessageWithSender {
+  var attributedText: NSAttributedString {
+    return self.message.attributedText
+  }
+
+  var replyText: String? {
+    guard let replyTo = self.replyTo else { return nil }
+    return replyTo.attributedText.string
+  }
+
+  var time: String {
+    return self.message.timestamp.formatted(date: .omitted, time: .shortened)
+  }
 }
 
 /// DataSource

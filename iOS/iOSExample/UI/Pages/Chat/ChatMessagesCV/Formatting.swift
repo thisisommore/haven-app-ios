@@ -24,7 +24,7 @@ extension NSRange {
 }
 
 extension String {
-  static let fontSize: CGFloat = 15
+  static let fontSize: CGFloat = 18
   static let defaultAttributes: [NSAttributedString.Key: Any] = [
     .font: UIFont.systemFont(ofSize: fontSize),
     .foregroundColor: UIColor.label,
@@ -71,6 +71,7 @@ extension String {
     }
   }
 
+  // TODO: remove from String
   var attr: NSAttributedString {
     return NSAttributedString(string: self, attributes: Self.defaultAttributes)
   }
