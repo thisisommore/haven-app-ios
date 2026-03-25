@@ -19,7 +19,6 @@ struct ReactorsSheet: View {
   @FetchAll private var reactions: [MessageReactionModel]
 
   @State private var currentEmoji: String?
-  @State private var canDeleteMyReactions: Bool = false
 
   init(
     targetMessageId: String,
@@ -69,16 +68,7 @@ struct ReactorsSheet: View {
     }
   }
 
-  private func refreshDeletePermission() {
-    let canDelete = (try? self.database.read { db in
-      try ChatModel.where { $0.id.eq(self.chatId) }.fetchOne(db)
-    })?.channelId != nil
-    self.canDeleteMyReactions = canDelete
-  }
-
   private func deleteReaction(_ reaction: MessageReactionModel) {
-    guard self.canDeleteMyReactions else { return }
-
     do {
       try self.database.write { db in
         try MessageReactionModel.delete(reaction).execute(db)
@@ -159,15 +149,13 @@ struct ReactorsSheet: View {
               Text("You")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-              if self.canDeleteMyReactions {
-                Button(role: .destructive) {
-                  self.deleteReaction(reaction)
-                } label: {
-                  Image(systemName: "trash")
-                    .font(.caption)
-                }
-                .buttonStyle(.borderless)
+              Button(role: .destructive) {
+                self.deleteReaction(reaction)
+              } label: {
+                Image(systemName: "trash")
+                  .font(.caption)
               }
+              .buttonStyle(.borderless)
             }
           }
         }
@@ -177,7 +165,6 @@ struct ReactorsSheet: View {
       .navigationBarTitleDisplayMode(.inline)
     }
     .onAppear {
-      self.refreshDeletePermission()
       self.ensureCurrentEmojiIsValid()
     }
     .onChange(of: self.reactions) { _, _ in
