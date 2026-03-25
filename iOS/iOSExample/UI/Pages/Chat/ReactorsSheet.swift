@@ -37,7 +37,11 @@ struct ReactorsSheet: View {
   private var groupedReactions: [(emoji: String, reactions: [MessageReactionModel])] {
     Dictionary(grouping: self.reactions, by: \.emoji)
       .map { (emoji: $0.key, reactions: $0.value) }
-      .sorted { $0.reactions.count > $1.reactions.count }
+      .sorted {
+        $0.reactions.count != $1.reactions.count
+          ? $0.reactions.count > $1.reactions.count
+          : $0.emoji > $1.emoji
+      }
   }
 
   private var totalReactionCount: Int {
