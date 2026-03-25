@@ -16,14 +16,9 @@ struct AdminBadge: View {
 
 struct SecretBadge: View {
   var body: some View {
-    Text("Secret")
-      .font(.system(size: 10, weight: .semibold))
-      .foregroundStyle(Color.haven)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(Color.clear)
-      .clipShape(Capsule())
-      .overlay(Capsule().stroke(Color.haven, lineWidth: 1))
+    Image(systemName: "lock.fill")
+      .font(.system(size: 12, weight: .semibold))
+      .foregroundStyle(Color(uiColor: .secondaryLabel))
   }
 }
 
