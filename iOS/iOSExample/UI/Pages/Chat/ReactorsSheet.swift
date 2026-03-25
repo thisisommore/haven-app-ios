@@ -153,7 +153,7 @@ struct ReactorsSheet: View {
             Text(reaction.emoji)
               .font(.title2)
             Text(self.senderCodename(for: reaction))
-              .foregroundStyle(reaction.isMe ? Color.accentColor : Color.primary)
+              .foregroundStyle(Color.primary)
             Spacer()
             if reaction.isMe {
               Text("You")
