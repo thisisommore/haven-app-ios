@@ -72,7 +72,7 @@ private extension MessageBubble {
     self.c.snp.makeConstraints {
       contentView.addSubview(self.c)
       $0.top.left.right.equalToSuperview()
-      $0.bottom.equalTo(contentView.snp.bottom).offset(-16)
+      $0.bottom.equalTo(contentView.snp.bottom).offset(-MessageBubbleReactions.reactionSideLength / 2)
     }
     self.senderLabel.snp.makeConstraints {
       self.c.addSubview(self.senderLabel)
@@ -116,8 +116,7 @@ private extension MessageBubble {
       self.contentView.addSubview(self.reaction)
       $0.centerY.equalTo(self.c.snp.bottom)
       $0.left.equalTo(self.contentView.snp.left).offset(4)
-      $0.height.equalTo(24)
-      $0.width.equalTo((24 + 2) * 3)
+
       self.reaction.addGestureRecognizer(
         UITapGestureRecognizer(
           target: self,
