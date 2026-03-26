@@ -45,7 +45,10 @@ struct ChatView<T: XXDKP>: View {
           },
           onDeleteMessage: { messageExternalId in
             if let channelId = self.chat?.channelId {
-              self.controller.deleteMessage(messageExternalId, channelId: channelId, xxdk: self.xxdk)
+              self.controller.deleteMessage(
+                messageExternalId, channelId: channelId, xxdk: self.xxdk,
+                database: self.database
+              )
             }
           },
           onMuteUser: { pubKey in
@@ -56,7 +59,8 @@ struct ChatView<T: XXDKP>: View {
           onDeleteReaction: { reaction in
             if let channelId = self.chat?.channelId {
               self.controller.deleteReaction(
-                reaction, channelId: channelId, xxdk: self.xxdk
+                reaction, channelId: channelId, xxdk: self.xxdk,
+                database: self.database
               )
             }
           }

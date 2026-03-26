@@ -105,24 +105,49 @@ final class ChatPageController {
   }
 
   func deleteReaction<T: XXDKP>(
-    _ reaction: MessageReactionModel, channelId: String, xxdk: T
+    _ reaction: MessageReactionModel, channelId: String, xxdk: T,
+    database: any DatabaseWriter
   ) {
-    Task.detached {
-      xxdk.channel.msg.deleteMessage(
-        channelId: channelId,
-        messageId: reaction.externalId
-      )
+    let externalId = reaction.externalId
+    Task {
+      try? database.write { db in
+        let match = MessageReactionModel.where { r in
+          r.externalId.eq(externalId)
+        }
+        if var updated = try match.fetchOne(db) {
+          updated.status = .deleting
+          try MessageReactionModel.update(updated).execute(db)
+        }
+      }
+      Task.detached {
+        xxdk.channel.msg.deleteMessage(
+          channelId: channelId,
+          messageId: externalId
+        )
+      }
     }
   }
 
   func deleteMessage<T: XXDKP>(
-    _ messageExternalId: String, channelId: String, xxdk: T
+    _ messageExternalId: String, channelId: String, xxdk: T,
+    database: any DatabaseWriter
   ) {
-    Task.detached {
-      xxdk.channel.msg.deleteMessage(
-        channelId: channelId,
-        messageId: messageExternalId
-      )
+    Task {
+      try? database.write { db in
+        let match = ChatMessageModel.where { msg in
+          msg.externalId.eq(messageExternalId)
+        }
+        if var message = try match.fetchOne(db) {
+          message.status = .deleting
+          try ChatMessageModel.update(message).execute(db)
+        }
+      }
+      Task.detached {
+        xxdk.channel.msg.deleteMessage(
+          channelId: channelId,
+          messageId: messageExternalId
+        )
+      }
     }
   }
 

@@ -21,6 +21,11 @@ final class ChatMessagesVC: UIViewController {
 
   /// Using externalId
   var onDeleteMessage: (String) -> Void
+  func _onDeleteMessage(externalId: String) {
+    self.shouldWaitForContentMenu = true
+    self.onDeleteMessage(externalId)
+  }
+
   var onMuteUser: (Data) -> Void
   var onDeleteReaction: (MessageReactionModel) -> Void
 
@@ -41,6 +46,10 @@ final class ChatMessagesVC: UIViewController {
   private(set) var isNearBottom: Bool = true
   var targetScrollMessageId: Int64?
   var highlightMessageId: Int64?
+
+  /// Defers diffable snapshot application while a context menu is visible (see `ChatMessages+CVDelegate`).
+  var shouldWaitForContentMenu = false
+  var pendingSnapshot: NSDiffableDataSourceSnapshot<Section, Item>?
   //
 
   // Flag to check if scrollToBottomButton can be shown,

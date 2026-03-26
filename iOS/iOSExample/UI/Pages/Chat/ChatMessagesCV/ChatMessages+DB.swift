@@ -84,88 +84,96 @@ extension ChatMessagesVC {
           }
           .flatMap { $0 }
       )
-      if self.initDataDone {
-        // Save scroll data so layout can restore it, this prevents scroll jumps when items are added/updated
-        let layout = (self.cv.collectionViewLayout as! ChatMessagesCollectionViewLayout)
+      if self.shouldWaitForContentMenu {
+        self.pendingSnapshot = snapshot
+        return
+      }
+      self.applySnapshot(snapshot)
+    }
+  }
 
-        // get previously visible element
-        // prevIndexForBackUpPoint is last element visible in scroll view
-        let item = self.dataSource.itemIdentifier(
-          for: layout.prevIndexForBackUpPoint.idxPath()
+  func applySnapshot(_ snapshot: NSDiffableDataSourceSnapshot<Section, Item>) {
+    if self.initDataDone {
+      // Save scroll data so layout can restore it, this prevents scroll jumps when items are added/updated
+      let layout = (self.cv.collectionViewLayout as! ChatMessagesCollectionViewLayout)
+
+      // get previously visible element
+      // prevIndexForBackUpPoint is last element visible in scroll view
+      let item = self.dataSource.itemIdentifier(
+        for: layout.prevIndexForBackUpPoint.idxPath()
+      )
+
+      if case let .text(message) = item {
+        // find new index of same element
+        let newIndex = snapshot.itemIdentifiers.firstIndex(where: {
+          guard case let .text(m) = $0 else { return false }
+          return m.message.id == message.message.id
+        })
+        let prevEleAttr = layout.layoutAttributesForItem(
+          at: layout.prevIndexForBackUpPoint.idxPath()
         )
 
-        if case let .text(message) = item {
-          // find new index of same element
-          let newIndex = snapshot.itemIdentifiers.firstIndex(where: {
-            guard case let .text(m) = $0 else { return false }
-            return m.message.id == message.message.id
-          })
-          let prevEleAttr = layout.layoutAttributesForItem(
-            at: layout.prevIndexForBackUpPoint.idxPath()
-          )
-
-          // store new index and prev element origin
-          if let newIndex, let prevEleAttr {
-            layout.newIndexForBackUpPoint = newIndex
-            layout.backupPoint =
-              prevEleAttr.frame
-                .origin
-          }
+        // store new index and prev element origin
+        if let newIndex, let prevEleAttr {
+          layout.newIndexForBackUpPoint = newIndex
+          layout.backupPoint =
+            prevEleAttr.frame
+              .origin
         }
+      }
 
-        let wasNearBottom = self.isNearBottom
-        if wasNearBottom, !self.cv.isTracking, !self.cv.isDragging, !self.cv.isDecelerating {
-          self.withScrollToButtomDisabled { enable in
-            // Calculates differences and applies them
-            self.dataSource.apply(snapshot, animatingDifferences: false)
-            // If user was near bottom, scroll to bottom to show new message
-            let numberOfItems = self.cv.numberOfItems(inSection: 0)
-            if numberOfItems > 0 {
-              self.cv.scrollToItem(
-                at: (numberOfItems - 1).idxPath(), at: .bottom, animated: true
-              )
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [enable] in
-              enable()
-            }
-          }
-        } else {
+      let wasNearBottom = self.isNearBottom
+      if wasNearBottom, !self.cv.isTracking, !self.cv.isDragging, !self.cv.isDecelerating {
+        self.withScrollToButtomDisabled { enable in
+          // Calculates differences and applies them
           self.dataSource.apply(snapshot, animatingDifferences: false)
-        }
+          // If user was near bottom, scroll to bottom to show new message
+          let numberOfItems = self.cv.numberOfItems(inSection: 0)
+          if numberOfItems > 0 {
+            self.cv.scrollToItem(
+              at: (numberOfItems - 1).idxPath(), at: .bottom, animated: true
+            )
+          }
 
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [enable] in
+            enable()
+          }
+        }
       } else {
-        // Faster for init data
-        self.dataSource.applySnapshotUsingReloadData(snapshot)
-        self.initDataDone = true
+        self.dataSource.apply(snapshot, animatingDifferences: false)
       }
 
-      if let targetId = self.targetScrollMessageId,
-         let index = snapshot.itemIdentifiers.firstIndex(where: {
-           if case let .text(m) = $0 {
-             return m.message.id == targetId
-           }
-           return false
-         }) {
-        self.highlightMessageId = targetId
-        // Use async to ensure layout is updated before scrolling
-        DispatchQueue.main.async {
-          let indexPath = index.idxPath()
-          self.cv.scrollToItem(
-            at: indexPath, at: .centeredVertically, animated: true
-          )
+    } else {
+      // Faster for init data
+      self.dataSource.applySnapshotUsingReloadData(snapshot)
+      self.initDataDone = true
+    }
 
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            if let cell = self.cv.cellForItem(at: indexPath) as? MessageBubble {
-              if self.highlightMessageId == targetId {
-                cell.highlight()
-                self.highlightMessageId = nil
-              }
+    if let targetId = self.targetScrollMessageId,
+       let index = snapshot.itemIdentifiers.firstIndex(where: {
+         if case let .text(m) = $0 {
+           return m.message.id == targetId
+         }
+         return false
+       }) {
+      self.highlightMessageId = targetId
+      // Use async to ensure layout is updated before scrolling
+      DispatchQueue.main.async {
+        let indexPath = index.idxPath()
+        self.cv.scrollToItem(
+          at: indexPath, at: .centeredVertically, animated: true
+        )
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+          if let cell = self.cv.cellForItem(at: indexPath) as? MessageBubble {
+            if self.highlightMessageId == targetId {
+              cell.highlight()
+              self.highlightMessageId = nil
             }
           }
         }
-        self.targetScrollMessageId = nil
       }
+      self.targetScrollMessageId = nil
     }
   }
 
@@ -183,9 +191,7 @@ extension ChatMessagesVC {
     let whereC = ChatMessageModel
       .where {
         $0.chatId.eq(self.chat.id)
-          && ($0.status.eq(MessageStatus.unsent)
-            || $0.status.eq(MessageStatus.delivered)
-            || $0.status.eq(MessageStatus.sent))
+          && $0.status.neq(MessageStatus.failed)
       }
 
     let joinSender = whereC.leftJoin(MessageSenderModel.all) { message, sender in

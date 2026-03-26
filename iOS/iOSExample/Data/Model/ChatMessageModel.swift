@@ -13,6 +13,7 @@ enum MessageStatus: Int, QueryBindable {
   case sent = 1
   case delivered = 2
   case failed = 3
+  case deleting = 9
 
   var name: String {
     switch self {
@@ -20,6 +21,7 @@ enum MessageStatus: Int, QueryBindable {
     case .sent: return "sent"
     case .delivered: return "delivered"
     case .failed: return "failed"
+    case .deleting: return "deleting"
     }
   }
 

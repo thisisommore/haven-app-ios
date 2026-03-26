@@ -140,13 +140,18 @@ struct ReactorsSheet: View {
               Text("You")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-              Button(role: .destructive) {
-                self.onDeleteReaction?(reaction)
-              } label: {
-                Image(systemName: "trash")
-                  .font(.caption)
+              if reaction.status == .deleting {
+                ProgressView()
+                  .controlSize(.small)
+              } else {
+                Button(role: .destructive) {
+                  self.onDeleteReaction?(reaction)
+                } label: {
+                  Image(systemName: "trash")
+                    .font(.caption)
+                }
+                .buttonStyle(.borderless)
               }
-              .buttonStyle(.borderless)
             }
           }
         }

@@ -199,7 +199,7 @@ extension MessageBubble: CVCell {
     self.senderLabel.render(for: data)
     self.msgLabel.render(for: Self.text(for: data))
     self.replyPreviewLabel.render(for: Self.replyText(for: data))
-    self.clock.render(for: data.message.status == .unsent)
+    self.clock.render(for: data.message.status == .unsent || data.message.status == .deleting)
     self.timeLabel.render(for: Self.time(for: data))
     self.reaction.render(for: data.reactionEmojis)
     self.c.snp.updateConstraints {

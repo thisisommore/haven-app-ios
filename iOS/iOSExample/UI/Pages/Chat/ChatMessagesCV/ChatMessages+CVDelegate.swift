@@ -33,7 +33,7 @@ extension ChatMessagesVC {
 
           cell.canDelete = (self.chat.isChannel && self.chat.isAdmin) || !message.message.isIncoming
           cell.onDelete = { [weak self] in
-            self?.onDeleteMessage(message.message.externalId)
+            self?._onDeleteMessage(externalId: message.message.externalId)
           }
           cell.onReplyPreviewClick = { [weak self] in
             self?.scrollToMessage(message.replyTo)
@@ -138,6 +138,26 @@ extension ChatMessagesVC: ChatMessagesCollectionViewLayoutDelegate, UICollection
       return message.message.isIncoming ? .left : .right
     case .date:
       return .center
+    }
+  }
+
+  func collectionView(
+    _: UICollectionView,
+    willEndContextMenuInteraction _: UIContextMenuConfiguration,
+    animator: (any UIContextMenuInteractionAnimating)?
+  ) {
+    let flushPending = { [weak self] in
+      guard let self else { return }
+      self.shouldWaitForContentMenu = false
+      if let pending = self.pendingSnapshot {
+        self.pendingSnapshot = nil
+        self.applySnapshot(pending)
+      }
+    }
+    if let animator {
+      animator.addCompletion(flushPending)
+    } else {
+      flushPending()
     }
   }
 
