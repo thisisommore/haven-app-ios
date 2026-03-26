@@ -94,6 +94,9 @@ struct ChatRowView<T: XXDKP>: View {
     if self.isDM, let nickname = dmPartnerNickname, !nickname.isEmpty {
       return "\(self.truncateNickname(nickname)) aka \(self.chat.name)"
     }
+    if self.isChannel {
+      return "#\(self.chat.name)"
+    }
     return self.chat.name
   }
 
