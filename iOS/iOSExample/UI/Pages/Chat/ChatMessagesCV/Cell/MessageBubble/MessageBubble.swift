@@ -182,12 +182,30 @@ extension MessageBubble: CVCell {
         .offset(data.reactionEmojis.isEmpty ? 0 : -16)
     }
     if data.sender == nil {
-      self.c.layer.maskedCorners = data.message.isIncoming ? .right : .left
+      if #available(iOS 26, *) {
+        self.c.cornerConfiguration = .corners(
+          topLeftRadius: data.message.isIncoming ? .fixed(6) : .fixed(12),
+          topRightRadius: data.message.isIncoming ? .fixed(12) : .fixed(6),
+          bottomLeftRadius: data.message.isIncoming ? .fixed(6) : .fixed(12),
+          bottomRightRadius: data.message.isIncoming ? .fixed(12) : .fixed(6)
+        )
+      } else {
+        self.c.layer.maskedCorners = data.message.isIncoming ? .right : .left
+      }
     } else {
-      self.c.layer.maskedCorners = [
-        .top,
-        data.message.isIncoming ? .bottomRight : .bottomLeft,
-      ]
+      if #available(iOS 26, *) {
+        self.c.cornerConfiguration = .corners(
+          topLeftRadius: .fixed(12),
+          topRightRadius: .fixed(12),
+          bottomLeftRadius: data.message.isIncoming ? .fixed(6) : .fixed(12),
+          bottomRightRadius: data.message.isIncoming ? .fixed(12) : .fixed(6)
+        )
+      } else {
+        self.c.layer.maskedCorners = [
+          .top,
+          data.message.isIncoming ? .bottomRight : .bottomLeft,
+        ]
+      }
     }
   }
 }
