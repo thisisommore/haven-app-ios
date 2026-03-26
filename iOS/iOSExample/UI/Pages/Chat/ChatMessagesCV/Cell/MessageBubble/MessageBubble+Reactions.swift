@@ -1,3 +1,4 @@
+import SwiftUI
 import UIKit
 
 final class MessageBubbleReactions: UIView {
@@ -72,7 +73,7 @@ final class Reaction: UIView {
   let t = UILabel()
   override init(frame: CGRect) {
     super.init(frame: frame)
-    self.backgroundColor = .gray
+    self.backgroundColor = UIColor(Color.messageBubbleReactionBG)
     self.layer.cornerRadius = 10
     self.addSubview(self.t)
     self.t.snp.makeConstraints {
