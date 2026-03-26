@@ -36,7 +36,10 @@ final class HomePageController {
   var didStartLoad = false
   var showTooltip = false
 
-  func filteredChats(from chats: [ChatModel], database: any DatabaseWriter) -> [ChatModel] {
+  @ObservationIgnored
+  @Dependency(\.defaultDatabase) var database
+
+  func filteredChats(from chats: [ChatModel]) -> [ChatModel] {
     if self.searchText.isEmpty {
       return chats
     }
@@ -63,7 +66,7 @@ final class HomePageController {
     }
   }
 
-  func handleAddUser<T: XXDKP>(code: String, xxdk _: T, database: any DatabaseWriter) {
+  func handleAddUser<T: XXDKP>(code: String, xxdk _: T) {
     guard let url = URL(string: code),
           let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
     else {
@@ -122,10 +125,8 @@ final class HomePageController {
 
     let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
 
-    Task.detached {
-      try? database.write { db in
-        try ChatModel.insert { newChat }.execute(db)
-      }
+    try? self.database.write { db in
+      try ChatModel.insert { newChat }.execute(db)
     }
 
     self.showToast("User added successfully", dismissAfter: 2)
@@ -176,7 +177,6 @@ final class HomePageController {
 
   func performLogout<T: XXDKP>(
     xxdk: T,
-    database: any DatabaseWriter,
     appStorage: AppStorage,
     navigation: AppNavigationPath
   ) {
@@ -184,7 +184,7 @@ final class HomePageController {
     Task {
       try! await xxdk.logout()
 
-      try! await database.write { db in
+      try! await self.database.write { db in
         try ChatMessageModel.delete().execute(db)
         try MessageReactionModel.delete().execute(db)
         try MessageSenderModel.delete().execute(db)

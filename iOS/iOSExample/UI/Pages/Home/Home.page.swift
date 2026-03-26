@@ -10,13 +10,11 @@ struct HomeView<T: XXDKP>: View {
   @Environment(\.isSplitView) private var isSplitView
   @EnvironmentObject private var selectedChat: SelectedChat
 
-  @Dependency(\.defaultDatabase) var database
-
   @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
 
   var body: some View {
     let chatList = List(selection: $selectedChat.chatId) {
-      ForEach(self.controller.filteredChats(from: self.chats, database: self.database)) { chat in
+      ForEach(self.controller.filteredChats(from: self.chats)) { chat in
         ChatRowView<T>(chat: chat)
           .tag(chat.id)
       }
@@ -91,8 +89,7 @@ struct HomeView<T: XXDKP>: View {
               onCodeScanned: { code in
                 self.controller.handleAddUser(
                   code: code,
-                  xxdk: self.xxdk,
-                  database: self.database
+                  xxdk: self.xxdk
                 )
               },
               onShowMyQR: {
@@ -121,7 +118,6 @@ struct HomeView<T: XXDKP>: View {
           Button("Logout", role: .destructive) {
             self.controller.performLogout(
               xxdk: self.xxdk,
-              database: self.database,
               appStorage: self.appStorage,
               navigation: self.navigation
             )
