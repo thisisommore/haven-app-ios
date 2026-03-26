@@ -10,7 +10,12 @@ import SQLiteData
 import UIKit
 
 extension ChatMessagesVC {
-  typealias ObservedMessages = [(ChatMessageModel, String, String?.QueryOutput, TableAlias<ChatMessageModel, ChatMessagesVC.ReplyTo>?.QueryOutput, Int, [String])]
+  typealias ObservedMessages = [(
+    ChatMessageModel,
+    MessageSenderModel?,
+    TableAlias<ChatMessageModel, ChatMessagesVC.ReplyTo>?.QueryOutput,
+    [String]
+  )]
 
   enum ReplyTo: AliasName {}
   func startObservation() {
@@ -25,12 +30,12 @@ extension ChatMessagesVC {
       // Handle error
     } onChange: { (_messages: ObservedMessages) in
       self.messages = _messages.reversed().map {
-        var strArr = $0.5
+        var strArr = $0.3
         if strArr.count >= 3 {
           strArr[2] = "+"
         }
         return MessageWithSender(
-          message: $0.0, sender: $0.1, senderNickname: $0.2, replyTo: $0.3, colorHex: $0.4,
+          message: $0.0, sender: $0.1, replyTo: $0.2,
           reactionEmojis: strArr
         )
       }
@@ -54,8 +59,7 @@ extension ChatMessagesVC {
               shouldShowSender
                 ? message
                 : MessageWithSender(
-                  message: message.message, sender: nil, senderNickname: nil, replyTo: message.replyTo,
-                  colorHex: message.colorHex,
+                  message: message.message, sender: nil, replyTo: message.replyTo,
                   reactionEmojis: message.reactionEmojis
                 )
             if dateChanged {
@@ -176,7 +180,7 @@ extension ChatMessagesVC {
             || $0.status.eq(MessageStatus.sent))
       }
 
-    let joinSender = whereC.join(MessageSenderModel.all) { message, sender in
+    let joinSender = whereC.leftJoin(MessageSenderModel.all) { message, sender in
       message.senderId.eq(sender.id)
     }
 
@@ -193,10 +197,8 @@ extension ChatMessagesVC {
 
         return (
           message,
-          sender.codename,
-          sender.nickname,
+          sender,
           reply,
-          sender.color,
           #sql(
             "coalesce((SELECT json_group_array(emoji) FROM (\(first3UniqueReactions))), '[]')",
             as: [String].JSONRepresentation.self

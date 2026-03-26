@@ -19,10 +19,10 @@ extension SenderLabel: CVView {
   typealias Data = MessageWithSender
 
   static func size(for data: Data, width: CGFloat) -> CGSize {
-    guard let sender = data.sender else { return .zero }
+    guard let codename = data.sender?.codename else { return .zero }
     // self sender have empty string
-    if sender == "" { return .zero }
-    let rect = sender.boundingRect(
+    if codename == "" { return .zero }
+    let rect = codename.boundingRect(
       with: CGSize(width: width, height: .greatestFiniteMagnitude),
       options: [.usesLineFragmentOrigin, .usesFontLeading],
       attributes: [.font: Self.font],
@@ -32,8 +32,8 @@ extension SenderLabel: CVView {
   }
 
   func render(for data: Data) {
-    self.text = data.sender
-    if let colorHex = data.colorHex {
+    self.text = data.sender?.codename
+    if let colorHex = data.sender?.color {
       self.textColor = UIColor { traitCollection in
         let colorScheme: ColorScheme =
           traitCollection.userInterfaceStyle == .dark ? .dark : .light

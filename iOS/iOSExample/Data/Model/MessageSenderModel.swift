@@ -2,7 +2,7 @@ import Foundation
 import SQLiteData
 
 @Table("messageSenders")
-struct MessageSenderModel {
+struct MessageSenderModel: Hashable {
   var id: UUID = .init()
   var pubkey: Data
   /// codename

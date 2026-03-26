@@ -30,7 +30,7 @@ extension ChatMessagesVC {
   }
 
   private func sender(for message: MessageWithSender) -> String? {
-    return message.sender
+    return message.sender?.codename
   }
 }
 
