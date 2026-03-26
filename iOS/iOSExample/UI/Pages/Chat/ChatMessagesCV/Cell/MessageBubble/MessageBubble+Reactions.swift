@@ -35,21 +35,6 @@ final class MessageBubbleReactions: UIView {
   }
 }
 
-private extension MessageBubbleReactions {
-  static func makeEmoji(_ emoji: String) -> UIView {
-    let v = UIView()
-    v.backgroundColor = .gray
-    v.layer.cornerRadius = 10
-    let t = UILabel()
-    t.text = emoji
-    v.addSubview(t)
-    t.snp.makeConstraints {
-      $0.center.equalToSuperview()
-    }
-    return v
-  }
-}
-
 extension Collection {
   subscript(safe index: Index) -> Element? {
     indices.contains(index) ? self[index] : nil
