@@ -18,8 +18,6 @@ struct ChannelOptionsView<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var xxdk: T
 
-  @Dependency(\.defaultDatabase) var database
-
   @FocusState private var isNicknameFocused: Bool
 
   private var isDM: Bool {
@@ -255,7 +253,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
           xxdk: self.xxdk,
           onSuccess: { message in
             self.controller.handleImportSuccess(
-              message: message, chatId: self.chat.id, chat: self.chat, database: self.database
+              message: message, chatId: self.chat.id, chat: self.chat
             )
           }
         )

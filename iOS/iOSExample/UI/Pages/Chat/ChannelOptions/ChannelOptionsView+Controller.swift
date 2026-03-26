@@ -24,6 +24,9 @@ final class ChannelOptionsController {
   var showDeleteConfirmation: Bool = false
   var channelNickname: String = ""
 
+  @ObservationIgnored
+  @Dependency(\.defaultDatabase) var database
+
   func onAppear<T: XXDKP>(chat: ChatModel?, channelId: String?, xxdk: T) {
     self.refreshAdminStatus(chat: chat)
     guard let channelId else { return }
@@ -114,10 +117,10 @@ final class ChannelOptionsController {
   }
 
   func handleImportSuccess(
-    message: String, chatId: UUID?, chat: ChatModel?, database: any DatabaseWriter
+    message: String, chatId: UUID?, chat: ChatModel?
   ) {
     if let chatId {
-      try? database.write { db in
+      try? self.database.write { db in
         try ChatModel.where { $0.id.eq(chatId) }
           .update { $0.isAdmin = true }
           .execute(db)
