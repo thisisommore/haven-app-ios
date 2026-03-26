@@ -87,7 +87,7 @@ final class ChatPageController {
 
     if let token = chat.dmToken, let pubKey = chat.pubKey {
       Task.detached {
-        xxdk.dm?.sendReaction(
+        xxdk.dm?.react(
           emoji: emoji,
           toMessageIdB64: message.externalId,
           toPubKey: pubKey,
@@ -98,7 +98,7 @@ final class ChatPageController {
     }
     if let channelId = chat.channelId {
       Task.detached {
-        xxdk.channel.msg.sendReaction(
+        xxdk.channel.msg.react(
           emoji: emoji,
           toMessageIdB64: message.externalId,
           inChannelId: channelId
@@ -122,7 +122,7 @@ final class ChatPageController {
         }
       }
       Task.detached {
-        xxdk.channel.msg.deleteMessage(
+        xxdk.channel.msg.delete(
           channelId: channelId,
           messageId: externalId
         )
@@ -144,7 +144,7 @@ final class ChatPageController {
         }
       }
       Task.detached {
-        xxdk.channel.msg.deleteMessage(
+        xxdk.channel.msg.delete(
           channelId: channelId,
           messageId: messageExternalId
         )

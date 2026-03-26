@@ -40,7 +40,7 @@ struct MessageForm<T: XXDKP>: View {
         if let replyTo {
           let replyToId = replyTo.externalId
           Task.detached {
-            xxdk.dm!.sendReply(
+            xxdk.dm!.reply(
               msg: trimmed,
               toPubKey: pubKey,
               partnerToken: token,
@@ -49,7 +49,7 @@ struct MessageForm<T: XXDKP>: View {
           }
         } else {
           Task.detached {
-            xxdk.dm!.sendDM(
+            xxdk.dm!.send(
               msg: trimmed,
               toPubKey: pubKey,
               partnerToken: token
@@ -61,7 +61,7 @@ struct MessageForm<T: XXDKP>: View {
         if let replyTo {
           let replyToId = replyTo.externalId
           Task.detached {
-            xxdk.channel.msg.sendReply(
+            xxdk.channel.msg.reply(
               msg: trimmed,
               channelId: channelId,
               replyToMessageIdB64: replyToId
@@ -69,7 +69,7 @@ struct MessageForm<T: XXDKP>: View {
           }
         } else {
           Task.detached {
-            xxdk.channel.msg.sendDM(
+            xxdk.channel.msg.send(
               msg: trimmed,
               channelId: channelId
             )

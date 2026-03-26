@@ -8,14 +8,14 @@ import Foundation
 import SQLiteData
 
 protocol ChannelsMessagingP {
-  func sendDM(msg: String, channelId: String)
-  func sendReply(msg: String, channelId: String, replyToMessageIdB64: String)
-  func sendReaction(
+  func send(msg: String, channelId: String)
+  func reply(msg: String, channelId: String, replyToMessageIdB64: String)
+  func react(
     emoji: String,
     toMessageIdB64: String,
     inChannelId channelId: String
   )
-  func deleteMessage(channelId: String, messageId: String)
+  func delete(channelId: String, messageId: String)
 }
 
 class ChannelsMessaging: ChannelsMessagingP {
@@ -26,7 +26,7 @@ class ChannelsMessaging: ChannelsMessagingP {
   }
 
   /// Send a message to a channel by Channel ID (base64-encoded)
-  func sendDM(msg: String, channelId: String) {
+  func send(msg: String, channelId: String) {
     let channelIdData =
       Data(base64Encoded: channelId) ?? channelId.data
     guard let encodedMsg = encodeMessage("<p>\(msg)</p>")
@@ -50,7 +50,7 @@ class ChannelsMessaging: ChannelsMessagingP {
   }
 
   /// Send a reply to a specific message in a channel
-  func sendReply(msg: String, channelId: String, replyToMessageIdB64: String) {
+  func reply(msg: String, channelId: String, replyToMessageIdB64: String) {
     let channelIdData =
       Data(base64Encoded: channelId) ?? channelId.data
     guard let replyToMessageId = Data(base64Encoded: replyToMessageIdB64)
@@ -82,7 +82,7 @@ class ChannelsMessaging: ChannelsMessagingP {
   }
 
   /// Send a reaction to a specific message in a channel
-  func sendReaction(
+  func react(
     emoji: String,
     toMessageIdB64: String,
     inChannelId channelId: String
@@ -109,7 +109,7 @@ class ChannelsMessaging: ChannelsMessagingP {
   }
 
   /// Delete a message from a channel (admin or message owner only)
-  func deleteMessage(channelId: String, messageId: String) {
+  func delete(channelId: String, messageId: String) {
     let channelIdData = Data(base64Encoded: channelId) ?? channelId.data
     guard let messageIdData = Data(base64Encoded: messageId)
     else {

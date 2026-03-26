@@ -9,9 +9,9 @@ import SQLiteData
 
 protocol DirectMessageP {
   func getPublicKey() -> Data?
-  func sendDM(msg: String, toPubKey: Data, partnerToken: Int32)
-  func sendReply(msg: String, toPubKey: Data, partnerToken: Int32, replyToMessageIdB64: String)
-  func sendReaction(
+  func send(msg: String, toPubKey: Data, partnerToken: Int32)
+  func reply(msg: String, toPubKey: Data, partnerToken: Int32, replyToMessageIdB64: String)
+  func react(
     emoji: String,
     toMessageIdB64: String,
     toPubKey: Data,
@@ -71,7 +71,7 @@ class DirectMessage: DirectMessageP {
     }
   }
 
-  func sendDM(msg: String, toPubKey: Data, partnerToken: Int32) {
+  func send(msg: String, toPubKey: Data, partnerToken: Int32) {
     guard let encodedMsg = encodeMessage("<p>\(msg)</p>")
     else {
       AppLogger.messaging.error("sendDM(DM): failed to encode message")
@@ -104,7 +104,7 @@ class DirectMessage: DirectMessageP {
   }
 
   /// Send a reply to a specific message in a DM conversation
-  func sendReply(
+  func reply(
     msg: String,
     toPubKey: Data,
     partnerToken: Int32,
@@ -149,7 +149,7 @@ class DirectMessage: DirectMessageP {
   }
 
   /// Send a reaction to a specific message in a DM conversation
-  func sendReaction(
+  func react(
     emoji: String,
     toMessageIdB64: String,
     toPubKey: Data,
