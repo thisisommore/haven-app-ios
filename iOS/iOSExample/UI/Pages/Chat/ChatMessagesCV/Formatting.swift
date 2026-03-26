@@ -70,9 +70,4 @@ extension String {
       return NSAttributedString(string: self, attributes: Self.defaultAttributes)
     }
   }
-
-  // TODO: remove from String
-  var attr: NSAttributedString {
-    return NSAttributedString(string: self, attributes: Self.defaultAttributes)
-  }
 }

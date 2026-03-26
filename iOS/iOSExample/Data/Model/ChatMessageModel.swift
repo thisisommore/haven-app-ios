@@ -74,7 +74,9 @@ struct ChatMessageModel: Identifiable, Hashable {
   var attributedText: NSAttributedString {
     let tagStripped = self.message.stripParagraphTags()
     return self.isPlain ?
-      tagStripped.attr :
+      NSAttributedString(string:
+        tagStripped,
+        attributes: String.defaultAttributes) :
       tagStripped.markdown
   }
 }
