@@ -18,7 +18,10 @@ final class ChatPageController {
   var isAdmin: Bool = false
   var isMuted: Bool = false
 
-  func markMessagesAsRead(chat: ChatModel, database: any DatabaseWriter) {
+  @ObservationIgnored
+  @Dependency(\.defaultDatabase) var database
+
+  func markMessagesAsRead(chat: ChatModel) {
     let joinedAt = chat.joinedAt
     let chatId = chat.id
 
@@ -34,7 +37,7 @@ final class ChatPageController {
     var updatedChat = chat
     updatedChat.unreadCount = 0
 
-    try? database.write { db in
+    try? self.database.write { db in
       for var message in unreadMessages {
         message.isRead = true
         try ChatMessageModel.update(message).execute(db)
@@ -43,14 +46,14 @@ final class ChatPageController {
     }
   }
 
-  func onAppear<T: XXDKP>(chat: ChatModel, xxdk: T, database: any DatabaseWriter) {
+  func onAppear<T: XXDKP>(chat: ChatModel, xxdk: T) {
     self.isAdmin = chat.isAdmin
     if chat.isChannel, let channelId = chat.channelId {
       self.isMuted = xxdk.channel.isMuted(channelId: channelId)
     } else {
       self.isMuted = false
     }
-    self.markMessagesAsRead(chat: chat, database: database)
+    self.markMessagesAsRead(chat: chat)
   }
 
   func refreshMuteFromNotification<T: XXDKP>(
@@ -70,10 +73,10 @@ final class ChatPageController {
   }
 
   func onUnreadCountChanged(
-    newValue: Int?, chat: ChatModel, database: any DatabaseWriter
+    newValue: Int?, chat: ChatModel
   ) {
     guard let newValue, newValue > 0 else { return }
-    self.markMessagesAsRead(chat: chat, database: database)
+    self.markMessagesAsRead(chat: chat)
   }
 
   func sendReaction<T: XXDKP>(
@@ -105,12 +108,11 @@ final class ChatPageController {
   }
 
   func deleteReaction<T: XXDKP>(
-    _ reaction: MessageReactionModel, channelId: String, xxdk: T,
-    database: any DatabaseWriter
+    _ reaction: MessageReactionModel, channelId: String, xxdk: T
   ) {
     let externalId = reaction.externalId
     Task {
-      try? database.write { db in
+      try? self.database.write { db in
         let match = MessageReactionModel.where { r in
           r.externalId.eq(externalId)
         }
@@ -129,11 +131,10 @@ final class ChatPageController {
   }
 
   func deleteMessage<T: XXDKP>(
-    _ messageExternalId: String, channelId: String, xxdk: T,
-    database: any DatabaseWriter
+    _ messageExternalId: String, channelId: String, xxdk: T
   ) {
     Task {
-      try? database.write { db in
+      try? self.database.write { db in
         let match = ChatMessageModel.where { msg in
           msg.externalId.eq(messageExternalId)
         }
@@ -164,7 +165,7 @@ final class ChatPageController {
   }
 
   func leaveChannel<T: XXDKP>(
-    chatId: UUID, chat: ChatModel?, xxdk: T, database: any DatabaseWriter,
+    chatId: UUID, chat: ChatModel?, xxdk: T,
     dismiss: @escaping () -> Void
   ) {
     Task {
@@ -176,7 +177,7 @@ final class ChatPageController {
             try ChatModel.where { $0.id.eq(chatId) }.fetchAll(db)
           }
         if let chatsToDelete {
-          try? await database.write { db in
+          try? await self.database.write { db in
             for chatToDelete in chatsToDelete {
               try ChatModel.delete(chatToDelete).execute(db)
             }

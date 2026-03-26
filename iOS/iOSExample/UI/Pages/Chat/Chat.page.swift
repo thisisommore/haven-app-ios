@@ -46,8 +46,7 @@ struct ChatView<T: XXDKP>: View {
           onDeleteMessage: { messageExternalId in
             if let channelId = self.chat?.channelId {
               self.controller.deleteMessage(
-                messageExternalId, channelId: channelId, xxdk: self.xxdk,
-                database: self.database
+                messageExternalId, channelId: channelId, xxdk: self.xxdk
               )
             }
           },
@@ -59,8 +58,7 @@ struct ChatView<T: XXDKP>: View {
           onDeleteReaction: { reaction in
             if let channelId = self.chat?.channelId {
               self.controller.deleteReaction(
-                reaction, channelId: channelId, xxdk: self.xxdk,
-                database: self.database
+                reaction, channelId: channelId, xxdk: self.xxdk
               )
             }
           }
@@ -141,7 +139,6 @@ struct ChatView<T: XXDKP>: View {
             chatId: self.chatId,
             chat: self.chat,
             xxdk: self.xxdk,
-            database: self.database,
             dismiss: { self.dismiss() }
           )
         }
@@ -165,7 +162,7 @@ struct ChatView<T: XXDKP>: View {
     .onAppear {
       if let chat {
         self.controller.onAppear(
-          chat: chat, xxdk: self.xxdk, database: self.database
+          chat: chat, xxdk: self.xxdk
         )
       }
     }
@@ -187,7 +184,7 @@ struct ChatView<T: XXDKP>: View {
     .onChange(of: self.chat?.unreadCount) { _, newValue in
       if let chat {
         self.controller.onUnreadCountChanged(
-          newValue: newValue, chat: chat, database: self.database
+          newValue: newValue, chat: chat
         )
       }
     }
