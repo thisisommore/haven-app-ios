@@ -152,13 +152,14 @@ private extension MessageBubble {
 extension MessageBubble {
   /// Brief orange border, then fades out (e.g. scroll-to-message highlight).
   func highlight() {
-    self.contentView.layer.borderColor = UIColor(Color.haven).cgColor
-    self.contentView.layer.borderWidth = 1.5
+    let view = self.c
+    view.layer.borderColor = UIColor(Color.haven).cgColor
+    view.layer.borderWidth = 1.5
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
-      guard let self else { return }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak view] in
+      guard let view else { return }
       UIView.animate(withDuration: 0.5) {
-        self.contentView.layer.borderWidth = 0
+        view.layer.borderWidth = 0
       }
     }
   }
