@@ -97,8 +97,28 @@ struct ChatRowView<T: XXDKP>: View {
     return self.chat.name
   }
 
+  /// Today: time only. Yesterday: localized "Yesterday". Same calendar week: weekday (abbrev).
+  /// Otherwise: numeric date (locale order).
+  private func formattedListTimestamp(_ date: Date) -> String {
+    let cal = Calendar.current
+    if cal.isDateInToday(date) {
+      return date.formatted(date: .omitted, time: .shortened)
+    }
+    if cal.isDateInYesterday(date) {
+      let f = DateFormatter()
+      f.dateStyle = .short
+      f.timeStyle = .none
+      f.doesRelativeDateFormatting = true
+      return f.string(from: date)
+    }
+    if cal.isDate(date, equalTo: Date(), toGranularity: .weekOfYear) {
+      return date.formatted(.dateTime.weekday(.abbreviated))
+    }
+    return date.formatted(date: .numeric, time: .omitted)
+  }
+
   var body: some View {
-    HStack {
+    HStack(alignment: .top) {
       if self.chat.name == "<self>" {
         Image(systemName: "bookmark.circle.fill").font(.system(size: 40)).foregroundStyle(
           .orange
@@ -132,10 +152,17 @@ struct ChatRowView<T: XXDKP>: View {
         }
       }
 
-      Spacer()
+      Spacer(minLength: 8)
 
-      if self.chat.unreadCount > 0 {
-        UnreadBadge(count: self.chat.unreadCount)
+      VStack(alignment: .trailing, spacing: 4) {
+        if let lastMessage = self.latestMessage.first {
+          Text(self.formattedListTimestamp(lastMessage.timestamp))
+            .font(.system(size: 12))
+            .foregroundStyle(Color(uiColor: .secondaryLabel))
+        }
+        if self.chat.unreadCount > 0 {
+          UnreadBadge(count: self.chat.unreadCount)
+        }
       }
     }
   }
