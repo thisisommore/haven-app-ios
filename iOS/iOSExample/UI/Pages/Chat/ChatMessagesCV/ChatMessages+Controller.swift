@@ -114,11 +114,12 @@ final class ChatMessagesVC: UIViewController {
     self.isNearBottom = distFromBottom < 1
 
     // Show button if more than 30pt from bottom
-    let shouldShowButton = distFromBottom > 30
-    if self.scrollToBottomButton.isHidden == shouldShowButton && !self.tempButtonDisable {
+    let shouldShowButton = distFromBottom > 60
+    let shouldHideButton = !shouldShowButton
+    if self.scrollToBottomButton.isHidden != shouldHideButton {
       UIView.animate(withDuration: 0.2) {
-        self.scrollToBottomButton.isHidden = !shouldShowButton
-        self.scrollToBottomButton.alpha = shouldShowButton ? 1.0 : 0.0
+        self.scrollToBottomButton.isHidden = shouldHideButton
+        self.scrollToBottomButton.alpha = shouldHideButton ? 0.0 : 1.0
       }
     }
 
