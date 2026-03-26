@@ -1,29 +1,9 @@
-import Bindings
 import SQLiteData
 import SwiftUI
-import UniformTypeIdentifiers
-
-enum HomeSheet: Identifiable {
-  case newChat
-  case createSpace
-  case exportIdentity
-  case qrScanner
-  case nicknamePicker
-  case qrCode(QRData)
-
-  var id: String {
-    switch self {
-    case .newChat: return "newChat"
-    case .createSpace: return "createSpace"
-    case .exportIdentity: return "exportIdentity"
-    case .qrScanner: return "qrScanner"
-    case .nicknamePicker: return "nicknamePicker"
-    case .qrCode: return "qrCode"
-    }
-  }
-}
 
 struct HomeView<T: XXDKP>: View {
+  @State private var controller = HomePageController()
+
   @EnvironmentObject var xxdk: T
   @EnvironmentObject private var appStorage: AppStorage
   @EnvironmentObject private var navigation: AppNavigationPath
@@ -34,166 +14,23 @@ struct HomeView<T: XXDKP>: View {
 
   @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
 
-  @State private var activeSheet: HomeSheet?
-  @State private var toastMessage: String?
-  @State private var showLogoutAlert = false
-  @State private var currentNickname: String?
-  @State private var searchText: String = ""
-  @State private var isLoggingOut = false
-  @State private var didNormalizeNavigation = false
-  @State private var didStartLoad = false
-  @State private var showTooltip = false
-
-  private var filteredChats: [ChatModel] {
-    if self.searchText.isEmpty {
-      return self.chats
-    }
-    return self.chats.filter { chat in
-      // Search by chat name (use "Notes" for self chat)
-      let displayName = chat.name == "<self>" ? "Notes" : chat.name
-      if displayName.localizedCaseInsensitiveContains(self.searchText) {
-        return true
-      }
-      if let senderId =
-        (try? database.read({ db in
-          try ChatMessageModel.where {
-            $0.chatId.eq(chat.id) && $0.isIncoming && $0.senderId != nil
-          }.limit(1).fetchOne(db)?.senderId
-        })).flatMap({ $0 }),
-        let nickname = try? database.read({ db in
-          try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.nickname
-        }),
-        !nickname.isEmpty,
-        nickname.localizedCaseInsensitiveContains(searchText) {
-        return true
-      }
-      return false
-    }
-  }
-
-  private func handleAddUser(code: String) {
-    guard let url = URL(string: code),
-          let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-    else {
-      return
-    }
-
-    guard components.scheme == "haven",
-          components.host == "dm",
-          let queryItems = components.queryItems
-    else {
-      return
-    }
-
-    guard let tokenStr = queryItems.first(where: { $0.name == "token" })?.value,
-          let token64 = Int64(tokenStr),
-          let pubKeyStr = queryItems.first(where: { $0.name == "pubKey" })?.value,
-          let pubKey = Data(base64Encoded: pubKeyStr)
-    else {
-      return
-    }
-
-    // Convert Int64 token to Int32 (handling unsigned 32-bit values that overflow signed Int32)
-    let token = Int32(bitPattern: UInt32(truncatingIfNeeded: token64))
-
-    // Get codeset from URL
-    guard let codesetStr = queryItems.first(where: { $0.name == "codeset" })?.value,
-          let codeset = Int(codesetStr)
-    else {
-      withAnimation(.spring(response: 0.3)) {
-        self.toastMessage = "Invalid QR code: missing codeset"
-      }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-        withAnimation { self.toastMessage = nil }
-      }
-      return
-    }
-
-    // Derive codename and color using BindingsConstructIdentity
-    let identity: IdentityJSON?
-    do {
-      identity = try BindingsStatic.constructIdentity(pubKey: pubKey, codeset: codeset)
-    } catch {
-      AppLogger.home.error(
-        "BindingsConstructIdentity failed: \(error.localizedDescription, privacy: .public)"
-      )
-      withAnimation(.spring(response: 0.3)) {
-        self.toastMessage = "Failed to derive identity"
-      }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-        withAnimation { self.toastMessage = nil }
-      }
-      return
-    }
-    guard let identity
-    else {
-      AppLogger.home.error("BindingsConstructIdentity returned nil")
-      withAnimation(.spring(response: 0.3)) { self.toastMessage = "Failed to derive identity" }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-        withAnimation { self.toastMessage = nil }
-      }
-      return
-    }
-
-    let name: String
-    let color: Int
-    name = identity.Codename
-    var colorStr = identity.Color
-    if colorStr.hasPrefix("0x") || colorStr.hasPrefix("0X") {
-      colorStr.removeFirst(2)
-    }
-    color = Int(colorStr, radix: 16) ?? 0xE97451
-
-    let newChat = ChatModel(pubKey: pubKey, name: name, dmToken: token, color: color)
-
-    Task.detached {
-      try? self.database.write { db in
-        try ChatModel.insert { newChat }.execute(db)
-      }
-    }
-
-    withAnimation(.spring(response: 0.3)) {
-      self.toastMessage = "User added successfully"
-    }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-      withAnimation {
-        self.toastMessage = nil
-      }
-    }
-  }
-
-  private func loadCurrentNickname() {
-    do {
-      if let nickname = try xxdk.dm?.getNickname() {
-        self.currentNickname = nickname.isEmpty ? nil : nickname
-      } else {
-        self.currentNickname = nil
-      }
-    } catch {
-      self.currentNickname = nil
-    }
-  }
-
   var body: some View {
     let chatList = List(selection: $selectedChat.chatId) {
-      ForEach(self.filteredChats) { chat in
+      ForEach(self.controller.filteredChats(from: self.chats, database: self.database)) { chat in
         ChatRowView<T>(chat: chat)
           .tag(chat.id)
       }
     }
     .scrollContentBackground(.hidden)
     .background(Color.appBackground)
-    .onChange(of: self.selectedChat.chatId) { _, newValue in
-      if let chatId = newValue,
-         let chat = chats.first(where: { $0.id == chatId }) {
-        self.selectedChat.chatTitle = chat.name
-      }
+    .onChange(of: self.selectedChat.chatId) { _, _ in
+      self.controller.syncSelectedChatTitle(chats: self.chats, selectedChat: self.selectedChat)
     }
 
     let listHeader =
       chatList
         .searchable(
-          text: self.$searchText,
+          text: self.$controller.searchText,
           placement: .navigationBarDrawer(displayMode: .automatic),
           prompt: "Search chats"
         )
@@ -203,35 +40,25 @@ struct HomeView<T: XXDKP>: View {
             HStack(spacing: 12) {
               UserMenuButton(
                 codename: self.xxdk.codename,
-                nickname: self.currentNickname,
+                nickname: self.controller.currentNickname,
                 onNicknameTap: {
-                  self.activeSheet = .nicknamePicker
+                  self.controller.activeSheet = .nicknamePicker
                 },
                 onExport: {
-                  self.activeSheet = .exportIdentity
+                  self.controller.activeSheet = .exportIdentity
                 },
                 onShareQR: {
-                  guard let dm = xxdk.dm,
-                        let pubKey = dm.getPublicKey(),
-                        !pubKey.isEmpty
-                  else {
-                    return
-                  }
-                  self.activeSheet = .qrCode(
-                    QRData(
-                      token: dm.getToken(), pubKey: pubKey, codeset: self.xxdk.codeset
-                    )
-                  )
+                  self.controller.openShareQRCode(xxdk: self.xxdk)
                 },
                 onLogout: {
-                  self.showLogoutAlert = true
+                  self.controller.showLogoutAlert = true
                 }
               )
               .frame(width: 28, height: 28)
 
               if self.xxdk.statusPercentage != 100 {
                 Button(action: {
-                  self.showTooltip.toggle()
+                  self.controller.showTooltip.toggle()
                 }) {
                   ProgressView().tint(.haven)
                 }
@@ -241,9 +68,9 @@ struct HomeView<T: XXDKP>: View {
 
           ToolbarItem(placement: .topBarTrailing) {
             PlusMenuButton(
-              onJoinChannel: { self.activeSheet = .newChat },
-              onCreateSpace: { self.activeSheet = .createSpace },
-              onScanQR: { self.activeSheet = .qrScanner }
+              onJoinChannel: { self.controller.activeSheet = .newChat },
+              onCreateSpace: { self.controller.activeSheet = .createSpace },
+              onScanQR: { self.controller.activeSheet = .qrScanner }
             )
             .frame(width: 28, height: 28)
           }.hiddenSharedBackground()
@@ -251,7 +78,7 @@ struct HomeView<T: XXDKP>: View {
 
     let withSheet =
       listHeader
-        .sheet(item: self.$activeSheet) { sheet in
+        .sheet(item: self.$controller.activeSheet) { sheet in
           switch sheet {
           case .newChat:
             NewChatView<T>()
@@ -262,66 +89,42 @@ struct HomeView<T: XXDKP>: View {
           case .qrScanner:
             QRScannerView(
               onCodeScanned: { code in
-                self.handleAddUser(code: code)
+                self.controller.handleAddUser(
+                  code: code,
+                  xxdk: self.xxdk,
+                  database: self.database
+                )
               },
               onShowMyQR: {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                  guard let dm = xxdk.dm, let pubKey = dm.getPublicKey()
-                  else {
-                    return
-                  }
-                  self.activeSheet = .qrCode(
-                    QRData(
-                      token: dm.getToken(), pubKey: pubKey, codeset: self.xxdk.codeset
-                    )
-                  )
-                }
+                self.controller.scheduleShowMyQRAfterScannerDismissal(xxdk: self.xxdk)
               }
             )
           case .nicknamePicker:
             NicknamePickerView<T>(codename: self.xxdk.codename ?? "")
               .onDisappear {
-                self.loadCurrentNickname()
+                self.controller.loadCurrentNickname(xxdk: self.xxdk)
               }
           case .exportIdentity:
             if let codename = xxdk.codename {
               ExportIdentitySheet(
                 xxdk: self.xxdk,
                 onSuccess: { message in
-                  withAnimation(.spring(response: 0.3)) {
-                    self.toastMessage = message
-                  }
-                  DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    withAnimation {
-                      self.toastMessage = nil
-                    }
-                  }
+                  self.controller.onExportSuccess(message: message)
                 },
                 codename: codename
               )
             }
           }
         }
-        .alert("Logout", isPresented: self.$showLogoutAlert) {
+        .alert("Logout", isPresented: self.$controller.showLogoutAlert) {
           Button("Cancel", role: .cancel) {}
           Button("Logout", role: .destructive) {
-            self.isLoggingOut = true
-            Task {
-              try! await self.xxdk.logout()
-
-              try! await self.database.write { db in
-                try ChatMessageModel.delete().execute(db)
-                try MessageReactionModel.delete().execute(db)
-                try MessageSenderModel.delete().execute(db)
-                try ChatModel.delete().execute(db)
-              }
-
-              self.appStorage.clearAll()
-              await MainActor.run {
-                self.navigation.path = NavigationPath()
-                self.navigation.path.append(Destination.password)
-              }
-            }
+            self.controller.performLogout(
+              xxdk: self.xxdk,
+              database: self.database,
+              appStorage: self.appStorage,
+              navigation: self.navigation
+            )
           }
         } message: {
           Text(
@@ -332,7 +135,7 @@ struct HomeView<T: XXDKP>: View {
     return
       withSheet
         .overlay {
-          if let toastMessage {
+          if let toastMessage = self.controller.toastMessage {
             VStack {
               Spacer()
               HStack(spacing: 10) {
@@ -354,7 +157,7 @@ struct HomeView<T: XXDKP>: View {
           }
         }
         .overlay {
-          if self.isLoggingOut {
+          if self.controller.isLoggingOut {
             ZStack {
               Color.black.opacity(0.3)
                 .ignoresSafeArea()
@@ -377,22 +180,7 @@ struct HomeView<T: XXDKP>: View {
         }
         .background(Color.appBackground)
         .onAppear {
-          if !self.didNormalizeNavigation {
-            self.didNormalizeNavigation = true
-            if !self.navigation.path.isEmpty {
-              self.navigation.path = NavigationPath()
-            }
-          }
-          if self.xxdk.statusPercentage == 0 && !self.didStartLoad {
-            self.didStartLoad = true
-            Task.detached {
-              await self.xxdk.loadCmix()
-              let privateIdentity = try! self.xxdk.loadSavedPrivateIdentity()
-              await self.xxdk.loadClients(privateIdentity: privateIdentity)
-              await self.xxdk.startNetworkFollower()
-            }
-          }
-          self.loadCurrentNickname()
+          self.controller.onAppear(navigation: self.navigation, xxdk: self.xxdk)
         }
         .navigationTitle("Chat")
         .navigationBarTitleDisplayMode(NavigationBarItem.TitleDisplayMode.large)
