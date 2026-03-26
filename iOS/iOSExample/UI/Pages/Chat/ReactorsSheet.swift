@@ -72,19 +72,6 @@ struct ReactorsSheet: View {
     }
   }
 
-  private func deleteReaction(_ reaction: MessageReactionModel) {
-    do {
-      try self.database.write { db in
-        try MessageReactionModel.delete(reaction).execute(db)
-      }
-      self.onDeleteReaction?(reaction)
-    } catch {
-      AppLogger.chat.error(
-        "Failed to delete reaction from sheet: \(error.localizedDescription, privacy: .public)"
-      )
-    }
-  }
-
   var body: some View {
     NavigationStack {
       VStack(spacing: 0) {
@@ -154,7 +141,7 @@ struct ReactorsSheet: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
               Button(role: .destructive) {
-                self.deleteReaction(reaction)
+                self.onDeleteReaction?(reaction)
               } label: {
                 Image(systemName: "trash")
                   .font(.caption)

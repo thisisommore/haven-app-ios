@@ -374,7 +374,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
 
     let messageIdB64 = messageID.base64EncodedString()
-
     if let sender = try? database.read({ db in
       try ChatMessageModel
         .where { $0.externalId.eq(messageIdB64) }
@@ -419,15 +418,13 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
     do {
       // First, try to find and delete a ChatMessage
-      let messages = try database.read { db in
-        try ChatMessageModel.where { $0.externalId.eq(messageIdB64) }.fetchAll(db)
+      let message = try database.read { db in
+        try ChatMessageModel.where { $0.externalId.eq(messageIdB64) }.fetchOne(db)
       }
 
-      if !messages.isEmpty {
-        for message in messages {
-          try self.database.write { db in
-            try ChatMessageModel.delete(message).execute(db)
-          }
+      if let message {
+        try self.database.write { db in
+          try ChatMessageModel.delete(message).execute(db)
         }
         return
       }
