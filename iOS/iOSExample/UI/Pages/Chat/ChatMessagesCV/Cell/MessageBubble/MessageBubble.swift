@@ -8,6 +8,28 @@ import SnapKit
 import SwiftUI
 import UIKit
 
+extension MessageBubble {
+  private static func text(for message: MessageWithSender) -> NSAttributedString {
+    return self.text(for: message.message)
+  }
+
+  private static func text(for message: ChatMessageModel) -> NSAttributedString {
+    let tagStripped = message.message.stripParagraphTags()
+    return message.isPlain ?
+      NSAttributedString(string: tagStripped, attributes: String.defaultAttributes) :
+      tagStripped.markdown
+  }
+
+  private static func replyText(for message: MessageWithSender) -> String? {
+    guard let replyTo = message.replyTo else { return nil }
+    return self.text(for: replyTo).string
+  }
+
+  private static func time(for message: MessageWithSender) -> String {
+    message.message.timestamp.formatted(date: .omitted, time: .shortened)
+  }
+}
+
 final class MessageBubble: UICollectionViewCell {
   private static let padding: CGFloat = 8
   private lazy var swipe = MessageBubbleSwipe(uiView: self, delegate: self)
@@ -160,7 +182,7 @@ extension MessageBubble: CVCell {
       CGSize.maxW(
         MessageLabel.size(for: data.message.attributedText, width: paddedW),
         SenderLabel.size(for: data, width: paddedW),
-        TimeLabel.size(for: data.time, width: paddedW),
+        TimeLabel.size(for: Self.time(for: data), width: paddedW),
         ReplyPreview.size(for: data.replyTo?.message.stripParagraphTags(), width: paddedW),
 
         data.reactionEmojis.isEmpty ? .zero : MessageBubbleReactions.size(for: data.reactionEmojis, width: paddedW)
@@ -170,10 +192,10 @@ extension MessageBubble: CVCell {
 
   func render(for data: Data) {
     self.senderLabel.render(for: data)
-    self.msgLabel.render(for: data.message.attributedText)
-    self.replyPreviewLabel.render(for: data.replyTo?.message.stripParagraphTags())
+    self.msgLabel.render(for: Self.text(for: data))
+    self.replyPreviewLabel.render(for: Self.replyText(for: data))
     self.clock.render(for: data.message.status == .unsent)
-    self.timeLabel.render(for: data.time)
+    self.timeLabel.render(for: Self.time(for: data))
     self.reaction.render(for: data.reactionEmojis)
     self.c.snp.updateConstraints {
       $0.bottom

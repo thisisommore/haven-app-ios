@@ -17,15 +17,6 @@ extension MessageWithSender {
   var attributedText: NSAttributedString {
     return self.message.attributedText
   }
-
-  var replyText: String? {
-    guard let replyTo = self.replyTo else { return nil }
-    return replyTo.attributedText.string
-  }
-
-  var time: String {
-    return self.message.timestamp.formatted(date: .omitted, time: .shortened)
-  }
 }
 
 /// DataSource

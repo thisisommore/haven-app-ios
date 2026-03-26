@@ -9,32 +9,6 @@ import SQLiteData
 import UIKit
 
 extension ChatMessagesVC {
-  private func text(for message: MessageWithSender) -> NSAttributedString {
-    return self.text(for: message.message)
-  }
-
-  private func text(for message: ChatMessageModel) -> NSAttributedString {
-    let tagStripped = message.message.stripParagraphTags()
-    return message.isPlain ?
-      NSAttributedString(string: tagStripped, attributes: String.defaultAttributes) :
-      tagStripped.markdown
-  }
-
-  private func replyText(for message: MessageWithSender) -> String? {
-    guard let replyTo = message.replyTo else { return nil }
-    return self.text(for: replyTo).string
-  }
-
-  private func time(for message: MessageWithSender) -> String {
-    return message.message.timestamp.formatted(date: .omitted, time: .shortened)
-  }
-
-  private func sender(for message: MessageWithSender) -> String? {
-    return message.sender?.codename
-  }
-}
-
-extension ChatMessagesVC {
   typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
   func makeDataSource() -> DataSource { // reusing typealias
     DataSource(
