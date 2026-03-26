@@ -14,10 +14,14 @@ import UIKit
 
 final class ChatMessagesVC: UIViewController {
   // Data
-  let chatId: UUID
+  var chat: ChatModel
   var isFetchingNextPage = true
   var onReply: (ChatMessageModel) -> Void
   var onReact: (ChatMessageModel) -> Void
+
+  /// Using externalId
+  var onDeleteMessage: (String) -> Void
+  var onMuteUser: (Data) -> Void
   var onDeleteReaction: (MessageReactionModel) -> Void
 
   typealias Section = Int
@@ -67,14 +71,18 @@ final class ChatMessagesVC: UIViewController {
   private var previousViewSize: CGFloat = 0
 
   init(
-    chatId: UUID,
+    chat: ChatModel,
     onReply: @escaping ((ChatMessageModel) -> Void),
     onReact: @escaping ((ChatMessageModel) -> Void),
+    onDeleteMessage: @escaping ((String) -> Void),
+    onMuteUser: @escaping ((Data) -> Void),
     onDeleteReaction: @escaping ((MessageReactionModel) -> Void)
   ) {
-    self.chatId = chatId
+    self.chat = chat
     self.onReply = onReply
     self.onReact = onReact
+    self.onDeleteMessage = onDeleteMessage
+    self.onMuteUser = onMuteUser
     self.onDeleteReaction = onDeleteReaction
     self.cv = UICollectionView(
       frame: .zero, collectionViewLayout: ChatMessagesCollectionViewLayout()
@@ -83,8 +91,7 @@ final class ChatMessagesVC: UIViewController {
       top: Self.padding, left: Self.padding, bottom: Self.padding, right: Self.padding
     )
     super.init(nibName: nil, bundle: nil)
-    startObservation()
-    //
+    self.startObservation()
   }
 
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -284,10 +291,11 @@ final class ChatMessagesVC: UIViewController {
 
     // If not loaded, we need to find its position in the database to load enough pages
     Task {
+      let chatId = self.chat.id
       do {
         let position = try await database.read { db in
           try ChatMessageModel
-            .where { $0.chatId.eq(self.chatId) && $0.timestamp.gte(msg.timestamp) }
+            .where { $0.chatId.eq(chatId) && $0.timestamp.gte(msg.timestamp) }
             .fetchCount(db)
         }
 
@@ -318,7 +326,7 @@ extension ChatMessagesVC {
   func showReactors(for message: ChatMessageModel) {
     let view = ReactorsSheet(
       targetMessageId: message.externalId,
-      chatId: self.chatId,
+      chatId: self.chat.id,
       selectedEmoji: nil,
       onDeleteReaction: { [weak self] reaction in
         self?.onDeleteReaction(reaction)

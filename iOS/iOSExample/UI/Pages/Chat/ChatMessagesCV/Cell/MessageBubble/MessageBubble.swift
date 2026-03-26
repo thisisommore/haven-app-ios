@@ -51,6 +51,10 @@ final class MessageBubble: UICollectionViewCell {
   var onReactionPreviewTap: (() -> Void)?
   var onReply: (() -> Void)?
   var onReact: (() -> Void)?
+  var onMuteUser: (() -> Void)?
+  var onDelete: (() -> Void)?
+  var canDelete = false
+  var canMuteUser = false
   var onLinkTapped: ((URL) -> Void)?
 
   @available(*, unavailable)

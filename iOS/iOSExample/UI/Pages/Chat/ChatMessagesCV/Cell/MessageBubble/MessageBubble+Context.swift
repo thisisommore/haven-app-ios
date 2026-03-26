@@ -31,8 +31,9 @@ extension MessageBubble: CellWithContextMenu {
   }
 
   func makeContextMenu() -> UIContextMenuConfiguration {
-    return UIContextMenuConfiguration(actionProvider: { _ in
-      UIMenu(children: [
+    return UIContextMenuConfiguration(actionProvider: { [weak self] _ in
+      guard let self else { return UIMenu(children: []) }
+      var actions: [UIMenuElement] = [
         UIAction(title: "React", image: UIImage(systemName: "face.smiling")) { [weak self] _ in
           self?.onReact?()
         },
@@ -44,7 +45,29 @@ extension MessageBubble: CellWithContextMenu {
             UIPasteboard.general.string = text
           }
         },
-      ])
+      ]
+      if self.canMuteUser {
+        actions.append(
+          UIAction(
+            title: "Mute user",
+            image: UIImage(systemName: "speaker.slash")
+          ) { [weak self] _ in
+            self?.onMuteUser?()
+          }
+        )
+      }
+      if self.canDelete {
+        actions.append(
+          UIAction(
+            title: "Delete",
+            image: UIImage(systemName: "trash"),
+            attributes: .destructive
+          ) { [weak self] _ in
+            self?.onDelete?()
+          }
+        )
+      }
+      return UIMenu(children: actions)
     })
   }
 }

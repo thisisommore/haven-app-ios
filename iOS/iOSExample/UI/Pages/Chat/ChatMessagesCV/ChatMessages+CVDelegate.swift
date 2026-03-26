@@ -22,6 +22,19 @@ extension ChatMessagesVC {
               for: indexPath
             ) as! MessageBubble
           cell.render(for: message)
+          let canMuteUser = self.chat.isChannel && self.chat.isAdmin && message.message.isIncoming
+          cell.canMuteUser = canMuteUser
+          cell.onMuteUser = { [weak self] in
+            if
+              let self,
+              let senderPubKey = message.sender?.pubkey
+            { self.onMuteUser(senderPubKey) }
+          }
+
+          cell.canDelete = (self.chat.isChannel && self.chat.isAdmin) || !message.message.isIncoming
+          cell.onDelete = { [weak self] in
+            self?.onDeleteMessage(message.message.externalId)
+          }
           cell.onReplyPreviewClick = { [weak self] in
             self?.scrollToMessage(message.replyTo)
           }

@@ -55,13 +55,21 @@ extension ChatMessagesVC {
                 || self.messages[index - 1].message.senderId != message.message.senderId
                 || self.messages[index - 1].sender != message.sender
             let shouldShowSender = dateChanged || senderChanged
-            let messageWithDisplaySender: MessageWithSender =
-              shouldShowSender
-                ? message
-                : MessageWithSender(
-                  message: message.message, sender: nil, replyTo: message.replyTo,
-                  reactionEmojis: message.reactionEmojis
-                )
+            let messageWithDisplaySender: MessageWithSender = {
+              if shouldShowSender {
+                return message
+              }
+
+              guard var sender = message.sender else {
+                fatalError("no sender")
+              }
+              sender.codename = ""
+              return MessageWithSender(
+                message: message.message, sender: sender, replyTo: message.replyTo,
+                reactionEmojis: message.reactionEmojis
+              )
+            }()
+
             if dateChanged {
               return [
                 .date(
@@ -174,7 +182,7 @@ extension ChatMessagesVC {
   private func makeObservationPayload(db: Database) throws -> ObservedMessages {
     let whereC = ChatMessageModel
       .where {
-        $0.chatId.eq(self.chatId)
+        $0.chatId.eq(self.chat.id)
           && ($0.status.eq(MessageStatus.unsent)
             || $0.status.eq(MessageStatus.delivered)
             || $0.status.eq(MessageStatus.sent))

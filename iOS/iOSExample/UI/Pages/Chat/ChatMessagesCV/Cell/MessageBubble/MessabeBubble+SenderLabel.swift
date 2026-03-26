@@ -20,7 +20,6 @@ extension SenderLabel: CVView {
 
   static func size(for data: Data, width: CGFloat) -> CGSize {
     guard let codename = data.sender?.codename else { return .zero }
-    // self sender have empty string
     if codename == "" { return .zero }
     let rect = codename.boundingRect(
       with: CGSize(width: width, height: .greatestFiniteMagnitude),

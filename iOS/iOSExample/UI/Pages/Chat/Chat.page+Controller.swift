@@ -105,15 +105,36 @@ final class ChatPageController {
   }
 
   func deleteReaction<T: XXDKP>(
-    _ reaction: MessageReactionModel, channelId: String?, xxdk: T
+    _ reaction: MessageReactionModel, channelId: String, xxdk: T
   ) {
-    guard let channelId else { return }
-
     Task.detached {
       xxdk.channel.msg.deleteMessage(
         channelId: channelId,
         messageId: reaction.externalId
       )
+    }
+  }
+
+  func deleteMessage<T: XXDKP>(
+    _ messageExternalId: String, channelId: String, xxdk: T
+  ) {
+    Task.detached {
+      xxdk.channel.msg.deleteMessage(
+        channelId: channelId,
+        messageId: messageExternalId
+      )
+    }
+  }
+
+  func muteUser<T: XXDKP>(_ pubKey: Data, channelId: String, xxdk: T) {
+    Task.detached {
+      do {
+        try xxdk.channel.muteUser(channelId: channelId, pubKey: pubKey, mute: true)
+      } catch {
+        AppLogger.channels.error(
+          "muteUser failed: \(error.localizedDescription, privacy: .public)"
+        )
+      }
     }
   }
 

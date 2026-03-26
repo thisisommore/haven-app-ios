@@ -32,17 +32,37 @@ struct ChatView<T: XXDKP>: View {
 
   var body: some View {
     ZStack {
-      ChatMessages(chatId: self.chatId) { message in
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-          self.controller.replyingTo = message
-        }
-      } onReact: { message in
-        self.controller.reactingTo = message
-      } onDeleteReaction: { reaction in
-        self.controller.deleteReaction(
-          reaction, channelId: self.chat?.channelId, xxdk: self.xxdk
+      if let chat {
+        ChatMessages(
+          chat: chat,
+          onReply: { message in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+              self.controller.replyingTo = message
+            }
+          },
+          onReact: { message in
+            self.controller.reactingTo = message
+          },
+          onDeleteMessage: { messageExternalId in
+            if let channelId = self.chat?.channelId {
+              self.controller.deleteMessage(messageExternalId, channelId: channelId, xxdk: self.xxdk)
+            }
+          },
+          onMuteUser: { pubKey in
+            if let channelId = self.chat?.channelId {
+              self.controller.muteUser(pubKey, channelId: channelId, xxdk: self.xxdk)
+            }
+          },
+          onDeleteReaction: { reaction in
+            if let channelId = self.chat?.channelId {
+              self.controller.deleteReaction(
+                reaction, channelId: channelId, xxdk: self.xxdk
+              )
+            }
+          }
         )
       }
+
       if self.firstMessage == nil {
         EmptyChatView()
       }

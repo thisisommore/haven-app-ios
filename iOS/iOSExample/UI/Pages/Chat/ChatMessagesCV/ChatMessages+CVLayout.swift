@@ -114,7 +114,10 @@ final class ChatMessagesCollectionViewLayout: UICollectionViewLayout {
     else {
       return Self.defaultSpaceBetween
     }
-    return message.sender == nil ? Self.groupedSenderSpaceBetween : Self.defaultSpaceBetween
+    guard let sender = message.sender else {
+      return Self.groupedSenderSpaceBetween
+    }
+    return sender.codename.isEmpty ? Self.groupedSenderSpaceBetween : Self.defaultSpaceBetween
   }
 
   override func layoutAttributesForElements(in rect: CGRect)
