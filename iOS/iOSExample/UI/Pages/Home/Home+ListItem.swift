@@ -80,12 +80,6 @@ struct ChatRowView<T: XXDKP>: View {
     nickname.count > 10 ? String(nickname.prefix(10)) + "…" : nickname
   }
 
-  private func strippedParagraphTags(_ message: String) -> String {
-    message
-      .replacingOccurrences(of: "<p>", with: "")
-      .replacingOccurrences(of: "</p>", with: "")
-  }
-
   /// Display name for chat title
   private var chatDisplayName: String {
     if self.chat.name == "<self>" {
@@ -142,7 +136,7 @@ struct ChatRowView<T: XXDKP>: View {
         if let lastMessage = self.latestMessage.first {
           VStack(alignment: .leading, spacing: 2) {
             LastMessageSenderNameView(lastMessage: lastMessage, isDM: self.isDM)
-            Text(self.strippedParagraphTags(lastMessage.message))
+            Text(AttributedString(lastMessage.attributedText(color: .secondaryLabel, size: 12)))
               .foregroundStyle(Color(uiColor: .secondaryLabel))
               .font(.system(size: 12))
               .lineLimit(1)

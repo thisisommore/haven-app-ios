@@ -1,0 +1,207 @@
+import Foundation
+import SwiftSoup
+import UIKit
+
+final class HTMLParser {
+  /// stack like, we add tags as we go deeper,
+  /// when existing node this tag is used to determine which style to apply to text
+  private var activeTag: [String] = []
+  private var href: String?
+  private var orderedListCounts: [Int] = []
+  private let nsAttributedString = NSMutableAttributedString()
+  private let color: UIColor
+  private let size: CGFloat
+
+  /// this attributes applied as default, it can be overriden see @appendAttributes
+  private let baseAttrs: [NSAttributedString.Key: Any]
+
+  private let boldFont: UIFont
+  private let italicFont: UIFont
+  private init(color: UIColor, size: CGFloat) {
+    self.color = color
+    self.size = size
+    self.baseAttrs = [
+      .font: UIFont.systemFont(ofSize: self.size),
+      .foregroundColor: self.color,
+    ]
+    self.boldFont = UIFont.systemFont(ofSize: self.size, weight: .bold)
+    self.italicFont = UIFont.italicSystemFont(ofSize: size)
+  }
+
+  /// clean leading and trailing whitespace, should be used after parsing
+  func cleanChars() {
+    let trimChars = CharacterSet.whitespacesAndNewlines
+    // Trim trailing
+    while let last = nsAttributedString.string.unicodeScalars.last,
+          trimChars.contains(last) {
+      self.nsAttributedString.deleteCharacters(
+        in: NSRange(location: self.nsAttributedString.length - 1, length: 1)
+      )
+    }
+
+    // Trim leading
+    while let first = nsAttributedString.string.unicodeScalars.first,
+          trimChars.contains(first) {
+      self.nsAttributedString.deleteCharacters(
+        in: NSRange(location: 0, length: 1)
+      )
+    }
+  }
+
+  /// append attribute string with new style if any
+  private func appendAttributes(_ str: String, attrs: [NSAttributedString.Key: Any] = [:]) {
+    // no attrs to add/override skip merging
+    let finalAttrs = attrs.isEmpty
+      ? self.baseAttrs
+      // merge attributes, override old key with new on conflict
+      : self.baseAttrs.merging(attrs) { _, new in new }
+    self.nsAttributedString.append(NSAttributedString(string: str, attributes: finalAttrs))
+  }
+
+  private func orderedListDepth(for node: SwiftSoup.Node) -> Int {
+    var depth = 0
+    var current = node.parent()
+    while let currentNode = current {
+      let nodeName = currentNode.nodeName()
+      if nodeName == "ol" || nodeName == "ul" {
+        depth += 1
+      }
+      current = currentNode.parent()
+    }
+    return max(depth - 1, 0)
+  }
+
+  private func orderedListPrefix(for node: SwiftSoup.Node, number: Int) -> String {
+    let indent = String(repeating: "    ", count: self.orderedListDepth(for: node))
+    return "\n\(indent)\(number). "
+  }
+}
+
+extension HTMLParser: NodeVisitor {
+  func head(_ node: SwiftSoup.Node, _: Int) throws {
+    let nodeName = node.nodeName()
+    // body can be returned by swiftsoup, skip it, we only interested in child nodes
+    if nodeName == "body" { return }
+
+    if let el = node as? Element {
+      self.activeTag.append(nodeName)
+
+      if nodeName == "a" {
+        if el.hasAttr("href") {
+          self.href = try! el.attr("href")
+        }
+      }
+      if nodeName == "p" {
+        self.appendAttributes("\n")
+      }
+
+      if nodeName == "ol" {
+        self.orderedListCounts.append(1)
+      }
+      if nodeName == "li" {
+        guard let parent = node.parent() else { return }
+        if parent.nodeName() == "ol" {
+          let countIndex = self.orderedListCounts.count - 1
+          let count = self.orderedListCounts[countIndex]
+          self.appendAttributes(self.orderedListPrefix(for: node, number: count))
+          self.orderedListCounts[countIndex] += 1
+        } else if parent.nodeName() == "ul" {
+          self.appendAttributes("\n- ")
+        }
+      }
+    }
+  }
+
+  func tail(_ node: SwiftSoup.Node, _: Int) throws {
+    let nodeName = node.nodeName()
+    // body can be returned by swiftsoup, skip it, we only interested in child nodes
+    if nodeName == "body" { return }
+
+    // Node like p br
+    if let el = node as? Element {
+      if nodeName == "br" {
+        self.appendAttributes("\n")
+      }
+      if nodeName == "p" {
+        self.appendAttributes("\n")
+      }
+      if nodeName == "ol", !self.orderedListCounts.isEmpty {
+        self.orderedListCounts.removeLast()
+      }
+
+      if self.activeTag.last == nodeName {
+        if nodeName == "a" {
+          if el.hasAttr("href") {
+            self.href = nil
+          }
+        }
+
+        self.activeTag.removeLast()
+      }
+    }
+
+    // Text Node like "hello" "cat"
+    if let tn = node as? TextNode {
+      // remove unnecessary leading whitespace
+      let text = {
+        let originalText = tn.text()
+        if
+          // if current text node is first child
+          tn.siblingIndex == 0 ||
+          // br is a special case where it is a leaf node that affects
+          // its next sibling's whitespace, not a child's
+          tn.previousSibling()?.nodeName() == "br" {
+          return String(originalText.trimmingPrefix(while: { $0.isWhitespace || $0.isNewline }))
+        } else {
+          return originalText
+        }
+      }()
+
+      // if there is no tag active current text node is root,
+      // add it directly and skip further node checking
+      guard let lastTag = activeTag.last else {
+        self.appendAttributes(text)
+        return
+      }
+
+      if lastTag == "a", let href = href, let url = URL(string: href) {
+        self.appendAttributes(text, attrs: [
+          .link: url,
+        ])
+      } else if lastTag == "b" || lastTag == "strong" {
+        self.appendAttributes(text, attrs: [
+          .font: self.boldFont,
+        ])
+      } else if lastTag == "i" || lastTag == "em" {
+        self.appendAttributes(text, attrs: [.font: self.italicFont])
+      } else if lastTag == "s" {
+        self.appendAttributes(text, attrs: [.strikethroughStyle: NSUnderlineStyle.single.rawValue])
+      } else {
+        self.appendAttributes(text)
+      }
+    }
+  }
+}
+
+extension HTMLParser {
+  private static let safelist = try! Whitelist.none()
+    .addTags("blockquote", "p", "a", "br", "code", "ol", "ul",
+             "li", "pre", "i", "strong", "b", "em", "s")
+    .addAttributes("a", "href")
+  static func parse(text: String, color: UIColor, size: CGFloat) throws -> NSAttributedString {
+    let parser = Self(color: color, size: size)
+    guard let cleanText = try SwiftSoup.clean(text, Self.safelist) else {
+      throw XXDKError.custom("failed to clean html")
+    }
+    let doc = try parseBodyFragment(cleanText)
+    parser.nsAttributedString.beginEditing()
+    guard let body = doc.body() else {
+      throw XXDKError.custom("body is nil")
+    }
+    try body.traverse(parser)
+
+    parser.cleanChars()
+    parser.nsAttributedString.endEditing()
+    return parser.nsAttributedString
+  }
+}

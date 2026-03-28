@@ -15,7 +15,7 @@ struct MessageWithSender: Hashable {
 
 extension MessageWithSender {
   var attributedText: NSAttributedString {
-    return self.message.attributedText
+    return self.message.attributedText()
   }
 }
 

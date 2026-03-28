@@ -127,8 +127,7 @@ final class ReceiverHelpers {
         status: MessageStatus(status)
       )
     }
-    let markdownPattern = #"(\*\*[^\*]+\*\*|\*[^\*]+\*|_[^_]+_|~~[^~]+~~|`[^`]+`|\[[^\]]+\]\([^\)]+\)|(?m)^\s*#{1,6}\s+)"#
-    msg.isPlain = !(text.range(of: markdownPattern, options: .regularExpression) != nil)
+    msg.isPlain = !MessageTextFormatting.containsHTML(text)
     try self.database.write { db in
       try ChatMessageModel.update(msg).execute(db)
     }

@@ -13,6 +13,7 @@
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1445D652F6036BA00FB3744 /* SnapKit */; };
+		A19ECBD22F77A05200AE70A7 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A19ECBD12F77A05200AE70A7 /* SwiftSoup */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
 		A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4F7E22F5B36FC006D6B39 /* SQLiteData */; };
 		A1A4FAC62F5B3A76006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4FAC52F5B3A76006D6B39 /* SQLiteData */; };
@@ -56,6 +57,7 @@
 				A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */,
 				A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */,
 				A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */,
+				A19ECBD22F77A05200AE70A7 /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -188,6 +190,7 @@
 			packageReferences = (
 				A1A4FCF12F5B3C1B006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */,
 				A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				A19ECBD02F77A05200AE70A7 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 			);
 			productRefGroup = 980A0D6A2B96723C004FB15A /* Products */;
 			projectDirPath = "";
@@ -524,6 +527,14 @@
 				minimumVersion = 5.7.1;
 			};
 		};
+		A19ECBD02F77A05200AE70A7 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.13.4;
+			};
+		};
 		A1A4F7E12F5B36FC006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/sqlite-data";
@@ -563,6 +574,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;
+		};
+		A19ECBD12F77A05200AE70A7 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A19ECBD02F77A05200AE70A7 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
 		};
 		A1A4F7E22F5B36FC006D6B39 /* SQLiteData */ = {
 			isa = XCSwiftPackageProductDependency;

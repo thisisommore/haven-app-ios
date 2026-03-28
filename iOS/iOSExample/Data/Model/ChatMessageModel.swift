@@ -6,6 +6,7 @@
 //
 import Foundation
 import SQLiteData
+import UIKit
 
 /// Message delivery status
 enum MessageStatus: Int, QueryBindable {
@@ -73,12 +74,17 @@ struct ChatMessageModel: Identifiable, Hashable {
     self.status = status ?? .unsent
   }
 
-  var attributedText: NSAttributedString {
+  func attributedText(color: UIColor = .label, size: CGFloat = 17) -> NSAttributedString {
     let tagStripped = self.message.stripParagraphTags()
-    return self.isPlain ?
-      NSAttributedString(string:
-        tagStripped,
-        attributes: String.defaultAttributes) :
-      tagStripped.markdown
+    if self.isPlain {
+      return NSAttributedString(string: tagStripped, attributes: String.defaultAttributes)
+    }
+
+    do {
+      return try HTMLParser.parse(text: tagStripped, color: color, size: size)
+    } catch {
+      AppLogger.messaging.error("failed to parse html \(error.localizedDescription)")
+      return NSAttributedString(string: tagStripped, attributes: String.defaultAttributes)
+    }
   }
 }

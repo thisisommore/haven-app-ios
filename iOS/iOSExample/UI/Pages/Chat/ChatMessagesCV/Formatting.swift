@@ -37,37 +37,16 @@ extension String {
       t.hasSuffix("</p>") ?
       String(t.dropFirst(3).dropLast(4)) : self
   }
+}
 
-  /// Converts a string containing HTML tags to an NSAttributedString, removing trailing newlines and adjusting the font.
-  var markdown: NSAttributedString {
-    do {
-      let attrStr = try NSMutableAttributedString(markdown: self)
-      let fullRange = NSRange(location: 0, length: attrStr.length)
-
-      let defaultFont = Self.defaultAttributes[.font] as? UIFont ?? UIFont.systemFont(ofSize: Self.fontSize)
-
-      attrStr.enumerateAttribute(.font, in: fullRange, options: .longestEffectiveRangeNotRequired) { value, range, _ in
-        if let currentFont = value as? UIFont {
-          let traits = currentFont.fontDescriptor.symbolicTraits
-          if traits.isEmpty {
-            attrStr.addAttribute(.font, value: defaultFont, range: range)
-          } else if let descriptor = defaultFont.fontDescriptor.withSymbolicTraits(traits) {
-            let newFont = UIFont(descriptor: descriptor, size: defaultFont.pointSize)
-            attrStr.addAttribute(.font, value: newFont, range: range)
-          }
-        } else {
-          attrStr.addAttribute(.font, value: defaultFont, range: range)
-        }
-      }
-
-      for (key, value) in Self.defaultAttributes where key != .font {
-        attrStr.addAttribute(key, value: value, range: fullRange)
-      }
-
-      return attrStr
-    } catch {
-      print("Error converting HTML to NSAttributedString: \(error.localizedDescription)")
-      return NSAttributedString(string: self, attributes: Self.defaultAttributes)
+enum MessageTextFormatting {
+  /// True if any HTML tag remains after stripping a single root-level `<p>...</p>` wrapper.
+  /// Nested `<p>` / `</p>` still counts as HTML.
+  static func containsHTML(_ text: String) -> Bool {
+    let s = text.stripParagraphTags()
+    guard let regex = try? NSRegularExpression(pattern: #"<[^>]+>"#, options: .caseInsensitive) else {
+      return false
     }
+    return regex.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) != nil
   }
 }

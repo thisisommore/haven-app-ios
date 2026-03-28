@@ -14,10 +14,7 @@ extension MessageBubble {
   }
 
   private static func text(for message: ChatMessageModel) -> NSAttributedString {
-    let tagStripped = message.message.stripParagraphTags()
-    return message.isPlain ?
-      NSAttributedString(string: tagStripped, attributes: String.defaultAttributes) :
-      tagStripped.markdown
+    message.attributedText()
   }
 
   private static func replyText(for message: MessageWithSender) -> String? {
@@ -185,7 +182,7 @@ extension MessageBubble: CVCell {
     let paddedW = self.padded(width)
     return self.padded(
       CGSize.maxW(
-        MessageLabel.size(for: data.message.attributedText, width: paddedW),
+        MessageLabel.size(for: data.message.attributedText(), width: paddedW),
         SenderLabel.size(for: data, width: paddedW),
         TimeLabel.size(for: Self.time(for: data), width: paddedW),
         ReplyPreview.size(for: data.replyTo?.message.stripParagraphTags(), width: paddedW),
