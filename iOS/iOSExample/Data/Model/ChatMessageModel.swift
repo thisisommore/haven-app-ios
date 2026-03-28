@@ -77,14 +77,15 @@ struct ChatMessageModel: Identifiable, Hashable {
   func attributedText(color: UIColor = .label, size: CGFloat = 17) -> NSAttributedString {
     let tagStripped = self.message.stripParagraphTags()
     if self.isPlain {
-      return NSAttributedString(string: tagStripped, attributes: String.defaultAttributes)
+      return NSAttributedString(string: tagStripped, attributes:
+        [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
     }
 
     do {
       return try HTMLParser.parse(text: tagStripped, color: color, size: size)
     } catch {
       AppLogger.messaging.error("failed to parse html \(error.localizedDescription)")
-      return NSAttributedString(string: tagStripped, attributes: String.defaultAttributes)
+      return NSAttributedString(string: tagStripped, attributes: [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
     }
   }
 }
