@@ -157,28 +157,19 @@ extension HTMLParser: NodeVisitor {
         }
       }()
 
-      // if there is no tag active current text node is root,
-      // add it directly and skip further node checking
-      guard let lastTag = activeTag.last else {
-        self.appendAttributes(text)
-        return
+      var attrs: [NSAttributedString.Key: Any] = [:]
+      for tag in self.activeTag {
+        if tag == "a", let href = href, let url = URL(string: href) {
+          attrs[.link] = url
+        } else if tag == "b" || tag == "strong" {
+          attrs[.font] = self.boldFont
+        } else if tag == "i" || tag == "em" {
+          attrs[.font] = self.italicFont
+        } else if tag == "s" {
+          attrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
+        }
       }
-
-      if lastTag == "a", let href = href, let url = URL(string: href) {
-        self.appendAttributes(text, attrs: [
-          .link: url,
-        ])
-      } else if lastTag == "b" || lastTag == "strong" {
-        self.appendAttributes(text, attrs: [
-          .font: self.boldFont,
-        ])
-      } else if lastTag == "i" || lastTag == "em" {
-        self.appendAttributes(text, attrs: [.font: self.italicFont])
-      } else if lastTag == "s" {
-        self.appendAttributes(text, attrs: [.strikethroughStyle: NSUnderlineStyle.single.rawValue])
-      } else {
-        self.appendAttributes(text)
-      }
+      self.appendAttributes(text, attrs: attrs)
     }
   }
 }
