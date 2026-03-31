@@ -67,14 +67,13 @@ private extension CGSize {
 }
 
 extension ReplyPreview: CVView {
-  typealias Data = String?
+  typealias Data = NSAttributedString?
 
   static func size(for text: Data, width: CGFloat) -> CGSize {
     guard let text else { return .zero }
     let rect = text.boundingRect(
       with: CGSize(width: width.padded, height: .greatestFiniteMagnitude),
       options: [.usesLineFragmentOrigin, .usesFontLeading],
-      attributes: [.font: Self.font],
       context: nil
     )
     return CGSize(width: ceil(rect.width), height: ceil(rect.height)).unpadded
@@ -86,6 +85,6 @@ extension ReplyPreview: CVView {
       return
     }
     self.zeroHeightConstraint?.deactivate()
-    self.tv.text = text
+    self.tv.attributedText = text
   }
 }

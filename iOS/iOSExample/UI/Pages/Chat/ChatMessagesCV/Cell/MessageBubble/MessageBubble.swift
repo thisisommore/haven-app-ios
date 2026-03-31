@@ -17,9 +17,9 @@ extension MessageBubble {
     message.attributedText()
   }
 
-  private static func replyText(for message: MessageWithSender) -> String? {
+  private static func replyText(for message: MessageWithSender) -> NSAttributedString? {
     guard let replyTo = message.replyTo else { return nil }
-    return self.text(for: replyTo).string
+    return self.text(for: replyTo)
   }
 
   private static func time(for message: MessageWithSender) -> String {
@@ -185,7 +185,7 @@ extension MessageBubble: CVCell {
         MessageLabel.size(for: data.message.attributedText(), width: paddedW),
         SenderLabel.size(for: data, width: paddedW),
         TimeLabel.size(for: Self.time(for: data), width: paddedW),
-        ReplyPreview.size(for: data.replyTo?.message.stripParagraphTags(), width: paddedW),
+        ReplyPreview.size(for: data.replyTo?.attributedText(), width: paddedW),
 
         data.reactionEmojis.isEmpty ? .zero : MessageBubbleReactions.size(for: data.reactionEmojis, width: paddedW)
       )
