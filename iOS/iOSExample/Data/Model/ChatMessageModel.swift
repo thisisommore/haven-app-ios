@@ -82,7 +82,7 @@ struct ChatMessageModel: Identifiable, Hashable {
     }
 
     do {
-      return try HTMLParser.parse(text: tagStripped, color: color, size: size)
+      return try HTMLParser.parse(text: self.message, color: color, size: size)
     } catch {
       AppLogger.messaging.error("failed to parse html \(error.localizedDescription)")
       return NSAttributedString(string: tagStripped, attributes: [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
