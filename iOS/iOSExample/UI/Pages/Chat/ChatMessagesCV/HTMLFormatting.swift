@@ -28,6 +28,63 @@ final class HTMLParser {
     self.italicFont = UIFont.italicSystemFont(ofSize: size)
   }
 
+  /// Counts trailing newlines in the rendered output while ignoring spaces.
+  /// This lets block elements and `<br>` share the same line-break policy.
+  private func trailingNewlineCount() -> Int {
+    let s = self.nsAttributedString.string
+    var count = 0
+    var index = s.unicodeScalars.endIndex
+    while index > s.unicodeScalars.startIndex {
+      s.unicodeScalars.formIndex(before: &index)
+      let scalar = s.unicodeScalars[index]
+      if scalar == "\n" {
+        count += 1
+      } else if CharacterSet.whitespaces.contains(scalar) {
+        continue
+      } else {
+        break
+      }
+    }
+    return count
+  }
+
+  /// Prevents repeated `<p>` / `<br>` nodes from producing more than one
+  /// empty visual line in the final output.
+  private func appendLineBreakIfNeeded() {
+    guard self.trailingNewlineCount() < 2 else { return }
+    self.appendAttributes("\n")
+  }
+
+  private func isAtStartOfLine() -> Bool {
+    guard let lastScalar = self.nsAttributedString.string.unicodeScalars.last else {
+      return true
+    }
+    return lastScalar == "\n"
+  }
+
+  /// SwiftSoup preserves indentation from the source HTML.
+  /// Trim leading whitespace only when this text starts a new rendered line.
+  private func normalizedText(for textNode: TextNode) -> String {
+    let originalText = textNode.text()
+    guard self.shouldTrimLeadingWhitespace(for: textNode) else {
+      return originalText
+    }
+
+    return String(originalText.trimmingPrefix(while: { $0.isWhitespace || $0.isNewline }))
+  }
+
+  private func shouldTrimLeadingWhitespace(for textNode: TextNode) -> Bool {
+    if textNode.siblingIndex == 0 {
+      return true
+    }
+
+    if textNode.previousSibling()?.nodeName() == "br" {
+      return true
+    }
+
+    return self.isAtStartOfLine()
+  }
+
   /// clean leading and trailing whitespace, should be used after parsing
   func cleanChars() {
     let trimChars = CharacterSet.whitespacesAndNewlines
@@ -48,7 +105,7 @@ final class HTMLParser {
     }
   }
 
-  /// append attribute string with new style if any
+  /// Appends text using the base attributes plus any tag-specific overrides.
   private func appendAttributes(_ str: String, attrs: [NSAttributedString.Key: Any] = [:]) {
     // no attrs to add/override skip merging
     let finalAttrs = attrs.isEmpty
@@ -92,7 +149,9 @@ extension HTMLParser: NodeVisitor {
         }
       }
       if nodeName == "p" {
-        self.appendAttributes("\n")
+        // Add paragraph spacing before the paragraph content so any preserved
+        // indentation inside the `<p>` can be trimmed as leading whitespace.
+        self.appendLineBreakIfNeeded()
       }
 
       if nodeName == "ol" {
@@ -117,13 +176,10 @@ extension HTMLParser: NodeVisitor {
     // body can be returned by swiftsoup, skip it, we only interested in child nodes
     if nodeName == "body" { return }
 
-    // Node like p br
+    // Element nodes that affect layout after their children are processed.
     if let el = node as? Element {
       if nodeName == "br" {
-        self.appendAttributes("\n")
-      }
-      if nodeName == "p" {
-        self.appendAttributes("\n")
+        self.appendLineBreakIfNeeded()
       }
       if nodeName == "ol", !self.orderedListCounts.isEmpty {
         self.orderedListCounts.removeLast()
@@ -140,22 +196,9 @@ extension HTMLParser: NodeVisitor {
       }
     }
 
-    // Text Node like "hello" "cat"
+    // Text nodes carry the actual visible content.
     if let tn = node as? TextNode {
-      // remove unnecessary leading whitespace
-      let text = {
-        let originalText = tn.text()
-        if
-          // if current text node is first child
-          tn.siblingIndex == 0 ||
-          // br is a special case where it is a leaf node that affects
-          // its next sibling's whitespace, not a child's
-          tn.previousSibling()?.nodeName() == "br" {
-          return String(originalText.trimmingPrefix(while: { $0.isWhitespace || $0.isNewline }))
-        } else {
-          return originalText
-        }
-      }()
+      let text = self.normalizedText(for: tn)
 
       var attrs: [NSAttributedString.Key: Any] = [:]
       for tag in self.activeTag {
