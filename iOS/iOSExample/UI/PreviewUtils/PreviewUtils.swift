@@ -6,39 +6,39 @@
 //
 #if DEBUG
 
-import Dependencies
-import Foundation
-import SQLiteData
-import SwiftUI
+  import Dependencies
+  import Foundation
+  import SQLiteData
+  import SwiftUI
 
-let previewChatId = UUID()
-let previewChannelId = "previewChatId"
-let greenColorInt = 0x0B421F
+  let previewChatId = UUID()
+  let previewChannelId = "previewChatId"
+  let greenColorInt = 0x0B421F
 
-/// Preview wrapper: seeds DB and dependencies before `content` is built (DEBUG only).
-struct Mock<Content: View>: View {
-  @ViewBuilder let content: () -> Content
+  /// Preview wrapper: seeds DB and dependencies before `content` is built (DEBUG only).
+  struct Mock<Content: View>: View {
+    @ViewBuilder let content: () -> Content
     private let database: any DatabaseWriter
 
-  init(@ViewBuilder content: @escaping () -> Content) {
-    self.content = content
+    init(@ViewBuilder content: @escaping () -> Content) {
+      self.content = content
       let db = try! appDatabase()
       self.database = db
       try! Self.seedPreviewDatabase(db)
-  }
+    }
 
-  var body: some View {
+    var body: some View {
       withDependencies {
         $0.defaultDatabase = self.database
       } operation: {
         NavigationStack {
-          content()
+          self.content()
         }
         .environmentObject(XXDKMock())
         .environmentObject(SelectedChat())
         .navigationBarBackButtonHidden()
       }
-  }
+    }
 
     private static func seedPreviewDatabase(_ database: any DatabaseWriter) throws {
       var chat = ChatModel(channelId: previewChannelId, name: "Mayur")
@@ -88,6 +88,6 @@ struct Mock<Content: View>: View {
         }
       }
     }
-}
+  }
 
 #endif
