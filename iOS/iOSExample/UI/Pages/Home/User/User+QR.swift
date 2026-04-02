@@ -122,7 +122,6 @@ struct QRCodeView: View {
         }
         .padding(.horizontal, 24)
 
-        // Warning notice
         HStack(alignment: .top, spacing: 10) {
           Image(systemName: "exclamationmark.triangle.fill")
             .foregroundColor(.orange)

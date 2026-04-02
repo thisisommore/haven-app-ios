@@ -83,8 +83,9 @@ struct ImportAccountSheet<T: XXDKP>: View {
 
   var body: some View {
     NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 24) {
+      VStack(spacing: 0) {
+        ScrollView {
+          VStack(alignment: .leading, spacing: 24) {
           // Header
           VStack(alignment: .leading, spacing: 8) {
             Text("Import your account")
@@ -145,9 +146,19 @@ struct ImportAccountSheet<T: XXDKP>: View {
                   .strokeBorder(Color.separator, lineWidth: 1)
               )
           }
+          }
+          .padding(.horizontal, 20)
+          .padding(.top, 20)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
+
+        if self.isImporting {
+          VStack {
+            Text(self.xxdk.status)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              .padding(.top, 8)
+          }
+        }
       }
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
@@ -174,15 +185,6 @@ struct ImportAccountSheet<T: XXDKP>: View {
         Button("OK", role: .cancel) {}
       } message: {
         Text(self.errorMessage ?? "Unknown error")
-      }
-
-      if self.isImporting {
-        VStack {
-          Text(self.xxdk.status)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .padding(.top, 8)
-        }
       }
     }
     .fileImporter(

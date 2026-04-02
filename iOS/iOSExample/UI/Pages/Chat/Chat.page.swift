@@ -144,17 +144,15 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .sheet(item: self.$controller.reactingTo) { message in
-      NavigationStack {
-        EmojiKeyboard { emoji in
-          if emoji.isEmpty {
-            self.controller.reactingTo = nil
-            return
-          }
-          self.controller.sendReaction(
-            emoji, to: message, chat: self.chat, xxdk: self.xxdk
-          )
+      EmojiKeyboard { emoji in
+        if emoji.isEmpty {
           self.controller.reactingTo = nil
+          return
         }
+        self.controller.sendReaction(
+          emoji, to: message, chat: self.chat, xxdk: self.xxdk
+        )
+        self.controller.reactingTo = nil
       }
     }
     .onAppear {

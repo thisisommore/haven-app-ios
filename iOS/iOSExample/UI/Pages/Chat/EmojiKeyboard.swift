@@ -69,31 +69,33 @@ struct EmojiKeyboard: View {
   private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 10), count: 8)
 
   var body: some View {
-    ScrollView {
-      Picker("Category", selection: self.$selectedCategory) {
-        ForEach(EmojiKeyboardCategory.allCases) { category in
-          Text(category.rawValue).tag(category)
+    NavigationStack {
+      ScrollView {
+        Picker("Category", selection: self.$selectedCategory) {
+          ForEach(EmojiKeyboardCategory.allCases) { category in
+            Text(category.rawValue).tag(category)
+          }
         }
-      }
-      .pickerStyle(.segmented)
-      .padding([.horizontal, .top], 16)
+        .pickerStyle(.segmented)
+        .padding([.horizontal, .top], 16)
 
-      LazyVGrid(columns: self.columns, spacing: 10) {
-        ForEach(self.emojiByCategory[self.selectedCategory] ?? [], id: \.self) { emoji in
-          Text(emoji)
-            .font(.system(size: 28))
-            .onTapGesture {
-              self.onSelect(emoji)
-            }
+        LazyVGrid(columns: self.columns, spacing: 10) {
+          ForEach(self.emojiByCategory[self.selectedCategory] ?? [], id: \.self) { emoji in
+            Text(emoji)
+              .font(.system(size: 28))
+              .onTapGesture {
+                self.onSelect(emoji)
+              }
+          }
         }
+        .padding()
       }
-      .padding()
-    }
-    .navigationTitle("Emoji Keyboard")
-    .toolbar {
-      ToolbarItem(placement: .navigationBarTrailing) {
-        Button("Clear") {
-          self.onSelect("")
+      .navigationTitle("Emoji Keyboard")
+      .toolbar {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button("Clear") {
+            self.onSelect("")
+          }
         }
       }
     }
@@ -102,9 +104,7 @@ struct EmojiKeyboard: View {
 
 struct EmojiKeyboard_Previews: PreviewProvider {
   static var previews: some View {
-    NavigationStack {
-      EmojiKeyboard { _ in
-      }
+    EmojiKeyboard { _ in
     }
   }
 }

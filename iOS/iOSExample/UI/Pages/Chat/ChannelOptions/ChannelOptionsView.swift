@@ -29,7 +29,8 @@ struct ChannelOptionsView<T: XXDKP>: View {
   }
 
   var body: some View {
-    List {
+    NavigationStack {
+      List {
       Section {
         // Chat name
         VStack(alignment: .leading, spacing: 8) {
@@ -234,6 +235,7 @@ struct ChannelOptionsView<T: XXDKP>: View {
           self.dismiss()
         }.tint(.haven)
       }.hiddenSharedBackground()
+    }
     }
     .sheet(isPresented: self.$controller.showExportKeySheet) {
       ExportChannelKeySheet(

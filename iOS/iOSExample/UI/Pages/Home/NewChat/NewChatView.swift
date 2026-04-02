@@ -108,19 +108,16 @@ struct NewChatView<T: XXDKP>: View {
                 guard !trimmed.isEmpty else { return }
 
                 do {
-                  // Check privacy level first
                   let privacyLevel =
                     try xxdk.channel.getChannelPrivacyLevel(
                       url: trimmed
                     )
 
                   if privacyLevel == .secret {
-                    // Private channel - show password input
                     self.isPrivateChannel = true
                     self.showPasswordSheet = true
                     self.errorMessage = nil
                   } else {
-                    // Public channel - proceed directly
                     let channel = try xxdk.channel.getChannelFromURL(
                       url: trimmed
                     )
@@ -138,53 +135,53 @@ struct NewChatView<T: XXDKP>: View {
           }.hiddenSharedBackground()
         }
       }
-      .sheet(isPresented: self.$showPasswordSheet) {
-        PasswordInputView(
-          url: self.inviteLink,
-          onConfirm: { password in
-            do {
-              let pp = try xxdk.channel.decodePrivateURL(
-                url: self.inviteLink,
-                password: password
-              )
-              self.prettyPrint = pp
-              let channel = try xxdk.channel.getPrivateChannelFromURL(
-                url: self.inviteLink,
-                password: password
-              )
-              self.channelData = channel
-              self.showConfirmationSheet = true
-              self.showPasswordSheet = false
-              self.errorMessage = nil
-            } catch {
-              self.errorMessage =
-                "Failed to decrypt channel: \(error.localizedDescription)"
-              self.showPasswordSheet = false
-            }
-          },
-          onCancel: {
-            self.showPasswordSheet = false
-          }
-        )
-      }
-      .sheet(isPresented: self.$showConfirmationSheet) { [inviteLink, channelData] in
-        JoinChannelConfirmationView(
-          channelName: channelData?.Name ?? "",
-          channelURL: inviteLink,
-          isJoining: self.$isJoining,
-          onConfirm: { enableDM in
-            Task {
-              await self.joinChannel(
-                url: inviteLink,
-                channelData: channelData!,
-                enableDM: enableDM
-              )
-            }
-          }
-        )
-      }
       .navigationTitle("Join Channel")
       .navigationBarTitleDisplayMode(.inline)
+    }
+    .sheet(isPresented: self.$showPasswordSheet) {
+      PasswordInputView(
+        url: self.inviteLink,
+        onConfirm: { password in
+          do {
+            let pp = try xxdk.channel.decodePrivateURL(
+              url: self.inviteLink,
+              password: password
+            )
+            self.prettyPrint = pp
+            let channel = try xxdk.channel.getPrivateChannelFromURL(
+              url: self.inviteLink,
+              password: password
+            )
+            self.channelData = channel
+            self.showConfirmationSheet = true
+            self.showPasswordSheet = false
+            self.errorMessage = nil
+          } catch {
+            self.errorMessage =
+              "Failed to decrypt channel: \(error.localizedDescription)"
+            self.showPasswordSheet = false
+          }
+        },
+        onCancel: {
+          self.showPasswordSheet = false
+        }
+      )
+    }
+    .sheet(isPresented: self.$showConfirmationSheet) { [inviteLink, channelData] in
+      JoinChannelConfirmationView(
+        channelName: channelData?.Name ?? "",
+        channelURL: inviteLink,
+        isJoining: self.$isJoining,
+        onConfirm: { enableDM in
+          Task {
+            await self.joinChannel(
+              url: inviteLink,
+              channelData: channelData!,
+              enableDM: enableDM
+            )
+          }
+        }
+      )
     }
   }
 }

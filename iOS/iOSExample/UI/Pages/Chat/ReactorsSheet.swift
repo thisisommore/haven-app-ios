@@ -77,94 +77,94 @@ struct ReactorsSheet: View {
       VStack(spacing: 0) {
         // Emoji tabs
         ScrollView(.horizontal, showsIndicators: false) {
-          HStack(spacing: 8) {
+        HStack(spacing: 8) {
+          Button {
+            self.currentEmoji = nil
+          } label: {
+            HStack(spacing: 4) {
+              Text("All")
+              Text("\(self.totalReactionCount)")
+                .font(.caption)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+              self.currentEmoji == nil
+                ? Color.accentColor.opacity(0.2)
+                : Color.secondary.opacity(0.1)
+            )
+            .clipShape(Capsule())
+          }
+          .buttonStyle(.plain)
+
+          ForEach(self.groupedReactions, id: \.emoji) { group in
             Button {
-              self.currentEmoji = nil
+              if self.currentEmoji == group.emoji {
+                self.currentEmoji = nil
+              } else {
+                self.currentEmoji = group.emoji
+              }
             } label: {
               HStack(spacing: 4) {
-                Text("All")
-                Text("\(self.totalReactionCount)")
+                Text(group.emoji)
+                Text("\(group.reactions.count)")
                   .font(.caption)
               }
               .padding(.horizontal, 12)
               .padding(.vertical, 8)
               .background(
-                self.currentEmoji == nil
+                self.currentEmoji == group.emoji
                   ? Color.accentColor.opacity(0.2)
                   : Color.secondary.opacity(0.1)
               )
               .clipShape(Capsule())
             }
             .buttonStyle(.plain)
+          }
+        }
+        .padding(.horizontal)
+      }
+      .padding(.vertical, 12)
 
-            ForEach(self.groupedReactions, id: \.emoji) { group in
-              Button {
-                if self.currentEmoji == group.emoji {
-                  self.currentEmoji = nil
-                } else {
-                  self.currentEmoji = group.emoji
-                }
+      Divider()
+
+      // Reactors list
+      List(self.displayedReactions, id: \.id) { reaction in
+        HStack {
+          Text(reaction.emoji)
+            .font(.title2)
+          Text(self.senderCodename(for: reaction))
+            .foregroundStyle(Color.primary)
+          Spacer()
+          if reaction.isMe {
+            Text("You")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+            if reaction.status == .deleting {
+              ProgressView()
+                .controlSize(.small)
+            } else {
+              Button(role: .destructive) {
+                self.onDeleteReaction?(reaction)
               } label: {
-                HStack(spacing: 4) {
-                  Text(group.emoji)
-                  Text("\(group.reactions.count)")
-                    .font(.caption)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                  self.currentEmoji == group.emoji
-                    ? Color.accentColor.opacity(0.2)
-                    : Color.secondary.opacity(0.1)
-                )
-                .clipShape(Capsule())
+                Image(systemName: "trash")
+                  .font(.caption)
               }
-              .buttonStyle(.plain)
-            }
-          }
-          .padding(.horizontal)
-        }
-        .padding(.vertical, 12)
-
-        Divider()
-
-        // Reactors list
-        List(self.displayedReactions, id: \.id) { reaction in
-          HStack {
-            Text(reaction.emoji)
-              .font(.title2)
-            Text(self.senderCodename(for: reaction))
-              .foregroundStyle(Color.primary)
-            Spacer()
-            if reaction.isMe {
-              Text("You")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-              if reaction.status == .deleting {
-                ProgressView()
-                  .controlSize(.small)
-              } else {
-                Button(role: .destructive) {
-                  self.onDeleteReaction?(reaction)
-                } label: {
-                  Image(systemName: "trash")
-                    .font(.caption)
-                }
-                .buttonStyle(.borderless)
-              }
+              .buttonStyle(.borderless)
             }
           }
         }
+      }
         .listStyle(.plain)
       }
       .navigationTitle("Reactions")
       .navigationBarTitleDisplayMode(.inline)
-    }
-    .onAppear {
-      self.ensureCurrentEmojiIsValid()
-    }
-    .onChange(of: self.reactions) { _, _ in
-      self.ensureCurrentEmojiIsValid()
+      .onAppear {
+        self.ensureCurrentEmojiIsValid()
+      }
+      .onChange(of: self.reactions) { _, _ in
+        self.ensureCurrentEmojiIsValid()
+      }
     }
   }
 }
