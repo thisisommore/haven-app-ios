@@ -8,7 +8,7 @@ import Foundation
 import SQLiteData
 import SwiftUI
 
-struct NewChatView<T: XXDKP>: View {
+struct NewChatSheet<T: XXDKP>: View {
   @Environment(\.dismiss) var dismiss
   @EnvironmentObject var xxdk: T
 
@@ -139,7 +139,7 @@ struct NewChatView<T: XXDKP>: View {
       .navigationBarTitleDisplayMode(.inline)
     }
     .sheet(isPresented: self.$showPasswordSheet) {
-      PasswordInputView(
+      PasswordInputSheet(
         url: self.inviteLink,
         onConfirm: { password in
           do {
@@ -168,7 +168,7 @@ struct NewChatView<T: XXDKP>: View {
       )
     }
     .sheet(isPresented: self.$showConfirmationSheet) { [inviteLink, channelData] in
-      JoinChannelConfirmationView(
+      JoinChannelConfirmationSheet(
         channelName: channelData?.Name ?? "",
         channelURL: inviteLink,
         isJoining: self.$isJoining,

@@ -34,7 +34,7 @@ func generateQRCode(from string: String) -> UIImage? {
   return nil
 }
 
-struct QRCodeView: View {
+struct QRCodeSheet: View {
   let dmToken: Int64
   let pubKey: Data
   let codeset: Int
@@ -154,7 +154,7 @@ struct QRCodeView: View {
   }
 }
 
-struct QRScannerView: View {
+struct QRScannerSheet: View {
   let onCodeScanned: (String) -> Void
   var onShowMyQR: (() -> Void)?
 

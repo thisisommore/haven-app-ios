@@ -79,13 +79,13 @@ struct HomeView<T: XXDKP>: View {
         .sheet(item: self.$controller.activeSheet) { sheet in
           switch sheet {
           case .newChat:
-            NewChatView<T>()
+            NewChatSheet<T>()
           case .createSpace:
-            CreateSpaceView<T>()
+            CreateSpaceSheet<T>()
           case let .qrCode(data):
-            QRCodeView(dmToken: data.token, pubKey: data.pubKey, codeset: data.codeset)
+            QRCodeSheet(dmToken: data.token, pubKey: data.pubKey, codeset: data.codeset)
           case .qrScanner:
-            QRScannerView(
+            QRScannerSheet(
               onCodeScanned: { code in
                 self.controller.handleAddUser(
                   code: code,
@@ -97,7 +97,7 @@ struct HomeView<T: XXDKP>: View {
               }
             )
           case .nicknamePicker:
-            NicknamePickerView<T>(codename: self.xxdk.codename ?? "")
+            NicknamePickerSheet<T>(codename: self.xxdk.codename ?? "")
               .onDisappear {
                 self.controller.loadCurrentNickname(xxdk: self.xxdk)
               }

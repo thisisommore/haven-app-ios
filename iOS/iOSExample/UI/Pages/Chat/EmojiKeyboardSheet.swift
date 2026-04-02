@@ -18,7 +18,7 @@ private enum EmojiKeyboardCategory: String, CaseIterable, Identifiable {
   }
 }
 
-struct EmojiKeyboard: View {
+struct EmojiKeyboardSheet: View {
   let onSelect: (String) -> Void
 
   @State private var selectedCategory: EmojiKeyboardCategory = .smileys
@@ -104,11 +104,11 @@ struct EmojiKeyboard: View {
 
 struct EmojiKeyboard_Previews: PreviewProvider {
   static var previews: some View {
-    EmojiKeyboard { _ in
+    EmojiKeyboardSheet { _ in
     }
   }
 }
 
 #Preview("Emoji Keyboard") {
-  EmojiKeyboard { _ in }
+  EmojiKeyboardSheet { _ in }
 }

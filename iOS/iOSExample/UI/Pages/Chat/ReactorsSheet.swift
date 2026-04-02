@@ -77,84 +77,84 @@ struct ReactorsSheet: View {
       VStack(spacing: 0) {
         // Emoji tabs
         ScrollView(.horizontal, showsIndicators: false) {
-        HStack(spacing: 8) {
-          Button {
-            self.currentEmoji = nil
-          } label: {
-            HStack(spacing: 4) {
-              Text("All")
-              Text("\(self.totalReactionCount)")
-                .font(.caption)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-              self.currentEmoji == nil
-                ? Color.accentColor.opacity(0.2)
-                : Color.secondary.opacity(0.1)
-            )
-            .clipShape(Capsule())
-          }
-          .buttonStyle(.plain)
-
-          ForEach(self.groupedReactions, id: \.emoji) { group in
+          HStack(spacing: 8) {
             Button {
-              if self.currentEmoji == group.emoji {
-                self.currentEmoji = nil
-              } else {
-                self.currentEmoji = group.emoji
-              }
+              self.currentEmoji = nil
             } label: {
               HStack(spacing: 4) {
-                Text(group.emoji)
-                Text("\(group.reactions.count)")
+                Text("All")
+                Text("\(self.totalReactionCount)")
                   .font(.caption)
               }
               .padding(.horizontal, 12)
               .padding(.vertical, 8)
               .background(
-                self.currentEmoji == group.emoji
+                self.currentEmoji == nil
                   ? Color.accentColor.opacity(0.2)
                   : Color.secondary.opacity(0.1)
               )
               .clipShape(Capsule())
             }
             .buttonStyle(.plain)
-          }
-        }
-        .padding(.horizontal)
-      }
-      .padding(.vertical, 12)
 
-      Divider()
-
-      // Reactors list
-      List(self.displayedReactions, id: \.id) { reaction in
-        HStack {
-          Text(reaction.emoji)
-            .font(.title2)
-          Text(self.senderCodename(for: reaction))
-            .foregroundStyle(Color.primary)
-          Spacer()
-          if reaction.isMe {
-            Text("You")
-              .font(.caption)
-              .foregroundStyle(.secondary)
-            if reaction.status == .deleting {
-              ProgressView()
-                .controlSize(.small)
-            } else {
-              Button(role: .destructive) {
-                self.onDeleteReaction?(reaction)
+            ForEach(self.groupedReactions, id: \.emoji) { group in
+              Button {
+                if self.currentEmoji == group.emoji {
+                  self.currentEmoji = nil
+                } else {
+                  self.currentEmoji = group.emoji
+                }
               } label: {
-                Image(systemName: "trash")
-                  .font(.caption)
+                HStack(spacing: 4) {
+                  Text(group.emoji)
+                  Text("\(group.reactions.count)")
+                    .font(.caption)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                  self.currentEmoji == group.emoji
+                    ? Color.accentColor.opacity(0.2)
+                    : Color.secondary.opacity(0.1)
+                )
+                .clipShape(Capsule())
               }
-              .buttonStyle(.borderless)
+              .buttonStyle(.plain)
+            }
+          }
+          .padding(.horizontal)
+        }
+        .padding(.vertical, 12)
+
+        Divider()
+
+        // Reactors list
+        List(self.displayedReactions, id: \.id) { reaction in
+          HStack {
+            Text(reaction.emoji)
+              .font(.title2)
+            Text(self.senderCodename(for: reaction))
+              .foregroundStyle(Color.primary)
+            Spacer()
+            if reaction.isMe {
+              Text("You")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+              if reaction.status == .deleting {
+                ProgressView()
+                  .controlSize(.small)
+              } else {
+                Button(role: .destructive) {
+                  self.onDeleteReaction?(reaction)
+                } label: {
+                  Image(systemName: "trash")
+                    .font(.caption)
+                }
+                .buttonStyle(.borderless)
+              }
             }
           }
         }
-      }
         .listStyle(.plain)
       }
       .navigationTitle("Reactions")

@@ -1,7 +1,7 @@
 import SQLiteData
 import SwiftUI
 
-struct CreateSpaceView<T: XXDKP>: View {
+struct CreateSpaceSheet<T: XXDKP>: View {
   @Environment(\.dismiss) var dismiss
   @EnvironmentObject var xxdk: T
 
@@ -58,74 +58,74 @@ struct CreateSpaceView<T: XXDKP>: View {
     NavigationStack {
       Form {
         Section(header: Text("Space Details")) {
-        TextField("Name", text: self.$name)
-          .textInputAutocapitalization(.words)
+          TextField("Name", text: self.$name)
+            .textInputAutocapitalization(.words)
 
-        TextField("Description", text: self.$description, axis: .vertical)
-          .lineLimit(3 ... 6)
-      }
-
-      Section(
-        header: Text("Privacy"),
-        footer: Text(
-          self.isSecret
-            ? "Secret Chats hide everything: The name, description, members, messages, and more. No one knows anything about the Haven Chat unless they are invited."
-            : "Public Chats are accessible by anyone with just the link. No passphrase is needed to join. You can assume everyone knows when your codename is in a public chat."
-        )
-      ) {
-        Toggle("Secret", isOn: self.$isSecret)
-          .tint(.haven)
-      }
-
-      Section(footer: Text("Allow others to send you direct messages from this space")) {
-        Toggle("Enable Direct Messages", isOn: self.$enableDirectMessages)
-          .tint(.haven)
-      }
-
-      if let errorMessage {
-        Section {
-          Text(errorMessage)
-            .foregroundColor(.red)
+          TextField("Description", text: self.$description, axis: .vertical)
+            .lineLimit(3 ... 6)
         }
-      }
 
-      if self.isCreating {
-        Section {
-          HStack {
-            Spacer()
-            ProgressView()
-              .progressViewStyle(.circular)
-            Text("Creating space...")
-              .foregroundColor(.secondary)
-              .padding(.leading, 8)
-            Spacer()
+        Section(
+          header: Text("Privacy"),
+          footer: Text(
+            self.isSecret
+              ? "Secret Chats hide everything: The name, description, members, messages, and more. No one knows anything about the Haven Chat unless they are invited."
+              : "Public Chats are accessible by anyone with just the link. No passphrase is needed to join. You can assume everyone knows when your codename is in a public chat."
+          )
+        ) {
+          Toggle("Secret", isOn: self.$isSecret)
+            .tint(.haven)
+        }
+
+        Section(footer: Text("Allow others to send you direct messages from this space")) {
+          Toggle("Enable Direct Messages", isOn: self.$enableDirectMessages)
+            .tint(.haven)
+        }
+
+        if let errorMessage {
+          Section {
+            Text(errorMessage)
+              .foregroundColor(.red)
+          }
+        }
+
+        if self.isCreating {
+          Section {
+            HStack {
+              Spacer()
+              ProgressView()
+                .progressViewStyle(.circular)
+              Text("Creating space...")
+                .foregroundColor(.secondary)
+                .padding(.leading, 8)
+              Spacer()
+            }
           }
         }
       }
-    }
-    .navigationTitle("Create Space")
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbar {
-      ToolbarItem(placement: .cancellationAction) {
-        Button("Cancel") {
-          self.dismiss()
-        }.tint(.haven)
-          .disabled(self.isCreating)
-      }.hiddenSharedBackground()
+      .navigationTitle("Create Space")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Cancel") {
+            self.dismiss()
+          }.tint(.haven)
+            .disabled(self.isCreating)
+        }.hiddenSharedBackground()
 
-      ToolbarItem(placement: .confirmationAction) {
-        Button("Create") {
-          self.createChannel()
-        }
-        .tint(.haven)
-        .disabled(self.name.isEmpty || self.isCreating)
-      }.hiddenSharedBackground()
-    }
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Create") {
+            self.createChannel()
+          }
+          .tint(.haven)
+          .disabled(self.name.isEmpty || self.isCreating)
+        }.hiddenSharedBackground()
+      }
     }
   }
 }
 
 #Preview {
-  CreateSpaceView<XXDKMock>()
+  CreateSpaceSheet<XXDKMock>()
     .mock()
 }

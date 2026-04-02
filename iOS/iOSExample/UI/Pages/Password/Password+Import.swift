@@ -86,55 +86,32 @@ struct ImportAccountSheet<T: XXDKP>: View {
       VStack(spacing: 0) {
         ScrollView {
           VStack(alignment: .leading, spacing: 24) {
-          // Header
-          VStack(alignment: .leading, spacing: 8) {
-            Text("Import your account")
-              .font(.title2)
-              .bold()
+            // Header
+            VStack(alignment: .leading, spacing: 8) {
+              Text("Import your account")
+                .font(.title2)
+                .bold()
 
-            Text(
-              "Note that importing your account will only restore your codename. You need to rejoin manually any previously joined channel"
-            )
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-          }
-
-          // File picker
-          Button(action: { self.showFilePicker = true }) {
-            HStack {
-              Image(systemName: "doc")
               Text(
-                self.selectedFileURL?.lastPathComponent
-                  ?? "Choose a file"
+                "Note that importing your account will only restore your codename. You need to rejoin manually any previously joined channel"
               )
-              Spacer()
-              Image(systemName: "chevron.right")
-                .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .background(
-              RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-            )
-            .overlay(
-              RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.separator, lineWidth: 1)
-            )
-          }
-          .foregroundStyle(.primary)
-
-          // Password field
-          VStack(alignment: .leading, spacing: 6) {
-            Text("Unlock export with your password")
               .font(.footnote)
               .foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
+            }
 
-            SecureField("-", text: self.$importPassword)
-              .textContentType(.password)
-              .textInputAutocapitalization(.never)
-              .disableAutocorrection(true)
+            // File picker
+            Button(action: { self.showFilePicker = true }) {
+              HStack {
+                Image(systemName: "doc")
+                Text(
+                  self.selectedFileURL?.lastPathComponent
+                    ?? "Choose a file"
+                )
+                Spacer()
+                Image(systemName: "chevron.right")
+                  .foregroundStyle(.secondary)
+              }
               .padding(.horizontal, 12)
               .padding(.vertical, 12)
               .background(
@@ -145,7 +122,30 @@ struct ImportAccountSheet<T: XXDKP>: View {
                 RoundedRectangle(cornerRadius: 12)
                   .strokeBorder(Color.separator, lineWidth: 1)
               )
-          }
+            }
+            .foregroundStyle(.primary)
+
+            // Password field
+            VStack(alignment: .leading, spacing: 6) {
+              Text("Unlock export with your password")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+              SecureField("-", text: self.$importPassword)
+                .textContentType(.password)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+                .background(
+                  RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.secondarySystemBackground))
+                )
+                .overlay(
+                  RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(Color.separator, lineWidth: 1)
+                )
+            }
           }
           .padding(.horizontal, 20)
           .padding(.top, 20)

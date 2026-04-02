@@ -132,7 +132,7 @@ struct ChatView<T: XXDKP>: View {
     }
     .sheet(isPresented: self.$controller.showChannelOptions) {
       if let chat = self.chat {
-        ChannelOptionsView<T>(chat: chat) {
+        ChannelOptionsSheet<T>(chat: chat) {
           self.controller.leaveChannel(
             chatId: self.chatId,
             chat: self.chat,
@@ -144,7 +144,7 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .sheet(item: self.$controller.reactingTo) { message in
-      EmojiKeyboard { emoji in
+      EmojiKeyboardSheet { emoji in
         if emoji.isEmpty {
           self.controller.reactingTo = nil
           return

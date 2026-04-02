@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-struct NicknamePickerView<T: XXDKP>: View {
+struct NicknamePickerSheet<T: XXDKP>: View {
   let codename: String
 
   @Environment(\.dismiss) private var dismiss
@@ -212,6 +212,6 @@ struct NicknamePickerView<T: XXDKP>: View {
 }
 
 #Preview {
-  NicknamePickerView<XXDKMock>(codename: "juniorFunkyAntiquity")
+  NicknamePickerSheet<XXDKMock>(codename: "juniorFunkyAntiquity")
     .mock()
 }

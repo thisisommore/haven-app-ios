@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct PasswordInputView: View {
+struct PasswordInputSheet: View {
   let url: String
   let onConfirm: (String) -> Void
   let onCancel: () -> Void
