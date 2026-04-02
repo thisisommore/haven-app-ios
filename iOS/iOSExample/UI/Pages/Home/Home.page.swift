@@ -7,7 +7,6 @@ struct HomeView<T: XXDKP>: View {
   @EnvironmentObject var xxdk: T
   @EnvironmentObject private var appStorage: AppStorage
   @EnvironmentObject private var navigation: AppNavigationPath
-  @Environment(\.isSplitView) private var isSplitView
   @EnvironmentObject private var selectedChat: SelectedChat
 
   var body: some View {

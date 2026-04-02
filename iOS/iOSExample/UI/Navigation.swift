@@ -25,10 +25,6 @@ final class SelectedChat: ObservableObject {
   }
 }
 
-extension EnvironmentValues {
-  @Entry var isSplitView: Bool = false
-}
-
 enum Destination: Hashable {
   case home
   case landing
