@@ -139,59 +139,62 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
           self.controller.onAppear(channelId: self.channelId, xxdk: self.xxdk)
         }
 
-        // Admin section - only visible for channel admins (not for DMs)
-        if !self.isDM, self.channelId != nil, self.chat.isAdmin {
-          Section(header: Text("Admin")) {
-            Button {
-              self.controller.showExportKeySheet = true
-            } label: {
-              HStack {
-                Image(systemName: "key.fill")
-                  .foregroundColor(.haven)
-                Text("Export Channel Key")
-                Spacer()
-                Image(systemName: "square.and.arrow.up")
-                  .foregroundColor(.secondary)
+        // Channels specific props
+        if !self.isDM {
+          // Admin section - only visible for channel admins (not for DMs)
+          if self.channelId != nil, self.chat.isAdmin {
+            Section(header: Text("Admin")) {
+              Button {
+                self.controller.showExportKeySheet = true
+              } label: {
+                HStack {
+                  Image(systemName: "key.fill")
+                    .foregroundColor(.haven)
+                  Text("Export Channel Key")
+                  Spacer()
+                  Image(systemName: "square.and.arrow.up")
+                    .foregroundColor(.secondary)
+                }
               }
+              .tint(.primary)
             }
-            .tint(.primary)
           }
-        }
 
-        // Muted Users section - only visible for admins (not for DMs)
-        if !self.isDM, self.channelId != nil, self.chat.isAdmin {
-          Section(header: Text("Muted Users")) {
-            if self.controller.mutedUsers.isEmpty {
-              Text("No muted users")
-                .foregroundColor(.secondary)
-            } else {
-              ForEach(self.controller.mutedUsers, id: \.self) { pubKey in
-                MutedUserRow(pubKey: pubKey) {
-                  self.controller.unmuteUser(
-                    pubKey: pubKey, channelId: self.channelId, xxdk: self.xxdk
-                  )
+          // Muted Users section - only visible for admins (not for DMs)
+          if self.channelId != nil, self.chat.isAdmin {
+            Section(header: Text("Muted Users")) {
+              if self.controller.mutedUsers.isEmpty {
+                Text("No muted users")
+                  .foregroundColor(.secondary)
+              } else {
+                ForEach(self.controller.mutedUsers, id: \.self) { pubKey in
+                  MutedUserRow(pubKey: pubKey) {
+                    self.controller.unmuteUser(
+                      pubKey: pubKey, channelId: self.channelId, xxdk: self.xxdk
+                    )
+                  }
                 }
               }
             }
           }
-        }
 
-        // Import key section - only visible for non-admins and not for DMs
-        if !self.isDM, self.channelId != nil, !self.chat.isAdmin {
-          Section {
-            Button {
-              self.controller.showImportKeySheet = true
-            } label: {
-              HStack {
-                Image(systemName: "key.fill")
-                  .foregroundColor(.haven)
-                Text("Import Channel Key")
-                Spacer()
-                Image(systemName: "square.and.arrow.down")
-                  .foregroundColor(.secondary)
+          // Import key section - only visible for non-admins and not for DMs
+          if self.channelId != nil, !self.chat.isAdmin {
+            Section {
+              Button {
+                self.controller.showImportKeySheet = true
+              } label: {
+                HStack {
+                  Image(systemName: "key.fill")
+                    .foregroundColor(.haven)
+                  Text("Import Channel Key")
+                  Spacer()
+                  Image(systemName: "square.and.arrow.down")
+                    .foregroundColor(.secondary)
+                }
               }
+              .tint(.primary)
             }
-            .tint(.primary)
           }
         }
 
