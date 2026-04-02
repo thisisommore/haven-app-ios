@@ -15,7 +15,7 @@ final class AppNavigationPath: Observable, ObservableObject {
 /// Holds selected chat info for split view detail column
 final class SelectedChat: ObservableObject {
   @Published var chatId: UUID?
-  @Published var chatTitle: String = ""
+  @Published var chatTitle: String?
 
   func select(id: UUID, title: String) {
     self.chatId = id

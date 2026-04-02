@@ -72,10 +72,11 @@ struct Root: View {
 
   @ViewBuilder
   private var detailContent: some View {
-    if let chatId = selectedChat.chatId {
+    if let chatId = selectedChat.chatId,
+       let chatTitle = selectedChat.chatTitle {
       ChatView<XXDK>(
         chatId: chatId,
-        chatTitle: self.selectedChat.chatTitle
+        chatTitle: chatTitle
       )
       .id(chatId)
     } else if self.horizontalSizeClass == .regular {
