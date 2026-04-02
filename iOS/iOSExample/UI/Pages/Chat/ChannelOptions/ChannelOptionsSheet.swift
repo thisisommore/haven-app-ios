@@ -297,8 +297,9 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
 }
 
 #Preview {
-  ChannelOptionsPreviewWrapper()
-    .mock()
+  Mock {
+    ChannelOptionsPreviewWrapper()
+  }
 }
 
 private struct ChannelOptionsPreviewWrapper: View {

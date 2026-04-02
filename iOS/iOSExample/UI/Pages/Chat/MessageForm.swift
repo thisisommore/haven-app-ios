@@ -152,13 +152,15 @@ struct MessageForm<T: XXDKP>: View {
 }
 
 #Preview {
-  MessageFormPreviewWrapper()
-    .mock()
+  Mock {
+    MessageFormPreviewWrapper()
+  }
 }
 
 #Preview("Reply Mode") {
-  MessageFormPreviewWrapper(replyMode: true)
-    .mock()
+  Mock {
+    MessageFormPreviewWrapper(replyMode: true)
+  }
 }
 
 private struct MessageFormPreviewWrapper: View {

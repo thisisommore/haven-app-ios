@@ -188,9 +188,10 @@ struct ChatView<T: XXDKP>: View {
 }
 
 #Preview {
-  ChatView<XXDKMock>(
-    chatId: previewChatId,
-    chatTitle: "Mayur"
-  )
-  .mock()
+  Mock {
+    ChatView<XXDKMock>(
+      chatId: previewChatId,
+      chatTitle: "Mayur"
+    )
+  }
 }

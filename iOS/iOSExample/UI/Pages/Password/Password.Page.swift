@@ -260,8 +260,9 @@ enum BranchColor {
 }
 
 #Preview {
-  PasswordCreationView<XXDKMock>()
-    .environmentObject(AppStorage())
-    .environmentObject(AppNavigationPath())
-    .mock()
+  Mock {
+    PasswordCreationView<XXDKMock>()
+      .environmentObject(AppStorage())
+      .environmentObject(AppNavigationPath())
+  }
 }

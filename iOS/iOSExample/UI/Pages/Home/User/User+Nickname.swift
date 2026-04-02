@@ -212,6 +212,7 @@ struct NicknamePickerSheet<T: XXDKP>: View {
 }
 
 #Preview {
-  NicknamePickerSheet<XXDKMock>(codename: "juniorFunkyAntiquity")
-    .mock()
+  Mock {
+    NicknamePickerSheet<XXDKMock>(codename: "juniorFunkyAntiquity")
+  }
 }

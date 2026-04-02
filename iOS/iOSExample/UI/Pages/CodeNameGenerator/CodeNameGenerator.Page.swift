@@ -129,14 +129,16 @@ struct CodenameGeneratorView<T: XXDKP>: View {
 }
 
 #Preview("Codename Generator") {
-  CodenameGeneratorView<XXDKMock>()
-    .mock()
+  Mock {
+    CodenameGeneratorView<XXDKMock>()
+  }
 }
 
 #Preview("Dark Mode") {
-  CodenameGeneratorView<XXDKMock>()
-    .preferredColorScheme(.dark)
-    .mock()
+  Mock {
+    CodenameGeneratorView<XXDKMock>()
+      .preferredColorScheme(.dark)
+  }
 }
 
 #Preview("Individual Cards") {

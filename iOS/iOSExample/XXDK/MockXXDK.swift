@@ -11,9 +11,123 @@ import Kronos
 import SQLiteData
 import SwiftUI
 
+private struct MockChannelsMessaging: ChannelsMessagingP {
+  func send(msg _: String, channelId _: String) {}
+  func reply(msg _: String, channelId _: String, replyToMessageIdB64 _: String) {}
+  func react(emoji _: String, toMessageIdB64 _: String, inChannelId _: String) {}
+  func delete(channelId _: String, messageId _: String) {}
+}
+
+final class MockChannels: ChannelsP {
+  unowned let owner: XXDKMock
+  let msg: ChannelsMessagingP
+
+  init(owner: XXDKMock) {
+    self.owner = owner
+    self.msg = MockChannelsMessaging()
+  }
+
+  func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
+    try await self.owner.joinChannelFromURL(url)
+  }
+
+  func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
+    try await self.owner.joinChannel(prettyPrint)
+  }
+
+  func createChannel(
+    name: String,
+    description: String,
+    privacyLevel: PrivacyLevel,
+    enableDms: Bool
+  ) async throws -> ChannelJSON {
+    try await self.owner.createChannel(
+      name: name,
+      description: description,
+      privacyLevel: privacyLevel,
+      enableDms: enableDms
+    )
+  }
+
+  func leaveChannel(channelId: String) throws {
+    try self.owner.leaveChannel(channelId: channelId)
+  }
+
+  func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
+    try self.owner.getShareURL(channelId: channelId, host: host)
+  }
+
+  func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel {
+    try self.owner.getChannelPrivacyLevel(url: url)
+  }
+
+  func getChannelFromURL(url: String) throws -> ChannelJSON {
+    try self.owner.getChannelFromURL(url: url)
+  }
+
+  func decodePrivateURL(url: String, password: String) throws -> String {
+    try self.owner.decodePrivateURL(url: url, password: password)
+  }
+
+  func getPrivateChannelFromURL(url: String, password: String) throws -> ChannelJSON {
+    try self.owner.getPrivateChannelFromURL(url: url, password: password)
+  }
+
+  func enableDirectMessages(channelId: String) throws {
+    try self.owner.enableDirectMessages(channelId: channelId)
+  }
+
+  func disableDirectMessages(channelId: String) throws {
+    try self.owner.disableDirectMessages(channelId: channelId)
+  }
+
+  func areDMsEnabled(channelId: String) throws -> Bool {
+    try self.owner.areDMsEnabled(channelId: channelId)
+  }
+
+  func isChannelAdmin(channelId: String) -> Bool {
+    self.owner.isChannelAdmin(channelId: channelId)
+  }
+
+  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> Data {
+    try self.owner.exportChannelAdminKey(
+      channelId: channelId, encryptionPassword: encryptionPassword
+    )
+  }
+
+  func importChannelAdminKey(
+    channelId: String, encryptionPassword: String, privateKey: String
+  ) throws {
+    try self.owner.importChannelAdminKey(
+      channelId: channelId, encryptionPassword: encryptionPassword, privateKey: privateKey
+    )
+  }
+
+  func getMutedUsers(channelId: String) throws -> [Data] {
+    try self.owner.getMutedUsers(channelId: channelId)
+  }
+
+  func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
+    try self.owner.muteUser(channelId: channelId, pubKey: pubKey, mute: mute)
+  }
+
+  func isMuted(channelId: String) -> Bool {
+    self.owner.isMuted(channelId: channelId)
+  }
+
+  func getChannelNickname(channelId: String) throws -> String {
+    try self.owner.getChannelNickname(channelId: channelId)
+  }
+
+  func setChannelNickname(channelId: String, nickname: String) throws {
+    try self.owner.setChannelNickname(channelId: channelId, nickname: nickname)
+  }
+}
+
 final class XXDKMock: XXDKP {
-  var channel: Channel {
-    fatalError("mock")
+  private lazy var channelImpl = MockChannels(owner: self)
+  var channel: MockChannels {
+    self.channelImpl
   }
 
   var dm: DirectMessage?
@@ -245,9 +359,9 @@ final class XXDKMock: XXDKP {
     return true
   }
 
-  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> String {
+  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> Data {
     // Mock: return a mock encrypted admin key
-    return "mock-encrypted-admin-key-\(channelId)-\(encryptionPassword.hashValue)"
+    return "mock-encrypted-admin-key-\(channelId)-\(encryptionPassword.hashValue)".data
   }
 
   func exportIdentity(password: String) throws -> Data {

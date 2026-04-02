@@ -184,6 +184,7 @@ struct HomeView<T: XXDKP>: View {
 }
 
 #Preview {
-  HomeView<XXDKMock>()
-    .mock()
+  Mock {
+    HomeView<XXDKMock>()
+  }
 }

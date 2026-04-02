@@ -75,5 +75,7 @@ struct LandingPage<T: XXDKP>: View {
 }
 
 #Preview {
-  return LandingPage<XXDKMock>().mock()
+  Mock {
+    LandingPage<XXDKMock>()
+  }
 }

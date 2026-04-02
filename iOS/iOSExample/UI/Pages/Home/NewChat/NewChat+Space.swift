@@ -126,6 +126,7 @@ struct CreateSpaceSheet<T: XXDKP>: View {
 }
 
 #Preview {
-  CreateSpaceSheet<XXDKMock>()
-    .mock()
+  Mock {
+    CreateSpaceSheet<XXDKMock>()
+  }
 }
