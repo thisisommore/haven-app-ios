@@ -22,7 +22,7 @@ struct CreateSpaceSheet<T: XXDKP>: View {
 
     Task {
       do {
-        let channel = try await xxdk.channel.createChannel(
+        let channel = try await xxdk.channel.create(
           name: self.name,
           description: self.description,
           privacyLevel: privacyLevel,

@@ -38,7 +38,7 @@ final class MockChannels: ChannelsP {
     )
   }
 
-  func createChannel(
+  func create(
     name _: String,
     description _: String,
     privacyLevel _: PrivacyLevel,
@@ -52,18 +52,18 @@ final class MockChannels: ChannelsP {
     )
   }
 
-  func leaveChannel(channelId _: String) throws {}
+  func leave(channelId _: String) throws {}
 
   func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
     return ShareURLJSON(url: "\(host)?channelId=\(channelId)", password: "")
   }
 
-  func getChannelPrivacyLevel(url _: String) throws -> PrivacyLevel {
+  func getPrivacyLevel(url _: String) throws -> PrivacyLevel {
     // Mock: return public by default
     return .publicChannel
   }
 
-  func getChannelFromURL(url _: String) throws -> ChannelJSON {
+  func getFrom(url _: String) throws -> ChannelJSON {
     return ChannelJSON(
       ChannelID: "mock-channel-id-\(UUID().uuidString)",
       Name: "Mock Joined Channel",
@@ -75,7 +75,7 @@ final class MockChannels: ChannelsP {
     ""
   }
 
-  func getPrivateChannelFromURL(url _: String, password _: String) throws -> ChannelJSON {
+  func getPrivateChannelFrom(url _: String, password _: String) throws -> ChannelJSON {
     return ChannelJSON(
       ChannelID: "mock-channel-id-\(UUID().uuidString)",
       Name: "Mock Joined Channel",
@@ -91,15 +91,15 @@ final class MockChannels: ChannelsP {
     true
   }
 
-  func isChannelAdmin(channelId _: String) -> Bool {
+  func isAdmin(channelId _: String) -> Bool {
     true
   }
 
-  func exportChannelAdminKey(channelId _: String, encryptionPassword _: String) throws -> Data {
+  func exportAdminKey(channelId _: String, encryptionPassword _: String) throws -> Data {
     Data()
   }
 
-  func importChannelAdminKey(
+  func importAdminKey(
     channelId _: String, encryptionPassword _: String, privateKey _: String
   ) throws {}
 
@@ -113,11 +113,11 @@ final class MockChannels: ChannelsP {
     true
   }
 
-  func getChannelNickname(channelId _: String) throws -> String {
+  func getNickname(channelId _: String) throws -> String {
     ""
   }
 
-  func setChannelNickname(channelId _: String, nickname _: String) throws {}
+  func setNickname(channelId _: String, nickname _: String) throws {}
 }
 
 final class XXDKMock: XXDKP {

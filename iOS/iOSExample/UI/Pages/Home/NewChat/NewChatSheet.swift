@@ -109,7 +109,7 @@ struct NewChatSheet<T: XXDKP>: View {
 
                 do {
                   let privacyLevel =
-                    try xxdk.channel.getChannelPrivacyLevel(
+                    try xxdk.channel.getPrivacyLevel(
                       url: trimmed
                     )
 
@@ -118,7 +118,7 @@ struct NewChatSheet<T: XXDKP>: View {
                     self.showPasswordSheet = true
                     self.errorMessage = nil
                   } else {
-                    let channel = try xxdk.channel.getChannelFromURL(
+                    let channel = try xxdk.channel.getFrom(
                       url: trimmed
                     )
                     self.channelData = channel
@@ -148,7 +148,7 @@ struct NewChatSheet<T: XXDKP>: View {
               password: password
             )
             self.prettyPrint = pp
-            let channel = try xxdk.channel.getPrivateChannelFromURL(
+            let channel = try xxdk.channel.getPrivateChannelFrom(
               url: self.inviteLink,
               password: password
             )

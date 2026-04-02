@@ -59,7 +59,7 @@ final class ChannelOptionsController {
     }
 
     do {
-      self.channelNickname = try xxdk.channel.getChannelNickname(channelId: channelId)
+      self.channelNickname = try xxdk.channel.getNickname(channelId: channelId)
     } catch {
       AppLogger.channels.error(
         "Failed to fetch channel nickname: \(error.localizedDescription, privacy: .public)"
@@ -146,7 +146,7 @@ final class ChannelOptionsController {
   func saveNickname<T: XXDKP>(channelId: String?, xxdk: T) {
     guard let channelId else { return }
     do {
-      try xxdk.channel.setChannelNickname(channelId: channelId, nickname: self.channelNickname)
+      try xxdk.channel.setNickname(channelId: channelId, nickname: self.channelNickname)
       self.showToast("Nickname saved")
     } catch {
       AppLogger.channels.error(

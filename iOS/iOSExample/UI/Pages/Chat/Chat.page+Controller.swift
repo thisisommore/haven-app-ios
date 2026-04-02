@@ -171,7 +171,7 @@ final class ChatPageController {
     Task {
       do {
         guard let channelId = chat?.channelId else { return }
-        try xxdk.channel.leaveChannel(channelId: channelId)
+        try xxdk.channel.leave(channelId: channelId)
         let chatsToDelete =
           try? await database.read { db in
             try ChatModel.where { $0.id.eq(chatId) }.fetchAll(db)

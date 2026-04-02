@@ -11,30 +11,30 @@ protocol ChannelsP {
   var msg: ChannelsMessagingP { get }
   func joinChannelFromURL(_ url: String) async throws -> ChannelJSON
   func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON
-  func createChannel(
+  func create(
     name: String,
     description: String,
     privacyLevel: PrivacyLevel,
     enableDms: Bool
   ) async throws -> ChannelJSON
-  func leaveChannel(channelId: String) throws
+  func leave(channelId: String) throws
   func getShareURL(channelId: String, host: String) throws -> ShareURLJSON
-  func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel
-  func getChannelFromURL(url: String) throws -> ChannelJSON
+  func getPrivacyLevel(url: String) throws -> PrivacyLevel
+  func getFrom(url: String) throws -> ChannelJSON
   func decodePrivateURL(url: String, password: String) throws -> String
-  func getPrivateChannelFromURL(url: String, password: String) throws -> ChannelJSON
+  func getPrivateChannelFrom(url: String, password: String) throws -> ChannelJSON
   func enableDirectMessages(channelId: String) throws
   func disableDirectMessages(channelId: String) throws
   func areDMsEnabled(channelId: String) throws -> Bool
-  func isChannelAdmin(channelId: String) -> Bool
-  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> Data
-  func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
+  func isAdmin(channelId: String) -> Bool
+  func exportAdminKey(channelId: String, encryptionPassword: String) throws -> Data
+  func importAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
     throws
   func getMutedUsers(channelId: String) throws -> [Data]
   func muteUser(channelId: String, pubKey: Data, mute: Bool) throws
   func isMuted(channelId: String) -> Bool
-  func getChannelNickname(channelId: String) throws -> String
-  func setChannelNickname(channelId: String, nickname: String) throws
+  func getNickname(channelId: String) throws -> String
+  func setNickname(channelId: String, nickname: String) throws
 }
 
 class Channel: ChannelsP {
@@ -69,7 +69,7 @@ class Channel: ChannelsP {
   }
 
   /// Create a new channel
-  func createChannel(
+  func create(
     name: String,
     description: String,
     privacyLevel: PrivacyLevel,
@@ -103,7 +103,7 @@ class Channel: ChannelsP {
   }
 
   /// Leave a channel
-  func leaveChannel(channelId: String) throws {
+  func leave(channelId: String) throws {
     guard let channelsManager
     else {
       throw XXDKError.channelManagerNotInitialized
@@ -140,13 +140,13 @@ class Channel: ChannelsP {
   }
 
   /// Get the privacy level for a given channel URL
-  func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel {
+  func getPrivacyLevel(url: String) throws -> PrivacyLevel {
     let typeValue = try BindingsStatic.getShareUrlType(url)
     return typeValue == 2 ? .secret : .publicChannel
   }
 
   /// Get channel data from a channel URL
-  func getChannelFromURL(url: String) throws -> ChannelJSON {
+  func getFrom(url: String) throws -> ChannelJSON {
     let prettyPrint = try BindingsStatic.decodePublicURL(url)
     guard let channel = try BindingsStatic.getChannelJSON(prettyPrint)
     else {
@@ -161,7 +161,7 @@ class Channel: ChannelsP {
   }
 
   /// Get channel data from a private channel URL with password
-  func getPrivateChannelFromURL(url: String, password: String) throws -> ChannelJSON {
+  func getPrivateChannelFrom(url: String, password: String) throws -> ChannelJSON {
     let prettyPrint = try decodePrivateURL(url: url, password: password)
     guard let channel = try BindingsStatic.getChannelJSON(prettyPrint)
     else {
@@ -218,7 +218,7 @@ class Channel: ChannelsP {
   }
 
   /// Check if current user is admin of a channel
-  func isChannelAdmin(channelId: String) -> Bool {
+  func isAdmin(channelId: String) -> Bool {
     guard let channelsManager
     else {
       return false
@@ -237,7 +237,7 @@ class Channel: ChannelsP {
   }
 
   /// Export the admin key for a channel
-  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> Data {
+  func exportAdminKey(channelId: String, encryptionPassword: String) throws -> Data {
     guard let channelsManager
     else {
       throw XXDKError.channelManagerNotInitialized
@@ -254,7 +254,7 @@ class Channel: ChannelsP {
   }
 
   /// Import an admin key for a channel
-  func importChannelAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
+  func importAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
     throws {
     guard let channelsManager
     else {
@@ -321,7 +321,7 @@ class Channel: ChannelsP {
     }
   }
 
-  func getChannelNickname(channelId: String) throws -> String {
+  func getNickname(channelId: String) throws -> String {
     guard let channelsManager
     else {
       throw XXDKError.channelManagerNotInitialized
@@ -333,7 +333,7 @@ class Channel: ChannelsP {
     return try channelsManager.getNickname(channelIdBytes)
   }
 
-  func setChannelNickname(channelId: String, nickname: String) throws {
+  func setNickname(channelId: String, nickname: String) throws {
     guard let channelsManager
     else {
       throw XXDKError.channelManagerNotInitialized
