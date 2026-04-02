@@ -133,7 +133,7 @@ struct PasswordCreationView<T: XXDKP>: View {
                 systemName: self.passwordsMatch
                   ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
               )
-              .foregroundStyle(self.passwordsMatch ? BranchColor.primary : .orange)
+              .foregroundStyle(self.passwordsMatch ? BranchColor.primary : .haven)
               Text(self.passwordsMatch ? "Passwords match" : "Passwords don't match")
             }
             .font(.footnote)

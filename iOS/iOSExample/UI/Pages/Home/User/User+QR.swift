@@ -124,7 +124,7 @@ struct QRCodeSheet: View {
 
         HStack(alignment: .top, spacing: 10) {
           Image(systemName: "exclamationmark.triangle.fill")
-            .foregroundColor(.orange)
+            .foregroundColor(.haven)
             .font(.system(size: 16))
 
           Text("This is permanent and cannot be revoked. Only share with people you trust.")
@@ -133,7 +133,7 @@ struct QRCodeSheet: View {
             .fixedSize(horizontal: false, vertical: true)
         }
         .padding(12)
-        .background(Color.orange.opacity(0.1))
+        .background(Color.haven.opacity(0.1))
         .cornerRadius(8)
         .padding(.horizontal, 24)
         .padding(.top, 8)

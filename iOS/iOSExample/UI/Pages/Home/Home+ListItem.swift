@@ -118,7 +118,7 @@ struct ChatRowView<T: XXDKP>: View {
     HStack(alignment: .top) {
       if self.chat.name == "<self>" {
         Image(systemName: "bookmark.circle.fill").font(.system(size: 40)).foregroundStyle(
-          .orange
+          .haven
         ).symbolRenderingMode(.hierarchical)
       }
 

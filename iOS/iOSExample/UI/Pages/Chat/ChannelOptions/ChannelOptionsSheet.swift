@@ -77,10 +77,10 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
               if self.controller.channelNickname.count > 10 {
                 HStack(spacing: 6) {
                   Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
+                    .foregroundColor(.haven)
                   Text("Nickname will be truncated to 10 chars in display")
                     .font(.caption)
-                    .foregroundColor(.orange)
+                    .foregroundColor(.haven)
                 }
               }
             }

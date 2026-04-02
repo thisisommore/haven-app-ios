@@ -16,7 +16,7 @@ enum LogLevel: String, CaseIterable {
   var color: Color {
     switch self {
     case .error: return .red
-    case .warning: return .orange
+    case .warning: return .haven
     case .info: return .green
     case .debug: return .blue
     case .trace: return .purple

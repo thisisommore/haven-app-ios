@@ -16,7 +16,7 @@ struct CodenameGeneratorView<T: XXDKP>: View {
   @State private var generatedIdentities: [GeneratedIdentity] = []
 
   private let colors: [Color] = [
-    .blue, .green, .orange, .purple, .pink, .red, .cyan, .mint, .indigo, .teal,
+    .blue, .green, .haven, .purple, .pink, .red, .cyan, .mint, .indigo, .teal,
   ]
 
   private func generateCodenames() {
@@ -154,7 +154,7 @@ struct CodenameGeneratorView<T: XXDKP>: View {
     )
 
     CodenameCard(
-      codename: Codename(text: "recruitMutativeVocal", color: .orange),
+      codename: Codename(text: "recruitMutativeVocal", color: .haven),
       isSelected: false
     )
   }

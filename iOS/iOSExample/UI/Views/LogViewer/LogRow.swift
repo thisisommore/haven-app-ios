@@ -18,7 +18,7 @@ struct LogRow: View {
   private func textColor(for level: LogLevel) -> Color {
     switch level {
     case .error: return .red
-    case .warning: return .orange
+    case .warning: return .haven
     case .debug: return .blue
     case .trace: return .purple
     default: return .primary
