@@ -9,6 +9,7 @@ import SQLiteData
 
 protocol ChannelsP {
   var msg: ChannelsMessagingP { get }
+
   func join(url: String) async throws -> ChannelJSON
   func join(prettyPrint: String) async throws -> ChannelJSON
   func create(
@@ -18,21 +19,28 @@ protocol ChannelsP {
     enableDms: Bool
   ) async throws -> ChannelJSON
   func leave(channelId: String) throws
+
+  // metadata
   func getShareURL(channelId: String, host: String) throws -> ShareURLJSON
   func getPrivacyLevel(url: String) throws -> PrivacyLevel
   func getFrom(url: String) throws -> ChannelJSON
   func decodePrivateURL(url: String, password: String) throws -> String
   func getPrivateChannelFrom(url: String, password: String) throws -> ChannelJSON
+
+  // self
   func enableDirectMessages(channelId: String) throws
   func disableDirectMessages(channelId: String) throws
   func areDMsEnabled(channelId: String) throws -> Bool
+
+  // Admin
   func isAdmin(channelId: String) -> Bool
   func exportAdminKey(channelId: String, encryptionPassword: String) throws -> Data
-  func importAdminKey(channelId: String, encryptionPassword: String, privateKey: String)
-    throws
-  func getMutedUsers(channelId: String) throws -> [Data]
+  func importAdminKey(channelId: String, encryptionPassword: String, privateKey: String) throws
   func muteUser(channelId: String, pubKey: Data, mute: Bool) throws
+  func getMutedUsers(channelId: String) throws -> [Data]
   func isMuted(channelId: String) -> Bool
+
+  // Nickname
   func getNickname(channelId: String) throws -> String
   func setNickname(channelId: String, nickname: String) throws
 }
