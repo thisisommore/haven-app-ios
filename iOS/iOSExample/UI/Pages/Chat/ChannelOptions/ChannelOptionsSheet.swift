@@ -43,6 +43,7 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
 
           // Channels specific props
           if !self.isDM {
+            // Description
             if let description = chat.channelDescription, !description.isEmpty {
               VStack(alignment: .leading, spacing: 8) {
                 Text("Description")
@@ -53,6 +54,7 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
               }
             }
 
+            // Your nickname
             VStack(alignment: .leading, spacing: 8) {
               Text("Your Nickname")
                 .font(.caption)
@@ -83,6 +85,7 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
               }
             }
 
+            // Toggle direct messages
             Toggle("Direct Messages", isOn: self.$controller.isDMEnabled)
               .tint(.haven)
               .onChange(of: self.controller.isDMEnabled) { oldValue, newValue in
@@ -91,6 +94,7 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
                 )
               }
 
+            // Channel share link
             if let urlString = self.controller.shareURL, let url = URL(string: urlString) {
               ShareLink(item: url) {
                 HStack {
