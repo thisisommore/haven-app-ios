@@ -53,23 +53,7 @@ final class HomePageController {
     let searchText = self.searchText
     return chats.filter { chat in
       let displayName = chat.name == "<self>" ? "Notes" : chat.name
-      if displayName.localizedCaseInsensitiveContains(searchText) {
-        return true
-      }
-      if let senderId =
-        (try? database.read({ db in
-          try ChatMessageModel.where {
-            $0.chatId.eq(chat.id) && $0.isIncoming && $0.senderId != nil
-          }.limit(1).fetchOne(db)?.senderId
-        })).flatMap({ $0 }),
-        let nickname = try? database.read({ db in
-          try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.nickname
-        }),
-        !nickname.isEmpty,
-        nickname.localizedCaseInsensitiveContains(searchText) {
-        return true
-      }
-      return false
+      return displayName.localizedCaseInsensitiveContains(searchText)
     }
   }
 
