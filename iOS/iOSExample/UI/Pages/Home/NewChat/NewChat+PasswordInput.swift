@@ -18,7 +18,7 @@ struct PasswordInputView: View {
   @State private var password: String = ""
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       Form {
         Section(header: Text("Private Channel")) {
           Text(

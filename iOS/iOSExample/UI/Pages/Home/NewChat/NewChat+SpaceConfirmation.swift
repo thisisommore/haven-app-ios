@@ -18,7 +18,7 @@ struct JoinChannelConfirmationView: View {
   @State private var enableDM = false
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       Form {
         Section(header: Text("Channel Details")) {
           HStack {

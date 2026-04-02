@@ -67,7 +67,7 @@ struct ExportIdentitySheet<T: XXDKP>: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       VStack(spacing: 24) {
         Image(systemName: "person.crop.circle.badge.checkmark")
           .font(.system(size: 48))

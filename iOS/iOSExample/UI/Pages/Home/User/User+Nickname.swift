@@ -178,7 +178,7 @@ struct NicknamePickerView<T: XXDKP>: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       ScrollView {
         VStack(spacing: 28) {
           // Nickname input

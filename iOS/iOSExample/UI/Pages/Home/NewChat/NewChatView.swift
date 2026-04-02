@@ -78,7 +78,7 @@ struct NewChatView<T: XXDKP>: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       VStack {
         Form {
           Section(header: Text("Enter invite link")) {

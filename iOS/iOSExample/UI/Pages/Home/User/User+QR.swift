@@ -71,7 +71,7 @@ struct QRCodeView: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       VStack(spacing: 24) {
         if let qrImage = generateQRCode(from: url) {
           Image(uiImage: qrImage)

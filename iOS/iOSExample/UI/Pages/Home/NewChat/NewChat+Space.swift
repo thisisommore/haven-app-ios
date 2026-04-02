@@ -55,7 +55,7 @@ struct CreateSpaceView<T: XXDKP>: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       Form {
         Section(header: Text("Space Details")) {
           TextField("Name", text: self.$name)
