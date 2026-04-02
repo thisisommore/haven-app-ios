@@ -19,116 +19,109 @@ private struct MockChannelsMessaging: ChannelsMessagingP {
 }
 
 final class MockChannels: ChannelsP {
-  unowned let owner: XXDKMock
   let msg: ChannelsMessagingP
 
-  init(owner: XXDKMock) {
-    self.owner = owner
+  init() {
     self.msg = MockChannelsMessaging()
   }
 
-  func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
-    try await self.owner.joinChannelFromURL(url)
+  func joinChannelFromURL(_: String) async throws -> ChannelJSON {
+    try await self.joinChannel("")
   }
 
-  func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
-    try await self.owner.joinChannel(prettyPrint)
+  func joinChannel(_: String) async throws -> ChannelJSON {
+    try await Task.sleep(for: .seconds(1))
+    return ChannelJSON(
+      ChannelID: "mock-channel-id-\(UUID().uuidString)",
+      Name: "Mock Joined Channel",
+      Description: "This is a mock joined channel"
+    )
   }
 
   func createChannel(
-    name: String,
-    description: String,
-    privacyLevel: PrivacyLevel,
-    enableDms: Bool
+    name _: String,
+    description _: String,
+    privacyLevel _: PrivacyLevel,
+    enableDms _: Bool
   ) async throws -> ChannelJSON {
-    try await self.owner.createChannel(
-      name: name,
-      description: description,
-      privacyLevel: privacyLevel,
-      enableDms: enableDms
+    try await Task.sleep(for: .seconds(1))
+    return ChannelJSON(
+      ChannelID: "mock-channel-id-\(UUID().uuidString)",
+      Name: "Mock Joined Channel",
+      Description: "This is a mock joined channel"
     )
   }
 
-  func leaveChannel(channelId: String) throws {
-    try self.owner.leaveChannel(channelId: channelId)
-  }
+  func leaveChannel(channelId _: String) throws {}
 
   func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
-    try self.owner.getShareURL(channelId: channelId, host: host)
+    return ShareURLJSON(url: "\(host)?channelId=\(channelId)", password: "")
   }
 
-  func getChannelPrivacyLevel(url: String) throws -> PrivacyLevel {
-    try self.owner.getChannelPrivacyLevel(url: url)
+  func getChannelPrivacyLevel(url _: String) throws -> PrivacyLevel {
+    // Mock: return public by default
+    return .publicChannel
   }
 
-  func getChannelFromURL(url: String) throws -> ChannelJSON {
-    try self.owner.getChannelFromURL(url: url)
-  }
-
-  func decodePrivateURL(url: String, password: String) throws -> String {
-    try self.owner.decodePrivateURL(url: url, password: password)
-  }
-
-  func getPrivateChannelFromURL(url: String, password: String) throws -> ChannelJSON {
-    try self.owner.getPrivateChannelFromURL(url: url, password: password)
-  }
-
-  func enableDirectMessages(channelId: String) throws {
-    try self.owner.enableDirectMessages(channelId: channelId)
-  }
-
-  func disableDirectMessages(channelId: String) throws {
-    try self.owner.disableDirectMessages(channelId: channelId)
-  }
-
-  func areDMsEnabled(channelId: String) throws -> Bool {
-    try self.owner.areDMsEnabled(channelId: channelId)
-  }
-
-  func isChannelAdmin(channelId: String) -> Bool {
-    self.owner.isChannelAdmin(channelId: channelId)
-  }
-
-  func exportChannelAdminKey(channelId: String, encryptionPassword: String) throws -> Data {
-    try self.owner.exportChannelAdminKey(
-      channelId: channelId, encryptionPassword: encryptionPassword
+  func getChannelFromURL(url _: String) throws -> ChannelJSON {
+    return ChannelJSON(
+      ChannelID: "mock-channel-id-\(UUID().uuidString)",
+      Name: "Mock Joined Channel",
+      Description: "This is a mock joined channel"
     )
+  }
+
+  func decodePrivateURL(url _: String, password _: String) throws -> String {
+    ""
+  }
+
+  func getPrivateChannelFromURL(url _: String, password _: String) throws -> ChannelJSON {
+    return ChannelJSON(
+      ChannelID: "mock-channel-id-\(UUID().uuidString)",
+      Name: "Mock Joined Channel",
+      Description: "This is a mock joined channel"
+    )
+  }
+
+  func enableDirectMessages(channelId _: String) throws {}
+
+  func disableDirectMessages(channelId _: String) throws {}
+
+  func areDMsEnabled(channelId _: String) throws -> Bool {
+    true
+  }
+
+  func isChannelAdmin(channelId _: String) -> Bool {
+    true
+  }
+
+  func exportChannelAdminKey(channelId _: String, encryptionPassword _: String) throws -> Data {
+    Data()
   }
 
   func importChannelAdminKey(
-    channelId: String, encryptionPassword: String, privateKey: String
-  ) throws {
-    try self.owner.importChannelAdminKey(
-      channelId: channelId, encryptionPassword: encryptionPassword, privateKey: privateKey
-    )
+    channelId _: String, encryptionPassword _: String, privateKey _: String
+  ) throws {}
+
+  func getMutedUsers(channelId _: String) throws -> [Data] {
+    []
   }
 
-  func getMutedUsers(channelId: String) throws -> [Data] {
-    try self.owner.getMutedUsers(channelId: channelId)
+  func muteUser(channelId _: String, pubKey _: Data, mute _: Bool) throws {}
+
+  func isMuted(channelId _: String) -> Bool {
+    true
   }
 
-  func muteUser(channelId: String, pubKey: Data, mute: Bool) throws {
-    try self.owner.muteUser(channelId: channelId, pubKey: pubKey, mute: mute)
+  func getChannelNickname(channelId _: String) throws -> String {
+    ""
   }
 
-  func isMuted(channelId: String) -> Bool {
-    self.owner.isMuted(channelId: channelId)
-  }
-
-  func getChannelNickname(channelId: String) throws -> String {
-    try self.owner.getChannelNickname(channelId: channelId)
-  }
-
-  func setChannelNickname(channelId: String, nickname: String) throws {
-    try self.owner.setChannelNickname(channelId: channelId, nickname: nickname)
-  }
+  func setChannelNickname(channelId _: String, nickname _: String) throws {}
 }
 
 final class XXDKMock: XXDKP {
-  private lazy var channelImpl = MockChannels(owner: self)
-  var channel: MockChannels {
-    self.channelImpl
-  }
+  let channel = MockChannels()
 
   var dm: DirectMessage?
 
@@ -163,26 +156,6 @@ final class XXDKMock: XXDKP {
 
   var codename: String? = "Manny"
   var codeset: Int = 0
-
-  func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
-    // Mock: simulate URL decode and join
-    return try await self.joinChannel(url) // For mock, treat URL as prettyPrint
-  }
-
-  func joinChannel(_: String) async throws -> ChannelJSON {
-    // Mock: return sample joined channel data after a short delay
-    try await Task.sleep(for: .seconds(1))
-    return ChannelJSON(
-      ChannelID: "mock-channel-id-\(UUID().uuidString)",
-      Name: "Mock Joined Channel",
-      Description: "This is a mock joined channel"
-    )
-  }
-
-  func getChannelPrivacyLevel(url _: String) throws -> PrivacyLevel {
-    // Mock: return public by default
-    return .publicChannel
-  }
 
   func getChannelFromURL(url _: String) throws -> ChannelJSON {
     // Mock: return sample channel data
@@ -222,11 +195,6 @@ final class XXDKMock: XXDKP {
 
   func leaveChannel(channelId _: String) throws {
     // Mock: no-op
-  }
-
-  func getShareURL(channelId: String, host: String) throws -> ShareURLJSON {
-    // Mock: return a mock share URL
-    return ShareURLJSON(url: "\(host)?channelId=\(channelId)", password: "")
   }
 
   func createChannel(
@@ -330,25 +298,13 @@ final class XXDKMock: XXDKP {
   /// - Returns: Array of mock GeneratedIdentity objects
   func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity] {
     var identities: [GeneratedIdentity] = []
-
     for i in 0 ..< amountOfIdentities {
-      // Generate mock private identity data
-      let mockPrivateIdentity =
-        "mock_private_identity_\(i)_\(UUID().uuidString)".data
-
-      // Generate mock identity details
-      let mockCodename = "MockUser\(i)_\(UUID().uuidString.prefix(8))"
-      let mockCodeset = 1
-      let mockPubkey = "mock_pubkey_\(i)_\(UUID().uuidString)"
-
-      let mockIdentity = GeneratedIdentity(
-        privateIdentity: mockPrivateIdentity,
-        codename: mockCodename,
-        codeset: mockCodeset,
-        pubkey: mockPubkey
-      )
-
-      identities.append(mockIdentity)
+      identities.append(GeneratedIdentity(
+        privateIdentity: "mock_private_identity_\(i)_\(UUID().uuidString)".data,
+        codename: "MockUser\(i)_\(UUID().uuidString.prefix(8))",
+        codeset: 1,
+        pubkey: "mock_pubkey_\(i)_\(UUID().uuidString)"
+      ))
     }
 
     return identities
