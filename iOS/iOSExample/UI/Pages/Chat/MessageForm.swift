@@ -151,6 +151,27 @@ struct MessageForm<T: XXDKP>: View {
   }
 }
 
+private struct ReplyToSenderView: View {
+  let messageId: String
+  let senderId: UUID?
+
+  @Dependency(\.defaultDatabase) var database
+
+  @State private var senderCodename: String?
+
+  var body: some View {
+    Text("Replying to \(self.senderCodename ?? "You")")
+      .font(.caption)
+      .foregroundStyle(.secondary)
+      .task {
+        guard let senderId else { return }
+        self.senderCodename = try? self.database.read { db in
+          try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.codename
+        }
+      }
+  }
+}
+
 #Preview {
   Mock {
     MessageFormPreviewWrapper()
@@ -184,26 +205,5 @@ private struct MessageFormPreviewWrapper: View {
         }
       }
     }
-  }
-}
-
-private struct ReplyToSenderView: View {
-  let messageId: String
-  let senderId: UUID?
-
-  @Dependency(\.defaultDatabase) var database
-
-  @State private var senderCodename: String?
-
-  var body: some View {
-    Text("Replying to \(self.senderCodename ?? "You")")
-      .font(.caption)
-      .foregroundStyle(.secondary)
-      .task {
-        guard let senderId else { return }
-        self.senderCodename = try? self.database.read { db in
-          try MessageSenderModel.where { $0.id.eq(senderId) }.fetchOne(db)?.codename
-        }
-      }
   }
 }
