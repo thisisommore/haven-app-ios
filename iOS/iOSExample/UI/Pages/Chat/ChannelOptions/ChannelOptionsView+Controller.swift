@@ -26,7 +26,7 @@ final class ChannelOptionsController {
   @ObservationIgnored
   @Dependency(\.defaultDatabase) var database
 
-  func onAppear<T: XXDKP>(chat _: ChatModel?, channelId: String?, xxdk: T) {
+  func onAppear<T: XXDKP>(channelId: String?, xxdk: T) {
     guard let channelId else { return }
 
     do {

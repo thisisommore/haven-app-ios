@@ -136,7 +136,7 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
           }
         }
         .onAppear {
-          self.controller.onAppear(chat: self.chat, channelId: self.channelId, xxdk: self.xxdk)
+          self.controller.onAppear(channelId: self.channelId, xxdk: self.xxdk)
         }
 
         // Admin section - only visible for channel admins (not for DMs)
