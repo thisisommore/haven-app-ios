@@ -315,7 +315,7 @@ extension XXDK {
       }
     }
     do {
-      let cd = try await channel.joinChannelFromURL(XX_IOS_CHAT)
+      let cd = try await channel.join(url: XX_IOS_CHAT)
       let channelId = cd.ChannelID ?? "xxIOS"
       let existingChannel = try await database.read { db in
         try ChatModel.where { $0.channelId.eq(channelId) }.fetchAll(db)

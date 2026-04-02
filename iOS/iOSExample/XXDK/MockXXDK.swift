@@ -25,11 +25,11 @@ final class MockChannels: ChannelsP {
     self.msg = MockChannelsMessaging()
   }
 
-  func joinChannelFromURL(_: String) async throws -> ChannelJSON {
-    try await self.joinChannel("")
+  func join(url _: String) async throws -> ChannelJSON {
+    try await self.join(prettyPrint: "")
   }
 
-  func joinChannel(_: String) async throws -> ChannelJSON {
+  func join(prettyPrint _: String) async throws -> ChannelJSON {
     try await Task.sleep(for: .seconds(1))
     return ChannelJSON(
       ChannelID: "mock-channel-id-\(UUID().uuidString)",

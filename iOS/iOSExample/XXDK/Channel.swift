@@ -9,8 +9,8 @@ import SQLiteData
 
 protocol ChannelsP {
   var msg: ChannelsMessagingP { get }
-  func joinChannelFromURL(_ url: String) async throws -> ChannelJSON
-  func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON
+  func join(url: String) async throws -> ChannelJSON
+  func join(prettyPrint: String) async throws -> ChannelJSON
   func create(
     name: String,
     description: String,
@@ -49,13 +49,13 @@ class Channel: ChannelsP {
   }
 
   /// Join a channel using a URL (public share link)
-  func joinChannelFromURL(_ url: String) async throws -> ChannelJSON {
+  func join(url: String) async throws -> ChannelJSON {
     let prettyPrint = try BindingsStatic.decodePublicURL(url)
-    return try await self.joinChannel(prettyPrint)
+    return try await self.join(prettyPrint: prettyPrint)
   }
 
   /// Join a channel using pretty print format
-  func joinChannel(_ prettyPrint: String) async throws -> ChannelJSON {
+  func join(prettyPrint: String) async throws -> ChannelJSON {
     // channelsManager can be nil
     if let channelsManager {
       guard let channel = try channelsManager.joinChannel(prettyPrint)
@@ -86,7 +86,7 @@ class Channel: ChannelsP {
       privacyLevel: privacyLevel.rawValue
     )
 
-    let channel = try await joinChannel(prettyPrint)
+    let channel = try await join(prettyPrint: prettyPrint)
 
     guard let channelId = channel.ChannelID
     else {

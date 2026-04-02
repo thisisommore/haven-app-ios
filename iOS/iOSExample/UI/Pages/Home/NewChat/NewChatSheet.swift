@@ -35,9 +35,9 @@ struct NewChatSheet<T: XXDKP>: View {
       let joinedChannel: ChannelJSON
       // Use prettyPrint if available (private channel), otherwise decode from URL (public channel)
       if let prettyPrint {
-        joinedChannel = try await self.xxdk.channel.joinChannel(prettyPrint)
+        joinedChannel = try await self.xxdk.channel.join(prettyPrint: prettyPrint)
       } else {
-        joinedChannel = try await self.xxdk.channel.joinChannelFromURL(url)
+        joinedChannel = try await self.xxdk.channel.join(url: url)
       }
 
       // Create and save the chat to the database
