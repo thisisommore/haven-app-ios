@@ -65,6 +65,8 @@ extension Destination {
   @MainActor
   func destinationView() -> some View {
     self._destinationView()
+      // hidden since most components don't use this, for example new user flow
+      // and chat page uses its own back button
       .navigationBarBackButtonHidden()
       .toolbarBackground(.ultraThinMaterial)
   }
