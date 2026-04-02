@@ -13,6 +13,8 @@ private typealias PreviewMessageFactory = (
   _ replyTo: String?
 ) -> ChatMessageModel
 
+// returns a function
+// uses provided chatId and senderId for each call
 private func makePreviewIncomingMessageFactory(chatId: UUID, senderId: UUID)
   -> PreviewMessageFactory {
   { message, externalId, replyTo in
@@ -30,7 +32,7 @@ private func makePreviewIncomingMessageFactory(chatId: UUID, senderId: UUID)
   }
 }
 
-private func makePreviewIncomingMessageWithoutSenderFactory(chatId: UUID) -> PreviewMessageFactory {
+private func makePreviewIncomingMessageFactory(chatId: UUID) -> PreviewMessageFactory {
   { message, externalId, replyTo in
     ChatMessageModel(
       message: message,
@@ -62,7 +64,7 @@ private func makePreviewOutgoingMessageFactory(chatId: UUID) -> PreviewMessageFa
 
 func previewMockMessages(chatId: UUID, senderId: UUID) -> [ChatMessageModel] {
   let makeIncomingMessage = makePreviewIncomingMessageFactory(chatId: chatId, senderId: senderId)
-  let makeIncomingMessageWithoutSender = makePreviewIncomingMessageWithoutSenderFactory(
+  let makeIncomingMessageWithoutSender = makePreviewIncomingMessageFactory(
     chatId: chatId
   )
   let makeOutgoingMessage = makePreviewOutgoingMessageFactory(chatId: chatId)
