@@ -110,16 +110,8 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
   /// Persist a message into SwiftData
   private func persistMessage(
-    channelId: String,
-    text: String,
-    senderCodename: String?,
-    senderPubKey: Data?,
-    messageIdB64: String? = nil,
-    replyTo: String? = nil,
-    timestamp: Int64,
-    dmToken: Int32? = nil,
-    color: Int,
-    nickname: String? = nil,
+    channelId: String, text: String, senderCodename: String?, senderPubKey: Data?, messageIdB64: String? = nil,
+    replyTo: String? = nil, timestamp: Int64, dmToken: Int32? = nil, color: Int, nickname: String? = nil,
     status: Int64
   ) -> Int64 {
     do {
@@ -161,19 +153,9 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
   func leaveChannel(_: Data?) {}
   func receiveMessage(
-    _ channelID: Data?,
-    messageID: Data?,
-    nickname: String?,
-    text: String?,
-    pubKey: Data?,
-    dmToken: Int32,
-    codeset: Int,
-    timestamp: Int64,
-    lease _: Int64,
-    roundID _: Int64,
-    messageType _: Int64,
-    status: Int64,
-    hidden _: Bool
+    _ channelID: Data?, messageID: Data?, nickname: String?, text: String?, pubKey: Data?,
+    dmToken: Int32, codeset: Int, timestamp: Int64, lease _: Int64, roundID _: Int64,
+    messageType _: Int64, status: Int64, hidden _: Bool
   ) -> Int64 {
     let messageIdB64 = messageID?.base64EncodedString()
     let messageTextB64 = text ?? ""
@@ -208,20 +190,9 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
   }
 
   func receiveReaction(
-    _: Data?,
-    messageID: Data?,
-    reactionTo: Data?,
-    nickname: String?,
-    reaction: String?,
-    pubKey: Data?,
-    dmToken: Int32,
-    codeset: Int,
-    timestamp _: Int64,
-    lease _: Int64,
-    roundID _: Int64,
-    messageType _: Int64,
-    status: Int64,
-    hidden _: Bool
+    _: Data?, messageID: Data?, reactionTo: Data?, nickname: String?, reaction: String?, pubKey: Data?,
+    dmToken: Int32, codeset: Int, timestamp _: Int64, lease _: Int64, roundID _: Int64, messageType _: Int64,
+    status: Int64, hidden _: Bool
   ) -> Int64 {
     guard let pubKey else { fatalError("no pub key") }
     let reactionText = reaction ?? ""
@@ -317,20 +288,9 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
   }
 
   func receiveReply(
-    _ channelID: Data?,
-    messageID: Data?,
-    reactionTo: Data?,
-    nickname: String?,
-    text: String?,
-    pubKey: Data?,
-    dmToken: Int32,
-    codeset: Int,
-    timestamp: Int64,
-    lease _: Int64,
-    roundID _: Int64,
-    messageType _: Int64,
-    status: Int64,
-    hidden _: Bool
+    _ channelID: Data?, messageID: Data?, reactionTo: Data?, nickname: String?, text: String?,
+    pubKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, lease _: Int64, roundID _: Int64,
+    messageType _: Int64, status: Int64, hidden _: Bool
   ) -> Int64 {
     let messageIdB64 = messageID?.base64EncodedString()
     let replyTextB64 = text ?? ""
