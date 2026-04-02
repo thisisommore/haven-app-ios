@@ -26,19 +26,29 @@ protocol XXDKP: ObservableObject, AnyObject {
   var codeset: Int { get }
   var channel: ChannelType { get }
   var dm: DirectMessageType? { get }
+
+  // Cmix
   func newCmix(downloadedNdf: Data) async
   func loadCmix() async
+  func logout() async throws
+
+  // network
   func startNetworkFollower() async
   func downloadNdf() async -> Data
+
+  // dm channel clients
   func loadClients(privateIdentity: Data) async
   func setupClients(privateIdentity: Data, successCallback: () -> Void) async
+
+  // identity
   func savePrivateIdentity(privateIdentity: Data) throws
   func loadSavedPrivateIdentity() throws -> Data
   func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity]
-  func setAppStorage(_: AppStorage)
   func exportIdentity(password: String) throws -> Data
   func importIdentity(password: String, data: Data) throws -> Data
-  func logout() async throws
+
+  // storage
+  func setAppStorage(_: AppStorage)
 }
 
 /// These are common helpers extending the string class which are essential for working with XXDK
