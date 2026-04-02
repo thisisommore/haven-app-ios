@@ -14,6 +14,7 @@ struct Main: App {
   init() {
     prepareDependencies {
       $0.defaultDatabase = try! appDatabase()
+      $0.appStorage = AppStorage()
     }
   }
 

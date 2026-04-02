@@ -5,11 +5,12 @@
 //  Created by Om More on 17/12/25.
 //
 
+import Dependencies
 import SwiftUI
 
 struct LandingPage<T: XXDKP>: View {
   @EnvironmentObject var xxdk: T
-  @EnvironmentObject private var appStorage: AppStorage
+  @Dependency(\.appStorage) private var appStorage
 
   @State private var moveUp: Bool = false
   @State private var showProgress: Bool = false

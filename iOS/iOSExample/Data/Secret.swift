@@ -6,7 +6,19 @@
 //
 
 import Combine
+import Dependencies
 import Foundation
+
+private enum AppStorageKey: DependencyKey {
+  static let liveValue = AppStorage()
+}
+
+extension DependencyValues {
+  var appStorage: AppStorage {
+    get { self[AppStorageKey.self] }
+    set { self[AppStorageKey.self] = newValue }
+  }
+}
 
 enum KeychainError: Error {
   case noPassword

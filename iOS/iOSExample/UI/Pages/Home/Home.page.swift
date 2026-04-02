@@ -5,7 +5,6 @@ struct HomeView<T: XXDKP>: View {
   @State private var controller = HomePageController()
 
   @EnvironmentObject var xxdk: T
-  @EnvironmentObject private var appStorage: AppStorage
   @EnvironmentObject private var navigation: AppNavigationPath
   @EnvironmentObject private var selectedChat: SelectedChat
 
@@ -111,7 +110,6 @@ struct HomeView<T: XXDKP>: View {
           Button("Logout", role: .destructive) {
             self.controller.performLogout(
               xxdk: self.xxdk,
-              appStorage: self.appStorage,
               navigation: self.navigation
             )
           }

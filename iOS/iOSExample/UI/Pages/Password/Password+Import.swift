@@ -5,6 +5,7 @@
 //  Created by Om More on 16/12/25.
 //
 
+import Dependencies
 import Foundation
 import SwiftUI
 
@@ -15,7 +16,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
   @Environment(\.dismiss) private var dismiss
   @EnvironmentObject var navigation: AppNavigationPath
   @EnvironmentObject var xxdk: T
-  @EnvironmentObject var appStorage: AppStorage
+  @Dependency(\.appStorage) private var appStorage
 
   @State private var selectedFileURL: URL?
   @State private var showFilePicker = false

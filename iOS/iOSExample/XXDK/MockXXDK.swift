@@ -133,10 +133,6 @@ final class XXDKMock: XXDKP {
 
   @Published var status: String = "Initiating"
   @Published var statusPercentage: Double = 0
-  func setAppStorage(_: AppStorage) {
-    // Retain container and inject into receivers/callbacks
-    self.eventModelBuilder = ChannelEventModelBuilder()
-  }
 
   var codename: String? = "Manny"
   var codeset: Int = 0

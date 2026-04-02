@@ -258,7 +258,7 @@ extension XXDK {
       // the data sometimes is not available in the listener immediately so we set it manually
       storageTagListener.data = channelsManager.getStorageTag().data
 
-      if appStorage?.isSetupComplete ?? false {
+      if appStorage.isSetupComplete {
         await progress(.readyExistingUser)
         return
       }
@@ -333,7 +333,7 @@ extension XXDK {
     }
 
     await MainActor.run {
-      appStorage!.isSetupComplete = true
+      appStorage.isSetupComplete = true
     }
 
     await progress(.ready)

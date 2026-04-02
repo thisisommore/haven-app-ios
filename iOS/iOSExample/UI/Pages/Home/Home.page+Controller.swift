@@ -41,6 +41,8 @@ final class HomePageController {
 
   @ObservationIgnored
   @Dependency(\.defaultDatabase) var database
+  @ObservationIgnored
+  @Dependency(\.appStorage) var appStorage
 
   var filteredChats: [ChatModel] {
     self.filteredChats(from: self.chats)
@@ -161,7 +163,6 @@ final class HomePageController {
 
   func performLogout<T: XXDKP>(
     xxdk: T,
-    appStorage: AppStorage,
     navigation: AppNavigationPath
   ) {
     self.isLoggingOut = true
@@ -175,7 +176,7 @@ final class HomePageController {
         try ChatModel.delete().execute(db)
       }
 
-      appStorage.clearAll()
+      self.appStorage.clearAll()
       await MainActor.run {
         navigation.path = NavigationPath()
         navigation.path.append(Destination.password)

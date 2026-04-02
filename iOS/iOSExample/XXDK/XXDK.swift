@@ -6,6 +6,7 @@
 //
 
 import Bindings
+import Dependencies
 import Foundation
 import Kronos
 import SQLiteData
@@ -40,7 +41,7 @@ final class XXDK: XXDKP {
   var cmix: Bindings.BindingsCmix?
   var eventModelBuilder = ChannelEventModelBuilder()
   var channelUICallbacks: ChannelUICallbacks
-  var appStorage: AppStorage?
+  @Dependency(\.appStorage) var appStorage
 
   // MARK: - Init
 
@@ -80,12 +81,6 @@ extension XXDK {
         "failed to get state directory: " + err.localizedDescription
       )
     }
-  }
-
-  // MARK: - Model Container Setup
-
-  func setAppStorage(_ appStorage: AppStorage) {
-    self.appStorage = appStorage
   }
 
   // MARK: - Logout
@@ -147,11 +142,7 @@ extension XXDK {
   }
 
   func newCmix(downloadedNdf: Data) async {
-    guard let appStorage
-    else {
-      fatalError("no secret manager")
-    }
-    let secret = try! appStorage.getPassword().data
+    let secret = try! self.appStorage.getPassword().data
 
     let defaultParamsJSON = Bindings.BindingsGetDefaultCMixParams()
     var params = try! Parser.decode(CMixParamsJSON.self, from: defaultParamsJSON ?? Data())
@@ -172,11 +163,7 @@ extension XXDK {
   }
 
   func loadCmix() async {
-    guard let appStorage
-    else {
-      fatalError("no secret manager")
-    }
-    let secret = try! appStorage.getPassword().data
+    let secret = try! self.appStorage.getPassword().data
 
     let defaultParamsJSON = Bindings.BindingsGetDefaultCMixParams()
     var params = try! Parser.decode(CMixParamsJSON.self, from: defaultParamsJSON ?? Data())

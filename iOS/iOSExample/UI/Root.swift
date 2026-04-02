@@ -6,18 +6,19 @@
 //
 
 import Bindings
+import Dependencies
 import SQLiteData
 import SwiftUI
 
 struct Root: View {
   @EnvironmentObject var logOutput: LogViewer
   @EnvironmentObject var xxdk: XXDK
-  @EnvironmentObject var appStorage: AppStorage
   @EnvironmentObject var selectedChat: SelectedChat
   @EnvironmentObject var navigation: AppNavigationPath
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
   @Dependency(\.defaultDatabase) var database
+  @Dependency(\.appStorage) var appStorage
 
   @State private var didRunOnboardingReset = false
 
@@ -46,7 +47,6 @@ struct Root: View {
             return
           }
           self.didRunOnboardingReset = true
-          self.xxdk.setAppStorage(self.appStorage)
 
           Task {
             do {
@@ -87,9 +87,6 @@ struct Root: View {
       } else {
         self.setupIncompleteView
       }
-    }
-    .onAppear {
-      self.xxdk.setAppStorage(self.appStorage)
     }
     .onChange(of: self.appStorage.isSetupComplete) { _, newValue in
       if newValue {

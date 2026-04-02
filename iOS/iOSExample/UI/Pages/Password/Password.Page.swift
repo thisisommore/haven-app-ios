@@ -1,11 +1,12 @@
+import Dependencies
 import SQLiteData
 import SwiftUI
 
 @MainActor
 struct PasswordCreationView<T: XXDKP>: View {
-  @EnvironmentObject var appStorage: AppStorage
   @EnvironmentObject var xxdk: T
   @EnvironmentObject var navigation: AppNavigationPath
+  @Dependency(\.appStorage) private var appStorage
 
   @State private var password: String = ""
   @State private var confirm: String = ""
@@ -262,7 +263,6 @@ enum BranchColor {
 #Preview {
   Mock {
     PasswordCreationView<XXDKMock>()
-      .environmentObject(AppStorage())
       .environmentObject(AppNavigationPath())
   }
 }
