@@ -63,44 +63,64 @@ private func makePreviewOutgoingMessageFactory(chatId: UUID) -> PreviewMessageFa
 }
 
 func previewMockMessages(chatId: UUID, senderId: UUID) -> [ChatMessageModel] {
-  let makeIncomingMessage = makePreviewIncomingMessageFactory(chatId: chatId, senderId: senderId)
-  let makeIncomingMessageWithoutSender = makePreviewIncomingMessageFactory(
+  let makeIncomingMessageFactory = makePreviewIncomingMessageFactory(chatId: chatId, senderId: senderId)
+  let makeIncomingMessageWithoutSenderFactory = makePreviewIncomingMessageFactory(
     chatId: chatId
   )
   let makeOutgoingMessage = makePreviewOutgoingMessageFactory(chatId: chatId)
 
+  func makeIncomingMessage(
+    _ message: String,
+    externalId: String? = nil,
+    replyTo: String? = nil
+  ) -> ChatMessageModel {
+    makeIncomingMessageFactory(message, externalId, replyTo)
+  }
+
+  func makeIncomingMessageWithoutSender(
+    _ message: String,
+    externalId: String? = nil,
+    replyTo: String? = nil
+  ) -> ChatMessageModel {
+    makeIncomingMessageWithoutSenderFactory(message, externalId, replyTo)
+  }
+
   return [
-    makeIncomingMessage("Hi there 👋", nil, nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
-    makeIncomingMessage("Yes sir", nil, "Study overs?"),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
+    makeIncomingMessage("Yes sir", externalId: nil, replyTo: "Study overs?"),
     makeOutgoingMessage("Study over?", "Study over?", nil),
     makeIncomingMessage(
       "All good! Working on the demo.",
-      "4TDppExKKwB/pAvRNkCn9pGDi8IGPIGhJSKdouDoCqE=",
-      nil
+      externalId: "4TDppExKKwB/pAvRNkCn9pGDi8IGPIGhJSKdouDoCqE=",
+      replyTo: nil
     ),
     makeOutgoingMessage("How's it going?", nil, nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
-    makeIncomingMessageWithoutSender("Hi there 👋", nil, nil),
-    makeIncomingMessageWithoutSender("Hi there 👋", nil, nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
+    makeIncomingMessageWithoutSender("Hi there 👋", externalId: nil, replyTo: nil),
+    makeIncomingMessageWithoutSender("Hi there 👋", externalId: nil, replyTo: nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
     makeOutgoingMessage("Hey Mayur!", nil, nil),
-    makeIncomingMessage("All good! Working on the demo.", nil, "How's it going?"),
+    makeIncomingMessage(
+      "All good! Working on the demo.",
+      externalId: nil,
+      replyTo: "How's it going?"
+    ),
     makeOutgoingMessage("How's it going?", "How's it going?", nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
     makeOutgoingMessage("Hey Mayur!", nil, nil),
-    makeIncomingMessage("All good! Working on the demo.", nil, nil),
+    makeIncomingMessage("All good! Working on the demo.", externalId: nil, replyTo: nil),
     makeOutgoingMessage("How's it going?", nil, nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
     makeOutgoingMessage("Hey Mayur!", nil, nil),
-    makeIncomingMessage("All good! Working on the demo.", nil, nil),
+    makeIncomingMessage("All good! Working on the demo.", externalId: nil, replyTo: nil),
     makeOutgoingMessage("How's it going?", nil, nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
     makeOutgoingMessage("Hey Mayur!", nil, nil),
-    makeIncomingMessage("All good! Working on the demo.", nil, nil),
+    makeIncomingMessage("All good! Working on the demo.", externalId: nil, replyTo: nil),
     makeOutgoingMessage("How's it going?", nil, nil),
-    makeIncomingMessage("Hi there 👋", nil, nil),
+    makeIncomingMessage("Hi there 👋", externalId: nil, replyTo: nil),
     makeOutgoingMessage("<p>Hey Mayur!</p>", nil, nil),
   ]
 }
