@@ -13,8 +13,6 @@ struct PasswordInputSheet: View {
   let onConfirm: (String) -> Void
   let onCancel: () -> Void
 
-  @Environment(\.dismiss) var dismiss
-
   @State private var password: String = ""
 
   var body: some View {
@@ -41,13 +39,11 @@ struct PasswordInputSheet: View {
         ToolbarItem(placement: .cancellationAction) {
           Button("Cancel") {
             self.onCancel()
-            self.dismiss()
           }
         }
         ToolbarItem(placement: .confirmationAction) {
           Button("Confirm") {
             self.onConfirm(self.password)
-            self.dismiss()
           }
           .disabled(self.password.isEmpty)
         }

@@ -40,7 +40,7 @@ struct ChatView<T: XXDKP>: View {
             }
           },
           onReact: { message in
-            self.controller.reactingTo = message
+            self.controller.activeSheet = .emojiKeyboard(message)
           },
           onDeleteMessage: { messageExternalId in
             if let channelId = self.controller.chat?.channelId {
@@ -113,7 +113,7 @@ struct ChatView<T: XXDKP>: View {
       }
       ToolbarItem(placement: .principal) {
         Button {
-          self.controller.showChannelOptions = true
+          self.controller.activeSheet = .channelOptions
         } label: {
           HStack(spacing: 4) {
             Text(self.chatTitle)
@@ -131,29 +131,36 @@ struct ChatView<T: XXDKP>: View {
         }
       }
     }
-    .sheet(isPresented: self.$controller.showChannelOptions) {
-      if let chat = self.controller.chat {
-        ChannelOptionsSheet<T>(chat: chat) {
-          self.controller.leaveChannel(
-            chatId: self.chatId,
-            chat: self.controller.chat,
-            xxdk: self.xxdk,
-            dismiss: { self.dismiss() }
-          )
-        }
-        .environmentObject(self.xxdk)
+    .sheet(
+      item: self.$controller.activeSheet,
+      onDismiss: {
+        self.controller.onSheetDismissed(chat: self.controller.chat)
       }
-    }
-    .sheet(item: self.$controller.reactingTo) { message in
-      EmojiKeyboardSheet { emoji in
-        if emoji.isEmpty {
-          self.controller.reactingTo = nil
-          return
+    ) { sheet in
+      switch sheet {
+      case .channelOptions:
+        if let chat = self.controller.chat {
+          ChannelOptionsSheet<T>(chat: chat) {
+            self.controller.leaveChannel(
+              chatId: self.chatId,
+              chat: self.controller.chat,
+              xxdk: self.xxdk,
+              dismiss: { self.dismiss() }
+            )
+          }
+          .environmentObject(self.xxdk)
         }
-        self.controller.sendReaction(
-          emoji, to: message, chat: self.controller.chat, xxdk: self.xxdk
-        )
-        self.controller.reactingTo = nil
+      case let .emojiKeyboard(message):
+        EmojiKeyboardSheet { emoji in
+          if emoji.isEmpty {
+            self.controller.activeSheet = nil
+            return
+          }
+          self.controller.sendReaction(
+            emoji, to: message, chat: self.controller.chat, xxdk: self.xxdk
+          )
+          self.controller.activeSheet = nil
+        }
       }
     }
     .onAppear {
@@ -173,11 +180,6 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .id("chat-\(self.chatId.uuidString)")
-    .onChange(of: self.controller.showChannelOptions) { _, newValue in
-      self.controller.onChannelOptionsVisibilityChanged(
-        newValue: newValue, chat: self.controller.chat
-      )
-    }
     .onChange(of: self.controller.chat?.unreadCount) { _, newValue in
       if let chat = self.controller.chat {
         self.controller.onUnreadCountChanged(

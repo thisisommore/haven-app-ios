@@ -8,18 +8,34 @@ import Foundation
 import SQLiteData
 import SwiftUI
 
+enum NewChatActiveSheet: Identifiable {
+  case passwordInput
+  case joinConfirmation(inviteLink: String, channelData: ChannelJSON)
+
+  var id: String {
+    switch self {
+    case .passwordInput:
+      return "passwordInput"
+    case let .joinConfirmation(inviteLink, channelData):
+      if let channelId = channelData.ChannelID {
+        return "joinConfirmation-\(channelId)"
+      }
+      return "joinConfirmation-\(inviteLink)"
+    }
+  }
+}
+
 struct NewChatSheet<T: XXDKP>: View {
   @Environment(\.dismiss) var dismiss
   @EnvironmentObject var xxdk: T
 
   @Dependency(\.defaultDatabase) var database
 
-  @State private var showConfirmationSheet: Bool = false
+  @State private var activeSheet: NewChatActiveSheet?
   @State private var inviteLink: String = ""
   @State private var channelData: ChannelJSON?
   @State private var errorMessage: String?
   @State private var isJoining: Bool = false
-  @State private var showPasswordSheet: Bool = false
   @State private var isPrivateChannel: Bool = false
   @State private var prettyPrint: String?
 
@@ -115,14 +131,17 @@ struct NewChatSheet<T: XXDKP>: View {
 
                   if privacyLevel == .secret {
                     self.isPrivateChannel = true
-                    self.showPasswordSheet = true
+                    self.activeSheet = .passwordInput
                     self.errorMessage = nil
                   } else {
                     let channel = try xxdk.channel.getFrom(
                       url: trimmed
                     )
                     self.channelData = channel
-                    self.showConfirmationSheet = true
+                    self.activeSheet = .joinConfirmation(
+                      inviteLink: trimmed,
+                      channelData: channel
+                    )
                     self.errorMessage = nil
                   }
                 } catch {
@@ -138,50 +157,54 @@ struct NewChatSheet<T: XXDKP>: View {
       .navigationTitle("Join Channel")
       .navigationBarTitleDisplayMode(.inline)
     }
-    .sheet(isPresented: self.$showPasswordSheet) {
-      PasswordInputSheet(
-        url: self.inviteLink,
-        onConfirm: { password in
-          do {
-            let pp = try xxdk.channel.decodePrivateURL(
-              url: self.inviteLink,
-              password: password
-            )
-            self.prettyPrint = pp
-            let channel = try xxdk.channel.getPrivateChannelFrom(
-              url: self.inviteLink,
-              password: password
-            )
-            self.channelData = channel
-            self.showConfirmationSheet = true
-            self.showPasswordSheet = false
-            self.errorMessage = nil
-          } catch {
-            self.errorMessage =
-              "Failed to decrypt channel: \(error.localizedDescription)"
-            self.showPasswordSheet = false
+    .sheet(item: self.$activeSheet) { sheet in
+      switch sheet {
+      case .passwordInput:
+        PasswordInputSheet(
+          url: self.inviteLink,
+          onConfirm: { password in
+            do {
+              let pp = try xxdk.channel.decodePrivateURL(
+                url: self.inviteLink,
+                password: password
+              )
+              self.prettyPrint = pp
+              let channel = try xxdk.channel.getPrivateChannelFrom(
+                url: self.inviteLink,
+                password: password
+              )
+              self.channelData = channel
+              self.activeSheet = .joinConfirmation(
+                inviteLink: self.inviteLink,
+                channelData: channel
+              )
+              self.errorMessage = nil
+            } catch {
+              self.errorMessage =
+                "Failed to decrypt channel: \(error.localizedDescription)"
+              self.activeSheet = nil
+            }
+          },
+          onCancel: {
+            self.activeSheet = nil
           }
-        },
-        onCancel: {
-          self.showPasswordSheet = false
-        }
-      )
-    }
-    .sheet(isPresented: self.$showConfirmationSheet) { [inviteLink, channelData] in
-      JoinChannelConfirmationSheet(
-        channelName: channelData?.Name ?? "",
-        channelURL: inviteLink,
-        isJoining: self.$isJoining,
-        onConfirm: { enableDM in
-          Task {
-            await self.joinChannel(
-              url: inviteLink,
-              channelData: channelData!,
-              enableDM: enableDM
-            )
+        )
+      case let .joinConfirmation(inviteLink, channelData):
+        JoinChannelConfirmationSheet(
+          channelName: channelData.Name,
+          channelURL: inviteLink,
+          isJoining: self.$isJoining,
+          onConfirm: { enableDM in
+            Task {
+              await self.joinChannel(
+                url: inviteLink,
+                channelData: channelData,
+                enableDM: enableDM
+              )
+            }
           }
-        }
-      )
+        )
+      }
     }
   }
 }

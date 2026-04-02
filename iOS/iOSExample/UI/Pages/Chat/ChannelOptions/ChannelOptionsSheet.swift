@@ -145,7 +145,7 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
           if self.channelId != nil, self.chat.isAdmin {
             Section(header: Text("Admin")) {
               Button {
-                self.controller.showExportKeySheet = true
+                self.controller.activeSheet = .exportKey
               } label: {
                 HStack {
                   Image(systemName: "key.fill")
@@ -182,7 +182,7 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
           if self.channelId != nil, !self.chat.isAdmin {
             Section {
               Button {
-                self.controller.showImportKeySheet = true
+                self.controller.activeSheet = .importKey
               } label: {
                 HStack {
                   Image(systemName: "key.fill")
@@ -244,27 +244,29 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
         }.hiddenSharedBackground()
       }
     }
-    .sheet(isPresented: self.$controller.showExportKeySheet) {
-      ExportChannelKeySheet(
-        channelId: self.channelId ?? "",
-        channelName: self.chat.name,
-        xxdk: self.xxdk,
-        onSuccess: { message in
-          self.controller.handleExportSuccess(message: message)
-        }
-      )
-    }
-    .sheet(isPresented: self.$controller.showImportKeySheet) {
-      ImportChannelKeySheet(
-        channelId: self.channelId ?? "",
-        channelName: self.chat.name,
-        xxdk: self.xxdk,
-        onSuccess: { message in
-          self.controller.handleImportSuccess(
-            message: message, chatId: self.chat.id, chat: self.chat
-          )
-        }
-      )
+    .sheet(item: self.$controller.activeSheet) { sheet in
+      switch sheet {
+      case .exportKey:
+        ExportChannelKeySheet(
+          channelId: self.channelId ?? "",
+          channelName: self.chat.name,
+          xxdk: self.xxdk,
+          onSuccess: { message in
+            self.controller.handleExportSuccess(message: message)
+          }
+        )
+      case .importKey:
+        ImportChannelKeySheet(
+          channelId: self.channelId ?? "",
+          channelName: self.chat.name,
+          xxdk: self.xxdk,
+          onSuccess: { message in
+            self.controller.handleImportSuccess(
+              message: message, chatId: self.chat.id, chat: self.chat
+            )
+          }
+        )
+      }
     }
     .overlay {
       if let toastMessage = self.controller.toastMessage {

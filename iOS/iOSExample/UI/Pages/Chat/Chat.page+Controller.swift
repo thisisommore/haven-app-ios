@@ -9,12 +9,25 @@ import Observation
 import SQLiteData
 import SwiftUI
 
+enum ChatSheet: Identifiable {
+  case channelOptions
+  case emojiKeyboard(ChatMessageModel)
+
+  var id: String {
+    switch self {
+    case .channelOptions:
+      return "channelOptions"
+    case let .emojiKeyboard(message):
+      return "emojiKeyboard-\(message.externalId)"
+    }
+  }
+}
+
 @MainActor
 @Observable
 final class ChatPageController {
   var replyingTo: ChatMessageModel?
-  var reactingTo: ChatMessageModel?
-  var showChannelOptions: Bool = false
+  var activeSheet: ChatSheet?
   var isAdmin: Bool = false
   var isMuted: Bool = false
 
@@ -77,10 +90,8 @@ final class ChatPageController {
     }
   }
 
-  func onChannelOptionsVisibilityChanged(newValue: Bool, chat: ChatModel?) {
-    if !newValue {
-      self.isAdmin = chat?.isAdmin ?? false
-    }
+  func onSheetDismissed(chat: ChatModel?) {
+    self.isAdmin = chat?.isAdmin ?? false
   }
 
   func onUnreadCountChanged(

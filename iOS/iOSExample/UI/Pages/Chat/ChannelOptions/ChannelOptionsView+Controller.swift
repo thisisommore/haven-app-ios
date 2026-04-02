@@ -9,14 +9,27 @@ import Observation
 import SQLiteData
 import SwiftUI
 
+enum ChannelOptionsActiveSheet: Identifiable {
+  case exportKey
+  case importKey
+
+  var id: String {
+    switch self {
+    case .exportKey:
+      return "exportKey"
+    case .importKey:
+      return "importKey"
+    }
+  }
+}
+
 @MainActor
 @Observable
 final class ChannelOptionsController {
   var isDMEnabled: Bool = false
   var shareURL: String?
   var sharePassword: String?
-  var showExportKeySheet: Bool = false
-  var showImportKeySheet: Bool = false
+  var activeSheet: ChannelOptionsActiveSheet?
   var toastMessage: String?
   var mutedUsers: [Data] = []
   var showLeaveConfirmation: Bool = false
