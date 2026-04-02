@@ -18,7 +18,6 @@ final class ChannelOptionsController {
   var showExportKeySheet: Bool = false
   var showImportKeySheet: Bool = false
   var toastMessage: String?
-  var isAdmin: Bool = false
   var mutedUsers: [Data] = []
   var showLeaveConfirmation: Bool = false
   var showDeleteConfirmation: Bool = false
@@ -27,8 +26,7 @@ final class ChannelOptionsController {
   @ObservationIgnored
   @Dependency(\.defaultDatabase) var database
 
-  func onAppear<T: XXDKP>(chat: ChatModel?, channelId: String?, xxdk: T) {
-    self.refreshAdminStatus(chat: chat)
+  func onAppear<T: XXDKP>(chat _: ChatModel?, channelId: String?, xxdk: T) {
     guard let channelId else { return }
 
     do {
@@ -117,7 +115,7 @@ final class ChannelOptionsController {
   }
 
   func handleImportSuccess(
-    message: String, chatId: UUID?, chat: ChatModel?
+    message: String, chatId: UUID?, chat _: ChatModel?
   ) {
     if let chatId {
       try? self.database.write { db in
@@ -126,7 +124,6 @@ final class ChannelOptionsController {
           .execute(db)
       }
     }
-    self.refreshAdminStatus(chat: chat)
     self.showToast(message)
   }
 
@@ -156,10 +153,6 @@ final class ChannelOptionsController {
         "Failed to save nickname: \(error.localizedDescription, privacy: .public)"
       )
     }
-  }
-
-  private func refreshAdminStatus(chat: ChatModel?) {
-    self.isAdmin = chat?.isAdmin ?? false
   }
 
   private func showToast(_ message: String) {

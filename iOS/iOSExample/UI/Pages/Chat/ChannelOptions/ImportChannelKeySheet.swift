@@ -49,7 +49,7 @@ struct ImportChannelKeySheet<T: XXDKP>: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       VStack(spacing: 24) {
         Image(systemName: "key.fill")
           .font(.system(size: 48))

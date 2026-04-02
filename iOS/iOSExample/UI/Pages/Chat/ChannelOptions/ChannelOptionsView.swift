@@ -29,18 +29,20 @@ struct ChannelOptionsView<T: XXDKP>: View {
   }
 
   var body: some View {
-    NavigationView {
-      List {
-        Section {
-          VStack(alignment: .leading, spacing: 8) {
-            Text(self.isDM ? "Name" : "Channel Name")
-              .font(.caption)
-              .foregroundColor(.secondary)
-            Text(self.chat.name)
-              .font(.body)
-          }
+    List {
+      Section {
+        // Chat name
+        VStack(alignment: .leading, spacing: 8) {
+          Text(self.isDM ? "Name" : "Channel Name")
+            .font(.caption)
+            .foregroundColor(.secondary)
+          Text(self.chat.name)
+            .font(.body)
+        }
 
-          if !self.isDM, let description = chat.channelDescription, !description.isEmpty {
+        // Channels specific props
+        if !self.isDM {
+          if let description = chat.channelDescription, !description.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
               Text("Description")
                 .font(.caption)
@@ -50,49 +52,45 @@ struct ChannelOptionsView<T: XXDKP>: View {
             }
           }
 
-          if !self.isDM {
-            VStack(alignment: .leading, spacing: 8) {
-              Text("Your Nickname")
+          VStack(alignment: .leading, spacing: 8) {
+            Text("Your Nickname")
+              .font(.caption)
+              .foregroundColor(.secondary)
+            HStack {
+              TextField("Enter nickname (max 24 chars)", text: self.$controller.channelNickname)
+                .focused(self.$isNicknameFocused)
+                .onChange(of: self.controller.channelNickname) { _, newValue in
+                  self.controller.updateChannelNickname(newValue)
+                }
+              if self.isNicknameFocused {
+                Button("Save") {
+                  self.controller.saveNickname(channelId: self.channelId, xxdk: self.xxdk)
+                  self.isNicknameFocused = false
+                }
                 .font(.caption)
-                .foregroundColor(.secondary)
-              HStack {
-                TextField("Enter nickname (max 24 chars)", text: self.$controller.channelNickname)
-                  .focused(self.$isNicknameFocused)
-                  .onChange(of: self.controller.channelNickname) { _, newValue in
-                    self.controller.updateChannelNickname(newValue)
-                  }
-                if self.isNicknameFocused {
-                  Button("Save") {
-                    self.controller.saveNickname(channelId: self.channelId, xxdk: self.xxdk)
-                    self.isNicknameFocused = false
-                  }
-                  .font(.caption)
-                  .foregroundColor(.haven)
-                }
+                .foregroundColor(.haven)
               }
-              if self.controller.channelNickname.count > 10 {
-                HStack(spacing: 6) {
-                  Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
-                  Text("Nickname will be truncated to 10 chars in display")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-                }
+            }
+            if self.controller.channelNickname.count > 10 {
+              HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                  .foregroundColor(.orange)
+                Text("Nickname will be truncated to 10 chars in display")
+                  .font(.caption)
+                  .foregroundColor(.orange)
               }
             }
           }
 
-          if !self.isDM {
-            Toggle("Direct Messages", isOn: self.$controller.isDMEnabled)
-              .tint(.haven)
-              .onChange(of: self.controller.isDMEnabled) { oldValue, newValue in
-                self.controller.toggleDirectMessages(
-                  oldValue: oldValue, newValue: newValue, channelId: self.channelId, xxdk: self.xxdk
-                )
-              }
-          }
+          Toggle("Direct Messages", isOn: self.$controller.isDMEnabled)
+            .tint(.haven)
+            .onChange(of: self.controller.isDMEnabled) { oldValue, newValue in
+              self.controller.toggleDirectMessages(
+                oldValue: oldValue, newValue: newValue, channelId: self.channelId, xxdk: self.xxdk
+              )
+            }
 
-          if !self.isDM, let urlString = self.controller.shareURL, let url = URL(string: urlString) {
+          if let urlString = self.controller.shareURL, let url = URL(string: urlString) {
             ShareLink(item: url) {
               HStack {
                 Text(verbatim: urlString)
@@ -131,160 +129,160 @@ struct ChannelOptionsView<T: XXDKP>: View {
             }
           }
         }
-        .onAppear {
-          self.controller.onAppear(chat: self.chat, channelId: self.channelId, xxdk: self.xxdk)
-        }
+      }
+      .onAppear {
+        self.controller.onAppear(chat: self.chat, channelId: self.channelId, xxdk: self.xxdk)
+      }
 
-        // Admin section - only visible for channel admins (not for DMs)
-        if !self.isDM, self.channelId != nil, self.controller.isAdmin {
-          Section(header: Text("Admin")) {
-            Button {
-              self.controller.showExportKeySheet = true
-            } label: {
-              HStack {
-                Image(systemName: "key.fill")
-                  .foregroundColor(.haven)
-                Text("Export Channel Key")
-                Spacer()
-                Image(systemName: "square.and.arrow.up")
-                  .foregroundColor(.secondary)
-              }
-            }
-            .tint(.primary)
-          }
-        }
-
-        // Muted Users section - only visible for admins (not for DMs)
-        if !self.isDM, self.channelId != nil, self.controller.isAdmin {
-          Section(header: Text("Muted Users")) {
-            if self.controller.mutedUsers.isEmpty {
-              Text("No muted users")
-                .foregroundColor(.secondary)
-            } else {
-              ForEach(self.controller.mutedUsers, id: \.self) { pubKey in
-                MutedUserRow(pubKey: pubKey) {
-                  self.controller.unmuteUser(
-                    pubKey: pubKey, channelId: self.channelId, xxdk: self.xxdk
-                  )
-                }
-              }
-            }
-          }
-        }
-
-        // Import key section - only visible for non-admins and not for DMs
-        if !self.isDM, self.channelId != nil, !self.controller.isAdmin {
-          Section {
-            Button {
-              self.controller.showImportKeySheet = true
-            } label: {
-              HStack {
-                Image(systemName: "key.fill")
-                  .foregroundColor(.haven)
-                Text("Import Channel Key")
-                Spacer()
-                Image(systemName: "square.and.arrow.down")
-                  .foregroundColor(.secondary)
-              }
-            }
-            .tint(.primary)
-          }
-        }
-
-        Section {
-          Button(role: .destructive) {
-            if self.isDM {
-              self.controller.showDeleteConfirmation = true
-            } else {
-              self.controller.showLeaveConfirmation = true
-            }
+      // Admin section - only visible for channel admins (not for DMs)
+      if !self.isDM, self.channelId != nil, self.chat.isAdmin {
+        Section(header: Text("Admin")) {
+          Button {
+            self.controller.showExportKeySheet = true
           } label: {
             HStack {
+              Image(systemName: "key.fill")
+                .foregroundColor(.haven)
+              Text("Export Channel Key")
               Spacer()
-              Text(self.isDM ? "Delete Chat" : "Leave Channel")
-              Spacer()
+              Image(systemName: "square.and.arrow.up")
+                .foregroundColor(.secondary)
+            }
+          }
+          .tint(.primary)
+        }
+      }
+
+      // Muted Users section - only visible for admins (not for DMs)
+      if !self.isDM, self.channelId != nil, self.chat.isAdmin {
+        Section(header: Text("Muted Users")) {
+          if self.controller.mutedUsers.isEmpty {
+            Text("No muted users")
+              .foregroundColor(.secondary)
+          } else {
+            ForEach(self.controller.mutedUsers, id: \.self) { pubKey in
+              MutedUserRow(pubKey: pubKey) {
+                self.controller.unmuteUser(
+                  pubKey: pubKey, channelId: self.channelId, xxdk: self.xxdk
+                )
+              }
             }
           }
         }
-        .alert("Leave Channel", isPresented: self.$controller.showLeaveConfirmation) {
-          Button("Cancel", role: .cancel) {}
-          Button("Leave", role: .destructive) {
-            self.onLeaveChannel()
-            self.dismiss()
+      }
+
+      // Import key section - only visible for non-admins and not for DMs
+      if !self.isDM, self.channelId != nil, !self.chat.isAdmin {
+        Section {
+          Button {
+            self.controller.showImportKeySheet = true
+          } label: {
+            HStack {
+              Image(systemName: "key.fill")
+                .foregroundColor(.haven)
+              Text("Import Channel Key")
+              Spacer()
+              Image(systemName: "square.and.arrow.down")
+                .foregroundColor(.secondary)
+            }
           }
-        } message: {
-          Text("Are you sure you want to leave \"\(self.chat.name)\"?")
+          .tint(.primary)
         }
-        .alert("Delete Chat", isPresented: self.$controller.showDeleteConfirmation) {
-          Button("Cancel", role: .cancel) {}
-          Button("Delete", role: .destructive) {
-            self.onDeleteChat?()
-            self.dismiss()
+      }
+
+      Section {
+        Button(role: .destructive) {
+          if self.isDM {
+            self.controller.showDeleteConfirmation = true
+          } else {
+            self.controller.showLeaveConfirmation = true
           }
-        } message: {
-          Text(
-            "Are you sure you want to delete this chat with \"\(self.chat.name)\"?"
+        } label: {
+          HStack {
+            Spacer()
+            Text(self.isDM ? "Delete Chat" : "Leave Channel")
+            Spacer()
+          }
+        }
+      }
+      .alert("Leave Channel", isPresented: self.$controller.showLeaveConfirmation) {
+        Button("Cancel", role: .cancel) {}
+        Button("Leave", role: .destructive) {
+          self.onLeaveChannel()
+          self.dismiss()
+        }
+      } message: {
+        Text("Are you sure you want to leave \"\(self.chat.name)\"?")
+      }
+      .alert("Delete Chat", isPresented: self.$controller.showDeleteConfirmation) {
+        Button("Cancel", role: .cancel) {}
+        Button("Delete", role: .destructive) {
+          self.onDeleteChat?()
+          self.dismiss()
+        }
+      } message: {
+        Text(
+          "Are you sure you want to delete this chat with \"\(self.chat.name)\"?"
+        )
+      }
+    }
+    .navigationTitle(self.isDM ? "DM Options" : "Channel Options")
+    .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .navigationBarTrailing) {
+        Button("Done") {
+          self.dismiss()
+        }.tint(.haven)
+      }.hiddenSharedBackground()
+    }
+    .sheet(isPresented: self.$controller.showExportKeySheet) {
+      ExportChannelKeySheet(
+        channelId: self.channelId ?? "",
+        channelName: self.chat.name,
+        xxdk: self.xxdk,
+        onSuccess: { message in
+          self.controller.handleExportSuccess(message: message)
+        }
+      )
+    }
+    .sheet(isPresented: self.$controller.showImportKeySheet) {
+      ImportChannelKeySheet(
+        channelId: self.channelId ?? "",
+        channelName: self.chat.name,
+        xxdk: self.xxdk,
+        onSuccess: { message in
+          self.controller.handleImportSuccess(
+            message: message, chatId: self.chat.id, chat: self.chat
           )
         }
-      }
-      .navigationTitle(self.isDM ? "DM Options" : "Channel Options")
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button("Done") {
-            self.dismiss()
-          }.tint(.haven)
-        }.hiddenSharedBackground()
-      }
-      .sheet(isPresented: self.$controller.showExportKeySheet) {
-        ExportChannelKeySheet(
-          channelId: self.channelId ?? "",
-          channelName: self.chat.name,
-          xxdk: self.xxdk,
-          onSuccess: { message in
-            self.controller.handleExportSuccess(message: message)
+      )
+    }
+    .overlay {
+      if let toastMessage = self.controller.toastMessage {
+        VStack {
+          Spacer()
+          HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+              .foregroundColor(.white)
+            Text(toastMessage)
+              .font(.subheadline)
+              .fontWeight(.medium)
+              .foregroundColor(.white)
           }
-        )
-      }
-      .sheet(isPresented: self.$controller.showImportKeySheet) {
-        ImportChannelKeySheet(
-          channelId: self.channelId ?? "",
-          channelName: self.chat.name,
-          xxdk: self.xxdk,
-          onSuccess: { message in
-            self.controller.handleImportSuccess(
-              message: message, chatId: self.chat.id, chat: self.chat
-            )
-          }
-        )
-      }
-      .overlay {
-        if let toastMessage = self.controller.toastMessage {
-          VStack {
-            Spacer()
-            HStack(spacing: 10) {
-              Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.white)
-              Text(toastMessage)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .background(Color.haven)
-            .cornerRadius(25)
-            .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
-            .padding(.bottom, 50)
-          }
-          .transition(.move(edge: .bottom).combined(with: .opacity))
+          .padding(.horizontal, 20)
+          .padding(.vertical, 14)
+          .background(Color.haven)
+          .cornerRadius(25)
+          .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
+          .padding(.bottom, 50)
         }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
       }
-      .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
-        self.controller.handleMuteStatusChanged(
-          notification: notification, channelId: self.channelId, xxdk: self.xxdk
-        )
-      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
+      self.controller.handleMuteStatusChanged(
+        notification: notification, channelId: self.channelId, xxdk: self.xxdk
+      )
     }
   }
 }
