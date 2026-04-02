@@ -57,7 +57,7 @@ final class HomePageController {
     }
   }
 
-  func handleAddUser<T: XXDKP>(code: String, xxdk _: T) {
+  func handleAddUser(code: String) {
     guard let url = URL(string: code),
           let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
     else {

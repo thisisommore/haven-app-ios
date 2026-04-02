@@ -86,8 +86,7 @@ struct HomeView<T: XXDKP>: View {
             QRScannerSheet(
               onCodeScanned: { code in
                 self.controller.handleAddUser(
-                  code: code,
-                  xxdk: self.xxdk
+                  code: code
                 )
               },
               onShowMyQR: {
