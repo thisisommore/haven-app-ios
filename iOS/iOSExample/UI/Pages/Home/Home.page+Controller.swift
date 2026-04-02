@@ -37,7 +37,14 @@ final class HomePageController {
   var showTooltip = false
 
   @ObservationIgnored
+  @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
+
+  @ObservationIgnored
   @Dependency(\.defaultDatabase) var database
+
+  var filteredChats: [ChatModel] {
+    self.filteredChats(from: self.chats)
+  }
 
   func filteredChats(from chats: [ChatModel]) -> [ChatModel] {
     if self.searchText.isEmpty {
@@ -144,9 +151,9 @@ final class HomePageController {
     }
   }
 
-  func syncSelectedChatTitle(chats: [ChatModel], selectedChat: SelectedChat) {
+  func syncSelectedChatTitle(selectedChat: SelectedChat) {
     if let chatId = selectedChat.chatId,
-       let chat = chats.first(where: { $0.id == chatId }) {
+       let chat = self.chats.first(where: { $0.id == chatId }) {
       selectedChat.chatTitle = chat.name
     }
   }

@@ -10,11 +10,9 @@ struct HomeView<T: XXDKP>: View {
   @Environment(\.isSplitView) private var isSplitView
   @EnvironmentObject private var selectedChat: SelectedChat
 
-  @FetchAll(ChatModel.order { $0.name }) private var chats: [ChatModel]
-
   var body: some View {
     let chatList = List(selection: $selectedChat.chatId) {
-      ForEach(self.controller.filteredChats(from: self.chats)) { chat in
+      ForEach(self.controller.filteredChats) { chat in
         ChatRowView<T>(chat: chat)
           .tag(chat.id)
       }
@@ -22,7 +20,7 @@ struct HomeView<T: XXDKP>: View {
     .scrollContentBackground(.hidden)
     .background(Color.appBackground)
     .onChange(of: self.selectedChat.chatId) { _, _ in
-      self.controller.syncSelectedChatTitle(chats: self.chats, selectedChat: self.selectedChat)
+      self.controller.syncSelectedChatTitle(selectedChat: self.selectedChat)
     }
 
     let listHeader =

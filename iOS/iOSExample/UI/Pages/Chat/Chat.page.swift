@@ -9,7 +9,7 @@ import SQLiteData
 import SwiftUI
 
 struct ChatView<T: XXDKP>: View {
-  @State private var controller = ChatPageController()
+  @State private var controller: ChatPageController
 
   let chatId: UUID
   let chatTitle: String
@@ -18,19 +18,15 @@ struct ChatView<T: XXDKP>: View {
   @EnvironmentObject var xxdk: T
   @Environment(\.dismiss) private var dismiss
 
-  @FetchOne private var chat: ChatModel?
-  @FetchOne private var firstMessage: ChatMessageModel?
-
   init(chatId: UUID, chatTitle: String) {
     self.chatId = chatId
     self.chatTitle = chatTitle
-    _chat = FetchOne(ChatModel.where { $0.id.eq(chatId) })
-    _firstMessage = FetchOne(ChatMessageModel.where { $0.chatId.eq(chatId) })
+    _controller = State(initialValue: ChatPageController(chatId: chatId))
   }
 
   var body: some View {
     ZStack {
-      if let chat {
+      if let chat = self.controller.chat {
         ChatMessages(
           chat: chat,
           onReply: { message in
@@ -42,19 +38,19 @@ struct ChatView<T: XXDKP>: View {
             self.controller.reactingTo = message
           },
           onDeleteMessage: { messageExternalId in
-            if let channelId = self.chat?.channelId {
+            if let channelId = self.controller.chat?.channelId {
               self.controller.deleteMessage(
                 messageExternalId, channelId: channelId, xxdk: self.xxdk
               )
             }
           },
           onMuteUser: { pubKey in
-            if let channelId = self.chat?.channelId {
+            if let channelId = self.controller.chat?.channelId {
               self.controller.muteUser(pubKey, channelId: channelId, xxdk: self.xxdk)
             }
           },
           onDeleteReaction: { reaction in
-            if let channelId = self.chat?.channelId {
+            if let channelId = self.controller.chat?.channelId {
               self.controller.deleteReaction(
                 reaction, channelId: channelId, xxdk: self.xxdk
               )
@@ -63,7 +59,7 @@ struct ChatView<T: XXDKP>: View {
         )
       }
 
-      if self.firstMessage == nil {
+      if self.controller.firstMessage == nil {
         EmptyChatView()
       }
     }
@@ -82,7 +78,7 @@ struct ChatView<T: XXDKP>: View {
         .background(.ultraThinMaterial)
       } else {
         MessageForm<T>(
-          chat: self.chat,
+          chat: self.controller.chat,
           replyTo: self.controller.replyingTo,
           onCancelReply: {
             self.controller.replyingTo = nil
@@ -118,7 +114,7 @@ struct ChatView<T: XXDKP>: View {
             Text(self.chatTitle == "<self>" ? "Notes" : self.chatTitle)
               .font(.headline.weight(.semibold))
               .foregroundStyle(.primary)
-            if let chat, chat.isChannel {
+            if let chat = self.controller.chat, chat.isChannel {
               if chat.isSecret == true {
                 SecretBadge()
               }
@@ -131,11 +127,11 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .sheet(isPresented: self.$controller.showChannelOptions) {
-      if let chat = self.chat {
+      if let chat = self.controller.chat {
         ChannelOptionsSheet<T>(chat: chat) {
           self.controller.leaveChannel(
             chatId: self.chatId,
-            chat: self.chat,
+            chat: self.controller.chat,
             xxdk: self.xxdk,
             dismiss: { self.dismiss() }
           )
@@ -150,13 +146,13 @@ struct ChatView<T: XXDKP>: View {
           return
         }
         self.controller.sendReaction(
-          emoji, to: message, chat: self.chat, xxdk: self.xxdk
+          emoji, to: message, chat: self.controller.chat, xxdk: self.xxdk
         )
         self.controller.reactingTo = nil
       }
     }
     .onAppear {
-      if let chat {
+      if let chat = self.controller.chat {
         self.controller.onAppear(
           chat: chat, xxdk: self.xxdk
         )
@@ -165,7 +161,7 @@ struct ChatView<T: XXDKP>: View {
     .onReceive(
       NotificationCenter.default.publisher(for: .userMuteStatusChanged)
     ) { notification in
-      if let chat {
+      if let chat = self.controller.chat {
         self.controller.refreshMuteFromNotification(
           notification, chat: chat, xxdk: self.xxdk
         )
@@ -174,11 +170,11 @@ struct ChatView<T: XXDKP>: View {
     .id("chat-\(self.chatId.uuidString)")
     .onChange(of: self.controller.showChannelOptions) { _, newValue in
       self.controller.onChannelOptionsVisibilityChanged(
-        newValue: newValue, chat: self.chat
+        newValue: newValue, chat: self.controller.chat
       )
     }
-    .onChange(of: self.chat?.unreadCount) { _, newValue in
-      if let chat {
+    .onChange(of: self.controller.chat?.unreadCount) { _, newValue in
+      if let chat = self.controller.chat {
         self.controller.onUnreadCountChanged(
           newValue: newValue, chat: chat
         )

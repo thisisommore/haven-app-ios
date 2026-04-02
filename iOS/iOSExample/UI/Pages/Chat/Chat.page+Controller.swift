@@ -19,7 +19,18 @@ final class ChatPageController {
   var isMuted: Bool = false
 
   @ObservationIgnored
+  @FetchOne var chat: ChatModel?
+
+  @ObservationIgnored
+  @FetchOne var firstMessage: ChatMessageModel?
+
+  @ObservationIgnored
   @Dependency(\.defaultDatabase) var database
+
+  init(chatId: UUID) {
+    _chat = FetchOne(ChatModel.where { $0.id.eq(chatId) })
+    _firstMessage = FetchOne(ChatMessageModel.where { $0.chatId.eq(chatId) })
+  }
 
   func markMessagesAsRead(chat: ChatModel) {
     let joinedAt = chat.joinedAt
