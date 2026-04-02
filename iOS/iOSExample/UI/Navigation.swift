@@ -15,16 +15,13 @@ final class AppNavigationPath: Observable, ObservableObject {
 /// Holds selected chat info for split view detail column
 final class SelectedChat: ObservableObject {
   @Published var chatId: UUID?
-  @Published var chatTitle: String?
 
-  func select(id: UUID, title: String) {
+  func select(id: UUID) {
     self.chatId = id
-    self.chatTitle = title
   }
 
   func clear() {
     self.chatId = nil
-    self.chatTitle = ""
   }
 }
 
@@ -37,7 +34,7 @@ enum Destination: Hashable {
   case landing
   case codenameGenerator
   case password
-  case chat(chatId: UUID, chatTitle: String) // add whatever "props" you need
+  case chat(chatId: UUID) // add whatever "props" you need
   case logViewer
 }
 
@@ -57,8 +54,8 @@ extension Destination {
     case .password:
       PasswordCreationView<XXDK>()
 
-    case let .chat(chatId, chatTitle):
-      ChatView<XXDK>(chatId: chatId, chatTitle: chatTitle)
+    case let .chat(chatId):
+      ChatView<XXDK>(chatId: chatId)
 
     case .logViewer:
       LogViewerUI()

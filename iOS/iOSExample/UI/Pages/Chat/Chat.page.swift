@@ -12,16 +12,21 @@ struct ChatView<T: XXDKP>: View {
   @State private var controller: ChatPageController
 
   let chatId: UUID
-  let chatTitle: String
 
   @EnvironmentObject var selectedChat: SelectedChat
   @EnvironmentObject var xxdk: T
   @Environment(\.dismiss) private var dismiss
 
-  init(chatId: UUID, chatTitle: String) {
+  init(chatId: UUID) {
     self.chatId = chatId
-    self.chatTitle = chatTitle
     _controller = State(initialValue: ChatPageController(chatId: chatId))
+  }
+
+  private var chatTitle: String {
+    guard let name = self.controller.chat?.name else {
+      return ""
+    }
+    return name == "<self>" ? "Notes" : name
   }
 
   var body: some View {
@@ -111,7 +116,7 @@ struct ChatView<T: XXDKP>: View {
           self.controller.showChannelOptions = true
         } label: {
           HStack(spacing: 4) {
-            Text(self.chatTitle == "<self>" ? "Notes" : self.chatTitle)
+            Text(self.chatTitle)
               .font(.headline.weight(.semibold))
               .foregroundStyle(.primary)
             if let chat = self.controller.chat, chat.isChannel {
@@ -185,9 +190,6 @@ struct ChatView<T: XXDKP>: View {
 
 #Preview {
   Mock {
-    ChatView<XXDKMock>(
-      chatId: previewChatId,
-      chatTitle: "Mayur"
-    )
+    ChatView<XXDKMock>(chatId: previewChatId)
   }
 }

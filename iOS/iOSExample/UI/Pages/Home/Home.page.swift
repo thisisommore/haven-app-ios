@@ -19,9 +19,6 @@ struct HomeView<T: XXDKP>: View {
     }
     .scrollContentBackground(.hidden)
     .background(Color.appBackground)
-    .onChange(of: self.selectedChat.chatId) { _, _ in
-      self.controller.syncSelectedChatTitle(selectedChat: self.selectedChat)
-    }
 
     let listHeader =
       chatList

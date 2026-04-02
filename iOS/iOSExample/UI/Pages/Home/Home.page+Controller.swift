@@ -135,13 +135,6 @@ final class HomePageController {
     }
   }
 
-  func syncSelectedChatTitle(selectedChat: SelectedChat) {
-    if let chatId = selectedChat.chatId,
-       let chat = self.chats.first(where: { $0.id == chatId }) {
-      selectedChat.chatTitle = chat.name
-    }
-  }
-
   func openShareQRCode<T: XXDKP>(xxdk: T) {
     guard let dm = xxdk.dm,
           let pubKey = dm.getPublicKey(),

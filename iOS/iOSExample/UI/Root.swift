@@ -72,13 +72,9 @@ struct Root: View {
 
   @ViewBuilder
   private var detailContent: some View {
-    if let chatId = selectedChat.chatId,
-       let chatTitle = selectedChat.chatTitle {
-      ChatView<XXDK>(
-        chatId: chatId,
-        chatTitle: chatTitle
-      )
-      .id(chatId)
+    if let chatId = selectedChat.chatId {
+      ChatView<XXDK>(chatId: chatId)
+        .id(chatId)
     } else if self.horizontalSizeClass == .regular {
       NoChatSelectedView()
     }
@@ -128,7 +124,7 @@ struct DeepLinkHandler: ViewModifier {
           let pathComponents = url.pathComponents.filter { $0 != "/" }
           if let chatIdRaw = pathComponents.first,
              let chatId = UUID(uuidString: chatIdRaw) {
-            self.selectedChat.select(id: chatId, title: "")
+            self.selectedChat.select(id: chatId)
           }
         case "dm":
           self.handleDMDeepLink(queryItems: queryItems)
@@ -206,7 +202,7 @@ struct DeepLinkHandler: ViewModifier {
 
       await MainActor.run {
         if let existingChat {
-          self.selectedChat.select(id: existingChat.id, title: existingChat.name)
+          self.selectedChat.select(id: existingChat.id)
           return
         }
       }
@@ -223,7 +219,7 @@ struct DeepLinkHandler: ViewModifier {
       }
 
       await MainActor.run {
-        self.selectedChat.select(id: newChat.id, title: name)
+        self.selectedChat.select(id: newChat.id)
       }
     }
   }
