@@ -4,12 +4,38 @@ Haven App for iOS and iPadOS \
 This is based on the iOS example in xxdk-examples \
 https://git.xx.network/xx_network/xxdk-examples/-/tree/f64201e9c426a64b15e9d2608003939f3c9184e5/iOS
 
-# Structure
+# Getting started
 
-### Startup
+#### Steps to getting this run locally with simulator.
+### Get XCode 
+This was developed with Xcode 26 \
+Current latest version should work
 
-Everything starts with Main.swift
-It initiates Provider and uses Root
+### Get CocoaPod
+CocoaPod 1.16.2 was used at time of writing this \
+Current latest version should work
+```bash
+brew install cocoapods
+```
+### Install dependencies
+```bash
+pod install
+```
+
+### Open project
+```bash
+open iOSExample.xcworkspace
+```
+And you should see the following in the file browser:
+
+![Opening the iOS Project](README-images/xcode-open.png)
+
+# File Structure
+
+### Entrypoint
+
+Everything starts with Main.swift \
+It initiates Provider and Root component \
 Root handles all the initial logic,
 like
 
@@ -44,58 +70,21 @@ See Navigation.swift for more info
 
 ### Pages
 
-All pages/screens are stored in the Pages folder, the entry point is defined by \*.page.swift
-Previews are used to quickly build UI without waiting for heavy builds to complete.
+All pages/screens are stored in the Pages folder, the entry point is defined by \*.page.swift \
+Previews are used to quickly build UI without waiting for heavy builds to complete. \
 PreviewUtils contains mock function which can be attached to any preview to quickly setup all necessary data and environment for preview.
 
 ### Data
 
-All Swift data models are defined in the Model folder
-
-### Secrets
-
-Secret.swift is used to store the password used for cmix
+All persistant data related code is stored in Data folder,
+it includes database powered by SQLiteData
+secrets using apple keychain
+key value like storage using user defaults
 
 ### XXDK
 
 All XXDK related code is in the XXDK folder, including documentation
-
-# Requirements
-
-### Xcode
-
-This was developed with Xcode 26 \
-Current latest version should work
-
-https://developer.apple.com/xcode/resources/
-
-### CocoaPod
-
-This project uses Swift Package Manager along with CocoaPods, Xcode should take care of the former.
-For CocoaPods, it is required to install the dependencies or else build will fail
-
-You will need to install CocoaPods
-
-```
-brew install cocoapods
-```
-
-After it is installed, you can run the following in the Terminal to download
-the dependencies to the `Pods` folder:
-
-```
-pod install
-```
-
-Now open the project with:
-
-```
-open iOSExample.xcworkspace
-```
-
-And you should see the following in the file browser:
-
-![Opening the iOS Project](README-images/xcode-open.png)
+This includes bindings, callbacks, etc.
 
 # Contributing
 
