@@ -68,7 +68,7 @@
           )
         }.execute(db)
 
-        for name in ["<self>", "Tom", "Shashank"] {
+        for name in ["ChatModel.selfChatInternalName", "Tom", "Shashank"] {
           let dmChat = ChatModel(
             pubKey: name.data, name: name, dmToken: 0, color: greenColorInt
           )

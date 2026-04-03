@@ -8,8 +8,12 @@
 import Foundation
 import SQLiteData
 
+// ChatModel is a single storage model for all conversation types: channel chat, DM chat, and self/notes chat.
+// init takes care of setting correct values
 @Table("chats")
 struct ChatModel: Identifiable, Hashable {
+  // this is transformed into readable name like Notes for user
+  private static let selfChatInternalName = "ChatModel.selfChatInternalName"
   /// Internal unique chat id
   var id: UUID = .init()
   var name: String
@@ -31,7 +35,7 @@ struct ChatModel: Identifiable, Hashable {
   //
 
   var isChannel: Bool {
-    self.name != "<self>" && self.dmToken == nil
+    self.name != Self.selfChatInternalName && self.dmToken == nil
   }
 }
 

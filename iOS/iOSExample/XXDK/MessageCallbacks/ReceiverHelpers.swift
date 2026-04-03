@@ -29,13 +29,13 @@ final class ReceiverHelpers {
     return (identity.Codename, Int(colorStr, radix: 16) ?? 0)
   }
 
-  /// Check if sender's pubKey matches the "<self>" chat pubKey
+  /// Check if sender's pubKey matches the "ChatModel.selfChatInternalName" chat pubKey
   func isSenderSelf(senderPubKey: Data?) -> Bool {
     guard let senderPubKey else { return false }
 
     if Self.cachedSelfChatId == nil {
       if let selfChat = try? database.read({ db in
-        try ChatModel.where { $0.name.eq("<self>") }.fetchOne(db)
+        try ChatModel.where { $0.name.eq("ChatModel.selfChatInternalName") }.fetchOne(db)
       }) {
         Self.cachedSelfChatId = selfChat.pubKey
       }
