@@ -4,9 +4,7 @@ This project is based on the iOS example in [xxdk-examples](https://git.xx.netwo
 
 *Note: It should take less than 1 minute for the app to set up for a new user (this also depends on network conditions).*
 
----
-
-## Setup
+# Setup
 
 Follow these steps to get the app running locally with the iOS Simulator.
 
@@ -34,9 +32,8 @@ You should see the following in the file browser:
 
 ![Opening the iOS Project](README-images/xcode-open.png)
 
----
 
-## Contributing
+# Contributing
 
 ### Formatting
 We use [SwiftFormat](https://github.com/nicklockwood/SwiftFormat) to format our Swift files.
@@ -60,11 +57,9 @@ brew install swiftlint
 swiftlint .
 ```
 
----
+# Architecture
 
-## Architecture
-
-### View Controller Pattern
+## View Controller Pattern
 Most of the app relies on a View Controller pattern. Logic and state management are placed in a controller (`+Controller.swift`). SwiftUI initializes that controller and calls the required functions and events.
 
 
@@ -190,4 +185,3 @@ struct ExampleView: View {
 }
 ```
 
----
