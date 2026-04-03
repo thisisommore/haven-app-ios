@@ -67,16 +67,14 @@ swiftlint .
 
 Most of the app relies on a view controller pattern. Logic and state management live in a controller (`+Controller.swift`), which SwiftUI view should initialize and call as needed.
 
-### File Structure
-
-#### Main.swift & Entrypoint
+### Main.swift & Entrypoint
 
 Everything starts with `Main.swift`. It acts as a container for `Provider` and `Root` and should be kept as clean as possible (< 30 lines).
 
 - **Provider:** Initializes all dependencies using Swift's dependency and environment systems, providing all required global dependencies.
 - **Root:** Handles all initial logic, including the navigation stack, deep links, and initial routing (e.g., separating new vs. returning users).
 
-#### Data
+### Data
 
 All persistent data-related code lives in the `Data` folder. This includes:
 
@@ -115,7 +113,7 @@ migrator.v3()
 try migrator.migrate(database)
 ```
 
-#### UI & Navigation
+### UI & Navigation
 
 - **Navigation:** We use a `Destination` enum to define navigation destinations. See `Navigation.swift` for details.
 
@@ -144,7 +142,7 @@ try migrator.migrate(database)
     - Previews are heavily utilized to build UI quickly without waiting for full builds to complete.
     - `PreviewUtils` contains mock functions that can be attached to any preview to quickly set up the necessary data and environment.
 
-#### XXDK
+### XXDK
 
 All XXDK-related code (bindings, callbacks, documentation) lives in the `XXDK` folder.
 
