@@ -4,9 +4,6 @@ This folder includes all the bindings with helper functions \
 For previews a mock is included in MockXXDK.swift \
 Both mock and real uses XXDK Protocol so that everything is in sync.
 
-XXDK is organised in 3 parts
-Core, Foundation, Receivers.
-
 ## Init
 
 For new user this functions are run in order
