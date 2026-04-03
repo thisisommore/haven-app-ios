@@ -122,7 +122,7 @@ struct ChatView<T: XXDKP>: View {
               if chat.isSecret == true {
                 SecretBadge()
               }
-              if self.controller.isAdmin {
+              if chat.isAdmin {
                 AdminBadge()
               }
             }
@@ -131,10 +131,7 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .sheet(
-      item: self.$controller.activeSheet,
-      onDismiss: {
-        self.controller.onSheetDismissed(chat: self.controller.chat)
-      }
+      item: self.$controller.activeSheet
     ) { sheet in
       switch sheet {
       case .channelOptions:
@@ -163,9 +160,7 @@ struct ChatView<T: XXDKP>: View {
       }
     }
     .onAppear {
-      if let chat = self.controller.chat {
-        self.controller.onAppear(chat: chat)
-      }
+      self.controller.onAppear()
     }
     .id("chat-\(self.chatId.uuidString)")
     .onChange(of: self.controller.chat?.unreadCount) { _, newValue in

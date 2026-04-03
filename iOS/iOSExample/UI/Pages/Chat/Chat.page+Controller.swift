@@ -28,7 +28,6 @@ enum ChatSheet: Identifiable {
 final class ChatPageController {
   var replyingTo: ChatMessageModel?
   var activeSheet: ChatSheet?
-  var isAdmin: Bool = false
   @FetchOne var mutedUser: ChannelMutedUserModel?
   var isMuted: Bool {
     self.mutedUser != nil
@@ -63,7 +62,8 @@ final class ChatPageController {
     )
   }
 
-  func markMessagesAsRead(chat: ChatModel) {
+  func markMessagesAsRead() {
+    guard let chat else { return }
     let joinedAt = chat.joinedAt
     let chatId = chat.id
 
@@ -88,20 +88,15 @@ final class ChatPageController {
     }
   }
 
-  func onAppear(chat: ChatModel) {
-    self.isAdmin = chat.isAdmin
-    self.markMessagesAsRead(chat: chat)
-  }
-
-  func onSheetDismissed(chat: ChatModel?) {
-    self.isAdmin = chat?.isAdmin ?? false
+  func onAppear() {
+    self.markMessagesAsRead()
   }
 
   func onUnreadCountChanged(
-    newValue: Int?, chat: ChatModel
+    newValue: Int?, chat _: ChatModel
   ) {
     guard let newValue, newValue > 0 else { return }
-    self.markMessagesAsRead(chat: chat)
+    self.markMessagesAsRead()
   }
 
   func sendReaction<T: XXDKP>(
