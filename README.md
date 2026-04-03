@@ -34,11 +34,17 @@ And you should see the following in the file browser:
 
 ### Entrypoint
 
+#### Main.swift
 Everything starts with Main.swift \
+Main is container for Provider and Root, keep main as clean as possible(<30 lines)\
 It initiates Provider and Root component \
-Root handles all the initial logic,
-like
 
+#### Provider
+Provider inites all dependency using swift dependency and environment,
+this provides all global dependencies required.
+
+#### Root handles all the initial logic,
+like
 - navigation stack
 - deep link
 - initial routing according to new or old user
@@ -76,12 +82,13 @@ PreviewUtils contains mock function which can be attached to any preview to quic
 
 ### Data
 
-All persistant data related code is stored in Data folder,
-it includes database powered by SQLiteData
-secrets using apple keychain
-key value like storage using user defaults
+All persistant data related code is stored in Data folder, it includes database powered by SQLiteData \
+Secrets using apple keychain \
+Key value like storage using user defaults
 
 ### XXDK
+
+When using xxdk always use XXDKP, so mock can provided inplace without much change, for example in previews. \
 
 All XXDK related code is in the XXDK folder, including documentation
 This includes bindings, callbacks, etc.
@@ -169,3 +176,39 @@ struct ExampleView: View {
   }
 }
 ```
+
+# Migrations
+Write new db changes in Data/Migration, raw sql is pressed since its easy to read for anyone and doesn't have any assumtions an ORM would make. \
+Migration should extend from DatabaseMigrator. \
+```swfit
+extension DatabaseMigrator {
+  mutating func v2() {
+    self.registerMigration("v1:init") { db in
+      try #sql(
+        """
+        CREATE TABLE "hello"(
+          "id" TEXT NOT NULL PRIMARY KEY,
+        ) STRICT
+        """
+      )
+      .execute(db)
+    }
+  }
+}
+```
+And then should be called in Database.swift.
+```swift
+  migrator.v1()
+  migrator.v2()
+  migrator.v3()
+  ...
+  try migrator.migrate(database)
+```
+
+
+# View Controller
+Most of part uses View Controller,
+that is logic and states is placed in controller (+Controller.swift),
+swiftui inits that controller and calls the required function/events.
+
+It should take less than 1 min for app to setup for new user. This also depends on network.
