@@ -1,193 +1,97 @@
-# Intro
+# Haven App
 
-Haven App for iOS and iPadOS \
-This is based on the iOS example in xxdk-examples \
-https://git.xx.network/xx_network/xxdk-examples/-/tree/f64201e9c426a64b15e9d2608003939f3c9184e5/iOS
+This project is based on the iOS example in [xxdk-examples](https://git.xx.network/xx_network/xxdk-examples/-/tree/f64201e9c426a64b15e9d2608003939f3c9184e5/iOS).
 
-# Getting started
+*Note: It should take less than 1 minute for the app to set up for a new user (this also depends on network conditions).*
 
-#### Steps to getting this run locally with simulator.
-### Get XCode 
-This was developed with Xcode 26 \
-Current latest version should work
+---
 
-### Get CocoaPod
-CocoaPod 1.16.2 was used at time of writing this \
-Current latest version should work
+## Setup
+
+Follow these steps to get the app running locally with the iOS Simulator.
+
+### Prerequisites
+* **Xcode:** Developed with Xcode 26 (the current latest version should work).
+* **CocoaPods:** Version 1.16.2 was used at the time of writing (the current latest version should work).
+
 ```bash
 brew install cocoapods
 ```
-### Install dependencies
+
+### Installation
+
+1. Install project dependencies:
 ```bash
 pod install
 ```
 
-### Open project
+2. Open the project in Xcode:
 ```bash
 open iOSExample.xcworkspace
 ```
-And you should see the following in the file browser:
+
+You should see the following in the file browser:
 
 ![Opening the iOS Project](README-images/xcode-open.png)
 
-# File Structure
+---
 
-### Entrypoint
+## Contributing
 
-#### Main.swift
-Everything starts with Main.swift \
-Main is container for Provider and Root, keep main as clean as possible(<30 lines)\
-It initiates Provider and Root component \
-
-#### Provider
-Provider inites all dependency using swift dependency and environment,
-this provides all global dependencies required.
-
-#### Root handles all the initial logic,
-like
-- navigation stack
-- deep link
-- initial routing according to new or old user
-
-### Navigation
-
-For navigation, we use a Destination enum with navigation destination
-
-```swift
-enum Destination: Hashable {
-    case home
-    case landing
-    // ...
-}
-
-extension Destination {
-    @MainActor @ViewBuilder
-    func _destinationView() -> some View {
-        switch self {
-        case .landing:
-            LandingPage<XXDK>()
-
-        case .home:
-            HomeView<XXDK>()
-        // ...
-```
-
-See Navigation.swift for more info
-
-### Pages
-
-All pages/screens are stored in the Pages folder, the entry point is defined by \*.page.swift \
-Previews are used to quickly build UI without waiting for heavy builds to complete. \
-PreviewUtils contains mock function which can be attached to any preview to quickly setup all necessary data and environment for preview.
-
-### Data
-
-All persistant data related code is stored in Data folder, it includes database powered by SQLiteData \
-Secrets using apple keychain \
-Key value like storage using user defaults
-
-### XXDK
-
-When using xxdk always use XXDKP, so mock can provided inplace without much change, for example in previews. \
-
-All XXDK related code is in the XXDK folder, including documentation
-This includes bindings, callbacks, etc.
-
-# Contributing
-
-## Formatting
-
-SwiftFormat is used to format Swift files
-https://github.com/nicklockwood/SwiftFormat
-
-Installing
+### Formatting
+We use [SwiftFormat](https://github.com/nicklockwood/SwiftFormat) to format our Swift files.
 
 ```bash
+# Install
 brew install swiftformat
-```
 
-Running
-
-```
+# Run
 swiftformat .
 ```
 
-## Linting
-
-SwiftLint is used to format Swift files
-https://github.com/realm/SwiftLint
-
-Installing
+### Linting
+We use [SwiftLint](https://github.com/realm/SwiftLint) to lint our Swift files.
 
 ```bash
+# Install
 brew install swiftlint
-```
 
-Running
-
-```
+# Run
 swiftlint .
 ```
 
-# Code patterns
-For swiftui view follow this order
-- Controller state
-- normal vars, non state, can be props, @Binding included
-- environment variables
-- @Dependency
-- fetch hooks
-- @States
-- anything else here
-- then body views go last
+---
+
+## Architecture
+
+### View Controller Pattern
+Most of the app relies on a View Controller pattern. Logic and state management are placed in a controller (`+Controller.swift`). SwiftUI initializes that controller and calls the required functions and events.
+
+
+## File Structure
+
+### Main.swift & Entrypoint
+Everything starts with `Main.swift`. It acts as a container for `Provider`and `Root`and should be kept as clean as possible (< 30 lines).
+* **Provider:** Initializes all dependencies using Swift dependency and environment, providing all required global dependencies.
+* **Root:** Handles all initial logic, including the navigation stack, deep links, and initial routing (e.g., separating new vs. returning users).
+
+### Data
+All persistent data-related code is stored in the `Data`folder. This includes:
+* Database logic powered by `SQLiteData`.
+* Secrets management using Apple Keychain.
+* Key-value storage using `UserDefaults`.
+
+#### Migrations
+Write new database changes in `Data/Migration`. Raw SQL is preferred because it is easy to read and avoids the assumptions an ORM might make. Migrations should extend from `DatabaseMigrator`.
 
 ```swift
-struct ExampleView: View {
-  // Controller state
-  @State private var controller = ExampleController()
-
-  // Normal vars / props / @Binding
-  let title: String
-  @Binding var isPresented: Bool
-
-  // Environment variables
-  @EnvironmentObject private var appState: AppState
-  @Environment(\.dismiss) private var dismiss
-
-  // Dependencies
-  @Dependency(\.defaultDatabase) private var database
-
-  // Fetch hooks
-  @FetchAll(Item.order { $0.name }) private var items: [Item]
-  @FetchOne private var selectedItem: Item?
-
-  // States
-  @State private var searchText = ""
-  @FocusState private var isSearchFocused: Bool
-
-  // Anything else
-  private func hello() {
-    AppLogger.app.info("hello")
-  }
-
-  private var pageSize = 20
-
-  var body: some View {
-    Text(title)
-  }
-}
-```
-
-# Migrations
-Write new db changes in Data/Migration, raw sql is pressed since its easy to read for anyone and doesn't have any assumtions an ORM would make. \
-Migration should extend from DatabaseMigrator. \
-```swfit
 extension DatabaseMigrator {
   mutating func v2() {
     self.registerMigration("v1:init") { db in
       try #sql(
         """
         CREATE TABLE "hello"(
-          "id" TEXT NOT NULL PRIMARY KEY,
+          "id" TEXT NOT NULL PRIMARY KEY
         ) STRICT
         """
       )
@@ -196,19 +100,94 @@ extension DatabaseMigrator {
   }
 }
 ```
-And then should be called in Database.swift.
+Migrations should then be called sequentially in `Database.swift`:
 ```swift
   migrator.v1()
   migrator.v2()
   migrator.v3()
-  ...
+  // ...
   try migrator.migrate(database)
 ```
 
+### UI & Navigation
+* **Navigation:** We use a `Destination`enum to define navigation destinations. (See `Navigation.swift`for more info).
+    ```swift
+    enum Destination: Hashable {
+        case home
+        case landing
+        // ...
+    }
 
-# View Controller
-Most of part uses View Controller,
-that is logic and states is placed in controller (+Controller.swift),
-swiftui inits that controller and calls the required function/events.
+    extension Destination {
+        @MainActor @ViewBuilder
+        func _destinationView() -> some View {
+            switch self {
+            case .landing:
+                LandingPage<XXDK>()
+            case .home:
+                HomeView<XXDK>()
+            // ...
+            }
+        }
+    }
+    ```
+* **Pages:** All screens and pages are stored in the `Pages`folder. The entry point for a page is defined by `*.page.swift`.
+    * *Previews* are heavily utilized to build UI quickly without waiting for heavy builds to complete.
+    * `PreviewUtils`contains mock functions that can be attached to any preview to quickly set up the necessary data and environment.
 
-It should take less than 1 min for app to setup for new user. This also depends on network.
+### XXDK
+All XXDK-related code (bindings, callbacks, documentation) is stored in the `XXDK`folder.
+* **Best Practice:** When using XXDK, always use the `XXDKP`protocol. This ensures that mocks can be provided in-place without requiring major code changes (which is especially useful in SwiftUI Previews).
+
+TODO: code style sepearate md file, things like +Controller, extension, +, protocols, line no limit, linting and formatting config
+### Code Patterns
+For SwiftUI views, follow this strict property ordering:
+1. Controller state
+2. Normal vars (non-state, props, `@Binding`included)
+3. Environment variables
+4. `@Dependency`
+5. Fetch hooks
+6. `@State`/ `@FocusState`
+7. Anything else (helper methods, constants)
+8. `body`view goes last
+
+**Example:**
+```swift
+struct ExampleView: View {
+  // 1. Controller state
+  @State private var controller = ExampleController()
+
+  // 2. Normal vars / props / @Binding
+  let title: String
+  @Binding var isPresented: Bool
+
+  // 3. Environment variables
+  @EnvironmentObject private var appState: AppState
+  @Environment(\.dismiss) private var dismiss
+
+  // 4. Dependencies
+  @Dependency(\.defaultDatabase) private var database
+
+  // 5. Fetch hooks
+  @FetchAll(Item.order { $0.name }) private var items: [Item]
+  @FetchOne private var selectedItem: Item?
+
+  // 6. States
+  @State private var searchText = ""
+  @FocusState private var isSearchFocused: Bool
+
+  // 7. Anything else
+  private func hello() {
+    AppLogger.app.info("hello")
+  }
+
+  private var pageSize = 20
+
+  // 8. Body
+  var body: some View {
+    Text(title)
+  }
+}
+```
+
+---
