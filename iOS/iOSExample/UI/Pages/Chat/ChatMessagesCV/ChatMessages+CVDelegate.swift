@@ -25,9 +25,9 @@ extension ChatMessagesVC {
           let canMuteUser = self.chat.isChannel && self.chat.isAdmin && message.message.isIncoming
           cell.canMuteUser = canMuteUser
           cell.onMuteUser = { [weak self] in
+            let senderPubKey = message.sender.pubkey
             if
-              let self,
-              let senderPubKey = message.sender?.pubkey
+              let self
             { self.onMuteUser(senderPubKey) }
           }
 

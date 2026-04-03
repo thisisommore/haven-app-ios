@@ -8,7 +8,7 @@ import UIKit
 
 struct MessageWithSender: Hashable {
   let message: ChatMessageModel
-  let sender: MessageSenderModel?
+  let sender: MessageSenderModel
   let replyTo: ChatMessageModel?
   let reactionEmojis: [String]
 }

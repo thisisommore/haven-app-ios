@@ -204,7 +204,7 @@ extension MessageBubble: CVCell {
         .equalTo(contentView.snp.bottom)
         .offset(data.reactionEmojis.isEmpty ? 0 : -16)
     }
-    if data.sender == nil {
+    if !data.sender.codename.isEmpty {
       if #available(iOS 26, *) {
         self.c.cornerConfiguration = .corners(
           topLeftRadius: data.message.isIncoming ? .fixed(6) : .fixed(12),

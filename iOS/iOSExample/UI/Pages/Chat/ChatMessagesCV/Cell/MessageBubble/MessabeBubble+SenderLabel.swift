@@ -19,7 +19,7 @@ extension SenderLabel: CVView {
   typealias Data = MessageWithSender
 
   static func size(for data: Data, width: CGFloat) -> CGSize {
-    guard let codename = data.sender?.codename else { return .zero }
+    let codename = data.sender.codename
     if codename == "" { return .zero }
     let rect = codename.boundingRect(
       with: CGSize(width: width, height: .greatestFiniteMagnitude),
@@ -31,13 +31,13 @@ extension SenderLabel: CVView {
   }
 
   func render(for data: Data) {
-    self.text = data.sender?.codename
-    if let colorHex = data.sender?.color {
-      self.textColor = UIColor { traitCollection in
-        let colorScheme: ColorScheme =
-          traitCollection.userInterfaceStyle == .dark ? .dark : .light
-        return UIColor(Color(hexNumber: colorHex).adaptive(for: colorScheme))
-      }
+    self.text = data.sender.codename
+    let colorHex = data.sender.color
+
+    self.textColor = UIColor { traitCollection in
+      let colorScheme: ColorScheme =
+        traitCollection.userInterfaceStyle == .dark ? .dark : .light
+      return UIColor(Color(hexNumber: colorHex).adaptive(for: colorScheme))
     }
   }
 }

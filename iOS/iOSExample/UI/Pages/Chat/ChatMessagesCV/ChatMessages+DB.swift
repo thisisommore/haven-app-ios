@@ -12,7 +12,7 @@ import UIKit
 extension ChatMessagesVC {
   typealias ObservedMessages = [(
     ChatMessageModel,
-    MessageSenderModel?,
+    MessageSenderModel,
     TableAlias<ChatMessageModel, ChatMessagesVC.ReplyTo>?.QueryOutput,
     [String]
   )]
@@ -59,10 +59,7 @@ extension ChatMessagesVC {
               if shouldShowSender {
                 return message
               }
-
-              guard var sender = message.sender else {
-                fatalError("no sender")
-              }
+              var sender = message.sender
               sender.codename = ""
               return MessageWithSender(
                 message: message.message, sender: sender, replyTo: message.replyTo,
@@ -194,7 +191,7 @@ extension ChatMessagesVC {
           && $0.status.neq(MessageStatus.failed)
       }
 
-    let joinSender = whereC.leftJoin(MessageSenderModel.all) { message, sender in
+    let joinSender = whereC.join(MessageSenderModel.all) { message, sender in
       message.senderId.eq(sender.id)
     }
 
