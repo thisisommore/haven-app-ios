@@ -8,14 +8,11 @@ extension Notification.Name {
 }
 
 final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, BindingsEventModelBuilderProtocol {
-  // Optional SwiftData container for persisting chats/messages
   @Dependency(\.defaultDatabase) private var database
   private let receiverHelpers = ReceiverHelpers.shared
   func build(_: String?) -> BindingsEventModelProtocol? {
     return self
   }
-
-  // MARK: - Helper Methods
 
   func update(
     fromMessageID _: Data?,
@@ -78,20 +75,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
   }
 
-  /// Fetch existing Chat by channelId or create a new one
-  private func fetchChannel(
-    channelId: String
-  ) throws -> ChatModel {
-    let existing = try database.read { db in
-      try ChatModel.where { $0.channelId.eq(channelId) }.fetchOne(db)
-    }
-
-    guard let existing else {
-      throw XXDKError.channelNotFound
-    }
-    return existing
-  }
-
   private func existingStoredMessage(
     messageId: String
   ) throws -> ChatMessageModel? {
@@ -110,18 +93,17 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
 
   /// Persist a message into SwiftData
   private func persistMessage(
-    channelId: String, text: String, senderCodename: String?, senderPubKey: Data?, messageIdB64: String? = nil,
+    channelId: String, text: String, senderCodename: String, senderPubKey: Data, messageIdB64: String,
     replyTo: String? = nil, timestamp: Int64, dmToken: Int32? = nil, color: Int, nickname: String? = nil,
     status: Int64
   ) -> Int64 {
     do {
-      let chat = try fetchChannel(
-        channelId: channelId
-      )
+      let chat = try database.read { db in
+        try ChatModel.where { $0.channelId.eq(channelId) }.fetchOne(db)
+      }
 
-      guard let messageIdB64 = messageIdB64, !messageIdB64.isEmpty
-      else {
-        fatalError("no message id")
+      guard let chat else {
+        throw XXDKError.channelNotFound
       }
 
       let msg = try receiverHelpers.persistIncomingMessage(
@@ -157,10 +139,12 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     dmToken: Int32, codeset: Int, timestamp: Int64, lease _: Int64, roundID _: Int64,
     messageType _: Int64, status: Int64, hidden _: Bool
   ) -> Int64 {
-    let messageIdB64 = messageID?.base64EncodedString()
-    let messageTextB64 = text ?? ""
+    guard let messageID, let text, let pubKey else {
+      fatalError("unexpected nil params found")
+    }
+    let messageIdB64 = messageID.base64EncodedString()
 
-    if let messageIdB64, let existing = try? existingStoredMessage(messageId: messageIdB64) {
+    if let existing = try? existingStoredMessage(messageId: messageIdB64) {
       return existing.id
     }
 
@@ -168,22 +152,21 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
       let (codename, color) = try ReceiverHelpers.parseIdentity(
         pubKey: pubKey, codeset: codeset
       )
-      let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
-      if let decodedText = decodeMessage(messageTextB64) {
-        return self.persistMessage(
-          channelId: channelIdB64,
-          text: decodedText,
-          senderCodename: codename,
-          senderPubKey: pubKey,
-          messageIdB64: messageIdB64,
-          timestamp: timestamp,
-          dmToken: dmToken,
-          color: color,
-          nickname: nickname,
-          status: status
-        )
+      guard let channelIdB64 = channelID?.base64EncodedString(), let decodedText = decodeMessage(text) else {
+        fatalError("failed to decode channelID/text")
       }
-      return 0
+      return self.persistMessage(
+        channelId: channelIdB64,
+        text: decodedText,
+        senderCodename: codename,
+        senderPubKey: pubKey,
+        messageIdB64: messageIdB64,
+        timestamp: timestamp,
+        dmToken: dmToken,
+        color: color,
+        nickname: nickname,
+        status: status
+      )
     } catch {
       fatalError("something went wrong \(error)")
     }
@@ -292,10 +275,12 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     pubKey: Data?, dmToken: Int32, codeset: Int, timestamp: Int64, lease _: Int64, roundID _: Int64,
     messageType _: Int64, status: Int64, hidden _: Bool
   ) -> Int64 {
-    let messageIdB64 = messageID?.base64EncodedString()
-    let replyTextB64 = text ?? ""
+    guard let messageID, let text, let reactionTo, let channelID, let pubKey else {
+      fatalError("unexpected nil params found")
+    }
+    let messageIdB64 = messageID.base64EncodedString()
 
-    if let messageIdB64, let existing = try? existingStoredMessage(messageId: messageIdB64) {
+    if let existing = try? existingStoredMessage(messageId: messageIdB64) {
       return existing.id
     }
 
@@ -306,25 +291,21 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     } catch {
       fatalError("\(error)")
     }
-    let channelIdB64 = channelID?.base64EncodedString() ?? "unknown"
-    guard let reactionTo
-    else {
-      fatalError("reactionTo is missing")
+    let channelIdB64 = channelID.base64EncodedString()
+    guard let decodedReply = decodeMessage(text) else {
+      fatalError("failed to decode text")
     }
-    if let decodedReply = decodeMessage(replyTextB64) {
-      return self.persistMessage(
-        channelId: channelIdB64,
-        text: decodedReply,
-        senderCodename: nick,
-        senderPubKey: pubKey,
-        messageIdB64: messageIdB64,
-        replyTo: reactionTo.base64EncodedString(),
-        timestamp: timestamp,
-        dmToken: dmToken, color: color,
-        nickname: nickname, status: status
-      )
-    }
-    return 0
+    return self.persistMessage(
+      channelId: channelIdB64,
+      text: decodedReply,
+      senderCodename: nick,
+      senderPubKey: pubKey,
+      messageIdB64: messageIdB64,
+      replyTo: reactionTo.base64EncodedString(),
+      timestamp: timestamp,
+      dmToken: dmToken, color: color,
+      nickname: nickname, status: status
+    )
   }
 
   func getMessage(_ messageID: Data?) throws -> Data {
