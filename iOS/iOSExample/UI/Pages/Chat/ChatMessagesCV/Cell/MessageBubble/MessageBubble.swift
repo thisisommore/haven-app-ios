@@ -28,7 +28,10 @@ extension MessageBubble {
 }
 
 final class MessageBubble: UICollectionViewCell {
-  private static let padding: CGFloat = 8
+  private static let radius: CGFloat = 20
+  private static let radiusS: CGFloat = 0
+  private static let paddingV: CGFloat = 8
+  private static let paddingH: CGFloat = 12
   private lazy var swipe = MessageBubbleSwipe(uiView: self, delegate: self)
 
   // Child components
@@ -79,7 +82,7 @@ extension MessageBubble: MessageBubbleSwipeDelegate {
 private extension MessageBubble {
   func makeUI() {
     self.c.backgroundColor = UIColor(Color.messageBubble)
-    self.c.layer.cornerRadius = 12
+    self.c.layer.cornerRadius = Self.radius
     self.makeMsgLabel()
   }
 
@@ -99,13 +102,14 @@ private extension MessageBubble {
     }
     self.senderLabel.snp.makeConstraints {
       self.c.addSubview(self.senderLabel)
-      $0.top.left.right.equalToSuperview().inset(MessageBubble.padding)
+      $0.left.right.equalToSuperview().inset(MessageBubble.paddingH)
+      $0.top.equalToSuperview().inset(MessageBubble.paddingV)
     }
 
     self.replyPreviewLabel.snp.makeConstraints {
       self.c.addSubview(self.replyPreviewLabel)
       $0.top.equalTo(self.senderLabel.snp.bottom)
-      $0.left.right.equalToSuperview().inset(MessageBubble.padding)
+      $0.left.right.equalToSuperview().inset(MessageBubble.paddingH)
 
       self.replyPreviewLabel.addGestureRecognizer(
         UITapGestureRecognizer(
@@ -120,13 +124,13 @@ private extension MessageBubble {
       self.msgLabel.delegate = self
       self.c.addSubview(self.msgLabel)
       $0.top.equalTo(self.replyPreviewLabel.snp.bottom)
-      $0.left.right.equalToSuperview().inset(MessageBubble.padding)
+      $0.left.right.equalToSuperview().inset(MessageBubble.paddingH)
     }
 
     self.clock.snp.makeConstraints {
       self.c.addSubview(self.clock)
       $0.top.equalTo(self.msgLabel.snp.bottom)
-      $0.right.equalToSuperview().inset(MessageBubble.padding)
+      $0.right.equalToSuperview().inset(MessageBubble.paddingH)
     }
 
     self.timeLabel.snp.makeConstraints {
@@ -170,12 +174,12 @@ extension MessageBubble: CVCell {
   typealias Data = MessageWithSender
   static let identifier = String(describing: MessageBubble.self)
   private static func padded(_ value: CGFloat) -> CGFloat {
-    value - (2 * self.padding)
+    value - (2 * self.paddingH)
   }
 
   private static func padded(_ value: CGSize) -> CGSize {
-    CGSize(width: value.width + (2 * self.padding),
-           height: value.height + (2 * self.padding))
+    CGSize(width: value.width + (2 * self.paddingH),
+           height: value.height + (2 * self.paddingV))
   }
 
   static func size(for data: Data, width: CGFloat) -> CGSize {
@@ -207,26 +211,27 @@ extension MessageBubble: CVCell {
     if !data.sender.codename.isEmpty {
       if #available(iOS 26, *) {
         self.c.cornerConfiguration = .corners(
-          topLeftRadius: data.message.isIncoming ? .fixed(6) : .fixed(12),
-          topRightRadius: data.message.isIncoming ? .fixed(12) : .fixed(6),
-          bottomLeftRadius: data.message.isIncoming ? .fixed(6) : .fixed(12),
-          bottomRightRadius: data.message.isIncoming ? .fixed(12) : .fixed(6)
+          topLeftRadius: data.message.isIncoming ? .fixed(Self.radiusS) : .fixed(Self.radius),
+          topRightRadius: data.message.isIncoming ? .fixed(Self.radius) : .fixed(Self.radiusS),
+          bottomLeftRadius: .fixed(Self.radius),
+          bottomRightRadius: .fixed(Self.radius)
         )
+
       } else {
         self.c.layer.maskedCorners = data.message.isIncoming ? .right : .left
       }
     } else {
       if #available(iOS 26, *) {
         self.c.cornerConfiguration = .corners(
-          topLeftRadius: .fixed(12),
-          topRightRadius: .fixed(12),
-          bottomLeftRadius: data.message.isIncoming ? .fixed(6) : .fixed(12),
-          bottomRightRadius: data.message.isIncoming ? .fixed(12) : .fixed(6)
+          topLeftRadius: .fixed(Self.radius),
+          topRightRadius: .fixed(Self.radius),
+          bottomLeftRadius: .fixed(Self.radius),
+          bottomRightRadius: .fixed(Self.radius)
         )
       } else {
         self.c.layer.maskedCorners = [
           .top,
-          data.message.isIncoming ? .bottomRight : .bottomLeft,
+          data.message.isIncoming ? .topRight : .topLeft,
         ]
       }
     }
