@@ -45,6 +45,18 @@ extension DatabaseMigrator {
 
       try #sql(
         """
+        CREATE TABLE "channelMutedUsers"(
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "channelId" TEXT NOT NULL REFERENCES "chats"("channelId") ON DELETE CASCADE,
+          "pubkey" BLOB NOT NULL,
+          UNIQUE("channelId", "pubkey")
+        ) STRICT
+        """
+      )
+      .execute(db)
+
+      try #sql(
+        """
         CREATE TABLE "chatMessages"(
           "id" INTEGER NOT NULL PRIMARY KEY,
           "externalId" TEXT NOT NULL UNIQUE,

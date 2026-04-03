@@ -29,7 +29,10 @@ final class ChatPageController {
   var replyingTo: ChatMessageModel?
   var activeSheet: ChatSheet?
   var isAdmin: Bool = false
-  var isMuted: Bool = false
+  @FetchOne var mutedUser: ChannelMutedUserModel?
+  var isMuted: Bool {
+    self.mutedUser != nil
+  }
 
   @ObservationIgnored
   @FetchOne var chat: ChatModel?
@@ -43,6 +46,21 @@ final class ChatPageController {
   init(chatId: UUID) {
     _chat = FetchOne(ChatModel.where { $0.id.eq(chatId) })
     _firstMessage = FetchOne(ChatMessageModel.where { $0.chatId.eq(chatId) })
+    enum CurrentChatAlias: AliasName {}
+    enum SelfChatAlias: AliasName {}
+    _mutedUser = FetchOne(
+      ChannelMutedUserModel
+        // inner join muted user with chat
+        .join(ChatModel.as(CurrentChatAlias.self).where { $0.id.eq(chatId) }) {
+          $1.channelId.eq($0.channelId)
+        }
+
+        // get self chat, from it get pubkey and get muted user for that pub key
+        .join(ChatModel.as(SelfChatAlias.self).where { $0.name.eq("<self>") }) {
+          $2.pubKey.eq($0.pubkey)
+        }
+        .select { mutedUser, _, _ in mutedUser }
+    )
   }
 
   func markMessagesAsRead(chat: ChatModel) {
@@ -70,24 +88,9 @@ final class ChatPageController {
     }
   }
 
-  func onAppear<T: XXDKP>(chat: ChatModel, xxdk: T) {
+  func onAppear(chat: ChatModel) {
     self.isAdmin = chat.isAdmin
-    if chat.isChannel, let channelId = chat.channelId {
-      self.isMuted = xxdk.channel.isMuted(channelId: channelId)
-    } else {
-      self.isMuted = false
-    }
     self.markMessagesAsRead(chat: chat)
-  }
-
-  func refreshMuteFromNotification<T: XXDKP>(
-    _ notification: Notification, chat: ChatModel, xxdk: T
-  ) {
-    guard chat.isChannel, let channelId = chat.channelId else { return }
-    if let channelID = notification.userInfo?["channelID"] as? String,
-       channelID == channelId {
-      self.isMuted = xxdk.channel.isMuted(channelId: channelId)
-    }
   }
 
   func onSheetDismissed(chat: ChatModel?) {

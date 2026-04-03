@@ -56,3 +56,15 @@ extension ChatModel {
     self.color = color
   }
 }
+
+@Table("channelMutedUsers")
+struct ChannelMutedUserModel: Identifiable, Hashable {
+  var id: UUID = .init()
+  var channelId: String
+  var pubkey: Data
+
+  init(channelId: String, pubkey: Data) {
+    self.channelId = channelId
+    self.pubkey = pubkey
+  }
+}

@@ -10,7 +10,6 @@ import SwiftUI
 
 struct ChatView<T: XXDKP>: View {
   @State private var controller: ChatPageController
-
   let chatId: UUID
 
   @EnvironmentObject var selectedChat: SelectedChat
@@ -165,18 +164,7 @@ struct ChatView<T: XXDKP>: View {
     }
     .onAppear {
       if let chat = self.controller.chat {
-        self.controller.onAppear(
-          chat: chat, xxdk: self.xxdk
-        )
-      }
-    }
-    .onReceive(
-      NotificationCenter.default.publisher(for: .userMuteStatusChanged)
-    ) { notification in
-      if let chat = self.controller.chat {
-        self.controller.refreshMuteFromNotification(
-          notification, chat: chat, xxdk: self.xxdk
-        )
+        self.controller.onAppear(chat: chat)
       }
     }
     .id("chat-\(self.chatId.uuidString)")

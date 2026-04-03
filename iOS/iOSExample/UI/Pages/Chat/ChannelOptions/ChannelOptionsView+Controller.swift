@@ -31,7 +31,6 @@ final class ChannelOptionsController {
   var sharePassword: String?
   var activeSheet: ChannelOptionsActiveSheet?
   var toastMessage: String?
-  var mutedUsers: [Data] = []
   var showLeaveConfirmation: Bool = false
   var showDeleteConfirmation: Bool = false
   var channelNickname: String = ""
@@ -60,14 +59,6 @@ final class ChannelOptionsController {
     } catch {
       AppLogger.channels.error(
         "Failed to fetch share URL: \(error.localizedDescription, privacy: .public)"
-      )
-    }
-
-    do {
-      self.mutedUsers = try xxdk.channel.getMutedUsers(channelId: channelId)
-    } catch {
-      AppLogger.channels.error(
-        "Failed to fetch muted users: \(error.localizedDescription, privacy: .public)"
       )
     }
 
@@ -110,7 +101,6 @@ final class ChannelOptionsController {
     guard let channelId else { return }
     do {
       try xxdk.channel.muteUser(channelId: channelId, pubKey: pubKey, mute: false)
-      self.mutedUsers = try xxdk.channel.getMutedUsers(channelId: channelId)
       self.showToast("User unmuted")
     } catch {
       AppLogger.channels.error(
@@ -138,22 +128,6 @@ final class ChannelOptionsController {
       }
     }
     self.showToast(message)
-  }
-
-  func handleMuteStatusChanged<T: XXDKP>(
-    notification: Notification, channelId: String?, xxdk: T
-  ) {
-    guard let channelId else { return }
-    if let notificationChannelID = notification.userInfo?["channelID"] as? String,
-       notificationChannelID == channelId {
-      do {
-        self.mutedUsers = try xxdk.channel.getMutedUsers(channelId: channelId)
-      } catch {
-        AppLogger.channels.error(
-          "Failed to refresh muted users: \(error.localizedDescription, privacy: .public)"
-        )
-      }
-    }
   }
 
   func saveNickname<T: XXDKP>(channelId: String?, xxdk: T) {

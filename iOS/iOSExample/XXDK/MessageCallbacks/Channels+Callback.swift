@@ -1,11 +1,6 @@
 import Bindings
-import Dispatch
 import Foundation
 import SQLiteData
-
-extension Notification.Name {
-  static let userMuteStatusChanged = Notification.Name("userMuteStatusChanged")
-}
 
 final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, BindingsEventModelBuilderProtocol {
   @Dependency(\.defaultDatabase) private var database
@@ -382,14 +377,40 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
   }
 
-  func muteUser(_ channelID: Data?, pubkey _: Data?, unmute _: Bool) {
-    // Post notification for UI to refresh mute status
-    DispatchQueue.main.async {
-      NotificationCenter.default.post(
-        name: .userMuteStatusChanged,
-        object: nil,
-        userInfo: ["channelID": channelID?.base64EncodedString() ?? ""]
-      )
+  func muteUser(_ channelID: Data?, pubkey: Data?, unmute: Bool) {
+    guard let channelID, let pubkey
+    else {
+      fatalError("unexpected nil params found")
+    }
+
+    let channelIdB64 = channelID.base64EncodedString()
+
+    do {
+      try self.database.write { db in
+        guard try ChatModel.where({ $0.channelId.eq(channelIdB64) }).fetchOne(db) != nil
+        else {
+          fatalError("mute callback received for unknown channel")
+        }
+
+        let existing = try ChannelMutedUserModel.where {
+          $0.channelId.eq(channelIdB64) && $0.pubkey.eq(pubkey)
+        }.fetchOne(db)
+
+        if unmute {
+          if let existing {
+            try ChannelMutedUserModel.delete(existing).execute(db)
+          }
+        } else if existing == nil {
+          let mutedUser = ChannelMutedUserModel(
+            channelId: channelIdB64,
+            pubkey: pubkey
+          )
+          try ChannelMutedUserModel.insert { mutedUser }.execute(db)
+        }
+      }
+    } catch {
+      fatalError("failed to persist channel mute state: \(error.localizedDescription)")
     }
   }
 }
+

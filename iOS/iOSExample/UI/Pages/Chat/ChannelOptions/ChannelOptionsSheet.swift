@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ChannelOptionsSheet<T: XXDKP>: View {
   @State private var controller = ChannelOptionsController()
+  @FetchAll private var mutedUsers: [ChannelMutedUserModel]
 
   var chat: ChatModel
   let onLeaveChannel: () -> Void
@@ -26,6 +27,19 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
 
   private var channelId: String? {
     self.chat.channelId
+  }
+
+  private var channelMutedUsers: [ChannelMutedUserModel] {
+    self.mutedUsers
+  }
+
+  init(chat: ChatModel, onLeaveChannel: @escaping () -> Void, onDeleteChat: (() -> Void)? = nil) {
+    self.chat = chat
+    self.onLeaveChannel = onLeaveChannel
+    self.onDeleteChat = onDeleteChat
+    _mutedUsers = FetchAll(
+      ChannelMutedUserModel.where { $0.channelId.eq(chat.channelId ?? "") }
+    )
   }
 
   var body: some View {
@@ -163,14 +177,16 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
           // Muted Users section - only visible for admins (not for DMs)
           if self.channelId != nil, self.chat.isAdmin {
             Section(header: Text("Muted Users")) {
-              if self.controller.mutedUsers.isEmpty {
+              if self.channelMutedUsers.isEmpty {
                 Text("No muted users")
                   .foregroundColor(.secondary)
               } else {
-                ForEach(self.controller.mutedUsers, id: \.self) { pubKey in
-                  MutedUserRow(pubKey: pubKey) {
+                ForEach(self.channelMutedUsers) { mutedUser in
+                  MutedUserRow(pubKey: mutedUser.pubkey) {
                     self.controller.unmuteUser(
-                      pubKey: pubKey, channelId: self.channelId, xxdk: self.xxdk
+                      pubKey: mutedUser.pubkey,
+                      channelId: self.channelId,
+                      xxdk: self.xxdk
                     )
                   }
                 }
@@ -289,11 +305,6 @@ struct ChannelOptionsSheet<T: XXDKP>: View {
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))
       }
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .userMuteStatusChanged)) { notification in
-      self.controller.handleMuteStatusChanged(
-        notification: notification, channelId: self.channelId, xxdk: self.xxdk
-      )
     }
   }
 }
