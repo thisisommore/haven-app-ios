@@ -83,14 +83,6 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
   }
 
-  private func existingStoredReaction(
-    messageId: String
-  ) throws -> MessageReactionModel? {
-    try self.database.read { db in
-      try MessageReactionModel.where { $0.externalId.eq(messageId) }.fetchOne(db)
-    }
-  }
-
   /// Persist a message into SwiftData
   private func persistMessage(
     channelId: String, text: String, senderCodename: String, senderPubKey: Data, messageIdB64: String,
@@ -199,7 +191,9 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
         pubKey: pubKey, codeset: codeset
       )
 
-      if let existing = try? existingStoredReaction(messageId: reactionMessageId) {
+      if let existing = try? self.database.read({ db in
+        try MessageReactionModel.where { $0.externalId.eq(reactionMessageId) }.fetchOne(db)
+      }) {
         return existing.id
       }
       let sender = try self.receiverHelpers.upsertSender(
