@@ -134,8 +134,44 @@ Migrations should then be called sequentially in `Database.swift`:
 All XXDK-related code (bindings, callbacks, documentation) is stored in the `XXDK`folder.
 * **Best Practice:** When using XXDK, always use the `XXDKP`protocol. This ensures that mocks can be provided in-place without requiring major code changes (which is especially useful in SwiftUI Previews).
 
-TODO: code style sepearate md file, things like +Controller, extension, +, protocols, line no limit, linting and formatting config
-### Code Patterns
+
+# Code Style
+## Naming Conventions
+
+### Controllers
+Controllers follow the `+Controller` suffix pattern. They manage state and logic for swift views.
+```swift
+@Observable
+class ChatController {
+  var messages: [Message] = []
+}
+```
+
+### Extensions
+Use extension to separate group of code, for example 
+```swift
+Class A {props, init} 
+extension A {methodA, methodB}
+```
+
+### +ABC.swift
+In swift scope is shared so same file names in difference folders collide, therefore use patterns like +XYZ
+to support its usage
+
+### Protocols
+Use protocols to support mock and previews, protocols allow to replace real implementation with mock \
+Use protocols to define common type/methods.  \
+For example we use CellWithContextMenu protocol to determine if the cell support context or not.
+
+## Formatting
+
+### Line Length
+Try to keep everything under 500 lines
+
+### Linting & Formatting
+Lint and formatting configs are provided, use them to maintain codebase and catch bugs/errors early.
+
+### SwiftUI View
 For SwiftUI views, follow this strict property ordering:
 1. Controller state
 2. Normal vars (non-state, props, `@Binding`included)
@@ -184,4 +220,3 @@ struct ExampleView: View {
   }
 }
 ```
-
