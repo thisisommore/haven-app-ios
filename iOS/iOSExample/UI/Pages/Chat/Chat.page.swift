@@ -25,7 +25,7 @@ struct ChatView<T: XXDKP>: View {
     guard let name = self.controller.chat?.name else {
       return ""
     }
-    return name == "<self>" ? "Notes" : name
+    return name == "ChatModel.selfChatInternalName" ? "Notes" : name
   }
 
   var body: some View {

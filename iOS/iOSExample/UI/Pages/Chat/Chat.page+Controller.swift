@@ -28,6 +28,7 @@ enum ChatSheet: Identifiable {
 final class ChatPageController {
   var replyingTo: ChatMessageModel?
   var activeSheet: ChatSheet?
+  @ObservationIgnored
   @FetchOne var mutedUser: ChannelMutedUserModel?
   var isMuted: Bool {
     self.mutedUser != nil
@@ -55,7 +56,7 @@ final class ChatPageController {
         }
 
         // get self chat, from it get pubkey and get muted user for that pub key
-        .join(ChatModel.as(SelfChatAlias.self).where { $0.name.eq("<self>") }) {
+        .join(ChatModel.as(SelfChatAlias.self).where { $0.name.eq("ChatModel.selfChatInternalName") }) {
           $2.pubKey.eq($0.pubkey)
         }
         .select { mutedUser, _, _ in mutedUser }

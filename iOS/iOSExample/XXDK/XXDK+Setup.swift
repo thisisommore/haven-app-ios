@@ -298,7 +298,7 @@ extension XXDK {
           let selfToken = Int32(bitPattern: tokenU32)
           let chat = ChatModel(
             pubKey: selfPubKeyData,
-            name: "<self>",
+            name: "ChatModel.selfChatInternalName",
             dmToken: selfToken,
             color: 0xE97451
           )

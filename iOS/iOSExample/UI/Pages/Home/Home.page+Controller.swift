@@ -54,7 +54,7 @@ final class HomePageController {
     }
     let searchText = self.searchText
     return chats.filter { chat in
-      let displayName = chat.name == "<self>" ? "Notes" : chat.name
+      let displayName = chat.name == "ChatModel.selfChatInternalName" ? "Notes" : chat.name
       return displayName.localizedCaseInsensitiveContains(searchText)
     }
   }
