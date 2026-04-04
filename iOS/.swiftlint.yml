@@ -34,7 +34,6 @@ disabled_rules:
   - unused_closure_parameter
   - vertical_whitespace
   - void_return
-# TODO
   - force_try
   - identifier_name
   - function_body_length
@@ -47,4 +46,3 @@ disabled_rules:
   - cyclomatic_complexity
   - function_parameter_count
   - inclusive_language
-  - todo
