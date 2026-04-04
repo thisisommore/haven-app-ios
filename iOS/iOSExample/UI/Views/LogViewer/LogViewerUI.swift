@@ -60,7 +60,7 @@ struct StyledLogMessage: Identifiable {
     self.id = message.id
     self.text = message.Msg
     self.level = LogLevel.detect(from: message.Msg)
-    self.timestamp = Date()
+    self.timestamp = message.timestamp
   }
 }
 

@@ -10,6 +10,7 @@ import Foundation
 struct LogMessage: Identifiable {
   var Msg: String
   var id = UUID()
+  var timestamp = Date()
 }
 
 /// LogViewer observes messages to stdout and stderr and sends them to your callback
