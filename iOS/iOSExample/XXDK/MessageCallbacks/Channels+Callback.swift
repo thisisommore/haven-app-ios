@@ -413,4 +413,3 @@ final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, Bind
     }
   }
 }
-
