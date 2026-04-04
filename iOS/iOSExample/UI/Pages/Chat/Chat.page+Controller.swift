@@ -28,6 +28,7 @@ enum ChatSheet: Identifiable {
 final class ChatPageController {
   var replyingTo: ChatMessageModel?
   var activeSheet: ChatSheet?
+  @ObservationIgnored
   @FetchOne var mutedUser: ChannelMutedUserModel?
   var isMuted: Bool {
     self.mutedUser != nil
