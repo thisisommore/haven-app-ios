@@ -14,7 +14,7 @@ Follow these steps to get the app running locally with the iOS Simulator.
 
 ### Setup
 
-1. Open the project in Xcode:
+Open the project in Xcode:
 
 ```bash
 open iOSExample.xcworkspace
@@ -23,6 +23,10 @@ open iOSExample.xcworkspace
 You should see the following in the file browser:
 
 ![Opening the iOS Project](README-images/xcode-open.png)
+
+This project uses SPM(Swift Package manager) and it should fetch dependencies automatically.
+
+You can run build or run in simulator to test the application.
 
 ## Contributing
 
