@@ -12,7 +12,7 @@ Follow these steps to get the app running locally with the iOS Simulator.
 
 - **Xcode:** Developed with Xcode 26. The current latest version should work.
 
-### Setup
+### Open project
 
 Open the project in Xcode:
 
