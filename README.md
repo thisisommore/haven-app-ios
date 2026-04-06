@@ -11,21 +11,10 @@ Follow these steps to get the app running locally with the iOS Simulator.
 ### Prerequisites
 
 - **Xcode:** Developed with Xcode 26. The current latest version should work.
-- **CocoaPods:** Version 1.16.2 was used at the time of writing. The current latest version should work.
 
-```bash
-brew install cocoapods
-```
+### Setup
 
-### Installation
-
-1. Install project dependencies:
-
-```bash
-pod install
-```
-
-2. Open the project in Xcode:
+1. Open the project in Xcode:
 
 ```bash
 open iOSExample.xcworkspace
