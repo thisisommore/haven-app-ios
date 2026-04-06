@@ -28,6 +28,21 @@ This project uses SPM(Swift Package manager) and it should fetch dependencies au
 
 You can run build or run in simulator to test the application.
 
+## Dependencies
+
+This project relies on the following Swift packages (managed via SPM):
+
+- **SnapKit:** A Swift Autolayout DSL for iOS UIKit, used for programmatic UI layout (e.g., chat message bubbles).
+https://github.com/SnapKit/SnapKit
+- **Kronos:** An elegant NTP date library for Swift, used to get accurate network time for XXDK operations.
+https://github.com/MobileNativeFoundation/Kronos
+- **SwiftSoup:** A Swift HTML Parser, used for parsing and formatting HTML content in chat messages.
+https://github.com/scinfu/SwiftSoup
+- **SQLiteData:** Based on GRDB, used for robust and type-safe SQLite database management.
+https://github.com/pointfreeco/sqlite-data
+- **xxdk-spm:** The Swift Package Manager wrapper for the XXDK (xx network development kit), providing core network functionality.
+https://github.com/thisisommore/xxdk-spm
+
 ## Contributing
 
 ### Formatting
