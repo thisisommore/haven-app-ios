@@ -17,7 +17,7 @@ Follow these steps to get the app running locally with the iOS Simulator.
 Open the project in Xcode:
 
 ```bash
-open iOSExample.xcworkspace
+open IOS/iOSExample.xcodeproj
 ```
 
 You should see the following in the file browser:
