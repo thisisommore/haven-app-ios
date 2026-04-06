@@ -168,8 +168,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/thisisommore/xxdk-spm",
       "state" : {
-        "revision" : "1e034f17ddd12ddafd09f2fcfa1fe89d9f4924f4",
-        "version" : "0.0.1"
+        "revision" : "eb7dfc2674824806a5368f88f0f5d5bf2433f49e",
+        "version" : "0.0.2"
       }
     }
   ],
