@@ -7,12 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1662B707BC8225B49C368183 /* Pods_iOSExample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0A4ED193EDC7519BB5AFA4 /* Pods_iOSExample.framework */; };
 		980A0D6D2B96723C004FB15A /* Main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980A0D6C2B96723C004FB15A /* Main.swift */; };
 		980A0D732B96723E004FB15A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D722B96723E004FB15A /* Assets.xcassets */; };
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1445D652F6036BA00FB3744 /* SnapKit */; };
+		A1710E392F8389F4003CC823 /* Kronos in Frameworks */ = {isa = PBXBuildFile; productRef = A1710E382F8389F4003CC823 /* Kronos */; };
+		A1710E3C2F838AEA003CC823 /* XXDK in Frameworks */ = {isa = PBXBuildFile; productRef = A1710E3B2F838AEA003CC823 /* XXDK */; };
 		A19ECBD22F77A05200AE70A7 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A19ECBD12F77A05200AE70A7 /* SwiftSoup */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
 		A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4F7E22F5B36FC006D6B39 /* SQLiteData */; };
@@ -24,7 +25,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		70A4CA2706503377F74DA753 /* Pods-iOSExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSExample.debug.xcconfig"; path = "Target Support Files/Pods-iOSExample/Pods-iOSExample.debug.xcconfig"; sourceTree = "<group>"; };
 		980A0D692B96723C004FB15A /* iOSExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		980A0D6C2B96723C004FB15A /* Main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Main.swift; sourceTree = "<group>"; };
 		980A0D722B96723E004FB15A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -35,8 +35,6 @@
 		A19FC0CD2EF1A254007FDD0F /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = HavenIcon.icon; sourceTree = "<group>"; };
 		A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		AC0A4ED193EDC7519BB5AFA4 /* Pods_iOSExample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iOSExample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		DAA55C59EA7ABF73C37204DC /* Pods-iOSExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSExample.release.xcconfig"; path = "Target Support Files/Pods-iOSExample/Pods-iOSExample.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,8 +50,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1A4FAC62F5B3A76006D6B39 /* SQLiteData in Frameworks */,
+				A1710E392F8389F4003CC823 /* Kronos in Frameworks */,
 				A1CDB04C2F5AFF66005F33F8 /* SQLiteData in Frameworks */,
-				1662B707BC8225B49C368183 /* Pods_iOSExample.framework in Frameworks */,
+				A1710E3C2F838AEA003CC823 /* XXDK in Frameworks */,
 				A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */,
 				A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */,
 				A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */,
@@ -64,22 +63,11 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		77919AD8E74808B7D1C36C88 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				70A4CA2706503377F74DA753 /* Pods-iOSExample.debug.xcconfig */,
-				DAA55C59EA7ABF73C37204DC /* Pods-iOSExample.release.xcconfig */,
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		980A0D602B96723C004FB15A = {
 			isa = PBXGroup;
 			children = (
 				980A0D6B2B96723C004FB15A /* iOSExample */,
 				980A0D6A2B96723C004FB15A /* Products */,
-				77919AD8E74808B7D1C36C88 /* Pods */,
-				C32B5F5AC5224F7FA06193DC /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -127,14 +115,6 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		C32B5F5AC5224F7FA06193DC /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				AC0A4ED193EDC7519BB5AFA4 /* Pods_iOSExample.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -142,11 +122,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 980A0D7A2B96723E004FB15A /* Build configuration list for PBXNativeTarget "iOSExample" */;
 			buildPhases = (
-				1D2DDD9F17F6AE0E2CD90774 /* [CP] Check Pods Manifest.lock */,
 				980A0D652B96723C004FB15A /* Sources */,
 				980A0D662B96723C004FB15A /* Frameworks */,
 				980A0D672B96723C004FB15A /* Resources */,
-				5E4D9E8B9CF9AA7746AC18CD /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -191,6 +169,8 @@
 				A1A4FCF12F5B3C1B006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */,
 				A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				A19ECBD02F77A05200AE70A7 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				A1710E372F8389F4003CC823 /* XCRemoteSwiftPackageReference "Kronos" */,
+				A1710E3A2F838AEA003CC823 /* XCLocalSwiftPackageReference "../../client" */,
 			);
 			productRefGroup = 980A0D6A2B96723C004FB15A /* Products */;
 			projectDirPath = "";
@@ -215,52 +195,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		1D2DDD9F17F6AE0E2CD90774 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-iOSExample-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		5E4D9E8B9CF9AA7746AC18CD /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-iOSExample/Pods-iOSExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-iOSExample/Pods-iOSExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-iOSExample/Pods-iOSExample-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		980A0D652B96723C004FB15A /* Sources */ = {
@@ -393,7 +327,6 @@
 		};
 		980A0D7B2B96723E004FB15A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 70A4CA2706503377F74DA753 /* Pods-iOSExample.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = HavenIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -445,7 +378,6 @@
 		};
 		980A0D7C2B96723E004FB15A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DAA55C59EA7ABF73C37204DC /* Pods-iOSExample.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = HavenIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -518,6 +450,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		A1710E3A2F838AEA003CC823 /* XCLocalSwiftPackageReference "../../client" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../client;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -525,6 +464,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 5.7.1;
+			};
+		};
+		A1710E372F8389F4003CC823 /* XCRemoteSwiftPackageReference "Kronos" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MobileNativeFoundation/Kronos.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.3.1;
 			};
 		};
 		A19ECBD02F77A05200AE70A7 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
@@ -574,6 +521,15 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;
+		};
+		A1710E382F8389F4003CC823 /* Kronos */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1710E372F8389F4003CC823 /* XCRemoteSwiftPackageReference "Kronos" */;
+			productName = Kronos;
+		};
+		A1710E3B2F838AEA003CC823 /* XXDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = XXDK;
 		};
 		A19ECBD12F77A05200AE70A7 /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;
