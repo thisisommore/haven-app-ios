@@ -524,7 +524,7 @@
 			repositoryURL = "https://github.com/thisisommore/xxdk-spm";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.0.1;
+				minimumVersion = 0.0.2;
 			};
 		};
 		A1CDB04A2F5AFF66005F33F8 /* XCRemoteSwiftPackageReference "sqlite-data" */ = {
