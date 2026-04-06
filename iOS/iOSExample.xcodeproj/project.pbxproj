@@ -13,12 +13,14 @@
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1445D652F6036BA00FB3744 /* SnapKit */; };
 		A1710E392F8389F4003CC823 /* Kronos in Frameworks */ = {isa = PBXBuildFile; productRef = A1710E382F8389F4003CC823 /* Kronos */; };
-		A1710E3C2F838AEA003CC823 /* XXDK in Frameworks */ = {isa = PBXBuildFile; productRef = A1710E3B2F838AEA003CC823 /* XXDK */; };
 		A19ECBD22F77A05200AE70A7 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A19ECBD12F77A05200AE70A7 /* SwiftSoup */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
 		A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4F7E22F5B36FC006D6B39 /* SQLiteData */; };
 		A1A4FAC62F5B3A76006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4FAC52F5B3A76006D6B39 /* SQLiteData */; };
 		A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4FCF22F5B3C1B006D6B39 /* SQLiteData */; };
+		A1AAB71B2F83C36E00D709FD /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = A1AAB71A2F83C36E00D709FD /* Bindings */; };
+		A1AAB71E2F83C40500D709FD /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = A1AAB71D2F83C40500D709FD /* Bindings */; };
+		A1AAB7212F83C41C00D709FD /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = A1AAB7202F83C41C00D709FD /* Bindings */; };
 		A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
 		A1CDB04C2F5AFF66005F33F8 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1CDB04B2F5AFF66005F33F8 /* SQLiteData */; };
 		A1E5FDBE2EE2AE5900627B46 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */; };
@@ -52,9 +54,11 @@
 				A1A4FAC62F5B3A76006D6B39 /* SQLiteData in Frameworks */,
 				A1710E392F8389F4003CC823 /* Kronos in Frameworks */,
 				A1CDB04C2F5AFF66005F33F8 /* SQLiteData in Frameworks */,
-				A1710E3C2F838AEA003CC823 /* XXDK in Frameworks */,
 				A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */,
 				A1A4F7E32F5B36FC006D6B39 /* SQLiteData in Frameworks */,
+				A1AAB71E2F83C40500D709FD /* Bindings in Frameworks */,
+				A1AAB7212F83C41C00D709FD /* Bindings in Frameworks */,
+				A1AAB71B2F83C36E00D709FD /* Bindings in Frameworks */,
 				A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */,
 				A19ECBD22F77A05200AE70A7 /* SwiftSoup in Frameworks */,
 			);
@@ -67,6 +71,7 @@
 			isa = PBXGroup;
 			children = (
 				980A0D6B2B96723C004FB15A /* iOSExample */,
+				A1AAB71F2F83C41C00D709FD /* Frameworks */,
 				980A0D6A2B96723C004FB15A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -113,6 +118,13 @@
 				9854D57B2B98C269009437B8 /* mainnet.crt */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		A1AAB71F2F83C41C00D709FD /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -170,7 +182,7 @@
 				A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				A19ECBD02F77A05200AE70A7 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				A1710E372F8389F4003CC823 /* XCRemoteSwiftPackageReference "Kronos" */,
-				A1710E3A2F838AEA003CC823 /* XCLocalSwiftPackageReference "../../client" */,
+				A1AAB71C2F83C40500D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */,
 			);
 			productRefGroup = 980A0D6A2B96723C004FB15A /* Products */;
 			projectDirPath = "";
@@ -450,13 +462,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		A1710E3A2F838AEA003CC823 /* XCLocalSwiftPackageReference "../../client" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../client;
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCRemoteSwiftPackageReference section */
 		A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -506,6 +511,22 @@
 				minimumVersion = 1.6.0;
 			};
 		};
+		A1AAB7192F83C36E00D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/thisisommore/xxdk-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.1;
+			};
+		};
+		A1AAB71C2F83C40500D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/thisisommore/xxdk-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.1;
+			};
+		};
 		A1CDB04A2F5AFF66005F33F8 /* XCRemoteSwiftPackageReference "sqlite-data" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/sqlite-data";
@@ -527,10 +548,6 @@
 			package = A1710E372F8389F4003CC823 /* XCRemoteSwiftPackageReference "Kronos" */;
 			productName = Kronos;
 		};
-		A1710E3B2F838AEA003CC823 /* XXDK */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = XXDK;
-		};
 		A19ECBD12F77A05200AE70A7 /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A19ECBD02F77A05200AE70A7 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
@@ -550,6 +567,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1A4FCF12F5B3C1B006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */;
 			productName = SQLiteData;
+		};
+		A1AAB71A2F83C36E00D709FD /* Bindings */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1AAB7192F83C36E00D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */;
+			productName = Bindings;
+		};
+		A1AAB71D2F83C40500D709FD /* Bindings */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1AAB71C2F83C40500D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */;
+			productName = Bindings;
+		};
+		A1AAB7202F83C41C00D709FD /* Bindings */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1AAB71C2F83C40500D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */;
+			productName = Bindings;
 		};
 		A1CDB04B2F5AFF66005F33F8 /* SQLiteData */ = {
 			isa = XCSwiftPackageProductDependency;

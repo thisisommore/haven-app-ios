@@ -1,5 +1,5 @@
 {
-  "originHash" : "c9d0684320be42da38942a36a93d49ec6669d4325a907e351d829200cc1fa11c",
+  "originHash" : "a86e59ba0b8f36f81f7f99e5dfe2ee326e6e9da225c2c18acf875ef545b9460e",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -161,6 +161,15 @@
       "state" : {
         "revision" : "dfd70507def84cb5fb821278448a262c6ff2bbad",
         "version" : "1.9.0"
+      }
+    },
+    {
+      "identity" : "xxdk-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/thisisommore/xxdk-spm",
+      "state" : {
+        "revision" : "1e034f17ddd12ddafd09f2fcfa1fe89d9f4924f4",
+        "version" : "0.0.1"
       }
     }
   ],
