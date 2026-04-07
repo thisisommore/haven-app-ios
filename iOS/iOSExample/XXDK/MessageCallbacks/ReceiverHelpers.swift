@@ -7,6 +7,7 @@
 
 import Bindings
 import Foundation
+import HavenCore
 import SQLiteData
 
 final class ReceiverHelpers {

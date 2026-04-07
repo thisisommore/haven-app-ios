@@ -5,6 +5,7 @@
 
 import Bindings
 import Foundation
+import HavenCore
 import SQLiteData
 
 extension XXDK {

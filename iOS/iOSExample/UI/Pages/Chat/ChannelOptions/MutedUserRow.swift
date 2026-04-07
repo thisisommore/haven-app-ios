@@ -5,6 +5,7 @@
 //  Created by Om More
 //
 
+import HavenCore
 import SQLiteData
 import SwiftUI
 

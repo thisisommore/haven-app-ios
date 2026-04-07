@@ -1,5 +1,6 @@
 import Bindings
 import Foundation
+import HavenCore
 import SQLiteData
 
 final class ChannelEventModelBuilder: NSObject, BindingsEventModelProtocol, BindingsEventModelBuilderProtocol {

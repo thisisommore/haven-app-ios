@@ -1,4 +1,5 @@
 import Bindings
+import HavenCore
 import Observation
 import SQLiteData
 import SwiftUI

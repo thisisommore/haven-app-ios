@@ -7,7 +7,7 @@
 
 import SQLiteData
 
-extension DatabaseMigrator {
+public extension DatabaseMigrator {
   mutating func v1() {
     self.registerMigration("v1:init") { db in
       try #sql(

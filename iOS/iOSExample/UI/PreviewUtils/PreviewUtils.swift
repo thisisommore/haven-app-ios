@@ -8,6 +8,7 @@
 
   import Dependencies
   import Foundation
+  import HavenCore
   import SQLiteData
   import SwiftUI
 

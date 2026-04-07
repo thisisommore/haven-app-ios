@@ -9,7 +9,7 @@ import Foundation
 // MARK: - Modern Swift Error Types
 
 /// Errors related to XXDK operations
-enum XXDKError: LocalizedError {
+public enum XXDKError: LocalizedError {
   case cmixNotInitialized
   case channelManagerNotInitialized
   case dmClientNotInitialized
@@ -30,7 +30,7 @@ enum XXDKError: LocalizedError {
   case channelNotFound
   case custom(String)
 
-  var errorDescription: String? {
+  public var errorDescription: String? {
     switch self {
     case .cmixNotInitialized: return "cMix not initialized"
     case .channelManagerNotInitialized: return "Channel manager not initialized"
@@ -57,11 +57,11 @@ enum XXDKError: LocalizedError {
 }
 
 /// Errors related to EventModel operations
-enum EventModelError: LocalizedError {
+public enum EventModelError: LocalizedError {
   case messageNotFound
   case identityConstructionFailed
 
-  var errorDescription: String? {
+  public var errorDescription: String? {
     switch self {
     case .messageNotFound: return BindingsGetNoMessageErr()
     case .identityConstructionFailed: return "Failed to construct identity"

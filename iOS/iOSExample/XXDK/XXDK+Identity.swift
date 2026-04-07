@@ -7,6 +7,7 @@
 
 import Bindings
 import Foundation
+import HavenCore
 
 extension XXDK {
   /// Generate multiple channel identities

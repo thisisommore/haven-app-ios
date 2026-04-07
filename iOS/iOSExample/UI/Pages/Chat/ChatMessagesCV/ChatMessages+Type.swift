@@ -4,7 +4,25 @@
 //
 //  Created by Om More on 21/03/26.
 //
+import HavenCore
 import UIKit
+
+public extension ChatMessageModel {
+  func attributedText(color: UIColor = .label, size: CGFloat = 17) -> NSAttributedString {
+    let tagStripped = self.message.stripParagraphTags()
+    if self.isPlain {
+      return NSAttributedString(string: tagStripped, attributes:
+        [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
+    }
+
+    do {
+      return try HTMLParser.parse(text: self.message, color: color, size: size)
+    } catch {
+      AppLogger.messaging.error("failed to parse html \(error.localizedDescription)")
+      return NSAttributedString(string: tagStripped, attributes: [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
+    }
+  }
+}
 
 struct MessageWithSender: Hashable {
   let message: ChatMessageModel

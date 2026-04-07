@@ -7,6 +7,7 @@
 
 import Combine
 import GRDB
+import HavenCore
 import SnapKit
 import SQLiteData
 import SwiftUI

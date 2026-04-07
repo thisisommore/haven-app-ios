@@ -5,6 +5,7 @@
 //  Created by Om More on 22/09/25.
 //
 
+import HavenCore
 import Observation
 import SQLiteData
 import SwiftUI

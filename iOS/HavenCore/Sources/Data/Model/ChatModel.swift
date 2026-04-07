@@ -11,35 +11,35 @@ import SQLiteData
 // ChatModel is a single storage model for all conversation types: channel chat, DM chat, and self/notes chat.
 // init takes care of setting correct values
 @Table("chats")
-struct ChatModel: Identifiable, Hashable {
+public struct ChatModel: Identifiable, Hashable, Sendable {
   // this is transformed into readable name like Notes for user
   private static let selfChatInternalName = "ChatModel.selfChatInternalName"
   /// Internal unique chat id
-  var id: UUID = .init()
-  var name: String
+  public var id: UUID = .init()
+  public var name: String
 
-  var joinedAt: Date = .init()
-  var unreadCount: Int = 0
+  public var joinedAt: Date = .init()
+  public var unreadCount: Int = 0
 
   // Channel only
-  var channelId: String?
-  var channelDescription: String?
-  var isSecret: Bool = false
-  var isAdmin: Bool = false
-  var color: Int = 0xE97451 // burnt sienna
+  public var channelId: String?
+  public var channelDescription: String?
+  public var isSecret: Bool = false
+  public var isAdmin: Bool = false
+  public var color: Int = 0xE97451 // burnt sienna
   //
 
   // DM only
-  var pubKey: Data?
-  var dmToken: Int32?
+  public var pubKey: Data?
+  public var dmToken: Int32?
   //
 
-  var isChannel: Bool {
+  public var isChannel: Bool {
     self.name != Self.selfChatInternalName && self.dmToken == nil
   }
 }
 
-extension ChatModel {
+public extension ChatModel {
   /// Initializer for Channels
   init(
     channelId: String, name: String, description: String? = nil, isAdmin: Bool = false,
@@ -62,12 +62,12 @@ extension ChatModel {
 }
 
 @Table("channelMutedUsers")
-struct ChannelMutedUserModel: Identifiable, Hashable {
-  var id: UUID = .init()
-  var channelId: String
-  var pubkey: Data
+public struct ChannelMutedUserModel: Identifiable, Hashable {
+  public var id: UUID = .init()
+  public var channelId: String
+  public var pubkey: Data
 
-  init(channelId: String, pubkey: Data) {
+  public init(channelId: String, pubkey: Data) {
     self.channelId = channelId
     self.pubkey = pubkey
   }

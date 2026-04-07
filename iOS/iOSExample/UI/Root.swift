@@ -7,6 +7,7 @@
 
 import Bindings
 import Dependencies
+import HavenCore
 import SQLiteData
 import SwiftUI
 

@@ -11,6 +11,7 @@
 		980A0D732B96723E004FB15A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D722B96723E004FB15A /* Assets.xcassets */; };
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
+		A13E2B2E2F84B5A900898CF2 /* HavenCore in Frameworks */ = {isa = PBXBuildFile; productRef = A13E2B2D2F84B5A900898CF2 /* HavenCore */; };
 		A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1445D652F6036BA00FB3744 /* SnapKit */; };
 		A1710E392F8389F4003CC823 /* Kronos in Frameworks */ = {isa = PBXBuildFile; productRef = A1710E382F8389F4003CC823 /* Kronos */; };
 		A19ECBD22F77A05200AE70A7 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A19ECBD12F77A05200AE70A7 /* SwiftSoup */; };
@@ -31,6 +32,7 @@
 		A17324322EA515BF00388AC0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A19FC0CD2EF1A254007FDD0F /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = HavenIcon.icon; sourceTree = "<group>"; };
+		A1E19A2E2F8411190043573F /* HavenCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = HavenCore; sourceTree = "<group>"; };
 		A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -46,6 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A13E2B2E2F84B5A900898CF2 /* HavenCore in Frameworks */,
 				A1710E392F8389F4003CC823 /* Kronos in Frameworks */,
 				A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */,
 				A1AAB71E2F83C40500D709FD /* Bindings in Frameworks */,
@@ -60,6 +63,7 @@
 		980A0D602B96723C004FB15A = {
 			isa = PBXGroup;
 			children = (
+				A1E19A2E2F8411190043573F /* HavenCore */,
 				980A0D6B2B96723C004FB15A /* iOSExample */,
 				A1AAB71F2F83C41C00D709FD /* Frameworks */,
 				980A0D6A2B96723C004FB15A /* Products */,
@@ -496,6 +500,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A13E2B2D2F84B5A900898CF2 /* HavenCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HavenCore;
+		};
 		A1445D652F6036BA00FB3744 /* SnapKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1445D642F6036BA00FB3744 /* XCRemoteSwiftPackageReference "SnapKit" */;

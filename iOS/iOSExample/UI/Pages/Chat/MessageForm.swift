@@ -4,6 +4,7 @@
 //
 //  Created by Om More on 28/09/25.
 //
+import HavenCore
 import SQLiteData
 import SwiftUI
 

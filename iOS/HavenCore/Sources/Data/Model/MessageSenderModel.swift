@@ -2,18 +2,18 @@ import Foundation
 import SQLiteData
 
 @Table("messageSenders")
-struct MessageSenderModel: Hashable {
-  var id: UUID = .init()
-  var pubkey: Data
+public struct MessageSenderModel: Hashable, Sendable {
+  public var id: UUID = .init()
+  public var pubkey: Data
   /// codename
-  var codename: String
+  public var codename: String
   /// User-set nickname (optional)
-  var nickname: String?
+  public var nickname: String?
   /// DM token for direct messaging (optional - nil means DM is disabled)
-  var dmToken: Int32?
+  public var dmToken: Int32?
 
-  var color: Int
-  init(
+  public var color: Int
+  public init(
     pubkey: Data, codename: String, nickname: String?, dmToken: Int32?,
     color: Int
   ) {
@@ -31,7 +31,7 @@ struct MessageSenderModel: Hashable {
     self.id = UUID.selfId
   }
 
-  static func selfSender(pubkey: Data) -> MessageSenderModel {
+  public static func selfSender(pubkey: Data) -> MessageSenderModel {
     return MessageSenderModel(pubkey: pubkey)
   }
 }

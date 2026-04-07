@@ -7,6 +7,7 @@
 #if DEBUG
 
   import Foundation
+  import HavenCore
 
   private typealias PreviewMessageFactory = (
     _ message: String,

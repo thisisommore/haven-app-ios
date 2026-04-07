@@ -2,6 +2,7 @@ strict: true
 
 excluded:
   - Pods
+  - HavenCore/.build
 
 disabled_rules:
 # Handled by SwiftFormat

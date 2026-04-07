@@ -7,6 +7,7 @@
 
 import Bindings
 import Foundation
+import HavenCore
 import Kronos
 import SQLiteData
 import SwiftUI

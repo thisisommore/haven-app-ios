@@ -1,4 +1,5 @@
 import Foundation
+import HavenCore
 import SwiftSoup
 import UIKit
 

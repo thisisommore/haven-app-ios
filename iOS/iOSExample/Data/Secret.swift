@@ -8,6 +8,7 @@
 import Combine
 import Dependencies
 import Foundation
+import HavenCore
 
 private enum AppStorageKey: DependencyKey {
   static let liveValue = AppStorage()

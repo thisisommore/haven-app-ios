@@ -9,14 +9,14 @@ import SQLiteData
 import UIKit
 
 /// Message delivery status
-enum MessageStatus: Int, QueryBindable {
+public enum MessageStatus: Int, QueryBindable, Sendable {
   case unsent = 0
   case sent = 1
   case delivered = 2
   case failed = 3
   case deleting = 9
 
-  var name: String {
+  public var name: String {
     switch self {
     case .unsent: return "unsent"
     case .sent: return "sent"
@@ -27,14 +27,14 @@ enum MessageStatus: Int, QueryBindable {
   }
 
   /// Int64 since we receive that from network
-  init?(_ rawValue: Int64) {
+  public init?(_ rawValue: Int64) {
     guard let s = MessageStatus(rawValue: Int(rawValue)) else {
       return nil
     }
     self = s
   }
 
-  init?(_ rawValue: Int) {
+  public init?(_ rawValue: Int) {
     guard let s = MessageStatus(rawValue: Int(rawValue)) else {
       return nil
     }
@@ -43,20 +43,20 @@ enum MessageStatus: Int, QueryBindable {
 }
 
 @Table("chatMessages")
-struct ChatMessageModel: Identifiable, Hashable {
-  var id: Int64
-  var externalId: String
-  var message: String
-  var timestamp: Date
-  var isIncoming: Bool
-  var isRead: Bool = false
-  var status: MessageStatus
-  var senderId: UUID?
-  var chatId: UUID
-  var replyTo: String?
-  var isPlain: Bool = false
+public struct ChatMessageModel: Identifiable, Hashable, Sendable {
+  public var id: Int64
+  public var externalId: String
+  public var message: String
+  public var timestamp: Date
+  public var isIncoming: Bool
+  public var isRead: Bool = false
+  public var status: MessageStatus
+  public var senderId: UUID?
+  public var chatId: UUID
+  public var replyTo: String?
+  public var isPlain: Bool = false
 
-  init(
+  public init(
     message: String, isIncoming: Bool, chatId: UUID, senderId: UUID? = nil,
     id: Int64, externalId: String, replyTo: String? = nil,
     timestamp: Date,
@@ -72,20 +72,5 @@ struct ChatMessageModel: Identifiable, Hashable {
     self.chatId = chatId
     self.replyTo = replyTo
     self.status = status ?? .unsent
-  }
-
-  func attributedText(color: UIColor = .label, size: CGFloat = 17) -> NSAttributedString {
-    let tagStripped = self.message.stripParagraphTags()
-    if self.isPlain {
-      return NSAttributedString(string: tagStripped, attributes:
-        [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
-    }
-
-    do {
-      return try HTMLParser.parse(text: self.message, color: color, size: size)
-    } catch {
-      AppLogger.messaging.error("failed to parse html \(error.localizedDescription)")
-      return NSAttributedString(string: tagStripped, attributes: [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
-    }
   }
 }

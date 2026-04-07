@@ -6,6 +6,7 @@
 //
 
 import struct GRDB.ValueObservation
+import HavenCore
 import SQLiteData
 import UIKit
 

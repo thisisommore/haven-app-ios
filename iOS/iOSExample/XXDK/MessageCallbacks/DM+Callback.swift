@@ -6,6 +6,7 @@
 //
 
 import Bindings
+import HavenCore
 import SQLiteData
 
 // DMReceiver's are callbacks for message processing. These include

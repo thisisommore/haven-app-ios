@@ -58,13 +58,3 @@ extension StringProtocol {
     .init(utf8)
   }
 }
-
-extension DataProtocol {
-  func utf8() throws -> String {
-    let result = String(bytes: self, encoding: .utf8)
-    guard let result else {
-      throw XXDKError.invalidUTF8
-    }
-    return result
-  }
-}

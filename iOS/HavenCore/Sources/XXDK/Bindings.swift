@@ -9,25 +9,35 @@
 import Bindings
 import Foundation
 
+public extension DataProtocol {
+  func utf8() throws -> String {
+    let result = String(bytes: self, encoding: .utf8)
+    guard let result else {
+      throw XXDKError.invalidUTF8
+    }
+    return result
+  }
+}
+
 // MARK: - Static Bindings (no instance required)
 
-enum BindingsStatic {
+public enum BindingsStatic {
   /// Channel URL / JSON
-  static func decodePublicURL(_ url: String) throws -> String {
+  public static func decodePublicURL(_ url: String) throws -> String {
     var err: NSError?
     let result = Bindings.BindingsDecodePublicURL(url, &err)
     if let err { throw err }
     return result
   }
 
-  static func decodePrivateURL(url: String, password: String) throws -> String {
+  public static func decodePrivateURL(url: String, password: String) throws -> String {
     var err: NSError?
     let result = Bindings.BindingsDecodePrivateURL(url, password, &err)
     if let err { throw err }
     return result
   }
 
-  static func getChannelJSON(_ prettyPrint: String) throws -> ChannelJSON? {
+  public static func getChannelJSON(_ prettyPrint: String) throws -> ChannelJSON? {
     var err: NSError?
     let result = Bindings.BindingsGetChannelJSON(prettyPrint, &err)
     if let err { throw err }
@@ -35,7 +45,7 @@ enum BindingsStatic {
     return try Parser.decode(ChannelJSON.self, from: data)
   }
 
-  static func getShareUrlType(_ url: String) throws -> Int {
+  public static func getShareUrlType(_ url: String) throws -> Int {
     var err: NSError?
     var typeValue = 0
     Bindings.BindingsGetShareUrlType(url, &typeValue, &err)
@@ -44,7 +54,7 @@ enum BindingsStatic {
   }
 
   /// Identity
-  static func getPublicChannelIdentityFromPrivate(_ privateIdentity: Data) throws -> IdentityJSON? {
+  public static func getPublicChannelIdentityFromPrivate(_ privateIdentity: Data) throws -> IdentityJSON? {
     var err: NSError?
     let result = Bindings.BindingsGetPublicChannelIdentityFromPrivate(privateIdentity, &err)
     if let err { throw err }
@@ -52,7 +62,7 @@ enum BindingsStatic {
     return try Parser.decode(IdentityJSON.self, from: data)
   }
 
-  static func constructIdentity(pubKey: Data?, codeset: Int) throws -> IdentityJSON? {
+  public static func constructIdentity(pubKey: Data?, codeset: Int) throws -> IdentityJSON? {
     var err: NSError?
     let result = Bindings.BindingsConstructIdentity(pubKey, codeset, &err)
     if let err { throw err }
@@ -60,14 +70,14 @@ enum BindingsStatic {
     return try Parser.decode(IdentityJSON.self, from: data)
   }
 
-  static func generateChannelIdentity(_ cmixId: Int) throws -> Data? {
+  public static func generateChannelIdentity(_ cmixId: Int) throws -> Data? {
     var err: NSError?
     let result = Bindings.BindingsGenerateChannelIdentity(cmixId, &err)
     if let err { throw err }
     return result
   }
 
-  static func importPrivateIdentity(password: String, data: Data) throws -> Data? {
+  public static func importPrivateIdentity(password: String, data: Data) throws -> Data? {
     var err: NSError?
     let result = Bindings.BindingsImportPrivateIdentity(password, data, &err)
     if let err { throw err }
@@ -75,14 +85,14 @@ enum BindingsStatic {
   }
 
   /// Notifications
-  static func loadNotifications(_ cmixId: Int) throws -> Bindings.BindingsNotifications? {
+  public static func loadNotifications(_ cmixId: Int) throws -> Bindings.BindingsNotifications? {
     var err: NSError?
     let result = Bindings.BindingsLoadNotifications(cmixId, &err)
     if let err { throw err }
     return result
   }
 
-  static func loadNotificationsDummy(_ cmixId: Int) throws -> Bindings.BindingsNotifications? {
+  public static func loadNotificationsDummy(_ cmixId: Int) throws -> Bindings.BindingsNotifications? {
     var err: NSError?
     let result = Bindings.BindingsLoadNotificationsDummy(cmixId, &err)
     if let err { throw err }
@@ -90,7 +100,7 @@ enum BindingsStatic {
   }
 
   /// DM
-  static func newDMClient(
+  public static func newDMClient(
     cmixId: Int,
     notifications: Bindings.BindingsNotifications,
     privateIdentity: Data,
@@ -106,7 +116,7 @@ enum BindingsStatic {
   }
 
   /// ChannelsManager
-  static func newChannelsManager(
+  public static func newChannelsManager(
     cmixId: Int,
     privateIdentity: Data,
     eventModelBuilder: Bindings.BindingsEventModelBuilderProtocol,
@@ -123,7 +133,7 @@ enum BindingsStatic {
     return result
   }
 
-  static func loadChannelsManager(
+  public static func loadChannelsManager(
     cmixId: Int,
     storageTag: String,
     eventModelBuilder: Bindings.BindingsEventModelBuilderProtocol,
@@ -140,13 +150,13 @@ enum BindingsStatic {
   }
 
   /// Cmix
-  static func newCmix(ndf: Data, stateDir: String, secret: Data, backup: String) throws {
+  public static func newCmix(ndf: Data, stateDir: String, secret: Data, backup: String) throws {
     var err: NSError?
     try Bindings.BindingsNewCmix(ndf.utf8(), stateDir, secret, backup, &err)
     if let err { throw err }
   }
 
-  static func loadCmix(stateDir: String, secret: Data, paramsJSON: Data) throws -> Bindings
+  public static func loadCmix(stateDir: String, secret: Data, paramsJSON: Data) throws -> Bindings
     .BindingsCmix? {
     var err: NSError?
     let result = Bindings.BindingsLoadCmix(stateDir, secret, paramsJSON, &err)
@@ -154,14 +164,14 @@ enum BindingsStatic {
     return result
   }
 
-  static func deleteCmixInstance(_ cmixId: Int) throws {
+  public static func deleteCmixInstance(_ cmixId: Int) throws {
     var err: NSError?
     Bindings.BindingsDeleteCmixInstance(cmixId, &err)
     if let err { throw err }
   }
 
   /// Network
-  static func downloadAndVerifySignedNdf(url: String, cert: String) throws -> Data? {
+  public static func downloadAndVerifySignedNdf(url: String, cert: String) throws -> Data? {
     var err: NSError?
     let result = Bindings.BindingsDownloadAndVerifySignedNdfWithUrl(url, cert, &err)
     if let err { throw err }
@@ -171,14 +181,14 @@ enum BindingsStatic {
 
 // MARK: - ChannelsManager
 
-final class BindingsChannelsManagerWrapper {
+public final class BindingsChannelsManagerWrapper {
   private let inner: Bindings.BindingsChannelsManager
 
-  init(_ inner: Bindings.BindingsChannelsManager) {
+  public init(_ inner: Bindings.BindingsChannelsManager) {
     self.inner = inner
   }
 
-  func generateChannel(name: String, description: String, privacyLevel: Int) throws -> String {
+  public func generateChannel(name: String, description: String, privacyLevel: Int) throws -> String {
     var err: NSError?
     let result = self.inner.generateChannel(
       name, description: description, privacyLevel: privacyLevel, error: &err
@@ -187,42 +197,42 @@ final class BindingsChannelsManagerWrapper {
     return result
   }
 
-  func getNickname(_ channelIdBytes: Data) throws -> String {
+  public func getNickname(_ channelIdBytes: Data) throws -> String {
     var err: NSError?
     let result = self.inner.getNickname(channelIdBytes, error: &err)
     if let err { throw err }
     return result
   }
 
-  func areDMsEnabled(_ channelIdData: Data) throws -> Bool {
+  public func areDMsEnabled(_ channelIdData: Data) throws -> Bool {
     var result = ObjCBool(false)
     try inner.areDMsEnabled(channelIdData, ret0_: &result)
     return result.boolValue
   }
 
-  func isChannelAdmin(_ channelIdData: Data) throws -> Bool {
+  public func isChannelAdmin(_ channelIdData: Data) throws -> Bool {
     var result = ObjCBool(false)
     try inner.isChannelAdmin(channelIdData, ret0_: &result)
     return result.boolValue
   }
 
-  func muted(_ channelIdData: Data) throws -> Bool {
+  public func muted(_ channelIdData: Data) throws -> Bool {
     var result = ObjCBool(false)
     try inner.muted(channelIdData, ret0_: &result)
     return result.boolValue
   }
 
   /// Pass-through to inner (already use Swift throws)
-  func joinChannel(_ prettyPrint: String) throws -> ChannelJSON? {
+  public func joinChannel(_ prettyPrint: String) throws -> ChannelJSON? {
     let data = try inner.joinChannel(prettyPrint)
     return try Parser.decode(ChannelJSON.self, from: data)
   }
 
-  func leaveChannel(_ channelIdData: Data) throws {
+  public func leaveChannel(_ channelIdData: Data) throws {
     try self.inner.leaveChannel(channelIdData)
   }
 
-  func getShareURL(_ cmixId: Int, host: String, maxUses: Int, channelIdBytes: Data) throws
+  public func getShareURL(_ cmixId: Int, host: String, maxUses: Int, channelIdBytes: Data) throws
     -> ShareURLJSON? {
     let data = try inner.getShareURL(
       cmixId, host: host, maxUses: maxUses, channelIdBytes: channelIdBytes
@@ -230,19 +240,19 @@ final class BindingsChannelsManagerWrapper {
     return try Parser.decode(ShareURLJSON.self, from: data)
   }
 
-  func enableDirectMessages(_ channelIdData: Data) throws {
+  public func enableDirectMessages(_ channelIdData: Data) throws {
     try self.inner.enableDirectMessages(channelIdData)
   }
 
-  func disableDirectMessages(_ channelIdData: Data) throws {
+  public func disableDirectMessages(_ channelIdData: Data) throws {
     try self.inner.disableDirectMessages(channelIdData)
   }
 
-  func exportChannelAdminKey(_ channelIdData: Data, encryptionPassword: String) throws -> Data {
+  public func exportChannelAdminKey(_ channelIdData: Data, encryptionPassword: String) throws -> Data {
     try self.inner.exportChannelAdminKey(channelIdData, encryptionPassword: encryptionPassword)
   }
 
-  func importChannelAdminKey(
+  public func importChannelAdminKey(
     _ channelIdData: Data, encryptionPassword: String, encryptedPrivKey: Data
   ) throws {
     try self.inner.importChannelAdminKey(
@@ -251,11 +261,11 @@ final class BindingsChannelsManagerWrapper {
     )
   }
 
-  func getMutedUsers(_ channelIdData: Data) throws -> Data {
+  public func getMutedUsers(_ channelIdData: Data) throws -> Data {
     try self.inner.getMutedUsers(channelIdData)
   }
 
-  func muteUser(
+  public func muteUser(
     _ channelIdData: Data, mutedUserPubKeyBytes: Data, undoAction: Bool, validUntilMS: Int,
     cmixParamsJSON: Data
   ) throws {
@@ -265,15 +275,15 @@ final class BindingsChannelsManagerWrapper {
     )
   }
 
-  func setNickname(_ nickname: String, channelIDBytes: Data) throws {
+  public func setNickname(_ nickname: String, channelIDBytes: Data) throws {
     try self.inner.setNickname(nickname, channelIDBytes: channelIDBytes)
   }
 
-  func getStorageTag() -> String {
+  public func getStorageTag() -> String {
     self.inner.getStorageTag()
   }
 
-  func sendMessage(
+  public func sendMessage(
     _ channelIdData: Data, message: String, validUntilMS: Int64, cmixParamsJSON: Data,
     pingsJSON: Data?
   ) throws {
@@ -283,7 +293,7 @@ final class BindingsChannelsManagerWrapper {
     )
   }
 
-  func sendReply(
+  public func sendReply(
     _ channelIdData: Data, message: String, messageToReactTo: Data, validUntilMS: Int64,
     cmixParamsJSON: Data, pingsJSON: Data?
   ) throws -> ChannelSendReportJSON? {
@@ -295,7 +305,7 @@ final class BindingsChannelsManagerWrapper {
   }
 
   @discardableResult
-  func sendReaction(
+  public func sendReaction(
     _ channelIdData: Data, reaction: String, messageToReactTo: Data, validUntilMS: Int64,
     cmixParamsJSON: Data
   ) throws -> ChannelSendReportJSON? {
@@ -306,7 +316,7 @@ final class BindingsChannelsManagerWrapper {
     return try Parser.decode(ChannelSendReportJSON.self, from: data)
   }
 
-  func deleteMessage(_ channelIdData: Data, targetMessageIdBytes: Data, cmixParamsJSON: Data)
+  public func deleteMessage(_ channelIdData: Data, targetMessageIdBytes: Data, cmixParamsJSON: Data)
     throws {
     try self.inner.deleteMessage(
       channelIdData, targetMessageIdBytes: targetMessageIdBytes,
@@ -314,40 +324,40 @@ final class BindingsChannelsManagerWrapper {
     )
   }
 
-  func exportPrivateIdentity(password: String) throws -> Data {
+  public func exportPrivateIdentity(password: String) throws -> Data {
     try self.inner.exportPrivateIdentity(password)
   }
 }
 
 // MARK: - DMClient
 
-final class BindingsDMClientWrapper {
+public final class BindingsDMClientWrapper {
   private let inner: Bindings.BindingsDMClient
 
-  init(_ inner: Bindings.BindingsDMClient) {
+  public init(_ inner: Bindings.BindingsDMClient) {
     self.inner = inner
   }
 
-  func getNickname() throws -> String {
+  public func getNickname() throws -> String {
     var err: NSError?
     let result = self.inner.getNickname(&err)
     if let err { throw err }
     return result
   }
 
-  func getPublicKey() -> Data? {
+  public func getPublicKey() -> Data? {
     self.inner.getPublicKey()
   }
 
-  func getToken() -> Int64 {
+  public func getToken() -> Int64 {
     self.inner.getToken()
   }
 
-  func setNickname(_ nickname: String) throws {
+  public func setNickname(_ nickname: String) throws {
     try self.inner.setNickname(nickname)
   }
 
-  func sendText(
+  public func sendText(
     _ toPubKey: Data, partnerToken: Int32, message: String, leaseTimeMS: Int64,
     cmixParamsJSON: Data
   ) throws -> ChannelSendReportJSON? {
@@ -358,7 +368,7 @@ final class BindingsDMClientWrapper {
     return try Parser.decode(ChannelSendReportJSON.self, from: data)
   }
 
-  func sendReply(
+  public func sendReply(
     _ toPubKey: Data, partnerToken: Int32, replyMessage: String, replyToBytes: Data,
     leaseTimeMS: Int64, cmixParamsJSON: Data
   ) throws -> ChannelSendReportJSON? {
@@ -369,7 +379,7 @@ final class BindingsDMClientWrapper {
     return try Parser.decode(ChannelSendReportJSON.self, from: data)
   }
 
-  func sendReaction(
+  public func sendReaction(
     _ toPubKey: Data, partnerToken: Int32, reaction: String, reactToBytes: Data,
     cmixParamsJSON: Data
   ) throws -> ChannelSendReportJSON? {

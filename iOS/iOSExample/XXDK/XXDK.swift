@@ -8,6 +8,7 @@
 import Bindings
 import Dependencies
 import Foundation
+import HavenCore
 import Kronos
 import SQLiteData
 import SwiftUI

@@ -8,7 +8,7 @@
 import Foundation
 import SQLiteData
 
-func appDatabase() throws -> any DatabaseWriter {
+public func appDatabase() throws -> any DatabaseWriter {
   @Dependency(\.context) var context
   var configuration = Configuration()
   #if DEBUG

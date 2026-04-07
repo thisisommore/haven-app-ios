@@ -1,3 +1,4 @@
+import HavenCore
 import SQLiteData
 import SwiftUI
 import UIKit
