@@ -62,7 +62,7 @@ public extension ChatModel {
 }
 
 @Table("channelMutedUsers")
-public struct ChannelMutedUserModel: Identifiable, Hashable {
+public struct ChannelMutedUserModel: Identifiable, Hashable, Sendable {
   public var id: UUID = .init()
   public var channelId: String
   public var pubkey: Data
