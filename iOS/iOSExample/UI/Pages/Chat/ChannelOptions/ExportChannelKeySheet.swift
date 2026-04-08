@@ -158,7 +158,7 @@ struct ExportChannelKeySheet<T: XXDKP>: View {
         defaultFilename: "\(self.channelName)_admin_key.txt"
       ) { result in
         switch result {
-        case let .success(url):
+        case .success:
           self.onSuccess("Exported to File")
           self.dismiss()
         case let .failure(error):

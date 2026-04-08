@@ -255,10 +255,9 @@ class Channel: ChannelsP {
       throw XXDKError.channelIDIsNotBase64Encoded
     }
 
-    let result = try channelsManager.exportChannelAdminKey(
+    return try channelsManager.exportChannelAdminKey(
       channelIdData, encryptionPassword: encryptionPassword
     )
-    return try result
   }
 
   /// Import an admin key for a channel
