@@ -293,6 +293,7 @@ public final class BindingsChannelsManagerWrapper {
     )
   }
 
+  @discardableResult
   public func sendReply(
     _ channelIdData: Data, message: String, messageToReactTo: Data, validUntilMS: Int64,
     cmixParamsJSON: Data, pingsJSON: Data?

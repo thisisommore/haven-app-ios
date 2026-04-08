@@ -64,7 +64,7 @@ class ChannelsMessaging: ChannelsMessagingP {
       return
     }
     do {
-      let report = try channelsManager.sendReply(
+      try self.channelsManager.sendReply(
         channelIdData,
         message: encodedMsg,
         messageToReactTo: replyToMessageId,
@@ -72,9 +72,6 @@ class ChannelsMessaging: ChannelsMessagingP {
         cmixParamsJSON: "".data,
         pingsJSON: nil
       )
-      if let report {
-        if let mid = report.messageID {} else {}
-      }
     } catch {
       AppLogger.messaging.error(
         "sendReply(channel) failed: \(error.localizedDescription, privacy: .public)"

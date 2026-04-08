@@ -67,7 +67,7 @@ struct ChatRowView<T: XXDKP>: View {
     guard
       let senderId = try? database.read({ db in
         try ChatMessageModel.where {
-          $0.chatId.eq(chat.id) && $0.isIncoming && $0.senderId != nil
+          $0.chatId.eq(chat.id) && $0.isIncoming && $0.senderId.isNot(nil)
         }.limit(1).fetchOne(db)?.senderId
       })
     else { return nil }
