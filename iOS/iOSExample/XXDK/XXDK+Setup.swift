@@ -9,6 +9,23 @@ import HavenCore
 import SQLiteData
 
 extension XXDK {
+  /// Registers a stored APNs token with the loaded notifications client (bundle id = app id).
+  func registerStoredApnsToken() {
+    guard let hex = apnsTokenHex, let notifications = notifications,
+          let appId = Bundle.main.bundleIdentifier
+    else {
+      return
+    }
+
+    do {
+      try notifications.addToken(hex, app: appId)
+    } catch {
+      AppLogger.app.error(
+        "Push addToken failed: \(error.localizedDescription, privacy: .public)"
+      )
+    }
+  }
+
   /// Loads dm and channels manager
   func loadClients(privateIdentity: Data) async {
     // Cmix
@@ -48,6 +65,8 @@ extension XXDK {
     else {
       fatalError("could not load notifications: returned nil")
     }
+    self.notifications = notifications
+    self.registerStoredApnsToken()
 
     await progress(.syncingNotifications)
 
@@ -170,6 +189,8 @@ extension XXDK {
     else {
       fatalError("could not load notifications: returned nil")
     }
+    self.notifications = notifications
+    self.registerStoredApnsToken()
 
     await progress(.syncingNotifications)
 

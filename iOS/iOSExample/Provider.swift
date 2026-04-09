@@ -10,12 +10,13 @@ import SwiftUI
 
 struct Provider<Content: View>: View {
   @StateObject private var logOutput = LogViewer()
-  @StateObject private var xxdk = XXDK()
+  @ObservedObject var xxdk: XXDK
   @StateObject private var navigation = AppNavigationPath()
   @StateObject private var selectedChat = SelectedChat()
   @ViewBuilder let content: Content
 
-  init(@ViewBuilder content: () -> Content) {
+  init(xxdk: XXDK, @ViewBuilder content: () -> Content) {
+    self.xxdk = xxdk
     self.content = content()
   }
 

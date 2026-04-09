@@ -46,6 +46,7 @@ protocol XXDKP: ObservableObject, AnyObject {
   func generateIdentities(amountOfIdentities: Int) -> [GeneratedIdentity]
   func exportIdentity(password: String) throws -> Data
   func importIdentity(password: String, data: Data) throws -> Data
+  func addApnsToken(_ token: String)
 }
 
 /// These are common helpers extending the string class which are essential for working with XXDK

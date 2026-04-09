@@ -11,16 +11,45 @@
 		980A0D732B96723E004FB15A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D722B96723E004FB15A /* Assets.xcassets */; };
 		980A0D772B96723E004FB15A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D762B96723E004FB15A /* Preview Assets.xcassets */; };
 		9854D57C2B98C269009437B8 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
+		A12A4F1C2F84DBDF007AB042 /* HavenCore in Frameworks */ = {isa = PBXBuildFile; productRef = A12A4F1B2F84DBDF007AB042 /* HavenCore */; };
+		A131C2A02F839B9500200A8D /* NotiServiceExt.appex in CopyFiles */ = {isa = PBXBuildFile; fileRef = A13F0B342F7A344F0050EFC3 /* NotiServiceExt.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A13E2B2E2F84B5A900898CF2 /* HavenCore in Frameworks */ = {isa = PBXBuildFile; productRef = A13E2B2D2F84B5A900898CF2 /* HavenCore */; };
+		A13F0E152F7A4CD10050EFC3 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A13F0E142F7A4CD10050EFC3 /* libsqlite3.tbd */; };
+		A13F0E182F7A5B360050EFC3 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A13F0E172F7A5B360050EFC3 /* SQLiteData */; };
 		A1445D662F6036BA00FB3744 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1445D652F6036BA00FB3744 /* SnapKit */; };
 		A1710E392F8389F4003CC823 /* Kronos in Frameworks */ = {isa = PBXBuildFile; productRef = A1710E382F8389F4003CC823 /* Kronos */; };
+		A189CA432F78E99B00AAEE9F /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = A189CA422F78E99B00AAEE9F /* Notifications.swift */; };
 		A19ECBD22F77A05200AE70A7 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A19ECBD12F77A05200AE70A7 /* SwiftSoup */; };
 		A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19FC0CD2EF1A254007FDD0F /* Provider.swift */; };
 		A1A4FCF32F5B3C1B006D6B39 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4FCF22F5B3C1B006D6B39 /* SQLiteData */; };
 		A1AAB71E2F83C40500D709FD /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = A1AAB71D2F83C40500D709FD /* Bindings */; };
 		A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
+		A1E199402F84100A0043573F /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = A1E1993F2F84100A0043573F /* Bindings */; };
 		A1E5FDBE2EE2AE5900627B46 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A13F0B392F7A344F0050EFC3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 980A0D612B96723C004FB15A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A13F0B332F7A344F0050EFC3;
+			remoteInfo = NotiServiceExt;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A131C29F2F839B8800200A8D /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A131C2A02F839B9500200A8D /* NotiServiceExt.appex in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		980A0D692B96723C004FB15A /* iOSExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -29,17 +58,40 @@
 		980A0D742B96723E004FB15A /* iOSExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iOSExample.entitlements; sourceTree = "<group>"; };
 		980A0D762B96723E004FB15A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		9854D57B2B98C269009437B8 /* mainnet.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = mainnet.crt; sourceTree = "<group>"; };
+		A12A4F1D2F850ABA007AB042 /* iOSExampleRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iOSExampleRelease.entitlements; sourceTree = "<group>"; };
+		A13F0B342F7A344F0050EFC3 /* NotiServiceExt.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotiServiceExt.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A13F0E142F7A4CD10050EFC3 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk/usr/lib/libsqlite3.tbd; sourceTree = DEVELOPER_DIR; };
 		A17324322EA515BF00388AC0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A189CA422F78E99B00AAEE9F /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
 		A19FC0CD2EF1A254007FDD0F /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = HavenIcon.icon; sourceTree = "<group>"; };
 		A1E19A2E2F8411190043573F /* HavenCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = HavenCore; sourceTree = "<group>"; };
 		A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A13F0B3F2F7A344F0050EFC3 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A13F0B332F7A344F0050EFC3 /* NotiServiceExt */;
+		};
+		A13F0E212F7A712C0050EFC3 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppLogger.swift,
+			);
+			target = A13F0B332F7A344F0050EFC3 /* NotiServiceExt */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A131C2932F839AE600200A8D /* testnoti */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = testnoti; sourceTree = "<group>"; };
+		A13F0B352F7A344F0050EFC3 /* NotiServiceExt */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A13F0B3F2F7A344F0050EFC3 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = NotiServiceExt; sourceTree = "<group>"; };
 		A18D86072F63FCF4005E3751 /* XXDK */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = XXDK; sourceTree = "<group>"; };
 		A18D86202F63FDE2005E3751 /* Data */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Data; sourceTree = "<group>"; };
-		A18D862C2F63FE5E005E3751 /* Common */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Common; sourceTree = "<group>"; };
+		A18D862C2F63FE5E005E3751 /* Common */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A13F0E212F7A712C0050EFC3 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Common; sourceTree = "<group>"; };
 		A18D862D2F641D75005E3751 /* UI */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UI; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -57,6 +109,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A13F0B312F7A344F0050EFC3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A12A4F1C2F84DBDF007AB042 /* HavenCore in Frameworks */,
+				A13F0E182F7A5B360050EFC3 /* SQLiteData in Frameworks */,
+				A1E199402F84100A0043573F /* Bindings in Frameworks */,
+				A13F0E152F7A4CD10050EFC3 /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -66,7 +129,10 @@
 				A1E19A2E2F8411190043573F /* HavenCore */,
 				980A0D6B2B96723C004FB15A /* iOSExample */,
 				A1AAB71F2F83C41C00D709FD /* Frameworks */,
+				A13F0B352F7A344F0050EFC3 /* NotiServiceExt */,
+				A131C2932F839AE600200A8D /* testnoti */,
 				980A0D6A2B96723C004FB15A /* Products */,
+				A1E198732F840AA20043573F /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -74,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				980A0D692B96723C004FB15A /* iOSExample.app */,
+				A13F0B342F7A344F0050EFC3 /* NotiServiceExt.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -81,6 +148,7 @@
 		980A0D6B2B96723C004FB15A /* iOSExample */ = {
 			isa = PBXGroup;
 			children = (
+				A12A4F1D2F850ABA007AB042 /* iOSExampleRelease.entitlements */,
 				980A0D6C2B96723C004FB15A /* Main.swift */,
 				A19FC0CD2EF1A254007FDD0F /* Provider.swift */,
 				A18D862C2F63FE5E005E3751 /* Common */,
@@ -94,6 +162,7 @@
 				980A0D722B96723E004FB15A /* Assets.xcassets */,
 				A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */,
 				A17324322EA515BF00388AC0 /* Info.plist */,
+				A189CA422F78E99B00AAEE9F /* Notifications.swift */,
 			);
 			path = iOSExample;
 			sourceTree = "<group>";
@@ -121,6 +190,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		A1E198732F840AA20043573F /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				A13F0E142F7A4CD10050EFC3 /* libsqlite3.tbd */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -131,10 +208,12 @@
 				980A0D652B96723C004FB15A /* Sources */,
 				980A0D662B96723C004FB15A /* Frameworks */,
 				980A0D672B96723C004FB15A /* Resources */,
+				A131C29F2F839B8800200A8D /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A13F0B3A2F7A344F0050EFC3 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A18D86072F63FCF4005E3751 /* XXDK */,
@@ -147,6 +226,27 @@
 			productReference = 980A0D692B96723C004FB15A /* iOSExample.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A13F0B332F7A344F0050EFC3 /* NotiServiceExt */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A13F0B402F7A344F0050EFC3 /* Build configuration list for PBXNativeTarget "NotiServiceExt" */;
+			buildPhases = (
+				A13F0B302F7A344F0050EFC3 /* Sources */,
+				A13F0B312F7A344F0050EFC3 /* Frameworks */,
+				A13F0B322F7A344F0050EFC3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A13F0B352F7A344F0050EFC3 /* NotiServiceExt */,
+				A18D86202F63FDE2005E3751 /* Data */,
+			);
+			name = NotiServiceExt;
+			productName = NotiServiceExt;
+			productReference = A13F0B342F7A344F0050EFC3 /* NotiServiceExt.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -154,11 +254,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1520;
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 1530;
 				TargetAttributes = {
 					980A0D682B96723C004FB15A = {
 						CreatedOnToolsVersion = 15.2;
+					};
+					A13F0B332F7A344F0050EFC3 = {
+						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
@@ -183,6 +286,7 @@
 			projectRoot = "";
 			targets = (
 				980A0D682B96723C004FB15A /* iOSExample */,
+				A13F0B332F7A344F0050EFC3 /* NotiServiceExt */,
 			);
 		};
 /* End PBXProject section */
@@ -200,6 +304,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A13F0B322F7A344F0050EFC3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -207,12 +318,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A189CA432F78E99B00AAEE9F /* Notifications.swift in Sources */,
 				A19FC0CE2EF1A257007FDD0F /* Provider.swift in Sources */,
 				980A0D6D2B96723C004FB15A /* Main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A13F0B302F7A344F0050EFC3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A13F0B3A2F7A344F0050EFC3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A13F0B332F7A344F0050EFC3 /* NotiServiceExt */;
+			targetProxy = A13F0B392F7A344F0050EFC3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		980A0D782B96723E004FB15A /* Debug */ = {
@@ -388,7 +515,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = HavenIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = iOSExample/iOSExample.entitlements;
+				CODE_SIGN_ENTITLEMENTS = iOSExample/iOSExampleRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iOSExample/Preview Content\"";
@@ -433,6 +560,71 @@
 			};
 			name = Release;
 		};
+		A13F0B3D2F7A344F0050EFC3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = NotiServiceExt/NotiServiceExt.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotiServiceExt/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotiServiceExt;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.client.haven.beta.NotiServiceExt;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A13F0B3E2F7A344F0050EFC3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = NotiServiceExt/NotiServiceExt.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotiServiceExt/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotiServiceExt;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.client.haven.beta.NotiServiceExt;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -450,6 +642,15 @@
 			buildConfigurations = (
 				980A0D7B2B96723E004FB15A /* Debug */,
 				980A0D7C2B96723E004FB15A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A13F0B402F7A344F0050EFC3 /* Build configuration list for PBXNativeTarget "NotiServiceExt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A13F0B3D2F7A344F0050EFC3 /* Debug */,
+				A13F0B3E2F7A344F0050EFC3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -500,9 +701,18 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A12A4F1B2F84DBDF007AB042 /* HavenCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HavenCore;
+		};
 		A13E2B2D2F84B5A900898CF2 /* HavenCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = HavenCore;
+		};
+		A13F0E172F7A5B360050EFC3 /* SQLiteData */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1A4FCF12F5B3C1B006D6B39 /* XCRemoteSwiftPackageReference "sqlite-data" */;
+			productName = SQLiteData;
 		};
 		A1445D652F6036BA00FB3744 /* SnapKit */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -525,6 +735,11 @@
 			productName = SQLiteData;
 		};
 		A1AAB71D2F83C40500D709FD /* Bindings */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1AAB71C2F83C40500D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */;
+			productName = Bindings;
+		};
+		A1E1993F2F84100A0043573F /* Bindings */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1AAB71C2F83C40500D709FD /* XCRemoteSwiftPackageReference "xxdk-spm" */;
 			productName = Bindings;

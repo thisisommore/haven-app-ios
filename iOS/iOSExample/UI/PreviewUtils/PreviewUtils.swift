@@ -22,7 +22,7 @@ struct Mock<Content: View>: View {
 
   init(@ViewBuilder content: @escaping () -> Content) {
     self.content = content
-    let db = try! appDatabase()
+    let db = try! appDatabase(migrate: true)
     self.database = db
     try! Self.seedPreviewDatabase(db)
   }

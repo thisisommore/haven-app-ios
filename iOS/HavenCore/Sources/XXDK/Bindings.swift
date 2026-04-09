@@ -156,6 +156,22 @@ public enum BindingsStatic {
     if let err { throw err }
   }
 
+  public static func getDmNotificationReportsForMe(notificationFilterJSON: Data?, notificationDataCSV: String?) throws -> [DMNotificationReport] {
+    var err: NSError?
+    let data = Bindings.BindingsGetDmNotificationReportsForMe(notificationFilterJSON, notificationDataCSV, &err)
+    if let err { throw err }
+    guard let data else { throw XXDKError.custom("no data") }
+    return try Parser.decode([DMNotificationReport].self, from: data)
+  }
+
+  public static func getChannelNotificationReportsForMe(notificationFilterJSON: Data?, notificationDataCSV: String?) throws -> [ChannelNotificationReport] {
+    var err: NSError?
+    let data = Bindings.BindingsGetChannelNotificationReportsForMe(notificationFilterJSON, notificationDataCSV, &err)
+    if let err { throw err }
+    guard let data else { throw XXDKError.custom("no data") }
+    return try Parser.decode([ChannelNotificationReport].self, from: data)
+  }
+
   public static func loadCmix(stateDir: String, secret: Data, paramsJSON: Data) throws -> Bindings
     .BindingsCmix? {
     var err: NSError?
@@ -242,6 +258,22 @@ public final class BindingsChannelsManagerWrapper {
 
   public func enableDirectMessages(_ channelIdData: Data) throws {
     try self.inner.enableDirectMessages(channelIdData)
+  }
+
+  public enum ChannelNotificationsLevel: Int {
+    case none = 10
+    case ping = 20
+    case all = 40
+  }
+
+  public enum ChannelNotificationStatus: Int {
+    case mute = 0
+    case whenOpen = 1
+    case push = 2
+  }
+
+  public func setMobileNotificationsLevel(_ channelIdData: Data, level: ChannelNotificationsLevel, status: ChannelNotificationStatus) throws {
+    try self.inner.setMobileNotificationsLevel(channelIdData, level: level.rawValue, status: status.rawValue)
   }
 
   public func disableDirectMessages(_ channelIdData: Data) throws {

@@ -88,6 +88,12 @@ final class MockChannels: ChannelsP {
 
   func disableDirectMessages(channelId _: String) throws {}
 
+  func setNotifications(
+    channelId _: String,
+    level _: BindingsChannelsManagerWrapper.ChannelNotificationsLevel,
+    status _: BindingsChannelsManagerWrapper.ChannelNotificationStatus
+  ) throws {}
+
   func areDMsEnabled(channelId _: String) throws -> Bool {
     true
   }
@@ -247,6 +253,8 @@ final class XXDKMock: XXDKP {
     // Mock: return mock private identity data
     return "mock-private-identity".data
   }
+
+  func addApnsToken(_: String) {}
 
   func logout() async throws {
     // Mock: reset state

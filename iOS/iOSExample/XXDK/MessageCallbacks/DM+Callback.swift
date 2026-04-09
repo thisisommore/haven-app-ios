@@ -102,6 +102,9 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
       switch eventType {
       case 1000:
         _ = try Parser.decode(DmNotificationUpdateJSON.self, from: jsonData)
+        UserDefaults(suiteName: GROUP_ID)!
+          .set(jsonData,
+               forKey: USER_DEFAULT_DM_NOTIFICATION_FILTER_KEY)
       case 2000:
         _ = try Parser.decode(DmBlockedUserJSON.self, from: jsonData)
       case 3000:

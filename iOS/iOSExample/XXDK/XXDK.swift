@@ -39,10 +39,12 @@ final class XXDK: XXDKP {
 
   var storageTagListener: RemoteKVKeyChangeListener?
   var remoteKV: Bindings.BindingsRemoteKV?
+  var notifications: Bindings.BindingsNotifications?
   var cmix: Bindings.BindingsCmix?
   var eventModelBuilder = ChannelEventModelBuilder()
   var channelUICallbacks: ChannelUICallbacks
   @Dependency(\.appStorage) var appStorage
+  var apnsTokenHex: String?
 
   // MARK: - Init
 
@@ -111,6 +113,7 @@ extension XXDK {
     self._dm = nil
     self.cmix = nil
     self.remoteKV = nil
+    self.notifications = nil
     self.storageTagListener = nil
 
     // 5. Clear caches
@@ -241,5 +244,10 @@ extension XXDK {
       )
       fatalError("DownloadAndVerifySignedNdfWithUrl failed: " + error.localizedDescription)
     }
+  }
+
+  func addApnsToken(_ token: String) {
+    self.apnsTokenHex = token
+    self.registerStoredApnsToken()
   }
 }

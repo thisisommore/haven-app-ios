@@ -8,7 +8,7 @@
 import Foundation
 import SQLiteData
 
-public func appDatabase() throws -> any DatabaseWriter {
+public func appDatabase(migrate: Bool) throws -> any DatabaseWriter {
   @Dependency(\.context) var context
   var configuration = Configuration()
   #if DEBUG
@@ -22,20 +22,20 @@ public func appDatabase() throws -> any DatabaseWriter {
       }
     }
   #endif
-  let appSupportDir = try FileManager.default.url(
-    for: .applicationSupportDirectory,
-    in: .userDomainMask,
-    appropriateFor: nil,
-    create: true
+  let appSupportDir = FileManager.default.containerURL(
+    forSecurityApplicationGroupIdentifier: GROUP_ID
   )
-  let dbPath = appSupportDir.appending(component: "SQLiteData.db").path
+  let dbPath = appSupportDir!.appendingPathComponent("SQLiteData.db").path
   let database = try defaultDatabase(path: dbPath, configuration: configuration)
-  var migrator = DatabaseMigrator()
-  #if DEBUG
-    migrator.eraseDatabaseOnSchemaChange = true
-  #endif
+  if migrate {
+    var migrator = DatabaseMigrator()
+    #if DEBUG
+      migrator.eraseDatabaseOnSchemaChange = true
+    #endif
 
-  migrator.v1()
-  try migrator.migrate(database)
+    migrator.v1()
+    try migrator.migrate(database)
+  }
+
   return database
 }

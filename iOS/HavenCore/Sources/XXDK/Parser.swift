@@ -625,3 +625,42 @@ public struct DmEmptyJSONObject: Decodable {
     _ = try decoder.container(keyedBy: EmptyKeys.self)
   }
 }
+
+public struct DMNotificationReport: Decodable {
+  public let partner: Data
+  public let type: DMMessageType
+}
+
+public enum DMMessageType: Int, Decodable {
+  case text = 1
+  case reply = 2
+  case reaction = 3
+  case silent = 4
+  case invitation = 5
+  case delete = 6
+}
+
+public enum ChannelsMessageType: Int, Decodable {
+  case text = 1
+  case adminText = 2
+  case reaction = 3
+  case silent = 4
+  case invitation = 5
+  case delete = 6
+  case pinned = 7
+  case mute = 8
+  case adminReplay = 9
+  case fileTransfer = 10
+}
+
+public struct ChannelNotificationReport: Decodable {
+  public let channel: Data
+  public let type: ChannelsMessageType
+  public let pingType: ChannelPingType?
+}
+
+public enum ChannelPingType: String, Decodable {
+  case generic = ""
+  case reply = "usrReply"
+  case mention = "usrMention"
+}

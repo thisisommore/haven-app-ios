@@ -12,17 +12,23 @@ import SwiftUI
 
 @main
 struct Main: App {
+  @StateObject private var xxdk = XXDK()
+  @UIApplicationDelegateAdaptor(Notifications.self) var notificationDelegate
+
   init() {
     prepareDependencies {
-      $0.defaultDatabase = try! appDatabase()
+      $0.defaultDatabase = try! appDatabase(migrate: true)
       $0.appStorage = AppStorage()
     }
   }
 
   var body: some Scene {
     WindowGroup {
-      Provider {
+      Provider(xxdk: self.xxdk) {
         Root()
+      }
+      .onAppear {
+        self.notificationDelegate.set(xxdk: self.xxdk)
       }
     }
   }

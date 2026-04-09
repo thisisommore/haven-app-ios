@@ -1,5 +1,6 @@
 import Bindings
 import Foundation
+import HavenCore
 import SQLiteData
 
 // NOTE:
@@ -39,5 +40,19 @@ enum ChannelEvent: Int64, CustomStringConvertible {
 }
 
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
-  func eventUpdate(_: Int64, jsonData _: Data?) {}
+  func eventUpdate(_ eventType: Int64, jsonData: Data?) {
+    guard let jsonData
+    else {
+      return
+    }
+
+    switch ChannelEvent(rawValue: eventType) {
+    case .notificationUpdate:
+      UserDefaults(suiteName: GROUP_ID)?
+        .set(jsonData,
+             forKey: USER_DEFAULT_CHANNEL_NOTIFICATION_FILTER_KEY)
+    default:
+      break
+    }
+  }
 }
