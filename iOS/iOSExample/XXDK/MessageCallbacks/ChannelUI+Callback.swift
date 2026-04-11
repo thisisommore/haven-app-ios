@@ -40,6 +40,31 @@ enum ChannelEvent: Int64, CustomStringConvertible {
 }
 
 final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksProtocol {
+  @Dependency(\.defaultDatabase) var database
+  private func storeNotificationSettings(_ states: [ChannelNotificationStateJSON]) {
+    guard !states.isEmpty else { return }
+
+    do {
+      try self.database.write { db in
+        for state in states {
+          guard let channelId = state.channelID?.base64EncodedString(), var chat = try (ChatModel.where { $0.channelId.eq(channelId) }.fetchOne(db)),
+                !chat.isSelfChat
+          else {
+            continue
+          }
+          let level = NotificationLevel(rawValue: state.level) ?? .none
+
+          chat.notificationLevel = level
+          try ChatModel.update(chat).execute(db)
+        }
+      }
+    } catch {
+      AppLogger.messaging.error(
+        "Failed to cache DM notification update: \(error.localizedDescription, privacy: .public)"
+      )
+    }
+  }
+
   func eventUpdate(_ eventType: Int64, jsonData: Data?) {
     guard let jsonData
     else {
@@ -48,9 +73,14 @@ final class ChannelUICallbacks: NSObject, Bindings.BindingsChannelUICallbacksPro
 
     switch ChannelEvent(rawValue: eventType) {
     case .notificationUpdate:
+      let update = try! Parser.decode(ChannelNotificationUpdateJSON.self, from: jsonData)
       UserDefaults(suiteName: GROUP_ID)?
         .set(jsonData,
              forKey: USER_DEFAULT_CHANNEL_NOTIFICATION_FILTER_KEY)
+      if let changedNoti = update.changedNotificationStates {
+        self.storeNotificationSettings(changedNoti)
+      }
+
     default:
       break
     }

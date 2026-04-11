@@ -22,6 +22,7 @@ public extension DatabaseMigrator {
           "color" INTEGER NOT NULL,
           "isAdmin" INTEGER NOT NULL,
           "isSecret" INTEGER NOT NULL,
+          "notificationLevel" INTEGER NOT NULL,
           "joinedAt" TEXT NOT NULL,
           "unreadCount" INTEGER NOT NULL
         ) STRICT

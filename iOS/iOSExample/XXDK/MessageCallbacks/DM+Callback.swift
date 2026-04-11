@@ -22,6 +22,17 @@ struct ReceivedMessage: Identifiable {
   var id = UUID()
 }
 
+enum DMEventType: Int64 {
+  case notificationUpdate = 1000
+  case blockedUser = 2000
+  case messageReceived = 3000
+  case messageDeleted = 4000
+
+  static func from(_ eventType: Int64) -> DMEventType? {
+    DMEventType(rawValue: eventType)
+  }
+}
+
 final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMReceiverProtocol, Bindings
   .BindingsDmCallbacksProtocol, Bindings.BindingsDMReceiverBuilderProtocol {
   func build(_: String?) -> (any BindingsDMReceiverProtocol)? {
@@ -99,17 +110,18 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     }
 
     do {
-      switch eventType {
-      case 1000:
-        _ = try Parser.decode(DmNotificationUpdateJSON.self, from: jsonData)
+      switch DMEventType.from(eventType) {
+      case .notificationUpdate:
+        let update = try Parser.decode(DmNotificationUpdateJSON.self, from: jsonData)
         UserDefaults(suiteName: GROUP_ID)!
           .set(jsonData,
                forKey: USER_DEFAULT_DM_NOTIFICATION_FILTER_KEY)
-      case 2000:
+        self.storeNotificationSettings(update.changed)
+      case .blockedUser:
         _ = try Parser.decode(DmBlockedUserJSON.self, from: jsonData)
-      case 3000:
+      case .messageReceived:
         _ = try Parser.decode(DmMessageReceivedJSON.self, from: jsonData)
-      case 4000:
+      case .messageDeleted:
         _ = try Parser.decode(DmMessageDeletedJSON.self, from: jsonData)
       default: break
       }
@@ -122,6 +134,29 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
 
   @Dependency(\.defaultDatabase) private var database
   private let receiverHelpers = ReceiverHelpers.shared
+
+  private func storeNotificationSettings(_ states: [DmNotificationStateJSON]) {
+    guard !states.isEmpty else { return }
+
+    do {
+      try self.database.write { db in
+        for state in states {
+          guard var chat = try (ChatModel.where { $0.pubKey.eq(state.pubKey) }.fetchOne(db)),
+                !chat.isSelfChat
+          else {
+            continue
+          }
+          let level = NotificationLevel(rawValue: state.level) ?? .none
+          chat.notificationLevel = level
+          try ChatModel.update(chat).execute(db)
+        }
+      }
+    } catch {
+      AppLogger.messaging.error(
+        "Failed to cache DM notification update: \(error.localizedDescription, privacy: .public)"
+      )
+    }
+  }
 
   func deleteMessage(_: Data?, senderPubKey _: Data?) -> Bool {
     return true

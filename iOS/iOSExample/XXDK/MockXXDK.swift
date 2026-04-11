@@ -19,6 +19,44 @@ private struct MockChannelsMessaging: ChannelsMessagingP {
   func delete(channelId _: String, messageId _: String) {}
 }
 
+final class MockDirectMessage: DirectMessageP {
+  func getPublicKey() -> Data? {
+    Data("mock-self".utf8)
+  }
+
+  func send(msg _: String, toPubKey _: Data, partnerToken _: Int32) {}
+
+  func reply(
+    msg _: String,
+    toPubKey _: Data,
+    partnerToken _: Int32,
+    replyToMessageIdB64 _: String
+  ) {}
+
+  func react(
+    emoji _: String,
+    toMessageIdB64 _: String,
+    toPubKey _: Data,
+    partnerToken _: Int32
+  ) {}
+
+  func getToken() -> Int64 {
+    0
+  }
+
+  func getNickname() throws -> String {
+    ""
+  }
+
+  func setNickname(_: String) throws {}
+
+  func setNotifications(pubKey _: Data, level _: NotificationLevel) throws {}
+
+  func getNotificationSettings(pubKey _: Data) throws -> NotificationLevel {
+    .all
+  }
+}
+
 final class MockChannels: ChannelsP {
   let msg: ChannelsMessagingP
 
@@ -90,9 +128,12 @@ final class MockChannels: ChannelsP {
 
   func setNotifications(
     channelId _: String,
-    level _: BindingsChannelsManagerWrapper.ChannelNotificationsLevel,
-    status _: BindingsChannelsManagerWrapper.ChannelNotificationStatus
+    level _: NotificationLevel,
   ) throws {}
+
+  func getNotificationSettings(channelId _: String) throws -> NotificationLevel {
+    .all
+  }
 
   func areDMsEnabled(channelId _: String) throws -> Bool {
     true
@@ -130,7 +171,7 @@ final class MockChannels: ChannelsP {
 final class XXDKMock: XXDKP {
   let channel = MockChannels()
 
-  var dm: DirectMessage?
+  var dm: MockDirectMessage? = MockDirectMessage()
 
   func importChannelAdminKey(
     channelId _: String, encryptionPassword _: String, privateKey _: String

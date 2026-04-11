@@ -27,6 +27,7 @@ public struct ChatModel: Identifiable, Hashable, Sendable {
   public var isSecret: Bool = false
   public var isAdmin: Bool = false
   public var color: Int = 0xE97451 // burnt sienna
+  public var notificationLevel: NotificationLevel = .none
   //
 
   // DM only
@@ -36,6 +37,10 @@ public struct ChatModel: Identifiable, Hashable, Sendable {
 
   public var isChannel: Bool {
     self.name != Self.selfChatInternalName && self.dmToken == nil
+  }
+
+  public var isSelfChat: Bool {
+    self.name == Self.selfChatInternalName
   }
 }
 
@@ -58,6 +63,7 @@ public extension ChatModel {
     self.name = name
     self.dmToken = dmToken
     self.color = color
+    self.notificationLevel = name == Self.selfChatInternalName ? .none : .all
   }
 }
 

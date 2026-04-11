@@ -23,6 +23,33 @@ struct SecretBadge: View {
   }
 }
 
+struct NotificationStatusIcon: View {
+  let level: NotificationLevel
+
+  private var isMuted: Bool {
+    self.level == .none
+  }
+
+  private var systemName: String {
+    if self.isMuted {
+      return "speaker.slash.fill"
+    }
+    return "speaker.wave.2.fill"
+  }
+
+  private var displayName: String {
+    self.isMuted ? "Muted" : "On"
+  }
+
+  var body: some View {
+    Image(systemName: self.systemName)
+      .font(.system(size: 12, weight: .semibold))
+      .foregroundStyle(Color(uiColor: .secondaryLabel))
+      .frame(width: 16, height: 16)
+      .accessibilityLabel("Notifications \(self.displayName)")
+  }
+}
+
 struct UnreadBadge: View {
   let count: Int
 
@@ -131,6 +158,11 @@ struct ChatRowView<T: XXDKP>: View {
           }
           if self.isChannel && self.chat.isAdmin {
             AdminBadge()
+          }
+          if !self.chat.isSelfChat {
+            NotificationStatusIcon(
+              level: self.chat.notificationLevel
+            )
           }
         }
 

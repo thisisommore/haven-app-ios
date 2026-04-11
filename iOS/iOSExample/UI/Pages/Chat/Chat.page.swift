@@ -28,7 +28,52 @@ struct ChatView<T: XXDKP>: View {
     return name == "ChatModel.selfChatInternalName" ? "Notes" : name
   }
 
-  var body: some View {
+  private var toolbar: some ToolbarContent {
+    Group {
+      ToolbarItem(placement: .topBarLeading) {
+        Button {
+          if self.selectedChat.chatId == self.chatId {
+            self.selectedChat.clear()
+          } else {
+            self.dismiss()
+          }
+        } label: {
+          HStack(spacing: 2) {
+            Image(systemName: "chevron.left")
+            Text("back")
+          }
+          .font(.headline)
+          .foregroundStyle(.haven)
+        }
+      }
+      ToolbarItem(placement: .principal) {
+        Button {
+          self.controller.activeSheet = .channelOptions
+        } label: {
+          HStack(spacing: 4) {
+            Text(self.chatTitle)
+              .font(.headline.weight(.semibold))
+              .foregroundStyle(.primary)
+            if let chat = self.controller.chat {
+              if chat.isChannel {
+                if chat.isSecret == true {
+                  SecretBadge()
+                }
+                if chat.isAdmin {
+                  AdminBadge()
+                }
+              }
+              if !chat.isSelfChat {
+                NotificationStatusIcon(level: chat.notificationLevel)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private var chatMessagesStack: some View {
     ZStack {
       if let chat = self.controller.chat {
         ChatMessages(
@@ -67,109 +112,88 @@ struct ChatView<T: XXDKP>: View {
         EmptyChatView()
       }
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.appBackground)
-    .safeAreaInset(edge: .bottom, spacing: 0) {
-      if self.controller.isMuted {
-        HStack {
-          Image(systemName: "speaker.slash.fill")
-            .foregroundColor(.secondary)
-          Text("You are muted in this channel")
-            .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(.ultraThinMaterial)
-      } else {
-        MessageForm<T>(
-          chat: self.controller.chat,
-          replyTo: self.controller.replyingTo,
-          onCancelReply: {
-            self.controller.replyingTo = nil
-          }
-        )
-        .padding(.vertical, 4)
+  }
+
+  @ViewBuilder
+  private var bottomInset: some View {
+    if self.controller.isMuted {
+      HStack {
+        Image(systemName: "speaker.slash.fill")
+          .foregroundColor(.secondary)
+        Text("You are muted in this channel")
+          .foregroundColor(.secondary)
       }
+      .frame(maxWidth: .infinity)
+      .padding()
+      .background(.ultraThinMaterial)
+    } else {
+      MessageForm<T>(
+        chat: self.controller.chat,
+        replyTo: self.controller.replyingTo,
+        onCancelReply: {
+          self.controller.replyingTo = nil
+        }
+      )
+      .padding(.vertical, 4)
     }
-    .navigationBarTitleDisplayMode(.inline)
-    .navigationBarBackButtonHidden(true)
-    .toolbar {
-      ToolbarItem(placement: .topBarLeading) {
-        Button {
-          if self.selectedChat.chatId == self.chatId {
-            self.selectedChat.clear()
-          } else {
-            self.dismiss()
-          }
-        } label: {
-          HStack(spacing: 2) {
-            Image(systemName: "chevron.left")
-            Text("back")
-          }
-          .font(.headline)
-          .foregroundStyle(.haven)
-        }
+  }
+
+  private var root: some View {
+    self.chatMessagesStack
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .background(Color.appBackground)
+      .safeAreaInset(edge: .bottom, spacing: 0) {
+        self.bottomInset
       }
-      ToolbarItem(placement: .principal) {
-        Button {
-          self.controller.activeSheet = .channelOptions
-        } label: {
-          HStack(spacing: 4) {
-            Text(self.chatTitle)
-              .font(.headline.weight(.semibold))
-              .foregroundStyle(.primary)
-            if let chat = self.controller.chat, chat.isChannel {
-              if chat.isSecret == true {
-                SecretBadge()
-              }
-              if chat.isAdmin {
-                AdminBadge()
-              }
+      .navigationBarTitleDisplayMode(.inline)
+      .navigationBarBackButtonHidden(true)
+      .toolbar {
+        self.toolbar
+      }
+      .sheet(
+        item: self.$controller.activeSheet
+      ) { sheet in
+        switch sheet {
+        case .channelOptions:
+          if let chat = self.controller.chat {
+            ChannelOptionsSheet<T>(chat: chat) {
+              self.controller.leaveChannel(
+                chatId: self.chatId,
+                chat: self.controller.chat,
+                xxdk: self.xxdk,
+                dismiss: { self.dismiss() }
+              )
             }
+            .environmentObject(self.xxdk)
           }
-        }
-      }
-    }
-    .sheet(
-      item: self.$controller.activeSheet
-    ) { sheet in
-      switch sheet {
-      case .channelOptions:
-        if let chat = self.controller.chat {
-          ChannelOptionsSheet<T>(chat: chat) {
-            self.controller.leaveChannel(
-              chatId: self.chatId,
-              chat: self.controller.chat,
-              xxdk: self.xxdk,
-              dismiss: { self.dismiss() }
+        case let .emojiKeyboard(message):
+          EmojiKeyboardSheet { emoji in
+            if emoji.isEmpty {
+              self.controller.activeSheet = nil
+              return
+            }
+            self.controller.sendReaction(
+              emoji, to: message, chat: self.controller.chat, xxdk: self.xxdk
             )
-          }
-          .environmentObject(self.xxdk)
-        }
-      case let .emojiKeyboard(message):
-        EmojiKeyboardSheet { emoji in
-          if emoji.isEmpty {
             self.controller.activeSheet = nil
-            return
           }
-          self.controller.sendReaction(
-            emoji, to: message, chat: self.controller.chat, xxdk: self.xxdk
-          )
-          self.controller.activeSheet = nil
         }
       }
-    }
-    .onAppear {
-      self.controller.onAppear()
-    }
-    .id("chat-\(self.chatId.uuidString)")
-    .onChange(of: self.controller.chat?.unreadCount) { _, newValue in
-      if let chat = self.controller.chat {
-        self.controller.onUnreadCountChanged(
-          newValue: newValue, chat: chat
-        )
+  }
+
+  var body: some View {
+    self.root
+      .onAppear {
+        self.controller.onAppear()
       }
-    }
+      .id("chat-\(self.chatId.uuidString)")
+      .onChange(of: self.controller.chat?.unreadCount) { _, newValue in
+        if let chat = self.controller.chat {
+          self.controller.onUnreadCountChanged(
+            newValue: newValue, chat: chat
+          )
+        }
+      }
   }
 }
 

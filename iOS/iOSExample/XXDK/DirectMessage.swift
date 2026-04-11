@@ -21,6 +21,8 @@ protocol DirectMessageP {
   func getToken() -> Int64
   func getNickname() throws -> String
   func setNickname(_ nickname: String) throws
+  func setNotifications(pubKey: Data, level: NotificationLevel) throws
+  func getNotificationSettings(pubKey: Data) throws -> NotificationLevel
 }
 
 class DirectMessage: DirectMessageP {
@@ -44,6 +46,17 @@ class DirectMessage: DirectMessageP {
 
   func setNickname(_ nickname: String) throws {
     try self.DM.setNickname(nickname)
+  }
+
+  func setNotifications(pubKey: Data, level: NotificationLevel) throws {
+    try self.DM.setMobileNotificationsLevel(
+      pubKey,
+      level: level
+    )
+  }
+
+  func getNotificationSettings(pubKey: Data) throws -> NotificationLevel {
+    return try self.DM.getNotificationSettings(pubKey)
   }
 
   /// Persist a reaction to SwiftData

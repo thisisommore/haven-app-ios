@@ -36,9 +36,10 @@ protocol ChannelsP {
   /// Mobile push for channel (bindings + server-side filter; filter JSON also arrives via `notificationUpdate` callback).
   func setNotifications(
     channelId: String,
-    level: BindingsChannelsManagerWrapper.ChannelNotificationsLevel,
-    status: BindingsChannelsManagerWrapper.ChannelNotificationStatus
+    level: NotificationLevel
   ) throws
+
+  func getNotificationSettings(channelId: String) throws -> NotificationLevel
 
   // Admin
   func isAdmin(channelId: String) -> Bool
@@ -203,8 +204,28 @@ class Channel: ChannelsP {
     }
   }
 
-  /// Enable direct messages for a channel
-  func setNotifications(channelId: String, level: BindingsChannelsManagerWrapper.ChannelNotificationsLevel, status: BindingsChannelsManagerWrapper.ChannelNotificationStatus) throws {
+  /// Update mobile notifications for a channel.
+  func setNotifications(
+    channelId: String,
+    level: NotificationLevel
+  ) throws {
+    guard let channelsManager
+    else {
+      throw XXDKError.channelManagerNotInitialized
+    }
+
+    let channelIdData =
+      Data(base64Encoded: channelId) ?? channelId.data
+    let status = Self.getStatus(level: level)
+
+    try channelsManager.setMobileNotificationsLevel(
+      channelIdData,
+      level: level,
+      status: status
+    )
+  }
+
+  func getNotificationSettings(channelId: String) throws -> NotificationLevel {
     guard let channelsManager
     else {
       throw XXDKError.channelManagerNotInitialized
@@ -213,11 +234,8 @@ class Channel: ChannelsP {
     let channelIdData =
       Data(base64Encoded: channelId) ?? channelId.data
 
-    do {
-      try channelsManager.setMobileNotificationsLevel(channelIdData, level: level, status: status)
-    } catch {
-      fatalError("failed to enable direct messages \(error)")
-    }
+    let settings = try channelsManager.getNotificationSettings(channelIdData)
+    return settings.level
   }
 
   /// Disable direct messages for a channel
@@ -383,5 +401,14 @@ class Channel: ChannelsP {
       throw XXDKError.channelManagerNotInitialized
     }
     return try channelsManager.exportPrivateIdentity(password: password)
+  }
+
+  private static func getStatus(
+    level: NotificationLevel
+  ) -> BindingsChannelsManagerWrapper.ChannelNotificationsStatus {
+    if level == .none {
+      return .mute
+    }
+    return .push
   }
 }

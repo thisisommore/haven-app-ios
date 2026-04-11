@@ -664,3 +664,37 @@ public enum ChannelPingType: String, Decodable {
   case reply = "usrReply"
   case mention = "usrMention"
 }
+
+public struct ChannelEmptyJSONObject: Decodable {}
+
+public struct ChannelNotificationUpdateJSON: Decodable {
+  public let notificationFilters: [ChannelNotificationFilterJSON]?
+  public let changedNotificationStates: [ChannelNotificationStateJSON]?
+  public let deletedNotificationStates: [Data]?
+  public let maxState: Int
+  enum CodingKeys: String, CodingKey {
+    case notificationFilters
+    case changedNotificationStates
+    case deletedNotificationStates
+    case maxState
+  }
+}
+
+public struct ChannelNotificationFilterJSON: Decodable {
+  public let identifier: Data
+  public let channelID: Data?
+  public let tags: [String]
+  public let allowLists: ChannelAllowListsJSON
+}
+
+public struct ChannelAllowListsJSON: Decodable {
+  public let allowWithTags: [String: ChannelEmptyJSONObject]
+  public let allowWithoutTags: [String: ChannelEmptyJSONObject]
+}
+
+/// `channels.NotificationState`: channel + level + global status.
+public struct ChannelNotificationStateJSON: Decodable {
+  public let channelID: Data?
+  public let level: Int
+  public let status: Int
+}

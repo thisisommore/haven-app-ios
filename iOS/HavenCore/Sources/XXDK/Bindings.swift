@@ -8,6 +8,25 @@
 
 import Bindings
 import Foundation
+import SQLiteData
+
+// notification level for both channel and dm
+public enum NotificationLevel: Int, QueryBindable, Sendable {
+  case none = 10
+  case all = 40
+
+  // channel only
+  case ping = 20
+  //
+
+  public var displayName: String {
+    switch self {
+    case .none: return "Mute"
+    case .ping: return "Ping"
+    case .all: return "All"
+    }
+  }
+}
 
 public extension DataProtocol {
   func utf8() throws -> String {
@@ -260,20 +279,24 @@ public final class BindingsChannelsManagerWrapper {
     try self.inner.enableDirectMessages(channelIdData)
   }
 
-  public enum ChannelNotificationsLevel: Int {
-    case none = 10
-    case ping = 20
-    case all = 40
-  }
-
-  public enum ChannelNotificationStatus: Int {
+  public enum ChannelNotificationsStatus: Int, QueryBindable, Sendable {
     case mute = 0
     case whenOpen = 1
     case push = 2
   }
 
-  public func setMobileNotificationsLevel(_ channelIdData: Data, level: ChannelNotificationsLevel, status: ChannelNotificationStatus) throws {
+  public func setMobileNotificationsLevel(_ channelIdData: Data, level: NotificationLevel, status: ChannelNotificationsStatus) throws {
     try self.inner.setMobileNotificationsLevel(channelIdData, level: level.rawValue, status: status.rawValue)
+  }
+
+  public func getNotificationSettings(_ channelIdData: Data) throws -> (level: NotificationLevel, status: ChannelNotificationsStatus) {
+    var notiLevel = 0
+    try self.inner.getNotificationLevel(channelIdData, ret0_: &notiLevel)
+    let chNotiLevel = NotificationLevel(rawValue: notiLevel) ?? .none
+    var notiStatus = 0
+    try self.inner.getNotificationStatus(channelIdData, ret0_: &notiStatus)
+    let chNotiStatus = ChannelNotificationsStatus(rawValue: notiStatus) ?? .mute
+    return (chNotiLevel, chNotiStatus)
   }
 
   public func disableDirectMessages(_ channelIdData: Data) throws {
@@ -388,6 +411,16 @@ public final class BindingsDMClientWrapper {
 
   public func setNickname(_ nickname: String) throws {
     try self.inner.setNickname(nickname)
+  }
+
+  public func setMobileNotificationsLevel(_ partnerPubKey: Data, level: NotificationLevel) throws {
+    try self.inner.setMobileNotificationsLevel(partnerPubKey, level: level.rawValue)
+  }
+
+  public func getNotificationSettings(_ partnerPubKey: Data) throws -> NotificationLevel {
+    var notiLevel = 0
+    try self.inner.getNotificationLevel(partnerPubKey, ret0_: &notiLevel)
+    return NotificationLevel(rawValue: notiLevel) ?? .none
   }
 
   public func sendText(

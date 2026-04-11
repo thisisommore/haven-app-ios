@@ -35,11 +35,36 @@ final class ChannelOptionsController {
   var showLeaveConfirmation: Bool = false
   var showDeleteConfirmation: Bool = false
   var channelNickname: String = ""
+  var notificationsLevel: NotificationLevel = .none
+
+  func notificationsLevels(for chat: ChatModel) -> [NotificationLevel] {
+    chat.isChannel ? [.all, .none, .ping] : [.none, .all]
+  }
 
   @ObservationIgnored
   @Dependency(\.defaultDatabase) var database
 
-  func onAppear<T: XXDKP>(channelId: String?, xxdk: T) {
+  func onAppear<T: XXDKP>(channelId: String?, chat: ChatModel, xxdk: T) {
+    self.notificationsLevel = chat.notificationLevel
+
+    if chat.isSelfChat {
+      self.notificationsLevel = .none
+      return
+    }
+
+    if let pubKey = chat.pubKey {
+      do {
+        if let level = try xxdk.dm?.getNotificationSettings(pubKey: pubKey) {
+          self.notificationsLevel = level
+        }
+      } catch {
+        AppLogger.messaging.error(
+          "Failed to fetch DM notification settings: \(error.localizedDescription, privacy: .public)"
+        )
+      }
+      return
+    }
+
     guard let channelId else { return }
 
     do {
@@ -68,6 +93,14 @@ final class ChannelOptionsController {
     } catch {
       AppLogger.channels.error(
         "Failed to fetch channel nickname: \(error.localizedDescription, privacy: .public)"
+      )
+    }
+
+    do {
+      self.notificationsLevel = try xxdk.channel.getNotificationSettings(channelId: channelId)
+    } catch {
+      AppLogger.channels.error(
+        "Failed to fetch notification settings: \(error.localizedDescription, privacy: .public)"
       )
     }
   }
@@ -106,6 +139,29 @@ final class ChannelOptionsController {
     } catch {
       AppLogger.channels.error(
         "Failed to unmute user: \(error.localizedDescription, privacy: .public)"
+      )
+    }
+  }
+
+  func setNotificationsLevel<T: XXDKP>(
+    _ level: NotificationLevel,
+    chat: ChatModel,
+    xxdk: T
+  ) {
+    guard !chat.isSelfChat else { return }
+    guard chat.channelId != nil || (chat.pubKey != nil && xxdk.dm != nil) else { return }
+
+    do {
+      if let channelId = chat.channelId {
+        try xxdk.channel.setNotifications(channelId: channelId, level: level)
+      } else if let pubKey = chat.pubKey, let dm = xxdk.dm {
+        try dm.setNotifications(pubKey: pubKey, level: level)
+      }
+      self.notificationsLevel = level
+      self.showToast("Notification settings saved")
+    } catch {
+      AppLogger.channels.error(
+        "Failed to update notification level: \(error.localizedDescription, privacy: .public)"
       )
     }
   }
