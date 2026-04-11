@@ -47,33 +47,34 @@ final class NotificationService: UNNotificationServiceExtension {
     }
 
     // get dm reports
-    guard let dmReports = try? BindingsStatic.getDmNotificationReportsForMe(
+    let dmReports = try? BindingsStatic.getDmNotificationReportsForMe(
       notificationFilterJSON: filters.dmFilter,
       notificationDataCSV: csv
-    ) else {
-      self.deliverFallback()
-      return
-    }
-
+    )
     // get channel reports
-    guard let channelReports = try? BindingsStatic.getChannelNotificationReportsForMe(
+    let channelReports = try? BindingsStatic.getChannelNotificationReportsForMe(
       notificationFilterJSON: filters.channelFilter,
       notificationDataCSV: csv
-    ) else {
+    )
+    if dmReports == nil, channelReports == nil {
       self.deliverFallback()
       return
     }
-
     var detailedReport: [RichMapping.NotificationItem] = []
-    for i in dmReports {
-      if let item = try? RichMapping.NotificationItem.from(report: i) {
-        detailedReport.append(item)
+
+    if let dmReports {
+      for i in dmReports {
+        if let item = try? RichMapping.NotificationItem.from(report: i) {
+          detailedReport.append(item)
+        }
       }
     }
 
-    for i in channelReports {
-      if let item = try? RichMapping.NotificationItem.from(report: i) {
-        detailedReport.append(item)
+    if let channelReports {
+      for i in channelReports {
+        if let item = try? RichMapping.NotificationItem.from(report: i) {
+          detailedReport.append(item)
+        }
       }
     }
 
