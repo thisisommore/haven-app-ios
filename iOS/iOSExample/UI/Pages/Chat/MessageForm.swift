@@ -39,7 +39,7 @@ struct MessageForm<T: XXDKP>: View {
         // DM chat: send direct message or reply
         if let replyTo {
           let replyToId = replyTo.externalId
-          Task.detached {
+          Task.detached(priority: .userInitiated) {
             xxdk.dm!.reply(
               msg: trimmed,
               toPubKey: pubKey,
@@ -48,7 +48,7 @@ struct MessageForm<T: XXDKP>: View {
             )
           }
         } else {
-          Task.detached {
+          Task.detached(priority: .userInitiated) {
             xxdk.dm!.send(
               msg: trimmed,
               toPubKey: pubKey,
@@ -60,7 +60,7 @@ struct MessageForm<T: XXDKP>: View {
         // Channel chat: send via Channels Manager
         if let replyTo {
           let replyToId = replyTo.externalId
-          Task.detached {
+          Task.detached(priority: .userInitiated) {
             xxdk.channel.msg.reply(
               msg: trimmed,
               channelId: channelId,
@@ -68,7 +68,7 @@ struct MessageForm<T: XXDKP>: View {
             )
           }
         } else {
-          Task.detached {
+          Task.detached(priority: .userInitiated) {
             xxdk.channel.msg.send(
               msg: trimmed,
               channelId: channelId
