@@ -74,7 +74,8 @@ struct ChatMessageModel: Identifiable, Hashable {
     self.status = status ?? .unsent
   }
 
-  func attributedText(color: UIColor = .label, size: CGFloat = 17) -> NSAttributedString {
+  /// If `linkClickable` is true make sure to handle it saftely. For example a warning model showing link can be unsafe
+  func attributedText(color: UIColor = .label, size: CGFloat = 17, linkClickable: Bool) -> NSAttributedString {
     let tagStripped = self.message.stripParagraphTags()
     if self.isPlain {
       return NSAttributedString(string: tagStripped, attributes:
@@ -82,7 +83,7 @@ struct ChatMessageModel: Identifiable, Hashable {
     }
 
     do {
-      return try HTMLParser.parse(text: self.message, color: color, size: size)
+      return try HTMLParser.parse(text: self.message, color: color, size: size, linkClickable: linkClickable)
     } catch {
       AppLogger.messaging.error("failed to parse html \(error.localizedDescription)")
       return NSAttributedString(string: tagStripped, attributes: [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])

@@ -136,7 +136,7 @@ struct ChatRowView<T: XXDKP>: View {
         if let lastMessage = self.latestMessage.first {
           VStack(alignment: .leading, spacing: 2) {
             LastMessageSenderNameView(lastMessage: lastMessage, isDM: self.isDM)
-            Text(AttributedString(lastMessage.attributedText(color: .secondaryLabel, size: 12)))
+            Text(AttributedString(lastMessage.attributedText(color: .secondaryLabel, size: 12, linkClickable: false)))
               .foregroundStyle(Color(uiColor: .secondaryLabel))
               .font(.system(size: 12))
               .lineLimit(1)

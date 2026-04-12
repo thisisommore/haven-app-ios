@@ -11,15 +11,16 @@ final class HTMLParser {
   private let nsAttributedString = NSMutableAttributedString()
   private let color: UIColor
   private let size: CGFloat
-
+  private let linkClickable: Bool
   /// this attributes applied as default, it can be overriden see @appendAttributes
   private let baseAttrs: [NSAttributedString.Key: Any]
 
   private let boldFont: UIFont
   private let italicFont: UIFont
-  private init(color: UIColor, size: CGFloat) {
+  private init(color: UIColor, size: CGFloat, linkClickable: Bool) {
     self.color = color
     self.size = size
+    self.linkClickable = linkClickable
     self.baseAttrs = [
       .font: UIFont.systemFont(ofSize: self.size),
       .foregroundColor: self.color,
@@ -203,7 +204,9 @@ extension HTMLParser: NodeVisitor {
       var attrs: [NSAttributedString.Key: Any] = [:]
       for tag in self.activeTag {
         if tag == "a", let href = href, let url = URL(string: href) {
-          attrs[.link] = url
+          if self.linkClickable {
+            attrs[.link] = url
+          }
         } else if tag == "b" || tag == "strong" {
           attrs[.font] = self.boldFont
         } else if tag == "i" || tag == "em" {
@@ -222,8 +225,10 @@ extension HTMLParser {
     .addTags("blockquote", "p", "a", "br", "code", "ol", "ul",
              "li", "pre", "i", "strong", "b", "em", "s")
     .addAttributes("a", "href")
-  static func parse(text: String, color: UIColor, size: CGFloat) throws -> NSAttributedString {
-    let parser = Self(color: color, size: size)
+
+  /// If `linkClickable` is true make sure to handle it saftely. For example a warning model showing link can be unsafe
+  static func parse(text: String, color: UIColor, size: CGFloat, linkClickable: Bool) throws -> NSAttributedString {
+    let parser = Self(color: color, size: size, linkClickable: linkClickable)
     guard let cleanText = try SwiftSoup.clean(text, Self.safelist) else {
       throw XXDKError.custom("failed to clean html")
     }

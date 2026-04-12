@@ -14,7 +14,7 @@ extension MessageBubble {
   }
 
   private static func text(for message: ChatMessageModel) -> NSAttributedString {
-    message.attributedText()
+    message.attributedText(linkClickable: true)
   }
 
   private static func replyText(for message: MessageWithSender) -> NSAttributedString? {
@@ -186,10 +186,10 @@ extension MessageBubble: CVCell {
     let paddedW = self.padded(width)
     return self.padded(
       CGSize.maxW(
-        MessageLabel.size(for: data.message.attributedText(), width: paddedW),
+        MessageLabel.size(for: data.message.attributedText(linkClickable: true), width: paddedW),
         SenderLabel.size(for: data, width: paddedW),
         TimeLabel.size(for: Self.time(for: data), width: paddedW),
-        ReplyPreview.size(for: data.replyTo?.attributedText(), width: paddedW),
+        ReplyPreview.size(for: data.replyTo?.attributedText(linkClickable: true), width: paddedW),
 
         data.reactionEmojis.isEmpty ? .zero : MessageBubbleReactions.size(for: data.reactionEmojis, width: paddedW)
       )
