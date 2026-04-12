@@ -18,6 +18,38 @@ private struct MockChannelsMessaging: ChannelsMessagingP {
   func delete(channelId _: String, messageId _: String) {}
 }
 
+struct MockDirectMessage: DirectMessageP {
+  func getPublicKey() -> Data? {
+    "mock-dm-pubkey".data
+  }
+
+  func send(msg _: String, toPubKey _: Data, partnerToken _: Int32) {}
+
+  func reply(
+    msg _: String,
+    toPubKey _: Data,
+    partnerToken _: Int32,
+    replyToMessageIdB64 _: String
+  ) {}
+
+  func react(
+    emoji _: String,
+    toMessageIdB64 _: String,
+    toPubKey _: Data,
+    partnerToken _: Int32
+  ) {}
+
+  func getToken() -> Int64 {
+    0
+  }
+
+  func getNickname() throws -> String {
+    ""
+  }
+
+  func setNickname(_: String) throws {}
+}
+
 final class MockChannels: ChannelsP {
   let msg: ChannelsMessagingP
 
@@ -122,8 +154,7 @@ final class MockChannels: ChannelsP {
 
 final class XXDKMock: XXDKP {
   let channel = MockChannels()
-
-  var dm: DirectMessage?
+  let dm = MockDirectMessage()
 
   func importChannelAdminKey(
     channelId _: String, encryptionPassword _: String, privateKey _: String

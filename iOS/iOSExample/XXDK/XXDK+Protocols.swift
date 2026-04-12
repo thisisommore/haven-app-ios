@@ -25,7 +25,8 @@ protocol XXDKP: ObservableObject, AnyObject {
   var codename: String? { get }
   var codeset: Int { get }
   var channel: ChannelType { get }
-  var dm: DirectMessageType? { get }
+
+  var dm: DirectMessageType { get }
 
   // Cmix
   func newCmix(downloadedNdf: Data) async

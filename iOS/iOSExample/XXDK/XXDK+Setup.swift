@@ -278,7 +278,7 @@ extension XXDK {
       fatalError("err \(error)")
     }
 
-    guard let codename, let dm
+    guard let codename
     else {
       fatalError("codename/DM/modelContainer not there")
     }

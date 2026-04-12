@@ -126,27 +126,23 @@ final class HomePageController {
   }
 
   func loadCurrentNickname<T: XXDKP>(xxdk: T) {
-    do {
-      if let nickname = try xxdk.dm?.getNickname() {
-        self.currentNickname = nickname.isEmpty ? nil : nickname
-      } else {
-        self.currentNickname = nil
-      }
-    } catch {
+    if let nickname = try? xxdk.dm.getNickname() {
+      self.currentNickname = nickname.isEmpty ? nil : nickname
+    } else {
       self.currentNickname = nil
     }
   }
 
   func openShareQRCode<T: XXDKP>(xxdk: T) {
-    guard let dm = xxdk.dm,
-          let pubKey = dm.getPublicKey(),
-          !pubKey.isEmpty
+    guard
+      let pubKey = xxdk.dm.getPublicKey(),
+      !pubKey.isEmpty
     else {
       return
     }
     self.activeSheet = .qrCode(
       QRData(
-        token: dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset
+        token: xxdk.dm.getToken(), pubKey: pubKey, codeset: xxdk.codeset
       )
     )
   }
@@ -200,7 +196,9 @@ final class HomePageController {
         await xxdk.startNetworkFollower()
       }
     }
-    self.loadCurrentNickname(xxdk: xxdk)
+    if xxdk.statusPercentage == 100 {
+      self.loadCurrentNickname(xxdk: xxdk)
+    }
   }
 
   private func showToast(_ message: String, dismissAfter seconds: TimeInterval = 3) {

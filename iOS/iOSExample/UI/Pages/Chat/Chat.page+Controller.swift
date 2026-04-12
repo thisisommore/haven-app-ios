@@ -108,7 +108,7 @@ final class ChatPageController {
 
     if let token = chat.dmToken, let pubKey = chat.pubKey {
       Task.detached {
-        xxdk.dm?.react(
+        xxdk.dm.react(
           emoji: emoji,
           toMessageIdB64: message.externalId,
           toPubKey: pubKey,

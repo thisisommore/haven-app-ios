@@ -27,11 +27,11 @@ final class XXDK: XXDKP {
   }
 
   var _dm: DirectMessage?
-  var dm: DirectMessage? {
+  var dm: DirectMessage {
     if let _dm {
       return _dm
     }
-    return nil
+    fatalError("dm is not defined")
   }
 
   var stateDir: URL
