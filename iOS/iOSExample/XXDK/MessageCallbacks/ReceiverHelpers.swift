@@ -14,7 +14,7 @@ final class ReceiverHelpers {
   private init() {}
   @Dependency(\.defaultDatabase) private var database
 
-  private static var cachedSelfChatId: Data?
+  private static var cachedSelfPubKey: Data?
 
   /// Parse identity from pubKey and codeset, returning codename and color
   static func parseIdentity(pubKey: Data?, codeset: Int) throws -> (codename: String, color: Int) {
@@ -33,15 +33,15 @@ final class ReceiverHelpers {
   func isSenderSelf(senderPubKey: Data?) -> Bool {
     guard let senderPubKey else { return false }
 
-    if Self.cachedSelfChatId == nil {
+    if Self.cachedSelfPubKey == nil {
       if let selfChat = try? database.read({ db in
         try ChatModel.where { $0.id.eq(UUID.selfId) }.fetchOne(db)
       }) {
-        Self.cachedSelfChatId = selfChat.pubKey
+        Self.cachedSelfPubKey = selfChat.pubKey
       }
     }
 
-    if let selfId = Self.cachedSelfChatId {
+    if let selfId = Self.cachedSelfPubKey {
       return selfId == senderPubKey
     }
     return false
@@ -49,7 +49,7 @@ final class ReceiverHelpers {
 
   /// Clear cached self chat ID (call after user switches)
   static func clearSelfChatCache() {
-    self.cachedSelfChatId = nil
+    self.cachedSelfPubKey = nil
   }
 
   /// Fetch or create a sender, updating dmToken and nickname if exists
