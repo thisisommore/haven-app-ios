@@ -162,38 +162,33 @@ final class XXDKMock: XXDKP {
 
   func deleteMessage(channelId _: String, messageId _: String) {}
 
-  @Published var status: String = "Initiating"
-  @Published var statusPercentage: Double = 0
+  @Published var status: XXDKProgressStatus = .none
 
   var codename: String? = "Manny"
   var codeset: Int = 0
 
   func downloadNdf() async -> Data {
     withAnimation {
-      self.statusPercentage = 5
-      self.status = "Downloading NDF"
+      self.status = .downloadingNDF
     }
     return Data("mock-ndf".utf8)
   }
 
   func newCmix(downloadedNdf _: Data) async {
     withAnimation {
-      self.statusPercentage = 10
-      self.status = "Setting cmix"
+      self.status = .settingUpCmix
     }
   }
 
   func loadCmix() async {
     withAnimation {
-      self.statusPercentage = 10
-      self.status = "Loading cmix"
+      self.status = .loadingCmix
     }
   }
 
   func startNetworkFollower() async {
     withAnimation {
-      self.statusPercentage = 20
-      self.status = "Starting network follower"
+      self.status = .startingNetworkFollower
     }
   }
 
@@ -201,26 +196,15 @@ final class XXDKMock: XXDKP {
     do {
       try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
       withAnimation {
-        self.statusPercentage = 30
-        self.status = "Connecting to network"
+        self.status = .joiningChannels
       }
 
       try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
       withAnimation {
-        self.statusPercentage = 40
-        self.status = "Joining xxNetwork channel"
+        self.status = .settingUpRemoteKV
       }
 
       try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
-      withAnimation {
-        self.statusPercentage = 60
-        self.status = "Setting up KV"
-      }
-
-      try await Task.sleep(nanoseconds: 2_000_000_000) // Reduced to 2 seconds for testing
-      withAnimation {
-        self.statusPercentage = 100
-      }
     } catch {
       fatalError("error in load fake sleep: \(error)")
     }
@@ -282,7 +266,6 @@ final class XXDKMock: XXDKP {
     // Mock: reset state
     self.codename = nil
     self.codeset = 0
-    self.status = "..."
-    self.statusPercentage = 0
+    self.status = .none
   }
 }

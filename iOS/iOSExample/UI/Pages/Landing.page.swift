@@ -14,7 +14,6 @@ struct LandingPage<T: XXDKP>: View {
 
   @State private var moveUp: Bool = false
   @State private var showProgress: Bool = false
-  @State private var isLoadingDone = false
 
   var body: some View {
     VStack(spacing: 12) {
@@ -25,20 +24,15 @@ struct LandingPage<T: XXDKP>: View {
         )
       }
 
-      if self.showProgress && !self.isLoadingDone {
+      if self.showProgress {
         HStack {
-          ProgressView(value: self.xxdk.statusPercentage, total: 100).tint(
+          ProgressView().tint(
             .gray
           )
           .transition(.move(edge: .top).combined(with: .opacity))
-          .onChange(of: self.xxdk.statusPercentage) { _, newValue in
-            if newValue == 100 && self.appStorage.isSetupComplete && !self.isLoadingDone {
-              self.isLoadingDone = true
-            }
-          }
         }.frame(width: 120)
 
-        Text(self.xxdk.status).font(.system(size: 12)).foregroundStyle(
+        Text(self.xxdk.status.message).font(.system(size: 12)).foregroundStyle(
           .secondary
         )
       }
@@ -60,16 +54,6 @@ struct LandingPage<T: XXDKP>: View {
       try? await Task.sleep(nanoseconds: 300_000_000)
       withAnimation(.spring(response: 0.5, dampingFraction: 0.9)) {
         self.showProgress = true
-      }
-    }
-    .onChange(of: self.showProgress) { _, newValue in
-      if newValue && self.xxdk.statusPercentage == 100 && self.appStorage.isSetupComplete && !self.isLoadingDone {
-        self.isLoadingDone = true
-      }
-    }
-    .onChange(of: self.appStorage.isSetupComplete) { _, newValue in
-      if newValue {
-        self.isLoadingDone = true
       }
     }
   }

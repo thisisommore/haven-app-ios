@@ -1,7 +1,7 @@
 # XXDK
 
 `XXDK` is the concrete implementation used by the app to work with the xx network bindings.
-It owns the cmix lifecycle, identity state, network follower, DM client, channels manager, and setup progress exposed to the UI through `status` and `statusPercentage`.
+It owns the cmix lifecycle, identity state, network follower, DM client, channels manager, and setup progress exposed to the UI through `status`.
 
 # XXDKP for mocks
 

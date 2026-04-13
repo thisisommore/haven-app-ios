@@ -73,7 +73,6 @@ extension XXDK {
     }
 
     //
-    await progress(.connectingToNodes)
     await progress(.settingUpRemoteKV)
 
     do {
@@ -91,8 +90,6 @@ extension XXDK {
     } catch {
       fatalError("failed to set storageTagListener \(error)")
     }
-
-    await progress(.waitingForNetwork)
 
     do {
       await progress(.preparingChannelsManager)
@@ -122,8 +119,6 @@ extension XXDK {
         fatalError("BindingsLoadChannelsManager returned nil")
       }
       _channels = Channel(channelsManager: BindingsChannelsManagerWrapper(cm), cmixId: cmix.getID())
-
-      await progress(.readyExistingUser)
 
     } catch {
       fatalError("err \(error)")
@@ -195,7 +190,6 @@ extension XXDK {
     }
 
     //
-    await progress(.connectingToNodes)
     await progress(.settingUpRemoteKV)
 
     do {
@@ -213,8 +207,6 @@ extension XXDK {
     } catch {
       fatalError("failed to set storageTagListener \(error)")
     }
-
-    await progress(.waitingForNetwork)
 
     do {
       await progress(.preparingChannelsManager)
@@ -257,11 +249,6 @@ extension XXDK {
       try remoteKV.set("channels-storage-tag", objectJSON: entryData)
       // the data sometimes is not available in the listener immediately so we set it manually
       storageTagListener.data = channelsManager.getStorageTag().data
-
-      if appStorage.isSetupComplete {
-        await progress(.readyExistingUser)
-        return
-      }
 
       await progress(.joiningChannels)
       while true {
@@ -335,7 +322,5 @@ extension XXDK {
     await MainActor.run {
       appStorage.isSetupComplete = true
     }
-
-    await progress(.ready)
   }
 }

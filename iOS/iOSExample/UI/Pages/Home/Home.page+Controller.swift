@@ -26,6 +26,7 @@ enum HomeSheet: Identifiable {
 @MainActor
 @Observable
 final class HomePageController {
+  var isLoading = true
   var activeSheet: HomeSheet?
   var toastMessage: String?
   var showLogoutAlert = false
@@ -187,17 +188,22 @@ final class HomePageController {
         navigation.path = NavigationPath()
       }
     }
-    if xxdk.statusPercentage == 0, !self.didStartLoad {
+    if xxdk.status == .none, !self.didStartLoad {
       self.didStartLoad = true
       Task.detached {
         await xxdk.loadCmix()
         let privateIdentity = try! xxdk.loadSavedPrivateIdentity()
         await xxdk.loadClients(privateIdentity: privateIdentity)
         await xxdk.startNetworkFollower()
+        await MainActor.run {
+          self.loadCurrentNickname(xxdk: xxdk)
+          self.isLoading = false
+        }
       }
     }
-    if xxdk.statusPercentage == 100 {
-      self.loadCurrentNickname(xxdk: xxdk)
+
+    if xxdk.status != .none, !self.didStartLoad {
+      self.isLoading = false
     }
   }
 

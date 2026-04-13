@@ -173,7 +173,7 @@ struct PasswordCreationView<T: XXDKP>: View {
               if self.isLoading {
                 ProgressView().frame(width: 16, height: 16)
               }
-              Text(self.isLoading ? self.xxdk.status : "Continue")
+              Text(self.isLoading ? self.xxdk.status.message : "Continue")
                 .fontWeight((!self.canContinue || self.isLoading) ? .regular : .bold)
                 .foregroundStyle((!self.canContinue || self.isLoading) ? .gray : .haven)
             }

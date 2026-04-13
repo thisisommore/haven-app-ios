@@ -13,8 +13,7 @@ import SQLiteData
 import SwiftUI
 
 final class XXDK: XXDKP {
-  @Published var status: String = "..."
-  @Published var statusPercentage: Double = 0
+  @Published var status: XXDKProgressStatus = .none
   @Published var codename: String?
   @Published var codeset: Int = 0
   @Dependency(\.defaultDatabase) var database
@@ -127,8 +126,7 @@ extension XXDK {
     await MainActor.run {
       self.codename = nil
       self.codeset = 0
-      self.status = "..."
-      self.statusPercentage = 0
+      self.status = .none
     }
   }
 
@@ -205,8 +203,6 @@ extension XXDK {
       )
       fatalError("cannot start network: " + error.localizedDescription)
     }
-
-    await progress(.networkFollowerComplete)
   }
 
   /// downloadNdf uses the mainnet URL to download and verify the

@@ -20,8 +20,7 @@ struct GeneratedIdentity {
 protocol XXDKP: ObservableObject, AnyObject {
   associatedtype ChannelType: ChannelsP
   associatedtype DirectMessageType: DirectMessageP
-  var status: String { get }
-  var statusPercentage: Double { get }
+  var status: XXDKProgressStatus { get }
   var codename: String? { get }
   var codeset: Int { get }
   var channel: ChannelType { get }

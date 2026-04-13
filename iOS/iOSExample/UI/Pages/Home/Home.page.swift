@@ -47,7 +47,7 @@ struct HomeView<T: XXDKP>: View {
               )
               .frame(width: 28, height: 28)
 
-              if self.xxdk.statusPercentage != 100 {
+              if self.controller.isLoading {
                 Button(action: {
                   self.controller.showTooltip.toggle()
                 }) {
@@ -155,7 +155,7 @@ struct HomeView<T: XXDKP>: View {
                   .controlSize(.large)
                   .tint(.white)
 
-                Text(self.xxdk.status)
+                Text(self.xxdk.status.message)
                   .font(.headline)
                   .foregroundStyle(.white)
               }

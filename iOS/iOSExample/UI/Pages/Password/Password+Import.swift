@@ -154,7 +154,7 @@ struct ImportAccountSheet<T: XXDKP>: View {
 
         if self.isImporting {
           VStack {
-            Text(self.xxdk.status)
+            Text(self.xxdk.status.message)
               .font(.caption)
               .foregroundStyle(.secondary)
               .padding(.top, 8)
