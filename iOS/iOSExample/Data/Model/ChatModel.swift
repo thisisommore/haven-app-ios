@@ -12,8 +12,6 @@ import SQLiteData
 // init takes care of setting correct values
 @Table("chats")
 struct ChatModel: Identifiable, Hashable {
-  // this is transformed into readable name like Notes for user
-  private static let selfChatInternalName = "ChatModel.selfChatInternalName"
   /// Internal unique chat id
   var id: UUID = .init()
   var name: String
@@ -35,7 +33,7 @@ struct ChatModel: Identifiable, Hashable {
   //
 
   var isChannel: Bool {
-    self.name != Self.selfChatInternalName && self.dmToken == nil
+    self.id != UUID.selfId && self.dmToken == nil
   }
 }
 
@@ -58,6 +56,19 @@ extension ChatModel {
     self.name = name
     self.dmToken = dmToken
     self.color = color
+  }
+
+  private init(pubkey: Data, dmToken: Int32) {
+    self.pubKey = pubkey
+    self.dmToken = dmToken
+    self.color = 0
+    self.id = UUID.selfId
+    self.color = 0xE97451
+    self.name = "Notes"
+  }
+
+  static func selfChat(pubkey: Data, dmToken: Int32) -> ChatModel {
+    return ChatModel(pubkey: pubkey, dmToken: dmToken)
   }
 }
 

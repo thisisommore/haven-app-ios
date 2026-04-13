@@ -56,7 +56,7 @@ final class ChatPageController {
         }
 
         // get self chat, from it get pubkey and get muted user for that pub key
-        .join(ChatModel.as(SelfChatAlias.self).where { $0.name.eq("ChatModel.selfChatInternalName") }) {
+        .join(ChatModel.as(SelfChatAlias.self).where { $0.id.eq(UUID.selfId) }) {
           $2.pubKey.eq($0.pubkey)
         }
         .select { mutedUser, _, _ in mutedUser }

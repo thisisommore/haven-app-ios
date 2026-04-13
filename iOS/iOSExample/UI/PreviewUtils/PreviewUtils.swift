@@ -67,7 +67,7 @@ struct Mock<Content: View>: View {
         )
       }.execute(db)
 
-      for name in ["ChatModel.selfChatInternalName", "Tom", "Shashank"] {
+      for name in ["Notes", "Tom", "Shashank"] {
         let dmChat = ChatModel(
           pubKey: name.data, name: name, dmToken: 0, color: greenColorInt
         )

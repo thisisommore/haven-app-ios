@@ -54,7 +54,7 @@ struct ChatRowView<T: XXDKP>: View {
   }
 
   private var isChannel: Bool {
-    self.chat.name != "ChatModel.selfChatInternalName" && self.chat.dmToken == nil
+    self.chat.id != UUID.selfId && self.chat.dmToken == nil
   }
 
   private var isDM: Bool {
@@ -82,9 +82,6 @@ struct ChatRowView<T: XXDKP>: View {
 
   /// Display name for chat title
   private var chatDisplayName: String {
-    if self.chat.name == "ChatModel.selfChatInternalName" {
-      return "Notes"
-    }
     if self.isDM, let nickname = dmPartnerNickname, !nickname.isEmpty {
       return "\(self.truncateNickname(nickname)) aka \(self.chat.name)"
     }
@@ -116,7 +113,7 @@ struct ChatRowView<T: XXDKP>: View {
 
   var body: some View {
     HStack(alignment: .top) {
-      if self.chat.name == "ChatModel.selfChatInternalName" {
+      if self.chat.id == UUID.selfId {
         Image(systemName: "bookmark.circle.fill").font(.system(size: 40)).foregroundStyle(
           .haven
         ).symbolRenderingMode(.hierarchical)
@@ -142,7 +139,7 @@ struct ChatRowView<T: XXDKP>: View {
               .lineLimit(1)
               .truncationMode(.tail)
           }
-        } else if self.chat.name != "ChatModel.selfChatInternalName" {
+        } else if self.chat.id != UUID.selfId {
           Text("No messages yet")
             .font(.system(size: 12))
             .foregroundStyle(Color(uiColor: .secondaryLabel))

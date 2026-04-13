@@ -283,12 +283,7 @@ extension XXDK {
           let token64 = dm.getToken()
           let tokenU32 = UInt32(truncatingIfNeeded: token64)
           let selfToken = Int32(bitPattern: tokenU32)
-          let chat = ChatModel(
-            pubKey: selfPubKeyData,
-            name: "ChatModel.selfChatInternalName",
-            dmToken: selfToken,
-            color: 0xE97451
-          )
+          let chat = ChatModel.selfChat(pubkey: selfPubKeyData, dmToken: selfToken)
           let sender = MessageSenderModel.selfSender(pubkey: selfPubKeyData)
           try await database.write { db in
             try ChatModel.insert { chat }.execute(db)
