@@ -139,7 +139,6 @@ struct ChatView<T: XXDKP>: View {
           ChannelOptionsSheet<T>(chat: chat) {
             self.controller.leaveChannel(
               chatId: self.chatId,
-              chat: self.controller.chat,
               xxdk: self.xxdk,
               dismiss: { self.dismiss() }
             )
@@ -153,7 +152,7 @@ struct ChatView<T: XXDKP>: View {
             return
           }
           self.controller.sendReaction(
-            emoji, to: message, chat: self.controller.chat, xxdk: self.xxdk
+            emoji, to: message, xxdk: self.xxdk
           )
           self.controller.activeSheet = nil
         }
@@ -164,11 +163,9 @@ struct ChatView<T: XXDKP>: View {
     }
     .id("chat-\(self.chatId.uuidString)")
     .onChange(of: self.controller.chat?.unreadCount) { _, newValue in
-      if let chat = self.controller.chat {
-        self.controller.onUnreadCountChanged(
-          newValue: newValue, chat: chat
-        )
-      }
+      self.controller.onUnreadCountChanged(
+        newValue: newValue
+      )
     }
   }
 }

@@ -94,14 +94,14 @@ final class ChatPageController {
   }
 
   func onUnreadCountChanged(
-    newValue: Int?, chat _: ChatModel
+    newValue: Int?
   ) {
     guard let newValue, newValue > 0 else { return }
     self.markMessagesAsRead()
   }
 
   func sendReaction<T: XXDKP>(
-    _ emoji: String, to message: ChatMessageModel, chat: ChatModel?, xxdk: T
+    _ emoji: String, to message: ChatMessageModel, xxdk: T
   ) {
     guard !emoji.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
     guard let chat else { return }
@@ -186,7 +186,7 @@ final class ChatPageController {
   }
 
   func leaveChannel<T: XXDKP>(
-    chatId: UUID, chat: ChatModel?, xxdk: T,
+    chatId: UUID, xxdk: T,
     dismiss: @escaping () -> Void
   ) {
     Task {
