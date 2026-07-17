@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct MacSidebar: View {
   @State private var controller = HomePageController()
@@ -22,6 +23,9 @@ struct MacSidebar: View {
           .tag(chat.id)
       }
     }
+    // Neutralize the accent-colored selection/press highlight in the sidebar;
+    // rows render with the native gray selection instead.
+    .tint(Color(nsColor: .unemphasizedSelectedContentBackgroundColor))
     .searchable(text: self.$controller.searchText, placement: .sidebar, prompt: "Search chats")
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
@@ -34,23 +38,9 @@ struct MacSidebar: View {
         .menuStyle(.borderlessButton)
         .help("New chat")
       }
-
-      ToolbarItem(placement: .navigation) {
-        Menu {
-          if let nickname = controller.currentNickname {
-            Text(nickname)
-          }
-          Button("My QR Code…") { self.controller.openShareQRCode(xxdk: self.xxdk) }
-          Button("Nickname…") { self.controller.activeSheet = .nicknamePicker }
-          Button("Export Identity…") { self.controller.activeSheet = .exportIdentity }
-          Divider()
-          Button("Log Out…", role: .destructive) { self.controller.showLogoutAlert = true }
-        } label: {
-          Image(systemName: "person.circle")
-        }
-        .menuStyle(.borderlessButton)
-        .help("Account")
-      }
+    }
+    .safeAreaInset(edge: .bottom) {
+      MacAccountChip<XXDK>(controller: self.controller)
     }
     .sheet(item: self.$controller.activeSheet) { sheet in
       switch sheet {

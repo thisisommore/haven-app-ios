@@ -152,6 +152,7 @@ struct MacChatMessagesView: View {
         .padding(.vertical, 10)
       }
       .defaultScrollAnchor(.bottom)
+      .background(Color.appBackground)
       .sheet(item: self.$reactorsFor) { message in
         ReactorsSheet(
           targetMessageId: message.externalId,

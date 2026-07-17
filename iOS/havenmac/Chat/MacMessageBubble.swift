@@ -93,6 +93,7 @@ struct MacMessageBubble: View {
             })
 
           HStack(spacing: 4) {
+            Spacer(minLength: 16)
             if self.message.status == .unsent || self.message.status == .deleting {
               Image(systemName: "clock")
                 .font(.system(size: 9))
@@ -102,7 +103,6 @@ struct MacMessageBubble: View {
               .font(.caption2)
               .foregroundStyle(.secondary)
           }
-          .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -114,6 +114,7 @@ struct MacMessageBubble: View {
               .transition(.opacity)
           }
         }
+        .frame(maxWidth: 520, alignment: self.isOutgoing ? .trailing : .leading)
 
         if !self.reactions.isEmpty {
           Button(action: self.onShowReactors) {
@@ -216,7 +217,7 @@ private struct MacReplyPreviewView: View {
         .foregroundStyle(.secondary)
       }
       .padding(6)
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(maxWidth: 340, alignment: .leading)
       .background(Color.messageReplyPreview, in: RoundedRectangle(cornerRadius: 8))
     }
     .buttonStyle(.plain)

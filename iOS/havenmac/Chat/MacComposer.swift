@@ -22,6 +22,14 @@ struct MacComposer<T: XXDKP>: View {
     !self.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
   }
 
+  /// Grows one line at a time up to ~7 lines, then scrolls.
+  private var editorHeight: CGFloat {
+    let lineBreaks = self.text.filter { $0 == "\n" }.count
+    let wrappedExtra = max(0, self.text.count / 90)
+    let lines = max(1, lineBreaks + wrappedExtra + 1)
+    return min(22 + CGFloat(lines - 1) * 17, 120)
+  }
+
   private func send() {
     let trimmed = self.text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty, let chat else { return }
@@ -64,8 +72,6 @@ struct MacComposer<T: XXDKP>: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      Divider()
-
       if let replyingTo {
         HStack(spacing: 8) {
           RoundedRectangle(cornerRadius: 1.5)
@@ -85,18 +91,26 @@ struct MacComposer<T: XXDKP>: View {
           .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
-        .padding(.top, 8)
+        .padding(.top, 10)
       }
 
       HStack(alignment: .bottom, spacing: 10) {
         TextEditor(text: self.$text)
           .font(.system(size: 14))
           .scrollContentBackground(.hidden)
-          .fixedSize(horizontal: false, vertical: true)
-          .frame(maxHeight: 140)
+          .frame(height: self.editorHeight)
           .padding(.horizontal, 10)
-          .padding(.vertical, 6)
-          .background(Color.formBG, in: RoundedRectangle(cornerRadius: 14))
+          .padding(.top, 8)
+          .padding(.bottom, 2)
+          .background(Color(nsColor: .textBackgroundColor))
+          .clipShape(RoundedRectangle(cornerRadius: 12))
+          .overlay {
+            RoundedRectangle(cornerRadius: 12)
+              .stroke(
+                self.isFocused ? Color.haven : Color(nsColor: .separatorColor),
+                lineWidth: self.isFocused ? 1.5 : 1
+              )
+          }
           .focused(self.$isFocused)
           .onKeyPress(.return, phases: .down) { press in
             // Return sends, Shift-Return inserts a newline.
@@ -109,8 +123,8 @@ struct MacComposer<T: XXDKP>: View {
 
         Button(action: self.send) {
           Image(systemName: "arrow.up.circle.fill")
-            .font(.system(size: 24))
-            .foregroundStyle(self.canSend ? Color.haven : Color.secondary.opacity(0.5))
+            .font(.system(size: 26))
+            .foregroundStyle(self.canSend ? Color.haven : Color.secondary.opacity(0.4))
         }
         .buttonStyle(.plain)
         .disabled(!self.canSend)
@@ -118,6 +132,10 @@ struct MacComposer<T: XXDKP>: View {
       }
       .padding(.horizontal, 14)
       .padding(.vertical, 10)
+    }
+    .background(.bar)
+    .overlay(alignment: .top) {
+      Divider()
     }
     .onAppear {
       self.isFocused = true
