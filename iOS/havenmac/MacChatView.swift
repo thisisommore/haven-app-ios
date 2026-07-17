@@ -16,6 +16,8 @@ struct MacChatView: View {
   @EnvironmentObject private var xxdk: XXDK
   @EnvironmentObject private var selectedChat: SelectedChat
 
+  @State private var reactorsFor: ChatMessageModel?
+
   init(chatId: UUID) {
     self.chatId = chatId
     _controller = State(initialValue: ChatPageController(chatId: chatId))
@@ -28,7 +30,11 @@ struct MacChatView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      MacChatMessagesView(chatId: self.chatId, controller: self.controller)
+      MacChatMessagesCV(
+        chatId: self.chatId,
+        controller: self.controller,
+        onShowReactors: { self.reactorsFor = $0 }
+      )
 
       if self.controller.isMuted {
         Text("You are muted in this channel")
@@ -75,6 +81,15 @@ struct MacChatView: View {
         }
         .frame(minWidth: 400, minHeight: 460)
       }
+    }
+    .sheet(item: self.$reactorsFor) { message in
+      ReactorsSheet(
+        targetMessageId: message.externalId,
+        chatId: self.chatId,
+        selectedEmoji: nil,
+        onDeleteReaction: nil
+      )
+      .frame(minWidth: 380, minHeight: 420)
     }
     .onAppear {
       self.controller.onAppear()

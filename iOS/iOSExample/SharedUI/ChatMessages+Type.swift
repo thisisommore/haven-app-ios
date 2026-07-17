@@ -4,7 +4,7 @@
 //
 //  Created by Om More on 21/03/26.
 //
-import UIKit
+import Foundation
 
 struct MessageWithSender: Hashable {
   let message: ChatMessageModel

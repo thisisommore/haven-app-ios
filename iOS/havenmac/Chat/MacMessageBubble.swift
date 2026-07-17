@@ -14,7 +14,7 @@ import SwiftUI
 struct MacMessageBubble: View {
   let message: ChatMessageModel
   let sender: MessageSenderModel?
-  let reactions: [MessageReactionModel]
+  let reactionEmojis: [String]
   let showsSender: Bool
   let isChannel: Bool
   let isHighlighted: Bool
@@ -37,20 +37,32 @@ struct MacMessageBubble: View {
     return Color(hexNumber: sender.color).adaptive(for: self.colorScheme)
   }
 
-  private var distinctEmojis: [String] {
-    var seen: [String] = []
-    for reaction in self.reactions where !seen.contains(reaction.emoji) {
-      seen.append(reaction.emoji)
-    }
-    return seen
-  }
-
   private var canModerate: Bool {
     self.isChannel && (self.controller.chat?.isAdmin ?? false)
   }
 
   private var canDelete: Bool {
     self.isChannel && (self.isOutgoing || (self.controller.chat?.isAdmin ?? false))
+  }
+
+  private static let maxBubbleWidth: CGFloat = 520
+  private static let horizontalPadding: CGFloat = 24
+
+  /// Deterministic bubble width: measured text width plus padding, clamped —
+  /// mirroring the iOS MessageBubble `size(for:width:)` approach.
+  private var bubbleWidth: CGFloat {
+    let attributed = self.message.attributedText(size: 14, linkClickable: true)
+    let bounds = attributed.boundingRect(
+      with: CGSize(
+        width: Self.maxBubbleWidth - Self.horizontalPadding,
+        height: .greatestFiniteMagnitude
+      ),
+      options: [.usesLineFragmentOrigin, .usesFontLeading]
+    )
+    let textWidth = ceil(bounds.width)
+    let timeRowWidth: CGFloat = 72
+    let content = max(textWidth, timeRowWidth)
+    return min(max(content, 44) + Self.horizontalPadding, Self.maxBubbleWidth)
   }
 
   private func copyMessage() {
@@ -114,18 +126,13 @@ struct MacMessageBubble: View {
               .transition(.opacity)
           }
         }
-        .frame(maxWidth: 520, alignment: self.isOutgoing ? .trailing : .leading)
+        .frame(width: self.bubbleWidth, alignment: self.isOutgoing ? .trailing : .leading)
 
-        if !self.reactions.isEmpty {
+        if !self.reactionEmojis.isEmpty {
           Button(action: self.onShowReactors) {
             HStack(spacing: 3) {
-              ForEach(self.distinctEmojis.prefix(3), id: \.self) { emoji in
+              ForEach(self.reactionEmojis, id: \.self) { emoji in
                 Text(emoji).font(.system(size: 12))
-              }
-              if self.reactions.count > 1 {
-                Text("\(self.reactions.count)")
-                  .font(.caption2)
-                  .foregroundStyle(.secondary)
               }
             }
             .padding(.horizontal, 8)
@@ -182,8 +189,7 @@ struct MacMessageBubble: View {
   }
 }
 
-private struct MacReplyPreviewView: View {
-  let externalId: String
+private struct MacReplyPreviewView: View {  let externalId: String
   let onTap: (String) -> Void
 
   @Dependency(\.defaultDatabase) private var database
