@@ -98,7 +98,7 @@ extension Color {
 }
 
 extension Color {
-  static let separator = Color(UIColor.separator)
+  static let separator = Color(uiColor: .separator)
 }
 
 extension ToolbarItem {

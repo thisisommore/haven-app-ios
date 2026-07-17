@@ -30,12 +30,14 @@ struct CodeNameGenHeaderView: View {
           Text(
             "Codenames are generated on your computer by you. No servers or databases are involved at all. Your Codename is your personally owned anonymous identity shared across every Haven Chat you join. It is private and it can never be traced back to you."
           )
-          .font(.caption)
+          .font(Font.caption)
           .padding(24)
           .frame(width: UIScreen.screenWidth)
           .fixedSize(horizontal: false, vertical: true)
           // Adapts the popover size for a better fit on different devices
-          .presentationCompactAdaptation(.popover)
+          #if os(iOS)
+            .presentationCompactAdaptation(.popover)
+          #endif
         }
       }
     }

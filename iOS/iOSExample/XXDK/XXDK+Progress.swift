@@ -57,17 +57,19 @@ extension XXDK {
   }
 
   /// Plays a subtle, satisfying haptic pattern for completion events
-  private static func playCompletionHaptic() {
-    let soft = UIImpactFeedbackGenerator(style: .soft)
-    let notif = UINotificationFeedbackGenerator()
+  #if canImport(UIKit)
+    private static func playCompletionHaptic() {
+      let soft = UIImpactFeedbackGenerator(style: .soft)
+      let notif = UINotificationFeedbackGenerator()
 
-    soft.prepare()
-    notif.prepare()
+      soft.prepare()
+      notif.prepare()
 
-    soft.impactOccurred(intensity: 0.4)
+      soft.impactOccurred(intensity: 0.4)
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
-      notif.notificationOccurred(.success)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+        notif.notificationOccurred(.success)
+      }
     }
-  }
+  #endif
 }

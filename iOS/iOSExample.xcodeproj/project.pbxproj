@@ -19,7 +19,30 @@
 		A1AAB71E2F83C40500D709FD /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = A1AAB71D2F83C40500D709FD /* Bindings */; };
 		A1B6B2CC2EA7EE12005598E8 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
 		A1E5FDBE2EE2AE5900627B46 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */; };
+		A1EE3D50300A0C4F008A9120 /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = A1AAB71D2F83C40500D709FD /* Bindings */; };
+		A1EE3D51300A0C4F008A9120 /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = A1A4FCF22F5B3C1B006D6B39 /* SQLiteData */; };
+		A1EE3D52300A0C4F008A9120 /* Kronos in Frameworks */ = {isa = PBXBuildFile; productRef = A1710E382F8389F4003CC823 /* Kronos */; };
+		A1EE3D53300A0C4F008A9120 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A19ECBD12F77A05200AE70A7 /* SwiftSoup */; };
+		A1EE3D54300A0C4F008A9120 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
+		A1EE3D55300A0C4F008A9120 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D722B96723E004FB15A /* Assets.xcassets */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A1EE3D2D300A0C4E008A9120 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 980A0D612B96723C004FB15A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1EE3D1F300A0C4D008A9120;
+			remoteInfo = haven;
+		};
+		A1EE3D37300A0C4F008A9120 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 980A0D612B96723C004FB15A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1EE3D1F300A0C4D008A9120;
+			remoteInfo = haven;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		980A0D692B96723C004FB15A /* iOSExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -32,13 +55,30 @@
 		A19FC0CD2EF1A254007FDD0F /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = HavenIcon.icon; sourceTree = "<group>"; };
 		A1E5FDBD2EE2AE5900627B46 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1EE3D20300A0C4D008A9120 /* haven.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = haven.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1EE3D2C300A0C4E008A9120 /* havenTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = havenTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1EE3D36300A0C4F008A9120 /* havenUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = havenUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A1EE3D60300A0C4F008A9120 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A1EE3D1F300A0C4D008A9120 /* mac */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A18D86072F63FCF4005E3751 /* XXDK */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = XXDK; sourceTree = "<group>"; };
 		A18D86202F63FDE2005E3751 /* Data */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Data; sourceTree = "<group>"; };
 		A18D862C2F63FE5E005E3751 /* Common */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Common; sourceTree = "<group>"; };
 		A18D862D2F641D75005E3751 /* UI */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UI; sourceTree = "<group>"; };
+		A18D86502F641D75005E3751 /* SharedUI */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = SharedUI; sourceTree = "<group>"; };
+		A1EE3D21300A0C4D008A9120 /* havenmac */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A1EE3D60300A0C4F008A9120 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = havenmac; sourceTree = "<group>"; };
+		A1EE3D2F300A0C4E008A9120 /* havenTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = havenTests; sourceTree = "<group>"; };
+		A1EE3D39300A0C4F008A9120 /* havenUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = havenUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +94,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1EE3D1D300A0C4D008A9120 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1EE3D50300A0C4F008A9120 /* Bindings in Frameworks */,
+				A1EE3D51300A0C4F008A9120 /* SQLiteData in Frameworks */,
+				A1EE3D52300A0C4F008A9120 /* Kronos in Frameworks */,
+				A1EE3D53300A0C4F008A9120 /* SwiftSoup in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1EE3D29300A0C4E008A9120 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1EE3D33300A0C4F008A9120 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -61,6 +126,9 @@
 			isa = PBXGroup;
 			children = (
 				980A0D6B2B96723C004FB15A /* iOSExample */,
+				A1EE3D21300A0C4D008A9120 /* havenmac */,
+				A1EE3D2F300A0C4E008A9120 /* havenTests */,
+				A1EE3D39300A0C4F008A9120 /* havenUITests */,
 				A1AAB71F2F83C41C00D709FD /* Frameworks */,
 				980A0D6A2B96723C004FB15A /* Products */,
 			);
@@ -70,6 +138,9 @@
 			isa = PBXGroup;
 			children = (
 				980A0D692B96723C004FB15A /* iOSExample.app */,
+				A1EE3D20300A0C4D008A9120 /* haven.app */,
+				A1EE3D2C300A0C4E008A9120 /* havenTests.xctest */,
+				A1EE3D36300A0C4F008A9120 /* havenUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -81,6 +152,7 @@
 				A19FC0CD2EF1A254007FDD0F /* Provider.swift */,
 				A18D862C2F63FE5E005E3751 /* Common */,
 				A18D862D2F641D75005E3751 /* UI */,
+				A18D86502F641D75005E3751 /* SharedUI */,
 				A18D86202F63FDE2005E3751 /* Data */,
 				A18D86072F63FCF4005E3751 /* XXDK */,
 				980A0D742B96723E004FB15A /* iOSExample.entitlements */,
@@ -137,11 +209,88 @@
 				A18D86202F63FDE2005E3751 /* Data */,
 				A18D862C2F63FE5E005E3751 /* Common */,
 				A18D862D2F641D75005E3751 /* UI */,
+				A18D86502F641D75005E3751 /* SharedUI */,
 			);
 			name = iOSExample;
 			productName = iOSExample;
 			productReference = 980A0D692B96723C004FB15A /* iOSExample.app */;
 			productType = "com.apple.product-type.application";
+		};
+		A1EE3D1F300A0C4D008A9120 /* mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1EE3D44300A0C4F008A9120 /* Build configuration list for PBXNativeTarget "mac" */;
+			buildPhases = (
+				A1EE3D1C300A0C4D008A9120 /* Sources */,
+				A1EE3D1D300A0C4D008A9120 /* Frameworks */,
+				A1EE3D1E300A0C4D008A9120 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A18D86072F63FCF4005E3751 /* XXDK */,
+				A18D86202F63FDE2005E3751 /* Data */,
+				A18D862C2F63FE5E005E3751 /* Common */,
+				A18D86502F641D75005E3751 /* SharedUI */,
+				A1EE3D21300A0C4D008A9120 /* havenmac */,
+			);
+			name = mac;
+			packageProductDependencies = (
+				A1AAB71D2F83C40500D709FD /* Bindings */,
+				A1A4FCF22F5B3C1B006D6B39 /* SQLiteData */,
+				A1710E382F8389F4003CC823 /* Kronos */,
+				A19ECBD12F77A05200AE70A7 /* SwiftSoup */,
+			);
+			productName = haven;
+			productReference = A1EE3D20300A0C4D008A9120 /* haven.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1EE3D2B300A0C4E008A9120 /* havenTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1EE3D45300A0C4F008A9120 /* Build configuration list for PBXNativeTarget "havenTests" */;
+			buildPhases = (
+				A1EE3D28300A0C4E008A9120 /* Sources */,
+				A1EE3D29300A0C4E008A9120 /* Frameworks */,
+				A1EE3D2A300A0C4E008A9120 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1EE3D2E300A0C4E008A9120 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A1EE3D2F300A0C4E008A9120 /* havenTests */,
+			);
+			name = havenTests;
+			packageProductDependencies = (
+			);
+			productName = havenTests;
+			productReference = A1EE3D2C300A0C4E008A9120 /* havenTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A1EE3D35300A0C4F008A9120 /* havenUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1EE3D46300A0C4F008A9120 /* Build configuration list for PBXNativeTarget "havenUITests" */;
+			buildPhases = (
+				A1EE3D32300A0C4F008A9120 /* Sources */,
+				A1EE3D33300A0C4F008A9120 /* Frameworks */,
+				A1EE3D34300A0C4F008A9120 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1EE3D38300A0C4F008A9120 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A1EE3D39300A0C4F008A9120 /* havenUITests */,
+			);
+			name = havenUITests;
+			packageProductDependencies = (
+			);
+			productName = havenUITests;
+			productReference = A1EE3D36300A0C4F008A9120 /* havenUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -150,11 +299,22 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1520;
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 1530;
 				TargetAttributes = {
 					980A0D682B96723C004FB15A = {
 						CreatedOnToolsVersion = 15.2;
+					};
+					A1EE3D1F300A0C4D008A9120 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
+					A1EE3D2B300A0C4E008A9120 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = A1EE3D1F300A0C4D008A9120;
+					};
+					A1EE3D35300A0C4F008A9120 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = A1EE3D1F300A0C4D008A9120;
 					};
 				};
 			};
@@ -179,6 +339,9 @@
 			projectRoot = "";
 			targets = (
 				980A0D682B96723C004FB15A /* iOSExample */,
+				A1EE3D1F300A0C4D008A9120 /* mac */,
+				A1EE3D2B300A0C4E008A9120 /* havenTests */,
+				A1EE3D35300A0C4F008A9120 /* havenUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -196,6 +359,29 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1EE3D1E300A0C4D008A9120 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1EE3D54300A0C4F008A9120 /* mainnet.crt in Resources */,
+				A1EE3D55300A0C4F008A9120 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1EE3D2A300A0C4E008A9120 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1EE3D34300A0C4F008A9120 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -208,7 +394,41 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1EE3D1C300A0C4D008A9120 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1EE3D28300A0C4E008A9120 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1EE3D32300A0C4F008A9120 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1EE3D2E300A0C4E008A9120 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1EE3D1F300A0C4D008A9120 /* mac */;
+			targetProxy = A1EE3D2D300A0C4E008A9120 /* PBXContainerItemProxy */;
+		};
+		A1EE3D38300A0C4F008A9120 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1EE3D1F300A0C4D008A9120 /* mac */;
+			targetProxy = A1EE3D37300A0C4F008A9120 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		980A0D782B96723E004FB15A /* Debug */ = {
@@ -429,6 +649,156 @@
 			};
 			name = Release;
 		};
+		A1EE3D3E300A0C4F008A9120 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = havenmac/havenmac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = havenmac/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = max.test.haven;
+				PRODUCT_NAME = haven;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A1EE3D3F300A0C4F008A9120 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = havenmac/havenmac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = havenmac/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = max.test.haven;
+				PRODUCT_NAME = haven;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A1EE3D40300A0C4F008A9120 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = max.test.havenTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/haven.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/haven";
+			};
+			name = Debug;
+		};
+		A1EE3D41300A0C4F008A9120 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = max.test.havenTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/haven.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/haven";
+			};
+			name = Release;
+		};
+		A1EE3D42300A0C4F008A9120 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = max.test.havenUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = haven;
+			};
+			name = Debug;
+		};
+		A1EE3D43300A0C4F008A9120 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NNJNNZZKNN;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = max.test.havenUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = haven;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -446,6 +816,33 @@
 			buildConfigurations = (
 				980A0D7B2B96723E004FB15A /* Debug */,
 				980A0D7C2B96723E004FB15A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1EE3D44300A0C4F008A9120 /* Build configuration list for PBXNativeTarget "mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1EE3D3E300A0C4F008A9120 /* Debug */,
+				A1EE3D3F300A0C4F008A9120 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1EE3D45300A0C4F008A9120 /* Build configuration list for PBXNativeTarget "havenTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1EE3D40300A0C4F008A9120 /* Debug */,
+				A1EE3D41300A0C4F008A9120 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1EE3D46300A0C4F008A9120 /* Build configuration list for PBXNativeTarget "havenUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1EE3D42300A0C4F008A9120 /* Debug */,
+				A1EE3D43300A0C4F008A9120 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -481,7 +878,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/sqlite-data";
 			requirement = {
-				kind = upToNextMajorVersion;
+				kind = upToNextMinorVersion;
 				minimumVersion = 1.6.0;
 			};
 		};

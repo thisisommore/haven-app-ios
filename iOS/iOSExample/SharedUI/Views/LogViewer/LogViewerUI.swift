@@ -121,16 +121,17 @@ struct LogViewerUI: View {
   }
 }
 
-struct ShareSheet: UIViewControllerRepresentable {
-  let items: [Any]
+#if os(iOS)
+  struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
 
-  func makeUIViewController(context _: Context) -> UIActivityViewController {
-    UIActivityViewController(activityItems: self.items, applicationActivities: nil)
+    func makeUIViewController(context _: Context) -> UIActivityViewController {
+      UIActivityViewController(activityItems: self.items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_: UIActivityViewController, context _: Context) {}
   }
-
-  func updateUIViewController(_: UIActivityViewController, context _: Context) {}
-}
-
+#endif
 extension String {
   func ranges(of substring: String, options: CompareOptions = []) -> [Range<Index>] {
     var ranges: [Range<Index>] = []

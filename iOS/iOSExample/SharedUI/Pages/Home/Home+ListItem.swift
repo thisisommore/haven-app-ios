@@ -1,6 +1,5 @@
 import SQLiteData
 import SwiftUI
-import UIKit
 
 struct AdminBadge: View {
   var body: some View {

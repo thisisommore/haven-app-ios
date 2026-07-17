@@ -185,7 +185,9 @@ struct PasswordCreationView<T: XXDKP>: View {
         }.hiddenSharedBackground()
       }
     }
-    .ignoresSafeArea(.keyboard, edges: .bottom)
+    #if os(iOS)
+      .ignoresSafeArea(.keyboard, edges: .bottom)
+    #endif
     .privacySensitive()
     .sheet(isPresented: self.$showImportSheet) {
       ImportAccountSheet<T>(
@@ -245,7 +247,7 @@ struct BranchButtonStyle: SwiftUI.ButtonStyle {
   }
 
   private var disabledColor: Color {
-    self.colorScheme == .dark ? Color(.systemGray4) : .gray.opacity(0.4)
+    self.colorScheme == .dark ? Color(uiColor: .systemGray4) : .gray.opacity(0.4)
   }
 
   private var disabledOpacity: Double {

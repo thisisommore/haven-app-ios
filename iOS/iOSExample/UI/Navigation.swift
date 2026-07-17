@@ -8,32 +8,6 @@
 import Foundation
 import SwiftUI
 
-final class AppNavigationPath: Observable, ObservableObject {
-  @Published var path = NavigationPath()
-}
-
-/// Holds selected chat info for split view detail column
-final class SelectedChat: ObservableObject {
-  @Published var chatId: UUID?
-
-  func select(id: UUID) {
-    self.chatId = id
-  }
-
-  func clear() {
-    self.chatId = nil
-  }
-}
-
-enum Destination: Hashable {
-  case home
-  case landing
-  case codenameGenerator
-  case password
-  case chat(chatId: UUID) // add whatever "props" you need
-  case logViewer
-}
-
 extension Destination {
   @MainActor @ViewBuilder
   func _destinationView() -> some View {

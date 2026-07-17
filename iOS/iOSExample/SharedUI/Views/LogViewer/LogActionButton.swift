@@ -15,8 +15,10 @@ struct LogActionButton: View {
 
   var body: some View {
     Button(action: {
-      let impact = UIImpactFeedbackGenerator(style: .light)
-      impact.impactOccurred()
+      #if canImport(UIKit)
+        let impact = UIImpactFeedbackGenerator(style: .light)
+        impact.impactOccurred()
+      #endif
       self.action()
     }) {
       Image(systemName: self.icon)

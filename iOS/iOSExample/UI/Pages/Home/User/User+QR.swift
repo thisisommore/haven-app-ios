@@ -10,13 +10,6 @@ import UIKit
 private let kScannerBlurRadius: CGFloat = 10
 private let kScannerDarkAmount: CGFloat = 0.5
 
-struct QRData: Identifiable {
-  let id = UUID()
-  let token: Int64
-  let pubKey: Data
-  let codeset: Int
-}
-
 func generateQRCode(from string: String) -> UIImage? {
   let data = string.data(using: .ascii)
   if let filter = CIFilter(name: "CIQRCodeGenerator") {

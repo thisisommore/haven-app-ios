@@ -6,7 +6,6 @@
 //
 import Foundation
 import SQLiteData
-import UIKit
 
 /// Message delivery status
 enum MessageStatus: Int, QueryBindable {
@@ -75,18 +74,18 @@ struct ChatMessageModel: Identifiable, Hashable {
   }
 
   /// If `linkClickable` is true make sure to handle it saftely. For example a warning model showing link can be unsafe
-  func attributedText(color: UIColor = .label, size: CGFloat = 17, linkClickable: Bool) -> NSAttributedString {
+  func attributedText(color: UXColor = .label, size: CGFloat = 17, linkClickable: Bool) -> NSAttributedString {
     let tagStripped = self.message.stripParagraphTags()
     if self.isPlain {
       return NSAttributedString(string: tagStripped, attributes:
-        [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
+        [.foregroundColor: color, .font: UXFont.systemFont(ofSize: size)])
     }
 
     do {
       return try HTMLParser.parse(text: self.message, color: color, size: size, linkClickable: linkClickable)
     } catch {
       AppLogger.messaging.error("failed to parse html \(error.localizedDescription)")
-      return NSAttributedString(string: tagStripped, attributes: [.foregroundColor: color, .font: UIFont.systemFont(ofSize: size)])
+      return NSAttributedString(string: tagStripped, attributes: [.foregroundColor: color, .font: UXFont.systemFont(ofSize: size)])
     }
   }
 }

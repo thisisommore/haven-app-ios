@@ -1,6 +1,10 @@
 import Foundation
 import SwiftSoup
-import UIKit
+#if canImport(UIKit)
+  import UIKit
+#elseif canImport(AppKit)
+  import AppKit
+#endif
 
 final class HTMLParser {
   /// stack like, we add tags as we go deeper,
@@ -9,24 +13,24 @@ final class HTMLParser {
   private var href: String?
   private var orderedListCounts: [Int] = []
   private let nsAttributedString = NSMutableAttributedString()
-  private let color: UIColor
+  private let color: UXColor
   private let size: CGFloat
   private let linkClickable: Bool
   /// this attributes applied as default, it can be overriden see @appendAttributes
   private let baseAttrs: [NSAttributedString.Key: Any]
 
-  private let boldFont: UIFont
-  private let italicFont: UIFont
-  private init(color: UIColor, size: CGFloat, linkClickable: Bool) {
+  private let boldFont: UXFont
+  private let italicFont: UXFont
+  private init(color: UXColor, size: CGFloat, linkClickable: Bool) {
     self.color = color
     self.size = size
     self.linkClickable = linkClickable
     self.baseAttrs = [
-      .font: UIFont.systemFont(ofSize: self.size),
+      .font: UXFont.systemFont(ofSize: self.size),
       .foregroundColor: self.color,
     ]
-    self.boldFont = UIFont.systemFont(ofSize: self.size, weight: .bold)
-    self.italicFont = UIFont.italicSystemFont(ofSize: size)
+    self.boldFont = UXFont.systemFont(ofSize: self.size, weight: .bold)
+    self.italicFont = UXFont.italicSystemFont(ofSize: size)
   }
 
   /// Counts trailing newlines in the rendered output while ignoring spaces.
@@ -227,7 +231,7 @@ extension HTMLParser {
     .addAttributes("a", "href")
 
   /// If `linkClickable` is true make sure to handle it saftely. For example a warning model showing link can be unsafe
-  static func parse(text: String, color: UIColor, size: CGFloat, linkClickable: Bool) throws -> NSAttributedString {
+  static func parse(text: String, color: UXColor, size: CGFloat, linkClickable: Bool) throws -> NSAttributedString {
     let parser = Self(color: color, size: size, linkClickable: linkClickable)
     guard let cleanText = try SwiftSoup.clean(text, Self.safelist) else {
       throw XXDKError.custom("failed to clean html")

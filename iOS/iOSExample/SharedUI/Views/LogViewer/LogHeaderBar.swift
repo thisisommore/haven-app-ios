@@ -6,6 +6,10 @@
 //
 import Foundation
 import SwiftUI
+#if os(macOS)
+  import AppKit
+  import UniformTypeIdentifiers
+#endif
 
 struct LogHeaderBar: View {
   let messageCount: Int
@@ -27,16 +31,28 @@ struct LogHeaderBar: View {
 
     let logContent = self.allMessages.map { $0.Msg }.joined(separator: "\n")
 
-    let tempDir = FileManager.default.temporaryDirectory
-    let fileURL = tempDir.appendingPathComponent(fileName)
+    #if os(macOS)
+      let panel = NSSavePanel()
+      panel.nameFieldStringValue = fileName
+      panel.allowedContentTypes = [.log, .text]
+      guard panel.runModal() == .OK, let url = panel.url else { return }
+      do {
+        try logContent.write(to: url, atomically: true, encoding: .utf8)
+      } catch {
+        AppLogger.app.error("Failed to export logs: \(error.localizedDescription, privacy: .public)")
+      }
+    #else
+      let tempDir = FileManager.default.temporaryDirectory
+      let fileURL = tempDir.appendingPathComponent(fileName)
 
-    do {
-      try logContent.write(to: fileURL, atomically: true, encoding: .utf8)
-      self.logFileURL = fileURL
-      self.showShareSheet = true
-    } catch {
-      AppLogger.app.error("Failed to export logs: \(error.localizedDescription, privacy: .public)")
-    }
+      do {
+        try logContent.write(to: fileURL, atomically: true, encoding: .utf8)
+        self.logFileURL = fileURL
+        self.showShareSheet = true
+      } catch {
+        AppLogger.app.error("Failed to export logs: \(error.localizedDescription, privacy: .public)")
+      }
+    #endif
   }
 
   var body: some View {
@@ -101,10 +117,12 @@ struct LogHeaderBar: View {
     .padding(.horizontal, 16)
     .padding(.vertical, 12)
     .background(Color(uiColor: .secondarySystemBackground))
-    .sheet(isPresented: self.$showShareSheet) {
-      if let logFileURL {
-        ShareSheet(items: [logFileURL])
+    #if os(iOS)
+      .sheet(isPresented: self.$showShareSheet) {
+        if let logFileURL {
+          ShareSheet(items: [logFileURL])
+        }
       }
-    }
+    #endif
   }
 }

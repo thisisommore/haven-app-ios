@@ -11,7 +11,6 @@
 //  Created by Om More on 16/03/26.
 //
 import Foundation
-import UIKit // Required for UIFont and text attributes
 
 extension NSRange {
   static var first: NSRange {
@@ -26,8 +25,8 @@ extension NSRange {
 extension String {
   static let fontSize: CGFloat = 18
   static let defaultAttributes: [NSAttributedString.Key: Any] = [
-    .font: UIFont.systemFont(ofSize: fontSize),
-    .foregroundColor: UIColor.label,
+    .font: UXFont.systemFont(ofSize: fontSize),
+    .foregroundColor: UXColor.label,
   ]
 
   /// Strips a single surrounding <p>...</p> pair if present (after trimming whitespace)

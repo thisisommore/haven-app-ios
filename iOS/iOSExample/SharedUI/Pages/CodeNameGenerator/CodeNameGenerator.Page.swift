@@ -21,8 +21,10 @@ struct CodenameGeneratorView<T: XXDKP>: View {
 
   private func generateCodenames() {
     self.isGenerating = true
-    let impact = UIImpactFeedbackGenerator(style: .medium)
-    impact.impactOccurred()
+    #if canImport(UIKit)
+      let impact = UIImpactFeedbackGenerator(style: .medium)
+      impact.impactOccurred()
+    #endif
 
     withAnimation(.easeOut(duration: 0.3)) {
       self.selectedCodename = nil
@@ -63,8 +65,10 @@ struct CodenameGeneratorView<T: XXDKP>: View {
     // Store the private identity in XXDK for later use
     // This would typically be stored securely for the user's identity
 
-    let success = UINotificationFeedbackGenerator()
-    success.notificationOccurred(.success)
+    #if canImport(UIKit)
+      let success = UINotificationFeedbackGenerator()
+      success.notificationOccurred(.success)
+    #endif
     Task {
       await self.xxdk.setupClients(privateIdentity: identity.privateIdentity) {
         do {
@@ -96,8 +100,10 @@ struct CodenameGeneratorView<T: XXDKP>: View {
             .onTapGesture {
               withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                 self.selectedCodename = codename
-                let impact = UIImpactFeedbackGenerator(style: .light)
-                impact.impactOccurred()
+                #if canImport(UIKit)
+                  let impact = UIImpactFeedbackGenerator(style: .light)
+                  impact.impactOccurred()
+                #endif
               }
             }
           }
