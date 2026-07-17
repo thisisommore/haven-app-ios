@@ -87,7 +87,7 @@ struct MacCreateSpaceView<T: XXDKP>: View {
 
       VStack(spacing: 12) {
         GroupBox {
-          LabeledContent("Name") {
+          MacSettingRow("Name") {
             TextField("Space name", text: self.$name)
               .textFieldStyle(.roundedBorder)
               .focused(self.$focusedField, equals: .name)
@@ -117,7 +117,7 @@ struct MacCreateSpaceView<T: XXDKP>: View {
         }
 
         GroupBox("Privacy") {
-          LabeledContent("Secret") {
+          MacSettingRow("Secret") {
             Toggle("", isOn: self.$isSecret)
               .toggleStyle(.switch)
               .labelsHidden()
@@ -130,7 +130,7 @@ struct MacCreateSpaceView<T: XXDKP>: View {
 
           Divider()
 
-          LabeledContent("Enable Direct Messages") {
+          MacSettingRow("Enable Direct Messages") {
             Toggle("", isOn: self.$enableDirectMessages)
               .toggleStyle(.switch)
               .labelsHidden()

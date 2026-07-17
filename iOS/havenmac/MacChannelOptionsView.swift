@@ -51,12 +51,12 @@ struct MacChannelOptionsView<T: XXDKP>: View {
         VStack(spacing: 12) {
           // Channel info
           GroupBox {
-            LabeledContent("Name") {
+            MacSettingRow("Name") {
               Text(self.chat.name)
             }
             if let description = chat.channelDescription, !description.isEmpty {
               Divider()
-              LabeledContent("Description") {
+              MacSettingRow("Description") {
                 Text(description)
                   .multilineTextAlignment(.trailing)
               }
@@ -65,7 +65,7 @@ struct MacChannelOptionsView<T: XXDKP>: View {
 
           // Your settings
           GroupBox {
-            LabeledContent("Nickname") {
+            MacSettingRow("Nickname") {
               TextField("Max 24 chars", text: self.$controller.channelNickname)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 200)
@@ -84,7 +84,7 @@ struct MacChannelOptionsView<T: XXDKP>: View {
               .frame(maxWidth: .infinity, alignment: .trailing)
             }
             Divider()
-            LabeledContent("Direct Messages") {
+            MacSettingRow("Direct Messages") {
               Toggle("", isOn: self.$controller.isDMEnabled)
                 .toggleStyle(.switch)
                 .labelsHidden()
@@ -101,7 +101,7 @@ struct MacChannelOptionsView<T: XXDKP>: View {
           if self.controller.shareURL != nil {
             GroupBox("Invite") {
               if let urlString = controller.shareURL {
-                LabeledContent("Link") {
+                MacSettingRow("Link") {
                   HStack(spacing: 6) {
                     Text(verbatim: urlString)
                       .font(.callout)
@@ -122,7 +122,7 @@ struct MacChannelOptionsView<T: XXDKP>: View {
               }
               if let sharePassword = controller.sharePassword, !sharePassword.isEmpty {
                 Divider()
-                LabeledContent("Password") {
+                MacSettingRow("Password") {
                   HStack(spacing: 6) {
                     Text(sharePassword)
                       .font(.callout.monospaced())

@@ -165,7 +165,7 @@ struct MacJoinChannelView<T: XXDKP>: View {
 
         case let .confirmation(channel):
           GroupBox("Channel") {
-            LabeledContent("Name") {
+            MacSettingRow("Name") {
               Text(channel.Name)
             }
             Divider()
@@ -178,7 +178,7 @@ struct MacJoinChannelView<T: XXDKP>: View {
                 .textSelection(.enabled)
             }
             Divider()
-            LabeledContent("Enable Direct Messages") {
+            MacSettingRow("Enable Direct Messages") {
               Toggle("", isOn: self.$enableDM)
                 .toggleStyle(.switch)
                 .labelsHidden()
