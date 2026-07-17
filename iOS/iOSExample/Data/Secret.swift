@@ -40,6 +40,9 @@ final class AppStorage: ObservableObject {
   private static let baseQuery: [String: Any] = [
     kSecClass as String: kSecClassGenericPassword,
     kSecAttrService as String: "internalPassword",
+    // Route to the data-protection (app-scoped) keychain — default on iOS,
+    // and on macOS the only way to avoid keychain access prompts.
+    kSecUseDataProtectionKeychain as String: true,
   ]
 
   private static var searchQuery: [String: Any] = {
@@ -134,7 +137,10 @@ final class AppStorage: ObservableObject {
     ]
 
     for secClass in secClasses {
-      let query: [String: Any] = [kSecClass as String: secClass]
+      let query: [String: Any] = [
+        kSecClass as String: secClass,
+        kSecUseDataProtectionKeychain as String: true,
+      ]
       SecItemDelete(query as CFDictionary)
     }
   }
