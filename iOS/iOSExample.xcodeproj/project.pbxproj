@@ -25,6 +25,7 @@
 		A1EE3D53300A0C4F008A9120 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A19ECBD12F77A05200AE70A7 /* SwiftSoup */; };
 		A1EE3D54300A0C4F008A9120 /* mainnet.crt in Resources */ = {isa = PBXBuildFile; fileRef = 9854D57B2B98C269009437B8 /* mainnet.crt */; };
 		A1EE3D55300A0C4F008A9120 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 980A0D722B96723E004FB15A /* Assets.xcassets */; };
+		A1EE3D56300A0C4F008A9120 /* HavenIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A1B6B2CB2EA7EE12005598E8 /* HavenIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -365,6 +366,7 @@
 			files = (
 				A1EE3D54300A0C4F008A9120 /* mainnet.crt in Resources */,
 				A1EE3D55300A0C4F008A9120 /* Assets.xcassets in Resources */,
+				A1EE3D56300A0C4F008A9120 /* HavenIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -652,7 +654,7 @@
 		A1EE3D3E300A0C4F008A9120 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = HavenIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = havenmac/havenmac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -686,7 +688,7 @@
 		A1EE3D3F300A0C4F008A9120 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = HavenIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = havenmac/havenmac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
