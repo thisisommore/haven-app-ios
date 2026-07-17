@@ -77,8 +77,7 @@ struct MacSidebar: View {
         NewChatSheet<XXDK>()
           .frame(minWidth: 460, minHeight: 420)
       case .createSpace:
-        CreateSpaceSheet<XXDK>()
-          .frame(minWidth: 460, minHeight: 420)
+        MacCreateSpaceView<XXDK>()
       case let .qrCode(data):
         MacQRCodeSheet(data: data)
       case .nicknamePicker:
