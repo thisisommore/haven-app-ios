@@ -180,6 +180,20 @@ class A { /* props, init */ }
 extension A { /* methodA, methodB */ }
 ```
 
+When implementing protocols, try to use extension and keep one
+extension per protocol implementation. \
+Don't try to implement multiple protocol in one group.
+
+```swift
+class A {  }
+extension A: ProtocolXYZ
+extension A: ProtocolABC
+```
+
+### UIKit
+In UIKit define and use makeUI instead of using init
+Try to keep init as clean as possible
+
 #### +ABC.swift
 
 In Swift, scope is shared across files, so identical file names in different folders collide. Use the `+XYZ` prefix pattern to avoid this.
@@ -250,3 +264,15 @@ struct ExampleView: View {
   }
 }
 ```
+
+in each class, all properties non function with init and overrides, then all functions private with private extension then all public functions.
+each protocol delegate should be simplified
+Like 
+class A {}
+extension A: Max {}
+extension A: Tax {}
+Wrong
+class A: Max, Tax {}
+
+See MessageBubble.swift for example
+
