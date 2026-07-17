@@ -76,7 +76,7 @@ struct MacComposer<T: XXDKP>: View {
         HStack(spacing: 8) {
           RoundedRectangle(cornerRadius: 1.5)
             .fill(Color.haven)
-            .frame(width: 3)
+            .frame(width: 3, height: 28)
           Text(replyingTo.message.stripParagraphTags())
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -98,6 +98,7 @@ struct MacComposer<T: XXDKP>: View {
         TextEditor(text: self.$text)
           .font(.system(size: 14))
           .scrollContentBackground(.hidden)
+          .scrollIndicators(.never)
           .frame(height: self.editorHeight)
           .padding(.horizontal, 10)
           .padding(.top, 8)
