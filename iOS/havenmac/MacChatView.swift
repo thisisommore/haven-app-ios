@@ -68,11 +68,10 @@ struct MacChatView: View {
       switch sheet {
       case .channelOptions:
         if let chat = controller.chat {
-          ChannelOptionsSheet<XXDK>(
+          MacChannelOptionsView<XXDK>(
             chat: chat,
             onLeaveChannel: { self.selectedChat.clear() }
           )
-          .frame(minWidth: 480, minHeight: 560)
         }
       case let .emojiKeyboard(message):
         EmojiKeyboardSheet { emoji in
