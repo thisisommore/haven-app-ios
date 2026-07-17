@@ -17,7 +17,7 @@ func appDatabase() throws -> any DatabaseWriter {
         if context == .preview {
           print("\($0.expandedDescription)")
         } else {
-          AppLogger.storage.debug("\($0.expandedDescription)")
+//          AppLogger.storage.debug("\($0.expandedDescription)")
         }
       }
     }
