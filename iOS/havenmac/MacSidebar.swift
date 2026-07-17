@@ -74,8 +74,7 @@ struct MacSidebar: View {
     .sheet(item: self.$controller.activeSheet) { sheet in
       switch sheet {
       case .newChat:
-        NewChatSheet<XXDK>()
-          .frame(minWidth: 460, minHeight: 420)
+        MacJoinChannelView<XXDK>()
       case .createSpace:
         MacCreateSpaceView<XXDK>()
       case let .qrCode(data):
