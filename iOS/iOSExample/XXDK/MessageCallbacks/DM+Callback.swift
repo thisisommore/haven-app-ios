@@ -211,7 +211,8 @@ final class DMReceiverBuilder: NSObject, ObservableObject, Bindings.BindingsDMRe
     let messageTextB64 = text ?? ""
     guard let decodedText = decodeMessage(messageTextB64)
     else {
-      fatalError("decode failed")
+        AppLogger.messaging.error("decode failed")
+        return InternalIdGenerator.shared.next()
     }
 
     let codename: String
