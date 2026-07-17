@@ -16,6 +16,8 @@ struct MacSidebar: View {
   @EnvironmentObject private var navigation: AppNavigationPath
   @EnvironmentObject private var selectedChat: SelectedChat
 
+  @State private var showNewChatMenu = false
+
   var body: some View {
     List(selection: self.$selectedChat.chatId) {
       ForEach(self.controller.filteredChats) { chat in
@@ -29,14 +31,41 @@ struct MacSidebar: View {
     .searchable(text: self.$controller.searchText, placement: .sidebar, prompt: "Search chats")
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
-        Menu {
-          Button("Join Channel…") { self.controller.activeSheet = .newChat }
-          Button("Create Space…") { self.controller.activeSheet = .createSpace }
+        Button {
+          self.showNewChatMenu.toggle()
         } label: {
           Image(systemName: "plus")
         }
-        .menuStyle(.borderlessButton)
         .help("New chat")
+        .popover(isPresented: self.$showNewChatMenu, arrowEdge: .bottom) {
+          VStack(alignment: .leading, spacing: 2) {
+            Button {
+              self.showNewChatMenu = false
+              self.controller.activeSheet = .newChat
+            } label: {
+              Text("Join Channel…")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+
+            Button {
+              self.showNewChatMenu = false
+              self.controller.activeSheet = .createSpace
+            } label: {
+              Text("Create Space…")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+          }
+          .padding(4)
+          .frame(width: 180)
+        }
       }
     }
     .safeAreaInset(edge: .bottom) {
