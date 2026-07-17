@@ -19,15 +19,24 @@ struct MacSidebar: View {
   @State private var showNewChatMenu = false
 
   var body: some View {
-    List(selection: self.$selectedChat.chatId) {
+    // Selection is handled manually instead of `List(selection:)` because the
+    // system selection highlight always flashes the app accent color (orange)
+    // while the mouse is pressed and cannot be overridden with `.tint`.
+    // Rows draw their own neutral gray background when selected.
+    List {
       ForEach(self.controller.filteredChats) { chat in
         ChatRowView<XXDK>(chat: chat)
-          .tag(chat.id)
+          .contentShape(Rectangle())
+          .onTapGesture {
+            self.selectedChat.chatId = chat.id
+          }
+          .listRowBackground(
+            self.selectedChat.chatId == chat.id
+              ? Color(nsColor: .unemphasizedSelectedContentBackgroundColor)
+              : Color.clear
+          )
       }
     }
-    // Neutralize the accent-colored selection/press highlight in the sidebar;
-    // rows render with the native gray selection instead.
-    .tint(Color(nsColor: .unemphasizedSelectedContentBackgroundColor))
     .searchable(text: self.$controller.searchText, placement: .sidebar, prompt: "Search chats")
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
