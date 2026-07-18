@@ -182,6 +182,7 @@ struct MacPasswordPage<T: XXDKP>: View {
         ndfTask: self.ndfTask
       )
       .frame(minWidth: 420, minHeight: 360)
+      .dismissOnOutsideClick()
     }
   }
 }

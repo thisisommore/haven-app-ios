@@ -65,21 +65,24 @@ struct MacChatView: View {
       }
     }
     .sheet(item: self.$controller.activeSheet) { sheet in
-      switch sheet {
-      case .channelOptions:
-        if let chat = controller.chat {
-          MacChannelOptionsView<XXDK>(
-            chat: chat,
-            onLeaveChannel: { self.selectedChat.clear() }
-          )
+      Group {
+        switch sheet {
+        case .channelOptions:
+          if let chat = controller.chat {
+            MacChannelOptionsView<XXDK>(
+              chat: chat,
+              onLeaveChannel: { self.selectedChat.clear() }
+            )
+          }
+        case let .emojiKeyboard(message):
+          EmojiKeyboardSheet { emoji in
+            guard !emoji.isEmpty else { return }
+            self.controller.sendReaction(emoji, to: message, xxdk: self.xxdk)
+          }
+          .frame(minWidth: 400, minHeight: 460)
         }
-      case let .emojiKeyboard(message):
-        EmojiKeyboardSheet { emoji in
-          guard !emoji.isEmpty else { return }
-          self.controller.sendReaction(emoji, to: message, xxdk: self.xxdk)
-        }
-        .frame(minWidth: 400, minHeight: 460)
       }
+      .dismissOnOutsideClick()
     }
     .sheet(item: self.$reactorsFor) { message in
       ReactorsSheet(
@@ -89,6 +92,7 @@ struct MacChatView: View {
         onDeleteReaction: nil
       )
       .frame(minWidth: 380, minHeight: 420)
+      .dismissOnOutsideClick()
     }
     .onAppear {
       self.controller.onAppear()

@@ -81,21 +81,24 @@ struct MacSidebar: View {
       MacAccountChip<XXDK>(controller: self.controller)
     }
     .sheet(item: self.$controller.activeSheet) { sheet in
-      switch sheet {
-      case .newChat:
-        MacJoinChannelView<XXDK>()
-      case .createSpace:
-        MacCreateSpaceView<XXDK>()
-      case let .qrCode(data):
-        MacQRCodeSheet(data: data)
-      case .nicknamePicker:
-        MacNicknameSheet<XXDK>()
-      case .exportIdentity:
-        MacExportIdentitySheet<XXDK>()
-      case .qrScanner:
-        // Camera scanning is iOS-only; unreachable from the mac UI.
-        EmptyView()
+      Group {
+        switch sheet {
+        case .newChat:
+          MacJoinChannelView<XXDK>()
+        case .createSpace:
+          MacCreateSpaceView<XXDK>()
+        case let .qrCode(data):
+          MacQRCodeSheet(data: data)
+        case .nicknamePicker:
+          MacNicknameSheet<XXDK>()
+        case .exportIdentity:
+          MacExportIdentitySheet<XXDK>()
+        case .qrScanner:
+          // Camera scanning is iOS-only; unreachable from the mac UI.
+          EmptyView()
+        }
       }
+      .dismissOnOutsideClick()
     }
     .overlay(alignment: .bottom) {
       if let toast = controller.toastMessage {

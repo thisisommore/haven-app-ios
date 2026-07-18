@@ -205,30 +205,33 @@ struct MacChannelOptionsView<T: XXDKP>: View {
       Text("Are you sure you want to leave \"\(self.chat.name)\"?")
     }
     .sheet(item: self.$controller.activeSheet) { sheet in
-      switch sheet {
-      case .exportKey:
-        ExportChannelKeySheet(
-          channelId: self.channelId ?? "",
-          channelName: self.chat.name,
-          xxdk: self.xxdk,
-          onSuccess: { message in
-            self.controller.handleExportSuccess(message: message)
-          }
-        )
-        .frame(minWidth: 420, minHeight: 300)
-      case .importKey:
-        ImportChannelKeySheet(
-          channelId: self.channelId ?? "",
-          channelName: self.chat.name,
-          xxdk: self.xxdk,
-          onSuccess: { message in
-            self.controller.handleImportSuccess(
-              message: message, chatId: self.chat.id, chat: self.chat
-            )
-          }
-        )
-        .frame(minWidth: 420, minHeight: 300)
+      Group {
+        switch sheet {
+        case .exportKey:
+          ExportChannelKeySheet(
+            channelId: self.channelId ?? "",
+            channelName: self.chat.name,
+            xxdk: self.xxdk,
+            onSuccess: { message in
+              self.controller.handleExportSuccess(message: message)
+            }
+          )
+          .frame(minWidth: 420, minHeight: 300)
+        case .importKey:
+          ImportChannelKeySheet(
+            channelId: self.channelId ?? "",
+            channelName: self.chat.name,
+            xxdk: self.xxdk,
+            onSuccess: { message in
+              self.controller.handleImportSuccess(
+                message: message, chatId: self.chat.id, chat: self.chat
+              )
+            }
+          )
+          .frame(minWidth: 420, minHeight: 300)
+        }
       }
+      .dismissOnOutsideClick()
     }
     .overlay(alignment: .bottom) {
       if let toastMessage = self.controller.toastMessage {
