@@ -183,20 +183,23 @@ extension MacChatMessagesVC {
   }
 
   private static func makeLayout() -> NSCollectionViewLayout {
+    // Estimated height must be large enough for a typical bubble+sender so the
+    // first layout pass is close; self-sizing then resolves via the cell's
+    // measured height constraint (see MacHostingCell).
     let itemSize = NSCollectionLayoutSize(
       widthDimension: .fractionalWidth(1.0),
-      heightDimension: .estimated(44)
+      heightDimension: .estimated(72)
     )
     let item = NSCollectionLayoutItem(layoutSize: itemSize)
 
     let groupSize = NSCollectionLayoutSize(
       widthDimension: .fractionalWidth(1.0),
-      heightDimension: .estimated(44)
+      heightDimension: .estimated(72)
     )
     let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
     let section = NSCollectionLayoutSection(group: group)
-    section.interGroupSpacing = 3
+    section.interGroupSpacing = 4
     section.contentInsets = NSDirectionalEdgeInsets(
       top: 10, leading: 16, bottom: 10, trailing: 16
     )
@@ -433,6 +436,11 @@ extension MacChatMessagesVC {
 
       let wasNearBottom = self.isNearBottom
       self.dataSource.apply(snapshot, animatingDifferences: false)
+      // Two-pass layout: first configures cells and measures SwiftUI heights;
+      // invalidate then re-layout so estimated item sizes converge on the
+      // measured height constraints (avoids overlapping bubbles on Mac).
+      self.cv.layoutSubtreeIfNeeded()
+      self.cv.collectionViewLayout?.invalidateLayout()
       self.cv.layoutSubtreeIfNeeded()
 
       if wasNearBottom {
@@ -452,6 +460,8 @@ extension MacChatMessagesVC {
     } else {
       self.dataSource.apply(snapshot, animatingDifferences: false)
       self.initDataDone = true
+      self.cv.layoutSubtreeIfNeeded()
+      self.cv.collectionViewLayout?.invalidateLayout()
       self.cv.layoutSubtreeIfNeeded()
       if !self.didInitialScroll {
         self.didInitialScroll = true

@@ -146,7 +146,10 @@ struct MacMessageBubble: View {
 
       if !self.isOutgoing { Spacer(minLength: 60) }
     }
-    .padding(.top, self.showsSender ? 4 : 0)
+    .padding(.top, self.showsSender ? 8 : 0)
+    // Definite vertical size so NSHostingView sizeThatFits / intrinsic height
+    // match the rendered bubble (prevents collection-view cell overlap on Mac).
+    .fixedSize(horizontal: false, vertical: true)
     .contextMenu {
       Button("React…") {
         self.controller.activeSheet = .emojiKeyboard(self.message)
